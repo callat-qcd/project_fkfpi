@@ -26,7 +26,10 @@ def format_data(switches,data,hisq_params,priors):
     mka = list()
     mss = list()
     aw0 = list()
+    a2di = list()
+    a2dm = list()
     for e in switches['ensemble']:
+        # get from postgre csv dump
         gvdata = gv.dataset.avg_data(data.query("ensemble=='%s'" %e)[['e0_pion','z0p_pion','e0_kaon','z0p_kaon','e0_etas','z0p_etas','mresl','mress']].to_dict(orient='list'),bstrap=True)
         mval = data.query("ensemble=='%s'" %e)[['mq1','mq2']].iloc[0].to_dict()
         data_dict = decay_constant(mval,gvdata)
@@ -35,12 +38,18 @@ def format_data(switches,data,hisq_params,priors):
         mpi.append(data_dict['p']['mpi'])
         mka.append(data_dict['p']['mka'])
         mss.append(data_dict['p']['mss'])
+        # milc file
         hp = hisq_params.query("ensemble=='%s'" %e)
         aw0.append(gv.gvar(hp['aw0_mean'].iloc[0],hp['aw0_sdev'].iloc[0]))
+        a2di.append(gv.gvar(hp['a2DI_mean'].iloc[0],hp['a2DI_sdev'].iloc[0]))
+        a2dm.append(gv.gvar(hp['a2dm_mean'].iloc[0],hp['a2dm_sdev'].iloc[0]))
     priors['mpi'] = np.array(mpi)
     priors['mka'] = np.array(mka)
     priors['mss'] = np.array(mss)
     priors['aw0'] = np.array(aw0)
+    if switches['ansatz']['type'] == 'MA':
+        priors['a2di'] = np.array(a2di)
+        priors['a2dm'] = np.array(a2dm)
     return {'x': np.array(x), 'y': np.array(y), 'p': priors}
 
 def fit_data(switches,data,phys_params):
@@ -78,92 +87,83 @@ class Fit(object):
             r += -1./4.*self.frac(p['mka']**2,x**2)*self.xlog(p['mka']**2,x**2)
             r += -3./8.*self.frac(p['mss']**2,x**2)*self.xlog(p['mss']**2,x**2)
             r += (4.*np.pi)**2*self.frac(4.*(p['mka']**2-p['mpi']**2),x**2)*(p['L5']+p['aw0']**2*p['s2'])
-            r += p['
             return r
         elif self.switches['ansatz']['type'] == 'MA':
-            pass
+            C4cls = C4(x,p)
+            logs = C4cls()
+            print("logs:",logs)
+            r = 1
+            r += logs
+            r += (4.*np.pi)**2*self.frac(4.*(p['mka']**2-p['mpi']**2),x**2)*p['L5'] #+p['aw0']**2*p['s2'])
+            return r 
 
 class C4(object):
     # Eq. C4
-    def __init__(self,Fka,Fpi,mka,mpi,mss,a2dm,a2di):
+    def __init__(self,x,p):
         # m_etas^2 = 4/3 * mka^2 - 1/3 mpi^2 # gellmann-okubo
         # mu = 4*pi * sqrt(Fpi Fka)
-        self.Fka = Fka
-        self.Fpi = Fpi
-        self.mka = mka
-        self.mpi = mpi
-        self.mss = mss
-        self.a2dm = a2dm
-        self.a2di = a2di
+        self.mu2 = x**2
+        self.eka2 = p['mka']**2/self.mu2
+        self.epi2 = p['mpi']**2/self.mu2
+        self.ess2 = p['mss']**2/self.mu2
+        self.eju2 = (p['mpi']**2+p['a2dm'])/self.mu2
+        self.eru2 = (p['mka']**2+p['a2dm'])/self.mu2
+        self.esj2 = self.eru2
+        self.ers2 = (p['mss']**2+p['a2dm'])/self.mu2
+        self.dpq2 = p['a2di']/self.mu2
         # construct dependencies
-        self.met = np.sqrt(4.*self.mka**2/3. - self.mpi**2/3.) # Gellmann-Okubo relation
-        self.mu = 4.*np.pi*np.sqrt(self.Fpi*self.Fka) # scale
-        self.fpi = np.sqrt(2*self.Fpi*self.Fka)
+        self.eX2 = 4.*self.eka2/3.-self.epi2/3.+self.dpq2 # Gellmann-Okubo relation
         # initialize contributions
-        self.ma1 = 0
-        self.ma2 = 0
-        self.ma3 = 0
-        self.ma4 = 0
-        self.ma7 = 0
+        self.malog = 0
+        self.pilog = 0
+        self.sslog = 0
+        self.etlog = 0
+        self.pqcnt = 0
     def __call__(self):
-        self.l1()
-        self.l2()
-        self.l3()
-        self.l4()
-        self.l7()
-        result = self.ma1 + self.ma2 + self.ma3 + self.ma4 + self.ma7
+        self.maLog()
+        self.piLog()
+        self.ssLog()
+        self.etLog()
+        self.pqCnt()
+        result = self.malog + self.pilog + self.sslog + self.etlog + self.pqcnt
         return result
     def frac(self,num,den):
         return num/den
-    def clog(self,num,den):
-        return np.log(self.frac(num,den))
-    def l1(self):
-        # line one of C4
-        c1 = self.frac(self.mpi**2+self.a2dm,(4.*np.pi*self.fpi)**2) * self.clog(self.mpi**2+self.a2dm,self.mu**2)
-        c2 = self.frac(self.mpi**2,(4.*np.pi*self.fpi)**2) * self.clog(self.mpi**2,self.mu**2)
-        c3 = self.frac(self.mka**2+self.a2dm,2.*(4.*np.pi*self.fpi)**2) * self.clog(self.mka**2+self.a2dm,self.mu**2)
-        self.ma1 = c1-c2-c3
-    def l2(self):
-        # line two of C4
-        c1 = self.frac(self.mka**2,2.*(4.*np.pi*self.fpi)**2) * self.clog(self.mka**2,self.mu**2)
-        c2A = self.frac(3.,4.*(4.*np.pi)**2)
-        c2a = self.frac(self.met**2+self.a2di,self.fpi**2) * self.clog(self.met**2+self.a2di,self.mu**2)
-        c2b = self.frac(self.met**2,self.fpi**2) * self.clog(self.met**2,self.mu**2)
-        c2 = c2A * (c2a-c2b)
-        self.ma2 = c1-c2
-    def l3(self):
-        # line three of C4
-        c1A = self.frac(1.,2.*(4.*np.pi)**2)
-        c1a = self.frac(self.mss**2+self.a2dm,self.fpi**2) * self.clog(self.mss**2+self.a2dm,self.mu**2)
-        c1b = self.frac(self.mss**2,self.fpi**2) * self.clog(self.mss**2,self.mu**2)
-        c1 = c1A * (c1a-c1b)
-        self.ma3 = -c1
-    def l4(self):
-        # lines 4, 5, 6 of C4
-        c1A = self.frac(self.a2di,self.fpi**2)
-        c1B = self.frac(1.,12.*(4.*np.pi)**2)
-        c1a = 3.
-        c1b = self.frac(4.*(self.mka**2-self.mpi**2),self.mss**2-self.met**2-self.a2di)
-        c1c = self.frac(3.*(self.met**2+self.a2di+self.mpi**2),self.met**2+self.a2di-self.mpi**2) * self.clog(self.mpi**2,self.mu**2)
-        c1d = self.frac(2.*(3*self.mss**4-(self.met**2+self.a2di)*(3.*self.mss**2-2.*self.mka**2+2.*self.mpi**2)),(self.mss**2-self.met**2-self.a2di)**2) * self.clog(self.mss**2,self.mu**2)
-        c1eA = 2.*(self.met**2+self.a2di)
-        c1eB = self.clog(self.met**2+self.a2di,self.mu**2)
-        c1ea = self.frac(3.*self.mss**2-3.*(self.met**2+self.a2di)+2.*self.mka**2-2.*self.mpi**2,(self.mss**2-self.met**2-self.a2di)**2)
-        c1eb = self.frac(3.,self.met**2+self.a2di-self.mpi**2)
-        c1 = c1A*c1B * ( c1a +c1b +c1c -c1d + c1eA*c1eB*(c1ea-c1eb) )
-        self.ma4 = -c1
-    def l7(self):
-        c1A = (self.frac(self.a2di,self.fpi**2))**2
-        c1B = self.frac(1.,12.*(4.*np.pi)**2)
-        c1a = self.frac(self.fpi**2,self.met**2+self.a2di-self.mpi**2)
-        c1b = self.frac(2.*self.fpi**2,self.met**2+self.a2di-self.mss**2)
-        c1cA = self.clog(self.mpi**2,self.mu**2)
-        c1ca = self.frac(self.fpi**2*(self.met**2+self.a2di),(self.met**2+self.a2di-self.mpi**2)**2)
-        c1cb = self.frac(4.*self.fpi**2*self.mpi**2,(self.met**2+self.a2di-self.mpi**2)*(self.mss**2-self.mpi**2))
-        c1d = self.clog(self.mss**2,self.mu**2) * self.frac(2.*self.fpi**2*(2.*self.mss**4-(self.met**2+self.a2di)*(self.mss**2+self.mpi**2)),(self.mss**2-self.mpi**2)*(self.met**2+self.a2di-self.mss**2)**2)
-        c1eA = self.frac(self.met**2+self.a2di,self.fpi**2)
-        c1eB = self.clog(self.met**2+self.a2di,self.mu**2)
-        c1ea = self.frac(self.fpi**4,(self.met**2+self.a2di-self.mpi**2)**2)
-        c1eb = self.frac(2.*self.fpi**4*(self.met**2+self.a2di+self.mpi**2-2.*self.mss**2),(self.met**2+self.a2di-self.mpi**2)*(self.met**2+self.a2di-self.mss**2)**2)
-        c1 = c1A*c1B * (c1a - c1b + c1cA*(c1ca-c1cb) - c1d - c1eA*c1eB*(c1ea+c1eb) )
-        self.ma7 = c1
+    def maLog(self):
+        # mixed action logs
+        cju = 1./2. * self.eju2*np.log(self.eju2)
+        csj = 1./2. * self.esj2*np.log(self.esj2)
+        cru = 1./4. * self.eru2*np.log(self.eru2)
+        crs = 1./4. * self.ers2*np.log(self.ers2)
+        self.malog = cju-csj+cru-crs
+    def piLog(self):
+        # pion logs
+        c = 1./8. * np.log(self.epi2) 
+        c1 = self.epi2
+        c2 = self.frac(self.dpq2*(self.eX2+self.epi2),self.eX2-self.epi2)
+        c3 = self.frac(self.dpq2**2*self.eX2,3.*(self.eX2-self.epi2)**2)
+        c4 = self.frac(4.*self.dpq2**2*self.epi2,3.*(self.eX2-self.epi2)*(self.ess2-self.epi2))
+        self.pilog = c*(c1-c2+c3-c4)
+    def ssLog(self):
+        # phi_ss log
+        c = 1./4. * np.log(self.ess2)
+        c1 = self.ess2
+        c2 = self.frac(self.dpq2*(3.*self.ess2*2+2.*(self.eka2-self.epi2)*self.eX2-3.*self.ess2*self.eX2),3.*(self.eX2-self.ess2)**2)
+        c3 = self.frac(self.dpq2**2*(self.ess2**2-self.eX2*(self.ess2+self.epi2)),3.*(self.eX2-self.ess2)**2*(self.ess2-self.epi2))
+        self.sslog = c*(c1+c2-c3)
+    def etLog(self):
+        # eta logs
+        print(self.eX2)
+        c = 3./8.*self.eX2*np.log(self.eX2)
+        c1 = 1.
+        c2 = self.frac(2.*self.dpq2,3.*(self.eX2-self.epi2))
+        c3 = self.frac(self.dpq2*(4.*(self.eka2-self.epi2)+6.*(self.ess2-self.eX2)),9.*(self.eX2-self.ess2)**2)
+        c4 = self.frac(self.dpq2**2.,9.*(self.eX2-self.ess2)**2)
+        c5 = self.frac(2.*self.dpq2**2*(2.*self.ess2-self.epi2-self.eX2),9.*(self.eX2-self.ess2)**2*(self.eX2-self.epi2))
+        self.etlog = -c*(c1-c2+c3+c4-c5)
+    def pqCnt(self):
+        c1 = self.frac(self.dpq2*(self.eka2-self.epi2),6.*(self.eX2-self.ess2))
+        c2 = self.frac(self.dpq2**2,24.*self.eX2-self.epi2)
+        c3 = self.frac(self.dpq2**2,12.*self.eX2-self.ess2)
+        c4 = self.frac(self.dpq2,8.)
+        self.pqcnt = c1+c2-c3-c4
