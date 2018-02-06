@@ -83,7 +83,7 @@ def format_data(switches,data,hisq_params,priors):
         aw0_ens = gv.gvar(hp['aw0_mean'].iloc[0],hp['aw0_sdev'].iloc[0])
         aw0.append(aw0_ens)
         a2di.append(gv.gvar(hp['a2DI_mean'].iloc[0],hp['a2DI_sdev'].iloc[0])/r_a[ens]**2)
-        a2dm.append(gv.gvar(hp['a2dm_mean'].iloc[0],hp['a2dm_sdev'].iloc[0])*aw0_ens)
+        a2dm.append(gv.gvar(hp['a2dm_mean'].iloc[0],hp['a2dm_sdev'].iloc[0])*aw0_ens**2)
     priors['mpi'] = np.array(mpi)
     priors['mka'] = np.array(mka)
     priors['mss'] = np.array(mss)
@@ -94,6 +94,10 @@ def format_data(switches,data,hisq_params,priors):
     if switches['ansatz']['type'] == 'MA':
         priors['a2di'] = np.array(a2di)
         priors['a2dm'] = np.array(a2dm)
+        mjuL = np.zeros_like(mpiL)
+        for i,mL in enumerate(mpiL):
+            r = (np.sqrt((priors['mpi'][i])**2 + priors['a2dm'][i])/priors['mpi'][i]).mean
+            mjuL[i] = mL*r
     if switches['ansatz']['FV']:
         cn = np.array([6,12,8,6,24,24,0,12,30,24,24,8,24,48,0,6,48,36,24,24])
         n_mag = np.sqrt(np.arange(1,len(cn)+1,1))
