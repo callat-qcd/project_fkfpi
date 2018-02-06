@@ -109,12 +109,12 @@ def format_data(switches,data,hisq_params,priors):
             k1pi[i] = np.sum(cn / (n_mag * mL) * spsp.kn(1,n_mag * mL))
             k0pi[i] = np.sum(cn * spsp.kn(0,n_mag * mL))
             k2pi[i] = np.sum(cn * spsp.kn(2,n_mag * mL))
-        p2 = priors['mpi']/ Lchi
+        p2 = (priors['mpi']/ Lchi)**2
         if switches['ansatz']['type'] == 'xpt':
             fv_mns_inv = 5./2 * p2 * k1pi
         elif switches['ansatz']['type'] == 'MA':
             ju  = priors['a2dm'] / Lchi**2 + p2
-            k2 = priors['mka']/ Lchi
+            k2  = priors['mka']/ Lchi
             x2  = 4./3 * k2 - p2/3 + priors['a2di'] / Lchi**2
             s2  = priors['mss']**2 / Lchi**2
             dju = priors['a2di'] / Lchi**2
