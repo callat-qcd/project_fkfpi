@@ -91,22 +91,41 @@ def format_data(switches,data,hisq_params,priors):
     y = np.array(y)
     mpiL = np.array(mpiL)
     Lchi = np.array(Lchi)
-    if switches['ansatz']['type'] == 'MA':
-        priors['a2di'] = np.array(a2di)
-        priors['a2dm'] = np.array(a2dm)
-        mjuL = np.zeros_like(mpiL)
-        for i,mL in enumerate(mpiL):
-            r = (np.sqrt((priors['mpi'][i])**2 + priors['a2dm'][i])/priors['mpi'][i]).mean
-            mjuL[i] = mL*r
+    priors['a2di'] = np.array(a2di)
+    priors['a2dm'] = np.array(a2dm)
+    mjuL = np.zeros_like(mpiL)
+    for i,mL in enumerate(mpiL):
+        r = (np.sqrt((priors['mpi'][i])**2 + priors['a2dm'][i])/priors['mpi'][i]).mean
+        mjuL[i] = mL*r
     if switches['ansatz']['FV']:
         cn = np.array([6,12,8,6,24,24,0,12,30,24,24,8,24,48,0,6,48,36,24,24])
         n_mag = np.sqrt(np.arange(1,len(cn)+1,1))
-        fv_mns_inv = np.zeros_like(mpiL)
+        k1ju = np.zeros_like(mpiL)
+        k1pi = np.zeros_like(mpiL)
+        k0pi = np.zeros_like(mpiL)
+        k2pi = np.zeros_like(mpiL)
         for i,mL in enumerate(mpiL):
-            epi = priors['mpi'][i].mean / Lchi[i]
-            sum = np.sum(cn / (n_mag * mL) * spsp.kn(1,n_mag * mL))
-            dfv = (4 * y[i].mean**2 - 3./2 * y[i].mean)* epi**2 * sum
-            fv_mns_inv[i] = dfv
+            k1ju[i] = np.sum(cn / (n_mag * mjuL[i]) * spsp.kn(1,n_mag * mjuL[i]))
+            k1pi[i] = np.sum(cn / (n_mag * mL) * spsp.kn(1,n_mag * mL))
+            k0pi[i] = np.sum(cn * spsp.kn(0,n_mag * mL))
+            k2pi[i] = np.sum(cn * spsp.kn(2,n_mag * mL))
+        p2 = priors['mpi']/ Lchi
+        if switches['ansatz']['type'] == 'xpt':
+            fv_mns_inv = 5./2 * p2 * k1pi
+        elif switches['ansatz']['type'] == 'MA':
+            ju  = priors['a2dm'] / Lchi**2 + p2
+            k2 = priors['mka']/ Lchi
+            x2  = 4./3 * k2 - p2/3 + priors['a2di'] / Lchi**2
+            s2  = priors['mss']**2 / Lchi**2
+            dju = priors['a2di'] / Lchi**2
+            drs = priors['a2di'] / Lchi**2
+            fv_mns_inv  = 2 * ju * k1ju + 0.5 * p2 * k1pi
+            fv_mns_inv -= dju/8 * (2*k1pi - k0pi - k2pi)
+            fv_mns_inv -= dju * p2 / (x2-p2) * k1pi
+            fv_mns_inv += dju**2 / 24 * (4*p2*k1pi/(x2-p2)**2 \
+                +(2*k1pi - k0pi -k2pi)/(x2-p2))
+            fv_mns_inv += 2./3 * dju * drs * p2 * k1pi/(x2-p2)/(s2-p2)
+        print('DEBUG FV:',fv_mns_inv)
         y = y - fv_mns_inv
     return {'x':{'Lchi':np.array(x),'mpiL':np.array(mpiL)}, 'y': y, 'p': priors}
 
