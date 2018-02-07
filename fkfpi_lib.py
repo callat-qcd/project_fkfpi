@@ -54,7 +54,7 @@ def decay_constant(s,mval,gvdata):
     p['mss'] = gvdata['e0_etas']
     return {'x': x, 'y': y, 'p': p}
 
-def format_data(switches,data,hisq_params,priors):
+def format_data(switches,data,mixed_data,hisq_params,priors):
     x = list()
     y = list()
     mpi = list()
@@ -63,12 +63,24 @@ def format_data(switches,data,hisq_params,priors):
     mss = list()
     aw0 = list()
     a2di = list()
-    a2dm = list()
+    mju = list()
+    mjs = list()
+    mru = list()
+    mrs = list()
     Lchi = list()
     for ens in switches['ensemble']:
         e = ens_long[ens]
+        print(ens)
         # get from postgre csv dump
-        gvdata = gv.dataset.avg_data(data.query("ensemble=='%s'" %e)[['e0_pion','z0p_pion','e0_kaon','z0p_kaon','e0_etas','z0p_etas','mresl','mress']].to_dict(orient='list'),bstrap=True)
+        # get mres, E0 and Z0p
+        data2pt = data.sort_values(by='nbs').query("ensemble=='%s'" %e)[['e0_pion','z0p_pion','e0_kaon','z0p_kaon','e0_etas','z0p_etas','mresl','mress']].to_dict(orient='list')
+        if ens in ['a12m220S','a12m220L']:
+            datamix = {t:np.squeeze(mixed_data.sort_values(by='nbs').query("ensemble=='l3264f211b600m00507m0507m628' and tag=='%s'" %(t))[['E0']].as_matrix()) for t in ['phi_ju','phi_js','phi_ru','phi_rs']}
+        else:
+            datamix = {t:np.squeeze(mixed_data.sort_values(by='nbs').query("ensemble=='%s' and tag=='%s'" %(e,t))[['E0']].as_matrix()) for t in ['phi_ju','phi_js','phi_ru','phi_rs']}
+        datamerge = dict(data2pt,**datamix)
+        gvdata = gv.dataset.avg_data(datamerge,bstrap=True)
+        print(gvdata)
         mval = data.query("ensemble=='%s'" %e)[['mq1','mq2']].iloc[0].to_dict()
         data_dict = decay_constant(switches,mval,gvdata)
         Lchi.append(data_dict['x']['Lchi'])
@@ -78,24 +90,33 @@ def format_data(switches,data,hisq_params,priors):
         mpiL.append(data_dict['p']['mpi'].mean * L_ens[ens])
         mka.append(data_dict['p']['mka'])
         mss.append(data_dict['p']['mss'])
+        mju.append(gvdata['phi_ju'])
+        mjs.append(gvdata['phi_js'])
+        mru.append(gvdata['phi_ru'])
+        mrs.append(gvdata['phi_rs'])
         # milc file
         hp = hisq_params.query("ensemble=='%s'" %e)
         aw0_ens = gv.gvar(hp['aw0_mean'].iloc[0],hp['aw0_sdev'].iloc[0])
         aw0.append(aw0_ens)
         a2di.append(gv.gvar(hp['a2DI_mean'].iloc[0],hp['a2DI_sdev'].iloc[0])/r_a[ens]**2)
-        a2dm.append(gv.gvar(hp['a2dm_mean'].iloc[0],hp['a2dm_sdev'].iloc[0])*aw0_ens**2)
+        #a2dm.append(gv.gvar(hp['a2dm_mean'].iloc[0],hp['a2dm_sdev'].iloc[0])*aw0_ens**2)
     priors['mpi'] = np.array(mpi)
     priors['mka'] = np.array(mka)
     priors['mss'] = np.array(mss)
     priors['aw0'] = np.array(aw0)
+    priors['mju'] = np.array(mju)
+    priors['mjs'] = np.array(mjs)
+    priors['mru'] = np.array(mru)
+    priors['mrs'] = np.array(mrs)
+    priors['a2dm'] = priors['mju']**2-priors['mpi']**2
     y = np.array(y)
     mpiL = np.array(mpiL)
     Lchi = np.array(Lchi)
     priors['a2di'] = np.array(a2di)
-    priors['a2dm'] = np.array(a2dm)
+    #priors['a2dm'] = np.array(a2dm)
     mjuL = np.zeros_like(mpiL)
     for i,mL in enumerate(mpiL):
-        r = (np.sqrt((priors['mpi'][i])**2 + priors['a2dm'][i])/priors['mpi'][i]).mean
+        r = (priors['mju'][i]/priors['mpi'][i]).mean
         mjuL[i] = mL*r
     if switches['ansatz']['FV']:
         cn = np.array([6,12,8,6,24,24,0,12,30,24,24,8,24,48,0,6,48,36,24,24])
