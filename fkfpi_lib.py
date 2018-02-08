@@ -55,22 +55,23 @@ def decay_constant(s,mval,gvdata):
     return {'x': x, 'y': y, 'p': p}
 
 def format_data(switches,data,mixed_data,hisq_params,priors):
-    x = list()
-    y = list()
-    mpi = list()
+    x    = list()
+    y    = list()
+    mpi  = list()
     mpiL = list()
-    mka = list()
-    mss = list()
-    aw0 = list()
+    mka  = list()
+    mss  = list()
+    aw0  = list()
     a2di = list()
-    mju = list()
-    mjs = list()
-    mru = list()
-    mrs = list()
+    mju  = list()
+    mjuL = list()
+    mjs  = list()
+    mru  = list()
+    mrs  = list()
     Lchi = list()
     for ens in switches['ensemble']:
         e = ens_long[ens]
-        print(ens)
+        #print(ens)
         # get from postgre csv dump
         # get mres, E0 and Z0p
         data2pt = data.sort_values(by='nbs').query("ensemble=='%s'" %e)[['e0_pion','z0p_pion','e0_kaon','z0p_kaon','e0_etas','z0p_etas','mresl','mress']].to_dict(orient='list')
@@ -80,7 +81,7 @@ def format_data(switches,data,mixed_data,hisq_params,priors):
             datamix = {t:np.squeeze(mixed_data.sort_values(by='nbs').query("ensemble=='%s' and tag=='%s'" %(e,t))[['E0']].as_matrix()) for t in ['phi_ju','phi_js','phi_ru','phi_rs']}
         datamerge = dict(data2pt,**datamix)
         gvdata = gv.dataset.avg_data(datamerge,bstrap=True)
-        print(gvdata)
+        #print(gvdata)
         mval = data.query("ensemble=='%s'" %e)[['mq1','mq2']].iloc[0].to_dict()
         data_dict = decay_constant(switches,mval,gvdata)
         Lchi.append(data_dict['x']['Lchi'])
@@ -88,6 +89,7 @@ def format_data(switches,data,mixed_data,hisq_params,priors):
         y.append(data_dict['y']['Fka/Fpi'])
         mpi.append(data_dict['p']['mpi'])
         mpiL.append(data_dict['p']['mpi'].mean * L_ens[ens])
+        mjuL.append(gvdata['phi_ju'].mean * L_ens[ens])
         mka.append(data_dict['p']['mka'])
         mss.append(data_dict['p']['mss'])
         mju.append(gvdata['phi_ju'])
@@ -108,16 +110,20 @@ def format_data(switches,data,mixed_data,hisq_params,priors):
     priors['mjs'] = np.array(mjs)
     priors['mru'] = np.array(mru)
     priors['mrs'] = np.array(mrs)
-    priors['a2dm'] = priors['mju']**2-priors['mpi']**2
+    if switches['ansatz']['a2dm'] == 'avg':
+        a2dm_ju = priors['mju']**2 - priors['mpi']**2
+        a2dm_sj = priors['mjs']**2 - priors['mka']**2
+        a2dm_ru = priors['mru']**2 - priors['mka']**2
+        a2dm_rs = priors['mrs']**2 - priors['mss']**2
+        priors['a2dm'] = 1./4*(a2dm_ju +a2dm_sj +a2dm_ru +a2dm_rs)
+    elif switches['ansatz']['a2dm'] == 'individual':
+        priors['a2dm'] = priors['mju']**2-priors['mpi']**2
     y = np.array(y)
     mpiL = np.array(mpiL)
     Lchi = np.array(Lchi)
     priors['a2di'] = np.array(a2di)
     #priors['a2dm'] = np.array(a2dm)
-    mjuL = np.zeros_like(mpiL)
-    for i,mL in enumerate(mpiL):
-        r = (priors['mju'][i]/priors['mpi'][i]).mean
-        mjuL[i] = mL*r
+    mjuL = np.array(mjuL)
     if switches['ansatz']['FV']:
         cn = np.array([6,12,8,6,24,24,0,12,30,24,24,8,24,48,0,6,48,36,24,24])
         n_mag = np.sqrt(np.arange(1,len(cn)+1,1))
@@ -134,8 +140,8 @@ def format_data(switches,data,mixed_data,hisq_params,priors):
         if switches['ansatz']['type'] == 'xpt':
             fv_mns_inv = 5./2 * p2 * k1pi
         elif switches['ansatz']['type'] == 'MA':
-            ju  = priors['a2dm'] / Lchi**2 + p2
-            k2  = priors['mka']/ Lchi
+            ju  = priors['mju']**2 / Lchi**2
+            k2  = priors['mka']**2 / Lchi**2
             x2  = 4./3 * k2 - p2/3 + priors['a2di'] / Lchi**2
             s2  = priors['mss']**2 / Lchi**2
             dju = priors['a2di'] / Lchi**2
@@ -146,7 +152,7 @@ def format_data(switches,data,mixed_data,hisq_params,priors):
             fv_mns_inv += dju**2 / 24 * (4*p2*k1pi/(x2-p2)**2 \
                 +(2*k1pi - k0pi -k2pi)/(x2-p2))
             fv_mns_inv += 2./3 * dju * drs * p2 * k1pi/(x2-p2)/(s2-p2)
-        print('DEBUG FV:',fv_mns_inv)
+        #print('DEBUG FV:',fv_mns_inv)
         y = y - fv_mns_inv
     return {'x':{'Lchi':np.array(x),'mpiL':np.array(mpiL)}, 'y': y, 'p': priors}
 
@@ -176,10 +182,17 @@ class Fit(object):
             p2  = p['mpi']**2 / x['Lchi']**2
             k2  = p['mka']**2  / x['Lchi']**2
             s2  = p['mss']**2 / x['Lchi']**2
-            ju  = p['a2dm'] / x['Lchi']**2 + p2
-            sj  = p['a2dm'] / x['Lchi']**2 + k2
-            ru  = p['a2dm'] / x['Lchi']**2 + k2
-            rs  = p['a2dm'] / x['Lchi']**2 + s2
+            if self.switches['ansatz']['a2dm'] == 'avg':
+                ju = p2 + p['a2dm'] / x['Lchi']**2
+                sj = k2 + p['a2dm'] / x['Lchi']**2
+                ru = k2 + p['a2dm'] / x['Lchi']**2
+                rs = s2 + p['a2dm'] / x['Lchi']**2
+            elif self.switches['ansatz']['a2dm'] == 'individual':
+                ju = (p['mju'] / x['Lchi'])**2
+                sj = (p['mjs'] / x['Lchi'])**2
+                ru = (p['mru'] / x['Lchi'])**2
+                rs = (p['mrs'] / x['Lchi'])**2
+            #print('ju:',ju)
             x2  = 4./3 * k2 - p2/3 + p['a2di'] / x['Lchi']**2
             dju = p['a2di'] / x['Lchi']**2
             drs = p['a2di'] / x['Lchi']**2
