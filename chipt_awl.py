@@ -1,7 +1,7 @@
 ## chipt functions
 import scipy.special as spsp
 import numpy as np
- 
+
 def fv_correction(switches,fv_params,priors):
     mpiL = fv_params['mpiL']
     mjuL = fv_params['mjuL']
