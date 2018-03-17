@@ -1,26 +1,21 @@
 ## chipt functions
 import scipy.special as spsp
 import numpy as np
-
+ 
 def fv_correction(switches,fv_params,priors):
     mpiL = fv_params['mpiL']
     mjuL = fv_params['mjuL']
     Lchi = fv_params['Lchi']
     cn = np.array([6,12,8,6,24,24,0,12,30,24,24,8,24,48,0,6,48,36,24,24])
     n_mag = np.sqrt(np.arange(1,len(cn)+1,1))
-    k1ju = np.zeros_like(mpiL)
-    k1pi = np.zeros_like(mpiL)
-    k0pi = np.zeros_like(mpiL)
-    k2pi = np.zeros_like(mpiL)
-    for i,mL in enumerate(mpiL):
-        k1ju[i] = np.sum(cn / (n_mag * mjuL[i]) * spsp.kn(1,n_mag * mjuL[i]))
-        k1pi[i] = np.sum(cn / (n_mag * mL) * spsp.kn(1,n_mag * mL))
-        k0pi[i] = np.sum(cn * spsp.kn(0,n_mag * mL))
-        k2pi[i] = np.sum(cn * spsp.kn(2,n_mag * mL))
+    k1pi = [np.sum(cn / (n_mag * mL) * spsp.kn(1,n_mag * mL)) for i,mL in enumerate(mpiL)]
     p2 = (priors['mpi']/ Lchi)**2
     if switches['ansatz']['type'] == 'xpt':
         fv_mns_inv = 5./2 * p2 * k1pi
     elif switches['ansatz']['type'] == 'MA':
+        k1ju = [np.sum(cn / (n_mag * mjuL[i]) * spsp.kn(1,n_mag * mjuL[i])) for i,mL in enumerate(mpiL)]
+        k0pi = [np.sum(cn * spsp.kn(0,n_mag * mL)) for i,mL in enumerate(mpiL)]
+        k2pi = [np.sum(cn * spsp.kn(2,n_mag * mL)) for i,mL in enumerate(mpiL)]
         ju  = priors['mju']**2 / Lchi**2
         k2  = priors['mka']**2 / Lchi**2
         x2  = 4./3 * k2 - p2/3 + priors['a2di'] / Lchi**2
@@ -96,10 +91,6 @@ class Fit(object):
                 -dju*drs*(2*s2**2 - x2*(s2+p2))/(x2-s2)**2 / (s2-p2)\
                 )
             # counter term
-            a2 = p['aw0']**2
-            r += 4 * (k2 - p2) * (4*np.pi)**2 * p['L5'] # m^2
-            r += a2 * (k2-p2) * p['s4'] # a^2 m^2
-            r += (k2-p2)**2 * p['c4'] # m^4
-            r += k2*(k2-p2) * p['d4'] # m^4
-            r += p2*(k2-p2) * p['e4'] # m^4
+            r += 4 * (k2 - p2) * (4*np.pi)**2 * p['L5']
+            #r += p['aw0']**2 * (p['mka']**2 - p['mpi']**2) / x['Lchi']**2 * p['s2'] * (4*np.pi)
             return r
