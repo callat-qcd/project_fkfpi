@@ -39,15 +39,31 @@ class Fit(object):
     def __init__(self,switches):
         self.switches = switches
         #self.n = switches['ansatz']['truncation']
+    def counterterms(self,x,p):
+        # counter term
+        a2 = p['aw0']**2
+        p2  = p['mpi']**2 / x['Lchi']**2
+        k2  = p['mka']**2  / x['Lchi']**2
+        ct = 4 * (k2 - p2) * (4*np.pi)**2 * p['L5'] # m^2
+        ct += a2 * (k2-p2) * p['s4'] # a^2 m^2
+        ct += (k2-p2)**2 * p['c4'] # m^4
+        ct += k2*(k2-p2) * p['d4'] # m^4
+        ct += p2*(k2-p2) * p['e4'] # m^4
+        ct += a2**2*(k2-p2) * p['s6'] # a^4*m^2
+        ct += a2 * (k2-p2)**2 * p['sc6'] # a^2*m^4
+        ct += a2 * k2*(k2-p2) * p['sd6']
+        ct += a2 * p2*(k2-p2) * p['se6']
+        return ct
     def fit_function(self,x,p):
         if self.switches['ansatz']['type'] == 'xpt':
             metaSq = 4./3 * p['mka']**2 - 1./3 * p['mpi']**2
+            p2  = p['mpi']**2 / x['Lchi']**2
+            k2  = p['mka']**2  / x['Lchi']**2
             r =  1.
-            r += 5./8 * p['mpi']**2 / x['Lchi']**2 * np.log(p['mpi']**2/x['Lchi']**2)
-            r -= 1./4 * p['mka']**2 / x['Lchi']**2 * np.log(p['mka']**2/x['Lchi']**2)
+            r += 5./8 * p2 * np.log(p2)
+            r -= 1./4 * k2 * np.log(k2)
             r -= 3./8 * metaSq / x['Lchi']**2 * np.log(metaSq / x['Lchi']**2)
-            r += 4. * (p['mka']**2 - p['mpi']**2) / x['Lchi']**2 * (4*np.pi)**2 * p['L5']
-            r += p['aw0']**2 * (p['mka']**2 - p['mpi']**2) / x['Lchi']**2 * p['s2'] * (4*np.pi)
+            r += self.counterterms(x,p)
             return r
         elif self.switches['ansatz']['type'] == 'MA':
             p2  = p['mpi']**2 / x['Lchi']**2
@@ -95,11 +111,6 @@ class Fit(object):
                 +drs*(3*s2**2 + 2*(k2-p2)*x2 -3*s2*x2)/(x2-s2)**2\
                 -dju*drs*(2*s2**2 - x2*(s2+p2))/(x2-s2)**2 / (s2-p2)\
                 )
-            # counter term
-            a2 = p['aw0']**2
-            r += 4 * (k2 - p2) * (4*np.pi)**2 * p['L5'] # m^2
-            r += a2 * (k2-p2) * p['s4'] # a^2 m^2
-            r += (k2-p2)**2 * p['c4'] # m^4
-            r += k2*(k2-p2) * p['d4'] # m^4
-            r += p2*(k2-p2) * p['e4'] # m^4
+            # counter terms
+            r += self.counterterms(x,p)
             return r

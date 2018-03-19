@@ -140,29 +140,29 @@ def fit_data(switches,data,phys_params):
     fit = lsqfit.nonlinear_fit(data=(x,y),prior=prior,fcn=Fitc.fit_function)
     return fit
 
-def fkfpi_nlo(mpi,mka,meta,Lchi,L5):
-    r =  1.
-    r += 5./8 * mpi**2 / Lchi**2 * np.log(mpi**2/Lchi**2)
-    r -= 1./4 * mka**2 / Lchi**2 * np.log(mka**2/Lchi**2)
-    r -= 3./8 * meta**2 / Lchi**2 * np.log(meta**2 / Lchi**2)
-    r += 4. * (mka**2 - mpi**2) / Lchi**2 * (4*np.pi)**2 * L5
-    return r
-
 def fkfpi_phys(x_phys,fit):
     # use metaSq = 4/3 mK**2 - 1/3 mpi**2
     print('prediction from LQCD')
-    meta = np.sqrt(4./3 * x_phys['mka']**2 -1./3 * x_phys['mpi']**2)
-    fkp = fkfpi_nlo(mpi=x_phys['mpi'],mka=x_phys['mka'],\
-        meta=meta,Lchi=x_phys['Lchi'],L5=fit.p['L5'])
+    #meta = np.sqrt(4./3 * x_phys['mka']**2 -1./3 * x_phys['mpi']**2)
+    #fkp = fkfpi_nlo(mpi=x_phys['mpi'],mka=x_phys['mka'],\
+    #    meta=meta,Lchi=x_phys['Lchi'],L5=fit.p['L5'])
+    Fitc = xpt.Fit(switches={'ansatz':{'type':'xpt'}})
+    for k in fit.p:
+        if k in x_phys:
+            pass
+        else:
+            x_phys[k] = fit.p[k]
+    fkp = Fitc.fit_function({'Lchi':x_phys['Lchi']},x_phys)
     su2 = dsu2(FKpi=fkp,mpi=x_phys['mpi'],mk=x_phys['mka'],F0=x_phys['F0'])
     print('FK / Fpi = ',fkp)
     print('FK+/Fpi+ = ',fkp*np.sqrt(1+su2))
     # use meta = meta_pdg
-    print('prediction from LQCD + meta_PDG')
-    fkp = fkfpi_nlo(mpi=x_phys['mpi'],mka=x_phys['mka'],\
-        meta=x_phys['meta'],Lchi=x_phys['Lchi'],L5=fit.p['L5'])
-    print('FK / Fpi = ',fkp)
-    print('FK+/Fpi+ = ',fkp*np.sqrt(1+su2))
+    #print('prediction from LQCD + meta_PDG')
+    #fkp = fkfpi_nlo(mpi=x_phys['mpi'],mka=x_phys['mka'],\
+    #    meta=x_phys['meta'],Lchi=x_phys['Lchi'],L5=fit.p['L5'])
+    #print('FK / Fpi = ',fkp)
+    #print('FK+/Fpi+ = ',fkp*np.sqrt(1+su2))
+    return fkp*np.sqrt(1+su2)
 
 def dsu2(FKpi,mpi,mk,F0):
     R = gv.gvar(35.7,np.sqrt(1.9**2 + 1.8**2))
