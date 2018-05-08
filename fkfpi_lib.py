@@ -49,6 +49,7 @@ L_ens = {'a15m400':16,'a15m350':16,'a15m310':16,'a15m220':24,'a15m130':32,
 def decay_constant(s,mval,gvdata):
     Fpi = gvdata['z0p_pion']*2*(mval['mq1']+gvdata['mresl'])/gvdata['e0_pion']**(3./2.)
     Fka = gvdata['z0p_kaon']*(mval['mq1']+mval['mq2']+gvdata['mresl']+gvdata['mress'])/gvdata['e0_kaon']**(3./2.)
+    Fss = gvdata['z0p_etas']*2*(mval['mq2']+gvdata['mress'])/gvdata['e0_etas']**(3./2.)
     if s['scale'] == 'PP':
         Lchi = 4 * np.pi * Fpi
     elif s['scale'] == 'PK':
@@ -62,6 +63,7 @@ def decay_constant(s,mval,gvdata):
     p = dict()
     p['mpi'] = gvdata['e0_pion']
     p['mka'] = gvdata['e0_kaon']
+    p['mss'] = gvdata['e0_etas']
     return {'x': x, 'y': y, 'p': p}
 
 def format_data(switches,data,mixed_data,hisq_params,priors):
@@ -70,6 +72,7 @@ def format_data(switches,data,mixed_data,hisq_params,priors):
     mpi  = list()
     mpiL = list()
     mka  = list()
+    mss  = list()
     aw0  = list()
     a2di = list()
     mju  = list()
@@ -78,12 +81,16 @@ def format_data(switches,data,mixed_data,hisq_params,priors):
     mru  = list()
     mrs  = list()
     Lchi = list()
+    wMix_ju = list()
+    wMix_js = list()
+    wMix_ru = list()
+    wMix_rs = list()
     for ens in switches['ensemble']:
         e = ens_long[ens]
         #print(ens)
         # get from postgre csv dump
         # get mres, E0 and Z0p
-        data2pt = data.sort_values(by='nbs').query("ensemble=='%s'" %e)[['e0_pion','z0p_pion','e0_kaon','z0p_kaon','mresl','mress']].to_dict(orient='list')
+        data2pt = data.sort_values(by='nbs').query("ensemble=='%s'" %e)[['e0_pion','z0p_pion','e0_kaon','z0p_kaon','e0_etas','z0p_etas','mresl','mress']].to_dict(orient='list')
         if ens in ['a12m220S','a12m220L']:
             datamix = {t:np.squeeze(mixed_data.sort_values(by='nbs').query("ensemble=='l3264f211b600m00507m0507m628' and tag=='%s'" %(t))[['E0']].as_matrix()) for t in ['phi_ju','phi_js','phi_ru','phi_rs']}
         elif ens in ['a15m400','a15m350']:
@@ -105,6 +112,7 @@ def format_data(switches,data,mixed_data,hisq_params,priors):
         mpiL.append(data_dict['p']['mpi'].mean * L_ens[ens])
         mjuL.append(gvdata['phi_ju'].mean * L_ens[ens])
         mka.append(data_dict['p']['mka'])
+        mss.append(data_dict['p']['mss'])
         mju.append(gvdata['phi_ju'])
         mjs.append(gvdata['phi_js'])
         mru.append(gvdata['phi_ru'])
@@ -114,13 +122,23 @@ def format_data(switches,data,mixed_data,hisq_params,priors):
         aw0_ens = gv.gvar(hp['aw0_mean'].iloc[0],hp['aw0_sdev'].iloc[0])
         aw0.append(aw0_ens)
         a2di.append(gv.gvar(hp['a2DI_mean'].iloc[0],hp['a2DI_sdev'].iloc[0])/r_a[ens]**2)
+        # w_0**2 Delta_Mix
+        wMix_ju.append((gvdata['phi_ju']**2-data_dict['p']['mpi']**2) / aw0_ens**2)
+        wMix_js.append((gvdata['phi_js']**2-data_dict['p']['mka']**2) / aw0_ens**2)
+        wMix_ru.append((gvdata['phi_ru']**2-data_dict['p']['mka']**2) / aw0_ens**2)
+        wMix_rs.append((gvdata['phi_rs']**2-data_dict['p']['mss']**2) / aw0_ens**2)
     priors['mpi'] = np.array(mpi)
     priors['mka'] = np.array(mka)
+    priors['mss'] = np.array(mss)
     priors['aw0'] = np.array(aw0)
     priors['mju'] = np.array(mju)
     priors['mjs'] = np.array(mjs)
     priors['mru'] = np.array(mru)
     priors['mrs'] = np.array(mrs)
+    priors['wMix_ju'] = np.array(wMix_ju)
+    priors['wMix_js'] = np.array(wMix_js)
+    priors['wMix_ru'] = np.array(wMix_ru)
+    priors['wMix_rs'] = np.array(wMix_rs)
     if switches['ansatz']['a2dm'] == 'avg':
         a2dm_ju = priors['mju']**2 - priors['mpi']**2
         a2dm_sj = priors['mjs']**2 - priors['mka']**2
