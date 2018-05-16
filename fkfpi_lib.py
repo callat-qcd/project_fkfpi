@@ -87,7 +87,6 @@ def format_data(switches,data,mixed_data,hisq_params,priors):
     wMix_rs = list()
     for ens in switches['ensemble']:
         e = ens_long[ens]
-        #print(ens)
         # get from postgre csv dump
         # get mres, E0 and Z0p
         data2pt = data.sort_values(by='nbs').query("ensemble=='%s'" %e)[['e0_pion','z0p_pion','e0_kaon','z0p_kaon','e0_etas','z0p_etas','mresl','mress']].to_dict(orient='list')
