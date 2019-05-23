@@ -25,18 +25,24 @@ class data_loader(object):
                         data[ensemble][key] = dset[:]
                     else:
                         data[ensemble][key] = dset[()]
-
         return data
 
     def get_ensembles(self):
         with h5py.File(self.file_h5, "r") as f:
             ensembles = f.keys()
-        return ensembles
+        return sorted(ensembles)
+
+    def get_variable_names(self):
+        names = []
+        with h5py.File(self.file_h5, "r") as f:
+            for ensemble in f.keys():
+                for key in f[ensemble].keys():
+                    names.append(key)
+        return sorted(np.unique([names]))
 
     def get_prior(self):
-        #df_read = pd.read_csv("./../prior.csv")
-        #return gv.gvar(df_read.to_dict("records")[0])
-        df_read = pd.read_csv(self.file_prior, index_col=0)
+        filepath = self.project_path + '/prior.csv'
+        df_read = pd.read_csv(filepath, index_col=0)
         return gv.gvar({key : df_read.to_dict("index")[key]["0"]
                 for key in df_read.to_dict("index").keys()})
 
