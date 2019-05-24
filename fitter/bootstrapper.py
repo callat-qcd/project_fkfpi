@@ -50,13 +50,11 @@ class bootstrapper(object):
         bs_fit_parameters = self.get_bootstrap_parameters()
         prior = self.prior
 
-        output = "Fitting to $O(\epsilon^%s)$\n" %(self.order)
+        output = "\n\nFitting to order %s \n" %(self.order)
         output = output + "Fitted/[Experimental] values at physical point:\n"
-        for m_hyperon in self.hyperon_mass_keys:
-            temp = self.mass_fit_fcn(self.get_phys_point_data())
-            output = output + "%s$=$%s [%s]\n"%(
-                        self._fmt_key_as_latex(m_hyperon),
-                        temp[m_hyperon], self.get_phys_point_data()[m_hyperon])
+        output = output + '\n\t\tF_K / F_pi = %s [%s]\n'%(
+                            self.fk_fpi_fit_fcn(self.get_phys_point_data()),
+                            self.get_phys_point_data('FK')/self.get_phys_point_data('Fpi'))
         output = output + "\n"
 
         table = gv.dataset.avg_data(bs_fit_parameters, bstrap=True)
@@ -154,7 +152,6 @@ class bootstrapper(object):
 
     # need to convert to/from lattice units
     def get_phys_point_data(self, parameter=None):
-        ['mpi', 'mk', 'mju', 'mrs', 'mru', 'mss', 'a2DI', 'Fpi', 'FK']
         phys_point_data = {
             'a' : 0,
             'V' : 0,
@@ -162,17 +159,29 @@ class bootstrapper(object):
             'mpi' : gv.gvar('138.05638(37)'),
             'mju' : gv.gvar('138.05638(37)'),
 
-            'mk' : 0,
-            'mrs' : 0,
+            'mk' : gv.gvar('495.6479(92)'),
+            'mru' : gv.gvar('495.6479(92)'),
 
-            'mss' : 0,
-            'a2DI' : 0,
-            'Fpi' : 0,
-            'FK' : 0
+            'mrs' : gv.gvar('495.6479(92)'),
+            'mss' : gv.gvar('495.6479(92)'),
+
+            'a2DI' : 0, # Need to check this
+            'Fpi' : gv.gvar('91.9(3.5)'),
+            'FK' : gv.gvar('110.38(64)')
         }
-        return phys_point_data
+        if parameter is None:
+            return phys_point_data
+        else:
+            return phys_point_data[parameter]
 
+    def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None):
+        if fit_data is None:
+            fit_data = self.get_phys_point_data()
+        if fit_parameters is None:
+            fit_parameters = self.get_fit_parameters()
 
+        model = fitter(order=self.order)._make_models(fit_data)[0]
+        return model.fitfcn(p=fit_parameters, fit_data=fit_data)
 
 
     #################################################
@@ -198,24 +207,6 @@ class bootstrapper(object):
         else:
             return self.fit_keys
 
-    def get_phys_point_data(self, parameter=None):
-        phys_point_data = {
-            'a' : 0,
-            'V' : 0,
-            'f_pion' : gv.gvar('130(5)'),
-            'm_pion' : gv.gvar('138.05638(37)'),
-            'm_omega' : gv.gvar('1672.45(29)') # Taken from wikipedia
-        }
-
-        #m_hyperons = self.mass_fit_fcn(phys_point_data)
-        #for key in m_hyperons:
-        #    phys_point_data[key] = m_hyperons[key]
-
-        if parameter is None:
-            return phys_point_data
-        else:
-            return phys_point_data[parameter]
-
     def extrapolate_hyperon_mass_to_phys_point(self, m_hyperon=None):
         if m_hyperon is None:
             return self.mass_fit_fcn(self.get_phys_point_data())
@@ -223,15 +214,7 @@ class bootstrapper(object):
             return self.mass_fit_fcn(self.get_phys_point_data())[m_hyperon]
 
 
-    # Use the results of fitting the mass formula (for a given strangeness) to
-    # calculate hyperon mass(es) at a given (m_pion, f_pion, a, V).
-    # Returns dict of form   m_hyperon : gvar.
-    def mass_fit_fcn(self, fit_data, fit_parameters=None):
-        if fit_parameters is None:
-            fit_parameters = self.get_fit_parameters()
 
-        models = fitter(strangeness=self.strangeness, order=self.order)._make_models(fit_data)
-        return {model.m_key : model.fitfcn(p=fit_parameters, fit_data=fit_data) for model in models}
 
 
 
