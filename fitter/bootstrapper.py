@@ -42,6 +42,7 @@ class bootstrapper(object):
         self.prior = prior
         self.order = order
 
+        self.w0 = 5.81743
         self.fits = None
         self.bs_fit_parameters = None
         self.fit_parameters = None
@@ -183,14 +184,149 @@ class bootstrapper(object):
         model = fitter(order=self.order)._make_models(fit_data)[0]
         return model.fitfcn(p=fit_parameters, fit_data=fit_data)
 
+    def extrapolate_to_phys_point(self):
+        return self.fk_fpi_fit_fcn(self.get_phys_point_data())
 
-    #################################################
-    #### EVERYTHING BELOW INCOMPATIBLE WITH CLASS ###
-    #################################################
+    def _fmt_key_as_latex(self, key):
+        convert = {
+            # data parameters
+            'a' : r'$a$ (fm)',
+            'L' : r'$L$ (fm)',
+
+            'mpi' : r'$m_\pi$ (MeV)',
+            'Fpi' : r'$F_\pi$ (MeV)',
+
+            'mk' : r'$m_K$ (MeV)',
+            'FK' : r'$F_K$ (MeV)',
+
+            'FK/Fpi' : r'$F_K / F_\pi$',
+
+            'V' : r'$e^{-m L} / \sqrt{m L}$',
+
+            # lattice artifacts
+            'c_2_a' : r'$c^{(2)}_a$',
+            'c_3_a' : r'$c^{(3)}_a$'
+        }
+
+        if key in convert.keys():
+            return convert[key]
+        else:
+            return key
+
+    def plot_parameter_histogram(self, parameter):
+        data = self.get_bootstrap_parameters()[parameter]
+        fig, ax = plt.subplots()
+        n, bins, patches = plt.hist(data, self.bs_N/10, normed=True, facecolor='green', alpha=0.75)
+
+        mu = np.mean(data)
+        sigma = np.std(data)
+
+        # Overlay a gaussian
+        y = matplotlib.mlab.normpdf(bins, mu, sigma)
+        l = plt.plot(bins, y, 'r--', linewidth=1)
+
+        plt.title("BS dist", fontsize=30)
+        plt.xlabel("$p = $"+self._fmt_key_as_latex(parameter), fontsize=24)
+        plt.ylabel('Frequency', fontsize=24)
+        plt.grid(True)
+
+        text = ('$\overline{p} (s_{\overline{p}}) = $ %s \n Prior: %s'
+                % (gv.gvar(mu, sigma), self.prior[parameter]))
+
+        # these are matplotlib.patch.Patch properties
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+
+        # place a text box in upper left in axes coords
+        ax.text(0.05, 0.95, text, transform=ax.transAxes, fontsize=14,
+                verticalalignment='top', bbox=props)
+
+        fig = plt.gcf()
+        plt.close()
+
+        return fig
 
 
+    # xy_parameters is an array (eg, ['mpi', 'Fpi'])
+    def plot_parameters(self, xy_parameters, color_parameter=None,
+                        xfcn=None, xlabel=None, yfcn=None, ylabel=None):
+        if xfcn is None:
+            xfcn = lambda x : 1 * x
+            xlabel = self._fmt_key_as_latex(xy_parameters[0])
+        else:
+            # Must also specify xlabel
+            xlabel = xlabel
+
+        if yfcn is None:
+            yfcn = lambda y : 1 * y
+            ylabel = self._fmt_key_as_latex(xy_parameters[1])
+        else:
+            # Must also specify ylabel
+            ylabel = ylabel
+
+        plot_data = {}
+        myfcn = [xfcn, yfcn]
+        for j, parameter in enumerate(xy_parameters):
+            if parameter in ['FK/Fpi', 'FK / Fpi']:
+                plot_data[j] = {abbr :  myfcn[j](self.fit_data[abbr]['FK'] /self.fit_data[abbr]['Fpi']) for abbr in self.abbrs}
+            else:
+                plot_data[j] = {abbr :  myfcn[j](self.fit_data[abbr][parameter]) for abbr in self.abbrs}
 
 
+        if color_parameter is None:
+            color_parameter = 'a'
+
+        if color_parameter in ['a']:
+            color_data = {abbr : np.repeat(self.fit_data[abbr]['aw0'][0]/self.w0, self.bs_N).ravel() for abbr in self.abbrs}
+        elif color_parameter in ['L']:
+            color_data = {abbr : np.repeat(gv.mean(self.fit_data[abbr][color_parameter]), self.bs_N).ravel() for abbr in self.abbrs}
+        elif color_parameter == 'V':
+            color_data = {abbr : gv.mean(self.fit_data[abbr][color_parameter]).ravel() for abbr in self.abbrs}
+        else:
+            color_data = {abbr : gv.mean(self.fit_data[abbr][color_parameter]).ravel() for abbr in self.abbrs}
+
+        # Color by lattice spacing/length
+        cmap = matplotlib.cm.get_cmap('rainbow')
+        min_max = lambda x : [np.min(x), np.max(x)]
+        minimum, maximum = min_max(np.concatenate([color_data[abbr] for abbr in self.abbrs]))
+        norm = matplotlib.colors.Normalize(vmin=minimum, vmax=maximum)
+
+        # Get scatter plot & color data
+        x = np.zeros(self.bs_N * len(self.abbrs))
+        y = np.zeros(self.bs_N * len(self.abbrs))
+        z = np.zeros(self.bs_N * len(self.abbrs))
+        for j, abbr in enumerate(self.abbrs):
+            x[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(plot_data[0][abbr])
+            y[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(plot_data[1][abbr])
+            z[j*self.bs_N:(j+1)*self.bs_N] = color_data[abbr]
+
+        sc = plt.scatter(x, y, c=z, vmin=minimum, vmax=maximum,
+                         cmap=cmap, rasterized=True, marker=".", alpha=100.0/self.bs_N)
+
+        # Plot labels
+        plt.grid()
+        plt.xlabel(xlabel, fontsize = 24)
+        plt.ylabel(ylabel, fontsize = 24)
+
+        # Format colorbar
+        color_bar = plt.colorbar(sc)
+        color_bar.set_alpha(0.8)
+        color_bar.draw_all()
+        color_bar.set_label(self._fmt_key_as_latex(color_parameter), fontsize = 24)
+
+        # Set xlim, ylim -- only works if xy_parameters[i] is a vector, not a scalar
+        '''
+        min_max = lambda x : [np.min(x), np.max(x)]
+        try:
+            xmin, xmax = min_max(np.concatenate([gv.mean(plot_data[0][abbr]) for abbr in self.abbrs]))
+            ymin, ymax = min_max(np.concatenate([gv.mean(plot_data[1][abbr]) for abbr in self.abbrs]))
+            plt.xlim(xmin, xmax)
+            plt.ylim(ymin, ymax)
+        except ValueError:
+            pass'''
+
+        fig = plt.gcf()
+        plt.close()
+        return fig
 
     # Returns dictionary with keys fit parameters, entries gvar results
     def get_fit_parameters(self):
@@ -201,17 +337,19 @@ class bootstrapper(object):
 
     # Returns keys of fit parameters
     def get_fit_keys(self):
-        if self.fit_keys is None:
-            self.fit_keys = sorted(self.get_bootstrap_parameters().keys())
-            return self.fit_keys
-        else:
-            return self.fit_keys
+        return sorted(self.get_bootstrap_parameters().keys())
 
-    def extrapolate_hyperon_mass_to_phys_point(self, m_hyperon=None):
-        if m_hyperon is None:
-            return self.mass_fit_fcn(self.get_phys_point_data())
-        else:
-            return self.mass_fit_fcn(self.get_phys_point_data())[m_hyperon]
+    #################################################
+    #### EVERYTHING BELOW INCOMPATIBLE WITH CLASS ###
+    #################################################
+
+
+
+
+
+
+
+
 
 
 
@@ -246,137 +384,9 @@ class bootstrapper(object):
         }
         return output_dict
 
-    def _fmt_key_as_latex(self, key):
-        convert = {
-            # data parameters
-            'a' : r'$a$ (fm)',
-            'L' : r'$L$ (fm)',
-            'm_pion' : r'$m_\pi$ (MeV)',
-            'f_pion' : r'$f_\pi$ (MeV)',
-            'm_omega' : r'$m_\Omega$ (MeV)',
-            'V' : r'$e^{-m L} / \sqrt{m L}$',
 
-            # fit parameters, s=3
-            'm_omega_0' : r'$m^{(0)}_\Omega$ (MeV)',
-            'sigma_bar_omega' : r'$\bar{\sigma}_\Omega$ (MeV)',
-            't_A_omega' : r'$t^A_\Omega$ (MeV)',
-            'beta_4_omega' : r'$\beta^{(4)}_\Omega$ (MeV)',
-            'beta_6_omega' : r'$\beta^{(6)}_\Omega$ (MeV)',
-            'gamma_6_omega' : r'$\gamma^{(6)}_\Omega$ (MeV)',
 
-            # lattice artifacts
-            'c_2_a' : r'$c^{(2)}_a$',
-            'c_3_a' : r'$c^{(3)}_a$'
-        }
 
-        if key in convert.keys():
-            return convert[key]
-        else:
-            return key
-
-    # xy_parameters is an array (eg, ['m_pion', 'm_omega'])
-    def plot_parameters(self, xy_parameters, color_parameter=None,
-                        xfcn=None, xlabel=None, yfcn=None, ylabel=None):
-
-        if xfcn is None:
-            xfcn = lambda x : 1 * x
-            xlabel = self._fmt_key_as_latex(xy_parameters[0])
-        else:
-            # Must also specify xlabel
-            xlabel = xlabel
-
-        if yfcn is None:
-            yfcn = lambda y : 1 * y
-            ylabel = self._fmt_key_as_latex(xy_parameters[1])
-        else:
-            # Must also specify ylabel
-            ylabel = ylabel
-
-        if color_parameter is None:
-            color_parameter = 'a'
-
-        if color_parameter in ['a', 'L']:
-            color_data = {abbr : np.repeat(gv.mean(self.fit_data[abbr][color_parameter]), self.bs_N).ravel() for abbr in self.abbrs}
-        elif color_parameter == 'V':
-            color_data = {abbr : gv.mean(self.fit_data[abbr][color_parameter]).ravel() for abbr in self.abbrs}
-        else:
-            color_data = {abbr : gv.mean(self.fit_data[abbr][color_parameter]).ravel() for abbr in self.abbrs}
-
-        # Color by lattice spacing/length
-        cmap = matplotlib.cm.get_cmap('rainbow')
-        min_max = lambda x : [np.min(x), np.max(x)]
-        minimum, maximum = min_max(np.concatenate([color_data[abbr] for abbr in self.abbrs]))
-        norm = matplotlib.colors.Normalize(vmin=minimum, vmax=maximum)
-
-        # Get scatter plot & color data
-        x = np.zeros(self.bs_N * len(self.abbrs))
-        y = np.zeros(self.bs_N * len(self.abbrs))
-        z = np.zeros(self.bs_N * len(self.abbrs))
-        for j, abbr in enumerate(self.abbrs):
-            x[j*self.bs_N:(j+1)*self.bs_N] = xfcn(gv.mean(self.fit_data[abbr][xy_parameters[0]]).ravel())
-            y[j*self.bs_N:(j+1)*self.bs_N] = yfcn(gv.mean(self.fit_data[abbr][xy_parameters[1]]).ravel())
-            z[j*self.bs_N:(j+1)*self.bs_N] = color_data[abbr]
-
-        sc = plt.scatter(x, y, c=z, vmin=minimum, vmax=maximum,
-                         cmap=cmap, rasterized=True, marker=".", alpha=100.0/self.bs_N)
-
-        # Plot labels
-        plt.grid()
-        plt.xlabel(xlabel, fontsize = 24)
-        plt.ylabel(ylabel, fontsize = 24)
-
-        # Format colorbar
-        color_bar = plt.colorbar(sc)
-        color_bar.set_alpha(0.8)
-        color_bar.draw_all()
-        color_bar.set_label(self._fmt_key_as_latex(color_parameter), fontsize = 24)
-
-        # Set xlim, ylim -- only works if xy_parameters[i] is a vector, not a scalar
-        min_max = lambda x : [np.min(x), np.max(x)]
-        try:
-            xmin, xmax = min_max(np.concatenate([xfcn(gv.mean(self.fit_data[abbr][xy_parameters[0]])) for abbr in self.abbrs]))
-            ymin, ymax = min_max(np.concatenate([yfcn(gv.mean(self.fit_data[abbr][xy_parameters[1]])) for abbr in self.abbrs]))
-            plt.xlim(xmin, xmax)
-            plt.ylim(ymin, ymax)
-        except ValueError:
-            pass
-
-        fig = plt.gcf()
-        plt.close()
-        return fig
-
-    def plot_parameter_histogram(self, parameter):
-
-        data = self.get_bootstrap_parameters()[parameter]
-        fig, ax = plt.subplots()
-        n, bins, patches = plt.hist(data, self.bs_N/10, normed=True, facecolor='green', alpha=0.75)
-
-        mu = np.mean(data)
-        sigma = np.std(data)
-
-        # Overlay a gaussian
-        y = matplotlib.mlab.normpdf(bins, mu, sigma)
-        l = plt.plot(bins, y, 'r--', linewidth=1)
-
-        plt.title("BS dist", fontsize=30)
-        plt.xlabel("$p = $"+self._fmt_key_as_latex(parameter), fontsize=24)
-        plt.ylabel('Frequency', fontsize=24)
-        plt.grid(True)
-
-        text = ('$\overline{p} (s_{\overline{p}}) = $ %s \n Prior: %s'
-                % (gv.gvar(mu, sigma), self.prior[parameter]))
-
-        # these are matplotlib.patch.Patch properties
-        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-
-        # place a text box in upper left in axes coords
-        ax.text(0.05, 0.95, text, transform=ax.transAxes, fontsize=14,
-                verticalalignment='top', bbox=props)
-
-        fig = plt.gcf()
-        plt.close()
-
-        return fig
 
     # Takes an array (eg, ['m_omega_0', 'beta_6_omega'])
     def plot_error_ellipsis(self, fit_keys):
