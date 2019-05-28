@@ -187,6 +187,10 @@ class bootstrapper(object):
     def extrapolate_to_phys_point(self):
         return self.fk_fpi_fit_fcn(self.get_phys_point_data())
 
+    def extrapolate_to_ensemble(self, abbr):
+        to_gvar = lambda x : gv.gvar(np.median(gv.mean(x)), np.median(gv.sdev(x)))
+        return to_gvar(self.fk_fpi_fit_fcn(self.fit_data[abbr]))
+
     def _fmt_key_as_latex(self, key):
         convert = {
             # data parameters
@@ -212,6 +216,76 @@ class bootstrapper(object):
             return convert[key]
         else:
             return key
+
+    def plot_fit_bar_graph(self):
+        y = 0
+        labels = np.array([])
+        for abbr in self.abbrs:
+            # data
+            data = self.fit_data[abbr]['FK'] / self.fit_data[abbr]['Fpi']
+            x = np.mean(data)
+            xerr = np.std(data)
+            plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
+                         color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
+                         ecolor='C1', elinewidth=10.0)
+
+            labels = np.append(labels, str(""))
+            y = y + 1
+
+            # fit result
+            fit_value = self.extrapolate_to_ensemble(abbr)
+            x = gv.mean(fit_value)
+            xerr = gv.sdev(fit_value)
+            plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
+                         color='C2', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
+                         ecolor='C3', elinewidth=10.0)
+
+            y = y + 1
+            labels = np.append(labels, str(abbr))
+            plt.axhline(y, ls='--')
+
+            y = y + 1
+            labels = np.append(labels, str(""))
+
+        # Physical point:
+        for j in range(1):
+            plt.axhline(y-1, ls ='-', color='C4')
+            data = self.get_phys_point_data('FK') / self.get_phys_point_data('FK')
+            x = gv.mean(data)
+            xerr = gv.sdev(data)
+            plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
+                         color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
+                         ecolor='C1', elinewidth=10.0)
+
+            labels = np.append(labels, str(""))
+            y = y + 1
+
+            # fit result
+            fit_value = self.extrapolate_to_phys_point()
+            x = gv.mean(fit_value)
+            xerr = gv.sdev(fit_value)
+            plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
+                         color='C2', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
+                         ecolor='C3', elinewidth=10.0)
+
+            y = y + 1
+            labels = np.append(labels, str("Phys. point"))
+            plt.axhline(y, ls='--')
+
+            y = y + 1
+            labels = np.append(labels, str(""))
+            plt.axhline(y-1, ls ='-', color='C4')
+
+
+        plt.yticks(1*range(len(labels)), labels, fontsize=15, rotation=45)
+        plt.ylim(-1, y)
+        plt.xlabel(self._fmt_key_as_latex('FK/Fpi'), fontsize = 24)
+
+        fig = plt.gcf()
+        plt.close()
+
+        return fig
+
 
     def plot_parameter_histogram(self, parameter):
         data = self.get_bootstrap_parameters()[parameter]
