@@ -163,13 +163,13 @@ class bootstrapper(object):
             'mk' : gv.gvar('495.6479(92)'),
             'mru' : gv.gvar('495.6479(92)'),
 
-            'mrs' : gv.gvar('495.6479(92)'),
-            'mss' : gv.gvar('495.6479(92)'),
-
             'a2DI' : 0, # Need to check this
             'Fpi' : gv.gvar('91.9(3.5)'),
             'FK' : gv.gvar('110.38(64)')
         }
+        phys_point_data['mss'] = np.sqrt((4*phys_point_data['mk']**2 - phys_point_data['mpi']**2)/3.0)
+        phys_point_data['mss'] = phys_point_data['mss'] * 1.00000001
+        phys_point_data['mrs'] = phys_point_data['mss']
         if parameter is None:
             return phys_point_data
         else:

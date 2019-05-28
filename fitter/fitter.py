@@ -80,7 +80,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                  + (del2_pq)**2 / (24.0 *(eps2_x - eps2_pi))
                  - (del2_pq)**2 / (12.0 *(eps2_x - eps2_ss))
                  - del2_pq / 8.0
-                 + 4 *(eps2_k - eps2_pi) *(4*pi**2) *p['l_5lam']
+                 + 4 *(eps2_k - eps2_pi) *(4*pi)**2 *p['l_5lam']
                  )
         if order == 0:
             return output
