@@ -20,6 +20,21 @@ class bootstrapper(object):
         if order is None:
             order = 0
 
+        if prior is None:
+            prior = {
+                'l_5lam' : '1(1)',
+                'l_ju' : '1(1)',
+                'l_pi' : '1(1)',
+                'l_rs' : '1(1)',
+                'l_ru' : '1(1)',
+                'l_sj' : '1(1)',
+                'l_ss' : '1(1)',
+                'l_x' : '1(1)',
+                'l_a2' : '1(1)',
+                'l_vol' : '1(1)'
+            }
+            prior = gv.gvar(prior)
+
         # Resize array data to bs_N
         for abbr in fit_data.keys():
             for data_parameter in fit_data[abbr].keys():
@@ -27,9 +42,12 @@ class bootstrapper(object):
                     fit_data[abbr][data_parameter] = fit_data[abbr][data_parameter][:bs_N]
                 except IndexError:
                     pass
-                if data_parameter == 'a2DI':
+                if data_parameter in ['a2DI', 'aw0']:
                     temp = fit_data[abbr][data_parameter]
-                    fit_data[abbr][data_parameter] = np.random.normal(temp[0], temp[1], bs_N)
+                    boot0 = [temp[0]]
+                    boot_results = np.random.normal(temp[0], temp[1], bs_N-1)
+                    fit_data[abbr][data_parameter] = np.concatenate((boot0, boot_results))
+
 
         #abbrs = sorted(fit_data.keys())
         #to_gvar = lambda x : gv.gvar(x[0], x[1])
@@ -64,6 +82,112 @@ class bootstrapper(object):
 
         return output
 
+    def _fmt_key_as_latex(self, key):
+        convert = {
+            # data parameters
+            'a' : r'$a$ (fm)',
+            'L' : r'$L$ (fm)',
+
+            'mpi' : r'$m_\pi$',
+            'Fpi' : r'$F_\pi$',
+
+            'mk' : r'$m_K$',
+            'FK' : r'$F_K$',
+
+            'FK/Fpi' : r'$F_K / F_\pi$',
+
+            'V' : r'$e^{-m L} / \sqrt{m L}$',
+
+            # lattice artifacts
+            'c_2_a' : r'$c^{(2)}_a$',
+            'c_3_a' : r'$c^{(3)}_a$'
+        }
+
+        if key in convert.keys():
+            return convert[key]
+        else:
+            return key
+
+    def _make_fit(self, j):
+        prepped_data = self._make_fit_data(j)
+        # Need to randomize prior in bayesian-bootstrap hybrid
+        temp_prior = self._randomize_prior(self.prior, j)
+        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, order=self.order)
+        return temp_fitter.get_fit()
+
+    def _make_fit_data(self, j):
+        prepped_data = {}
+        for parameter in ['a2DI', 'aw0', 'FK', 'Fpi', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'MpiL']:
+            prepped_data[parameter] = np.array([np.asscalar(self.fit_data[abbr][parameter][j]) for abbr in self.abbrs])
+
+        y_mean = ([np.mean(self.fit_data[abbr]['FK']/self.fit_data[abbr]['Fpi'])
+                   for abbr in self.abbrs])
+        y_cov = np.diagflat([np.var(self.fit_data[abbr]['FK']/self.fit_data[abbr]['Fpi'])
+                             for abbr in self.abbrs])
+        prepped_data['y'] = gv.gvar(y_mean, y_cov)
+
+        return prepped_data
+
+    # This will consistently give the same results despite randomizing prior
+    def _randomize_prior(self, prior, j):
+        if j==0:
+            return prior
+
+        new_prior = {}
+        for key in prior.keys():
+            p_mean = gv.mean(prior[key])
+            p_sdev = gv.sdev(prior[key])
+
+            p_re = re.sub('[^A-Za-z0-9]+','',key)
+            if len(p_re) > 6:
+                p_re = p_re[0:6]
+            s = int(p_re,36)
+
+            np.random.seed(s+j)
+            new_prior[key] = gv.gvar(np.random.normal(p_mean,scale=p_sdev), p_sdev)
+
+        return new_prior
+
+    def bootstrap_fits(self):
+        print "Making fits..."
+        start_time = time.time()
+        self.fits = np.array([])
+
+        for j in range(self.bs_N):
+            temp_fit = self._make_fit(j)
+            self.fits = np.append(self.fits, temp_fit)
+
+            sys.stdout.write("\r{0}% complete".format(int((float(j+1)/self.bs_N)*100)))
+            print "",
+            sys.stdout.flush()
+        end_time = time.time()
+        print "Time (s): ",  end_time - start_time
+
+    def create_prior_from_fit(self):
+        output = {}
+        for key in self.get_fit_parameters():
+            mean = gv.mean(self.get_fit_parameters()[key])
+            unc = 0.5 #0.25*gv.mean(self.get_fit_parameters()[key])
+            output[key] = gv.gvar(mean, unc)
+
+        return output
+
+    def extrapolate_to_ensemble(self, abbr):
+        to_gvar = lambda x : gv.gvar(np.median(gv.mean(x)), np.median(gv.sdev(x)))
+        return to_gvar(self.fk_fpi_fit_fcn(self.fit_data[abbr]))
+
+    def extrapolate_to_phys_point(self):
+        return self.fk_fpi_fit_fcn(self.get_phys_point_data())
+
+    def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None):
+        if fit_data is None:
+            fit_data = self.get_phys_point_data()
+        if fit_parameters is None:
+            fit_parameters = self.get_fit_parameters()
+
+        model = fitter(order=self.order)._make_models(fit_data)[0]
+        return model.fitfcn(p=fit_parameters, fit_data=fit_data)
+
     # Returns dictionary with keys fit parameters, entries bs results
     def get_bootstrap_parameters(self):
         bs_fit_parameters = self.bs_fit_parameters
@@ -95,67 +219,23 @@ class bootstrapper(object):
         else:
             return bs_fit_parameters
 
-    def bootstrap_fits(self):
-        print "Making fits..."
-        start_time = time.time()
-        self.fits = np.array([])
+    # Returns keys of fit parameters
+    def get_fit_keys(self):
+        return sorted(self.get_bootstrap_parameters().keys())
 
-        for j in range(self.bs_N):
-            temp_fit = self._make_fit(j)
-            self.fits = np.append(self.fits, temp_fit)
-
-            sys.stdout.write("\r{0}% complete".format(int((float(j+1)/self.bs_N)*100)))
-            print "",
-            sys.stdout.flush()
-        end_time = time.time()
-        print "Time (s): ",  end_time - start_time
-
-
-    def _make_fit(self, j):
-        prepped_data = self._make_fit_data(j)
-        # Need to randomize prior in bayesian-bootstrap hybrid
-        temp_prior = self._randomize_prior(self.prior, j)
-        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, order=self.order)
-        return temp_fitter.get_fit()
-
-    def _make_fit_data(self, j):
-        prepped_data = {}
-        for parameter in ['mpi', 'mk', 'mju', 'mrs', 'mru', 'mss', 'a2DI', 'Fpi', 'FK']:
-            prepped_data[parameter] = np.array([np.asscalar(self.fit_data[abbr][parameter][j]) for abbr in self.abbrs])
-
-        y_mean = ([np.mean(self.fit_data[abbr]['FK']/self.fit_data[abbr]['Fpi'])
-                   for abbr in self.abbrs])
-        y_cov = np.diagflat([np.var(self.fit_data[abbr]['FK']/self.fit_data[abbr]['Fpi'])
-                             for abbr in self.abbrs])
-        prepped_data['y'] = gv.gvar(y_mean, y_cov)
-
-        return prepped_data
-
-    # This will consistently give the same results despite randomizing prior
-    def _randomize_prior(self, prior, j):
-        if j==0:
-            return prior
-
-        new_prior = {}
-        for key in prior.keys():
-            p_mean = gv.mean(prior[key])
-            p_sdev = gv.sdev(prior[key])
-
-            p_re = re.sub('[^A-Za-z0-9]+','',key)
-            if len(p_re) > 6:
-                p_re = p_re[0:6]
-            s = int(p_re,36)
-
-            np.random.seed(s+j)
-            new_prior[key] = gv.gvar(np.random.normal(p_mean,scale=p_sdev), p_sdev)
-
-        return new_prior
+    # Returns dictionary with keys fit parameters, entries gvar results
+    def get_fit_parameters(self):
+        if self.fit_parameters is None:
+            self.fit_parameters = gv.dataset.avg_data(self.get_bootstrap_parameters(), bstrap=True)
+            return self.fit_parameters
+        else:
+            return self.fit_parameters
 
     # need to convert to/from lattice units
     def get_phys_point_data(self, parameter=None):
         phys_point_data = {
-            'a' : 0,
-            'V' : 0,
+            'aw0' : 0,
+            'MpiL' : np.infty,
 
             'mpi' : gv.gvar('138.05638(37)'),
             'mju' : gv.gvar('138.05638(37)'),
@@ -174,48 +254,6 @@ class bootstrapper(object):
             return phys_point_data
         else:
             return phys_point_data[parameter]
-
-    def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None):
-        if fit_data is None:
-            fit_data = self.get_phys_point_data()
-        if fit_parameters is None:
-            fit_parameters = self.get_fit_parameters()
-
-        model = fitter(order=self.order)._make_models(fit_data)[0]
-        return model.fitfcn(p=fit_parameters, fit_data=fit_data)
-
-    def extrapolate_to_phys_point(self):
-        return self.fk_fpi_fit_fcn(self.get_phys_point_data())
-
-    def extrapolate_to_ensemble(self, abbr):
-        to_gvar = lambda x : gv.gvar(np.median(gv.mean(x)), np.median(gv.sdev(x)))
-        return to_gvar(self.fk_fpi_fit_fcn(self.fit_data[abbr]))
-
-    def _fmt_key_as_latex(self, key):
-        convert = {
-            # data parameters
-            'a' : r'$a$ (fm)',
-            'L' : r'$L$ (fm)',
-
-            'mpi' : r'$m_\pi$ (MeV)',
-            'Fpi' : r'$F_\pi$ (MeV)',
-
-            'mk' : r'$m_K$ (MeV)',
-            'FK' : r'$F_K$ (MeV)',
-
-            'FK/Fpi' : r'$F_K / F_\pi$',
-
-            'V' : r'$e^{-m L} / \sqrt{m L}$',
-
-            # lattice artifacts
-            'c_2_a' : r'$c^{(2)}_a$',
-            'c_3_a' : r'$c^{(3)}_a$'
-        }
-
-        if key in convert.keys():
-            return convert[key]
-        else:
-            return key
 
     def plot_fit_bar_graph(self):
         y = 0
@@ -402,16 +440,6 @@ class bootstrapper(object):
         plt.close()
         return fig
 
-    # Returns dictionary with keys fit parameters, entries gvar results
-    def get_fit_parameters(self):
-        if self.fit_parameters is None:
-            return gv.dataset.avg_data(self.get_bootstrap_parameters(), bstrap=True)
-        else:
-            return self.fit_parameters
-
-    # Returns keys of fit parameters
-    def get_fit_keys(self):
-        return sorted(self.get_bootstrap_parameters().keys())
 
     #################################################
     #### EVERYTHING BELOW INCOMPATIBLE WITH CLASS ###

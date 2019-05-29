@@ -32,6 +32,12 @@ class data_loader(object):
             ensembles = f.keys()
         return sorted(ensembles)
 
+    def get_prior(self):
+        filepath = self.project_path + '/prior.csv'
+        df_read = pd.read_csv(filepath, index_col=0)
+        return gv.gvar({key : df_read.to_dict("index")[key]["0"]
+                for key in df_read.to_dict("index").keys()})
+
     def get_variable_names(self):
         names = []
         with h5py.File(self.file_h5, "r") as f:
@@ -40,24 +46,29 @@ class data_loader(object):
                     names.append(key)
         return sorted(np.unique([names]))
 
-    def get_prior(self):
-        filepath = self.project_path + '/prior.csv'
-        df_read = pd.read_csv(filepath, index_col=0)
-        return gv.gvar({key : df_read.to_dict("index")[key]["0"]
-                for key in df_read.to_dict("index").keys()})
-
     def save_plots(self, figs=None, bootstrapper=None, output_file=None):
         if figs is None:
             figs = bootstrapper.make_plots()
 
         if output_file is None:
-            if not os.path.exists(self.project_path+'/tmp/'):
-                os.makedirs(self.project_path+'/tmp/')
+            if not os.path.exists(os.path.normpath(self.project_path+'/tmp/')):
+                os.makedirs(os.path.normpath(self.project_path+'/tmp/'))
             output_file = os.path.normpath(self.project_path+'/tmp/temp.pdf')
 
         output_pdf = PdfPages(output_file)
-        for fig in figs:
-            output_pdf.savefig(fig)
+        try:
+            for fig in figs:
+                output_pdf.savefig(fig)
+        except TypeError: # save figs directly if figs is just a figure, not an array
+            output_pdf.savefig(figs)
 
         output_pdf.close()
         print "Done."
+
+    def save_prior(self, prior):
+        out_prior = {}
+        for key in prior.keys():
+            out_prior[key] = [str(prior[key])]
+
+        df = pd.DataFrame.from_dict(out_prior).T
+        df.to_csv(self.project_path+'/prior.csv')

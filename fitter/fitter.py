@@ -70,9 +70,17 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         del2_pq = fit_data['a2DI'] / lam2_chi
         #del2_pq = p['a2DI'] / lam2_chi
         eps2_x = (4.0/3.0) *eps2_k - (1.0/3.0) *eps2_pi + del2_pq
+        aw02 = fit_data['aw0']**2
+        mpil = fit_data['MpiL']
 
         # Force output array to have the correct shape
         output = 0 *eps2_pi
+
+        # Lattice artifact term
+        output = output + aw02 *p['l_a2']
+
+        # Volume term
+        output = output + np.exp(-mpil) / np.sqrt(mpil) *p['l_vol']
 
         # Order = 0
         output = (output + 1
@@ -126,8 +134,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         keys_0 = ['l_5lam']
         keys_1 = ['l_ju', 'l_pi', 'l_rs', 'l_ru', 'l_sj', 'l_ss', 'l_x']
         keys_2 = []
-        #keys_lat = ['c_2_a']#, 'c_3_a']
-        #keys_vol = ['c_volume']
+        keys_lat = ['l_a2']#, 'c_3_a']
+        keys_vol = ['l_vol']
 
         for key in keys_0:
             newprior[key] = prior[key]
@@ -141,12 +149,12 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 newprior[key] = prior[key]
 
         # Lattice artifacts
-        #for key in keys_lat:
-        #    newprior[key] = prior[key]
+        for key in keys_lat:
+            newprior[key] = prior[key]
 
         # Volume term
-        #for key in keys_vol:
-        #   newprior[key] = prior[key]
+        for key in keys_vol:
+           newprior[key] = prior[key]
 
         return newprior
 
