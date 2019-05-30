@@ -171,6 +171,9 @@ class bootstrapper(object):
         for key in self.get_fit_parameters():
             mean = gv.mean(self.get_fit_parameters()[key])
             unc = 0.5 #0.25*gv.mean(self.get_fit_parameters()[key])
+            #mean = gv.mean(self.fits[0].p[key])
+            #unc = gv.sdev(self.fits[0].p[key])
+
             output[key] = gv.gvar(mean, unc)
 
         return output
@@ -229,10 +232,9 @@ class bootstrapper(object):
     # Returns dictionary with keys fit parameters, entries gvar results
     def get_fit_parameters(self):
         if self.fit_parameters is None:
-            self.fit_parameters = gv.dataset.avg_data(self.get_bootstrap_parameters(), bstrap=True)
-            return self.fit_parameters
-        else:
-            return self.fit_parameters
+            fit_parameters = gv.dataset.avg_data(self.get_bootstrap_parameters(), bstrap=True)
+            self.fit_parameters = fit_parameters
+        return self.fit_parameters
 
     # need to convert to/from lattice units
     def get_phys_point_data(self, parameter=None):
@@ -532,6 +534,7 @@ class bootstrapper(object):
                 x = np.linspace(np.max((minimum - 0.05*delta, 0)), maximum + 0.05*delta)
 
 
+                # Get phys point data, substituting x-data and current 'a' in loop
                 prepped_data = self.get_phys_point_data()
                 prepped_data[xy_parameters[0]] = x
                 prepped_data['aw0'] = a*self.w0
@@ -539,8 +542,8 @@ class bootstrapper(object):
                 y = self.fk_fpi_fit_fcn(fit_data=prepped_data)
 
                 pm = lambda g, k : gv.mean(g) + k*gv.sdev(g)
-                plt.plot(xfcn(x), pm(y, 0), '--', color=colors[j], label='$a=$%s (fm)'%(str(a)))
-                plt.fill_between(xfcn(x), pm(y, -1), pm(y, 1), alpha=0.20, color=colors[j])
+                plt.plot(xfcn(x), pm(y, 0), '--', color=colors[j], label='$a=$%s (fm)'%(str(a)), rasterized=True)
+                plt.fill_between(xfcn(x), pm(y, -1), pm(y, 1), alpha=0.20, color=colors[j], rasterized=True)
 
             plt.legend()
 
@@ -556,7 +559,6 @@ class bootstrapper(object):
         color_bar.set_label(self._fmt_key_as_latex(color_parameter), fontsize = 24)
 
         # Set xlim, ylim -- only works if xy_parameters[i] is a vector, not a scalar
-
         min_max = lambda x : [np.min(x), np.max(x)]
         try:
             xmin, xmax = min_max(np.concatenate([gv.mean(plot_data[0][abbr]) for abbr in self.abbrs]))
