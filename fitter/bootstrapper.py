@@ -12,7 +12,7 @@ from fitter import fitter
 
 class bootstrapper(object):
 
-    def __init__(self, fit_data, prior, bs_N=None, order=None):
+    def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None, order=None):
 
         if bs_N is None or bs_N==0:
             bs_N = len(fit_data[fit_data.keys()[0]]['mpi'])
@@ -35,8 +35,11 @@ class bootstrapper(object):
             }
             prior = gv.gvar(prior)
 
+        if abbrs is None:
+            abbrs = fit_data.keys()
+
         # Resize array data to bs_N
-        for abbr in fit_data.keys():
+        for abbr in abbrs:
             for data_parameter in fit_data[abbr].keys():
                 try:
                     fit_data[abbr][data_parameter] = fit_data[abbr][data_parameter][:bs_N]
@@ -54,7 +57,7 @@ class bootstrapper(object):
         #prior['a2DI'] = [to_gvar(fit_data[abbr]['a2DI']) for abbr in abbrs]
 
         self.bs_N = bs_N
-        self.abbrs = sorted(fit_data.keys())
+        self.abbrs = sorted(abbrs)
         self.variable_names = sorted(fit_data[self.abbrs[0]].keys())
         self.fit_data = fit_data
         self.prior = prior
@@ -525,10 +528,10 @@ class bootstrapper(object):
             for j, a in enumerate([0.0, 0.09, 0.12, 0.15]):
                 minimum = np.nanmin([np.nanmin(
                     self.fit_data[abbr][xy_parameters[0]] *hbar_c / (self.fit_data[abbr]['aw0'] /self.w0)
-                ) for abbr in self.fit_data.keys()])
+                ) for abbr in self.abbrs])
                 maximum = np.nanmax([np.nanmax(
                     self.fit_data[abbr][xy_parameters[0]] *hbar_c / (self.fit_data[abbr]['aw0'] /self.w0)
-                ) for abbr in self.fit_data.keys()])
+                ) for abbr in self.abbrs])
                 delta = maximum - minimum
 
                 x = np.linspace(np.max((minimum - 0.05*delta, 0)), maximum + 0.05*delta)

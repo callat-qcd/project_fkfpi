@@ -81,6 +81,56 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         #output = output + aw02 *np.sqrt(aw02) *p['l_vol']
 
         # Volume term
+        #output = output + np.exp(-mpil) / np.sqrt(mpil) *p['l_vol']
+        #output = output + p['l_vol']
+
+        output = (output
+                 +  (eps2_pi) *p['l_pi']
+                 +  (eps2_pi)**2 *p['l_ju']
+                 #-  (eps2_k) *p['l_sj']
+                 #+  eps2_ss *p['l_ss']
+                 #+  eps2_ju *p['l_ju']
+                 #+  eps2_ru *p['l_ru']
+                 #+  eps2_sj *p['l_sj']
+                 #+  eps2_rs *p['l_rs']
+                 -  (eps2_x) *p['l_x']
+                 )
+
+        output = output + (eps2_k - eps2_pi) *p['l_5lam']
+
+        return output
+
+    def fitfcn_proper(self, p, fit_data=None):
+        if fit_data is None:
+            fit_data = self.fit_data
+
+        # Constants
+        pi = np.pi
+        order = self.order
+
+        # Independent variables
+        lam2_chi = 16 *pi**2 *(fit_data['Fpi'] *fit_data['FK'])
+        eps2_pi = fit_data['mpi']**2 / lam2_chi
+        eps2_k = fit_data['mk']**2 / lam2_chi
+        eps2_ss = fit_data['mss']**2 / lam2_chi
+        eps2_ju = fit_data['mju']**2 / lam2_chi
+        eps2_ru = fit_data['mru']**2 / lam2_chi
+        eps2_sj = eps2_ru
+        eps2_rs = fit_data['mrs']**2 / lam2_chi
+        del2_pq = fit_data['a2DI'] / lam2_chi
+        #del2_pq = p['a2DI'] / lam2_chi
+        eps2_x = (4.0/3.0) *eps2_k - (1.0/3.0) *eps2_pi + del2_pq
+        aw02 = fit_data['aw0']**2
+        mpil = fit_data['MpiL']
+
+        # Force output array to have the correct shape
+        output = 0 *eps2_pi
+
+        # Lattice artifact term
+        output = output + aw02 *p['l_a2']
+        #output = output + aw02 *np.sqrt(aw02) *p['l_vol']
+
+        # Volume term
         output = output + np.exp(-mpil) / np.sqrt(mpil) *p['l_vol']
 
         # Order = 0
