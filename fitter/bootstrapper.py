@@ -39,18 +39,20 @@ class bootstrapper(object):
             abbrs = fit_data.keys()
 
         # Resize array data to bs_N
+        data = {}
         for abbr in abbrs:
+            data[abbr] = {}
             for data_parameter in fit_data[abbr].keys():
                 try:
-                    fit_data[abbr][data_parameter] = fit_data[abbr][data_parameter][:bs_N]
+                    means = fit_data[abbr][data_parameter][:bs_N]
+                    unc = np.std(fit_data[abbr][data_parameter][:bs_N])
+                    #print gv.gvar(means, np.repeat(unc, len(means)))
+                    data[abbr][data_parameter] = gv.gvar(means, np.repeat(unc, len(means)))
                 except IndexError:
                     pass
                 if data_parameter in ['a2DI', 'aw0']:
-                    temp = fit_data[abbr][data_parameter]
-                    boot0 = [temp[0]]
-                    boot_results = np.random.normal(temp[0], temp[1], bs_N-1)
-                    fit_data[abbr][data_parameter] = np.concatenate((boot0, boot_results))
-
+                    to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
+                    data[abbr][data_parameter] = np.repeat(to_gvar(fit_data[abbr][data_parameter]), bs_N)
 
         #abbrs = sorted(fit_data.keys())
         #to_gvar = lambda x : gv.gvar(x[0], x[1])
@@ -59,10 +61,9 @@ class bootstrapper(object):
         self.bs_N = bs_N
         self.abbrs = sorted(abbrs)
         self.variable_names = sorted(fit_data[self.abbrs[0]].keys())
-        self.fit_data = fit_data
+        self.fit_data = data
         self.prior = prior
         self.order = order
-
         self.w0 = 5.81743
         self.fits = None
         self.bs_fit_parameters = None
@@ -124,13 +125,10 @@ class bootstrapper(object):
     def _make_fit_data(self, j):
         prepped_data = {}
         for parameter in ['a2DI', 'aw0', 'FK', 'Fpi', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'MpiL']:
-            prepped_data[parameter] = np.array([np.asscalar(self.fit_data[abbr][parameter][j]) for abbr in self.abbrs])
+            prepped_data[parameter] = np.array([self.fit_data[abbr][parameter][j] for abbr in self.abbrs])
 
-        y_mean = ([np.mean(self.fit_data[abbr]['FK']/self.fit_data[abbr]['Fpi'])
-                   for abbr in self.abbrs])
-        y_cov = np.diagflat([np.var(self.fit_data[abbr]['FK']/self.fit_data[abbr]['Fpi'])
-                             for abbr in self.abbrs])
-        prepped_data['y'] = gv.gvar(y_mean, y_cov)
+        y = ([self.fit_data[abbr]['FK'][j]/self.fit_data[abbr]['Fpi'][j] for abbr in self.abbrs])
+        prepped_data['y'] = y
 
         return prepped_data
 
@@ -171,7 +169,7 @@ class bootstrapper(object):
 
     def create_prior_from_fit(self):
         output = {}
-        for key in self.get_fit_parameters():
+        for key in self.get_fit_parameters().keys():
             mean = gv.mean(self.get_fit_parameters()[key])
             unc = 0.5 #0.25*gv.mean(self.get_fit_parameters()[key])
             #mean = gv.mean(self.fits[0].p[key])
@@ -207,7 +205,7 @@ class bootstrapper(object):
                 self.bootstrap_fits()
 
             # Get all fit parameters
-            parameters = self.fits[0].p.keys()
+            parameters = self.prior.keys()
 
             # Make dictionary if it doesn't exist yet
             if bs_fit_parameters is None:
@@ -237,6 +235,7 @@ class bootstrapper(object):
         if self.fit_parameters is None:
             fit_parameters = gv.dataset.avg_data(self.get_bootstrap_parameters(), bstrap=True)
             self.fit_parameters = fit_parameters
+            print self.fit_parameters.keys()
         return self.fit_parameters
 
     # need to convert to/from lattice units
@@ -359,8 +358,9 @@ class bootstrapper(object):
         for abbr in self.abbrs:
             # data
             data = self.fit_data[abbr]['FK'] / self.fit_data[abbr]['Fpi']
-            x = np.mean(data)
-            xerr = np.std(data)
+            x = gv.mean(np.mean(data))
+            xerr = gv.sdev(data[0])
+
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
                          color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
                          ecolor='C1', elinewidth=10.0)
@@ -397,7 +397,8 @@ class bootstrapper(object):
             y = y + 1
 
             # fit result
-            fit_value = self.extrapolate_to_phys_point()
+            fit_value = self.extrapolate_to_phys_point()[0]
+            print fit_value
             x = gv.mean(fit_value)
             xerr = gv.sdev(fit_value)
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
