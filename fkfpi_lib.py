@@ -66,6 +66,104 @@ def decay_constant(s,mval,gvdata):
     p['mss'] = gvdata['e0_etas']
     return {'x': x, 'y': y, 'p': p}
 
+def format_h5_data(switches,data,priors):
+    x    = list()
+    y    = list()
+    mpi  = list()
+    mpiL = list()
+    mka  = list()
+    mss  = list()
+    aw0  = list()
+    a2di = list()
+    mju  = list()
+    mjuL = list()
+    mjs  = list()
+    mru  = list()
+    mrs  = list()
+    Lchi = list()
+    wMix_ju = list()
+    wMix_js = list()
+    wMix_ru = list()
+    wMix_rs = list()
+    for e in switches['ensemble']:
+        data_dict = dict()
+        print(e)
+        for m in ['mpi','mk','mss','mju','mjs','mrs','mru']:
+            data_dict[m] = data.get_node('/'+e+'/'+m).read()
+            #print('  %s = %.5f +- %.5f' %(m,data_dict[m].mean(),data_dict[m].std()))
+        for f in ['FK','Fpi','Fss']:
+            data_dict[f] = data.get_node('/'+e+'/'+f).read()
+        #fkfpi = data_dict['FK']/data_dict['Fpi']
+        #print('  FK/Fpi = %.5f +- %.5f' %(fkfpi.mean(),fkfpi.std()))
+        gvdata = gv.dataset.avg_data(data_dict,bstrap=True)
+        print(gvdata)
+    '''
+        data2pt = data.sort_values(by='nbs').query("ensemble=='%s'" %e)[['e0_pion','z0p_pion','e0_kaon','z0p_kaon','e0_etas','z0p_etas','mresl','mress']].to_dict(orient='list')
+        datamerge = dict(data2pt,**datamix)
+        gvdata = gv.dataset.avg_data(datamerge,bstrap=True)
+        mval = data.query("ensemble=='%s'" %e)[['mq1','mq2']].iloc[0].to_dict()
+        data_dict = decay_constant(switches,mval,gvdata)
+        Lchi.append(data_dict['x']['Lchi'])
+        x.append(data_dict['x']['Lchi'])
+        y.append(data_dict['y']['Fka/Fpi'])
+        mpi.append(data_dict['p']['mpi'])
+        mpiL.append(data_dict['p']['mpi'].mean * L_ens[ens])
+        mjuL.append(gvdata['phi_ju'].mean * L_ens[ens])
+        mka.append(data_dict['p']['mka'])
+        mss.append(data_dict['p']['mss'])
+        mju.append(gvdata['phi_ju'])
+        mjs.append(gvdata['phi_js'])
+        mru.append(gvdata['phi_ru'])
+        mrs.append(gvdata['phi_rs'])
+        # milc file
+        hp = hisq_params.query("ensemble=='%s'" %e)
+        aw0_ens = gv.gvar(hp['aw0_mean'].iloc[0],hp['aw0_sdev'].iloc[0])
+        aw0.append(aw0_ens)
+        a2di.append(gv.gvar(hp['a2DI_mean'].iloc[0],hp['a2DI_sdev'].iloc[0])/r_a[ens]**2)
+        # w_0**2 Delta_Mix
+        wMix_ju.append((gvdata['phi_ju']**2-data_dict['p']['mpi']**2) / aw0_ens**2)
+        wMix_js.append((gvdata['phi_js']**2-data_dict['p']['mka']**2) / aw0_ens**2)
+        wMix_ru.append((gvdata['phi_ru']**2-data_dict['p']['mka']**2) / aw0_ens**2)
+        wMix_rs.append((gvdata['phi_rs']**2-data_dict['p']['mss']**2) / aw0_ens**2)
+    priors['mpi'] = np.array(mpi)
+    priors['mka'] = np.array(mka)
+    priors['mss'] = np.array(mss)
+    priors['aw0'] = np.array(aw0)
+    priors['mju'] = np.array(mju)
+    priors['mjs'] = np.array(mjs)
+    priors['mru'] = np.array(mru)
+    priors['mrs'] = np.array(mrs)
+    priors['wMix_ju'] = np.array(wMix_ju)
+    priors['wMix_js'] = np.array(wMix_js)
+    priors['wMix_ru'] = np.array(wMix_ru)
+    priors['wMix_rs'] = np.array(wMix_rs)
+    if switches['ansatz']['a2dm'] == 'avg':
+        a2dm_ju = priors['mju']**2 - priors['mpi']**2
+        a2dm_sj = priors['mjs']**2 - priors['mka']**2
+        a2dm_ru = priors['mru']**2 - priors['mka']**2
+        a2dm_rs = priors['mrs']**2 - priors['mss']**2
+        priors['a2dm'] = 1./4*(a2dm_ju +a2dm_sj +a2dm_ru +a2dm_rs)
+    elif switches['ansatz']['a2dm'] == 'individual':
+        priors['a2dm'] = priors['mju']**2-priors['mpi']**2
+    y = np.array(y)
+    mpiL = np.array(mpiL)
+    Lchi = np.array(Lchi)
+    priors['a2di'] = np.array(a2di)
+    #priors['a2dm'] = np.array(a2dm)
+    mjuL = np.array(mjuL)
+    if switches['ansatz']['FV']:
+        fv_params = dict()
+        fv_params['mjuL'] = mjuL
+        fv_params['mpiL'] = mpiL
+        fv_params['Lchi'] = Lchi
+        fv_mns_inv = xpt.fv_correction(switches,fv_params,priors)
+        #print('DEBUG FV:',fv_mns_inv)
+        y = y - fv_mns_inv
+
+    return {'x':{'Lchi':np.array(x),'mpiL':np.array(mpiL)}, 'y': y, 'p': priors}
+    '''
+
+
 def format_data(switches,data,mixed_data,hisq_params,priors):
     x    = list()
     y    = list()

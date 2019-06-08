@@ -1,0 +1,343 @@
+\documentclass[prd,11pt,tightenlines,preprintnumbers,showpacs,superscriptaddress,notitlepage,nofootinbib,eqsecnum,floatfix]{revtex4-1}
+% LOAD PREAMBLE
+\input{preamble.tex}
+% NEW COMMANDS
+\input{command_list}
+
+\input{def}
+\input{affiliations}
+\newcount\hour \newcount\hourminute \newcount\minute 
+\hour=\time \divide \hour by 60
+\hourminute=\hour \multiply \hourminute by 60
+\minute=\time \advance \minute by -\hourminute
+\newcommand{\mydate}{\ \today \ - \number\hour :\number\minute}
+
+
+\begin{document}
+
+\title{$F_K / F_\pi$ notes}
+
+%\author{Evan~Berkowitz}
+%\affiliation{\julich}
+
+%\author{Chris~Bouchard}
+%\affiliation{\glasgow}
+
+%\author{David~A.~Brantley}
+%\affiliation{\wm}
+%\affiliation{\lblnsd}
+%\affiliation{\llnl}
+
+%\author{Chia-Cheng Chang}
+%\affiliation{\lblnsd}
+%
+%\author{M.A.~Clark}
+%\affiliation{\nvidia}
+%
+%\author{Arjun~Gambhir}
+%\affiliation{\llnl}
+%\affiliation{\lblnsd}
+%\affiliation{\ucb}
+%
+%\author{Nicolas~Garron}
+%\affiliation{\liverpool}
+%
+%\author{B\'{a}lint~Jo\'{o}}
+%\affiliation{\jlabt}
+%
+%\author{Thorsten~Kurth}
+%\affiliation{\lblnersc}
+%
+%\author{Chris~Monahan}
+%\affiliation{\intuw}
+%
+%\author{Henry~Monge-Camacho}
+%\affiliation{\wm}
+%\affiliation{\lblnsd}
+%
+%\author{Amy~Nicholson}
+%\affiliation{\unc}
+%
+%%\author{Kostas Orginos}
+%%\email[]{kostas@wm.edu}
+%%\affiliation{\wm}
+%%\affiliation{\jlab}
+%
+%\author{Enrico~Rinaldi}
+%\affiliation{\rbrc}
+%
+%\author{Pavlos~Vranas}
+%\affiliation{\llnl}
+%\affiliation{\lblnsd}
+
+\author{Andr\'{e}~Walker-Loud}
+%\email[]{awalker-loud@lbl.gov}
+%\affiliation{\lblnsd}
+%\affiliation{\llnl}
+%\affiliation{\ucb}
+
+\date{\mydate}
+
+\begin{abstract}
+Notes on $F_K/F_\pi$ extrapolation
+\end{abstract}
+\maketitle
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\tableofcontents
+
+\section{Strategy}
+We want to perform several extrapolations of our $F_K/F_\pi$ data and perform a weighted model average of these extrapolations.
+The four extrapolations to be performed are:
+\begin{enumerate}
+\item NLO MA + NNLO c.t.: ratio of $F_K$ and $F_\pi$ fit functions
+
+\item NLO MA + NNLO c.t.: Taylor expanded ratio of $F_K/F_\pi$ extrapolation functions
+
+\item NLO $\chi$PT + discretization + NNLO c.t.: ratio of $F_K$ and $F_\pi$ fit functions
+
+\item NLO $\chi$PT + discretization + NNLO c.t.: Taylor expanded ratio of $F_K/F_\pi$ extrapolation functions
+
+\end{enumerate}
+In all cases, the predicted NLO finite volume corrections should be used.
+At NLO, the following functions arise in the extrapolation formulae (the $\ln$ terms arise from the infinite volume integrals and the sums over Bessel functions are the finite volume corrections):
+\begin{equation}
+\mc{I}(m) = \frac{m^2}{(4\pi)^2} \ln \left( \frac{m^2}{\mu^2} \right)
+	+ \frac{m^2}{4\pi^2} \sum_{|\mathbf{n}|\neq0} \frac{c_n}{mL|\mathbf{n}|} K_1(mL|\mathbf{n}|)
+\end{equation}
+\begin{align}
+d\mc{I}(m) &= \frac{1 + \ln \left( \frac{m^2}{\mu^2} \right)}{(4\pi)^2} 
+	+\sum_{|\mathbf{n}|\neq0} \frac{c_n}{(4\pi)^2} \left[
+		\frac{2K_1(mL|\mathbf{n}|)}{mL|\mathbf{n}|}
+		-K_0(mL|\mathbf{n}|)
+		-K_2(mL|\mathbf{n}|)
+	\right]
+\nonumber\\&=
+	\frac{1}{(4\pi)^2} + \frac{\mc{I}(m)}{m^2}
+	+\sum_{|\mathbf{n}|\neq0} \frac{c_n}{(4\pi)^2} \left[
+		\frac{2K_1(mL|\mathbf{n}|)}{mL|\mathbf{n}|}
+		-K_0(mL|\mathbf{n}|)
+		-K_2(mL|\mathbf{n}|)
+	\right]
+\end{align}
+\begin{equation}
+\mc{K}(m,M) = \frac{1}{M^2 - m^2} \left[ \mc{I}(M) - \mc{I}(m) \right]
+\end{equation}
+\begin{align}
+\mc{K}_{21}(m,M) &= \int_R \frac{d^d k}{(2\pi)^d} \frac{1}{(k^2 -m^2)^2} \frac{1}{k^2 - M^2}
+\nonumber\\&=
+	\frac{\partial}{\partial m^2} \int_R \frac{d^d k}{(2\pi)^d} \frac{1}{k^2 -m^2} \frac{1}{k^2 - M^2}
+\nonumber\\&=
+	\frac{\partial}{\partial m^2} \mc{K}(m,M)
+\nonumber\\&=
+	\frac{1}{(M^2 - m^2)^2} \left[ \mc{I}(M) - \mc{I}(m) \right]
+	-\frac{1}{M^2 - m^2} d\mc{I}(m)
+\end{align}
+\begin{align}
+\mc{K}(m_1,m_2,m_3) &= \frac{1}{m_1^2 - m_2^2}\frac{1}{m_1^2-m_3^2} \mc{I}(m_1)
+	+\frac{1}{m_2^2 - m_1^2} \frac{1}{m_2^2 - m_3^2} \mc{I}(m_2)
+\nonumber\\&\phantom{=}
+	+\frac{1}{m_3^2 - m_1^2} \frac{1}{m_3^2 - m_2^2} \mc{I}(m_3)
+\end{align}
+
+
+The NNLO and NNNLO counter term expressions are 
+\begin{equation}
+\d_{c.t.}^{\rm NNLO} = \e_a^2 (\e_K^2 - \e_\pi^2) A_{2,2}
+	+(\e_K^2 - \e_\pi^2)^2 M_{4,0,0}
+	+\e_K^2 (\e_K^2 - \e_\pi^2) M_{2,2,0}
+	+\e_\pi^2 (\e_K^2 - \e_\pi^2) M_{2,0,2}
+\end{equation}
+\begin{equation}
+\d_{c.t.}^{\rm NNNLO} = \e_a^4 (\e_K^2 - \e_\pi^2) A_{4,2}
+	+\e_a^2 (\e_K^2 - \e_\pi^2)^2 A_{2,4}
+	+\e_a^2 \e_K^2 (\e_K^2 - \e_\pi^2) A_{2,2,2,0}
+	+\e_a^2 \e_\pi^2 (\e_K^2 - \e_\pi^2) A_{2,2,0,2}
+\end{equation}
+
+
+
+
+\subsubsection{NLO MA + NNLO c.t. ratio}
+For these fits, we will do
+\begin{equation}
+\frac{F_K}{F_\pi} = \frac{F_K^{\rm nlo}}{F_\pi^{\rm nlo}} + \d_{c.t.}^{\rm NNLO}
+\end{equation}
+where
+\begin{align}
+\frac{F_\pi^{\rm nlo}}{F_0} &= 
+	1 
+	- \frac{\mc{I}(m_{ju})}{F^2}
+	-\frac{\mc{I}(m_{ru})}{2F^2}
+	+4 \e_\pi^2 (4\pi)^2 (L_4 + L_5)
+	+8 \e_K^2 (4\pi)^2 L_4
+\end{align}
+
+
+
+
+\subsubsection{NLO MA + NNLO c.t. Taylor expanded ratio}
+\begin{align}\label{eq:fkfpi_ma}
+\frac{F_K}{F_\pi} &= 1
+	+\frac{\mc{I(m_{ju})}}{2F^2}
+	+\frac{\mc{I}(m_\pi)}{8F^2}
+	-\frac{\mc{I}(m_{rs})}{4F^2}
+	+\frac{\mc{I}(m_{ru})}{4F^2}
+	-\frac{\mc{I}(m_{sj})}{2F^2}
+	+\frac{\mc{I}(m_{ss})}{4F^2}
+	-\frac{3\mc{I}(m_X)}{8F^2}
+\nonumber\\&\phantom{=}
+	+\D_{ju}^2 \left[ -\frac{d\mc{I}(m_\pi)}{8F^2} + \frac{\mc{K(}m_\pi,m_X)}{4F^2} \right]
+	-\D_{ju}^4 \frac{\mc{K}_{21}(m_\pi,m_X)}{24 F^2}
+\nonumber\\&\phantom{=}
+	+\D_{ju}^2\D_{rs}^2 \left[ \frac{\mc{K}(m_\pi, m_{ss}, m_X)}{6F^2}
+		+\frac{\mc{K}_{21}(m_{ss},m_X)}{12F^2} \right]
+\nonumber\\&\phantom{=}
+	+\D_{rs}^2 \left[
+		\frac{\mc{K}(m_{ss},m_X)}{4F^2} 
+		-\frac{\mc{K}_{21}(m_{ss},m_X) m_K^2}{6F^2}
+		+\frac{\mc{K}_{21}(m_{ss},m_X) m_\pi^2}{6F^2}
+		\right]
+\nonumber\\&\phantom{=}
+	+ 4 (4\pi)^2 L_5(\mu) \frac{m_K^2 - m_\pi^2}{(4\pi F)^2}
+\end{align}
+
+\subsubsection{NLO $\chi$PT + NNLO c.t. ratio}
+
+
+\subsubsection{NLO $\chi$PT + NNLO c.t. Taylor expansion}
+\begin{align}\label{eq:fkfpi_chpt}
+\frac{F_K}{F_\pi} &= 1
+	+\frac{5}{8} \e_\pi^2 \ell_\pi
+	-\frac{1}{4} \e_K^2 \ell_K
+	-\frac{3}{8} \e_\eta^2 \ell_\eta
+%\nonumber\\&\phantom{=}
+	+4(\e_K^2 - \e_\pi^2) (4\pi)^2 L_5(\L_{\chi})
+%\nonumber\\&\phantom{=}
+	+ \d_{c.t.}^{NNLO}
+\end{align}
+
+
+
+\section{OLD}
+In this expression
+We can estimate the FV corrections by tracking only the terms with $\pi$ and $ju$ meson loops.
+Introducing shorthand notation, we find
+\begin{align}
+\d \frac{F_K}{F_\pi} &= 
+	\frac{\d\mc{I(m_{ju})}}{2F^2}
+	+\frac{\d\mc{I}(m_\pi)}{8F^2}
+	+\D_{ju}^2 \left[ -\frac{\d d\mc{I}(m_\pi)}{8F^2} + \frac{\d\mc{K(}m_\pi,m_X)}{4F^2} \right]
+\nonumber\\&\phantom{=}
+	-\D_{ju}^4 \frac{\d\mc{K}_{21}(m_\pi,m_X)}{24 F^2}
+	+\D_{ju}^2\D_{rs}^2 \frac{\d\mc{K}(m_\pi, m_{ss}, m_X)}{6F^2}
+\nonumber\\&= \sum_{|\mathbf{n}|\neq0} c_n \bigg\{
+	2\frac{\e_{ju}^2 K_1^{ju}}{x^{Ln}_{ju}}
+	+\frac{1}{2}\frac{\e_{\pi}^2 K_1^\pi}{x^{Ln}_{\pi}}
+%\nonumber\\&\qquad 
+	-\frac{1}{8}\frac{\D_{ju}^2}{(4\pi F)^2} \left[
+		\frac{2K_1^\pi}{x^{Ln}_{\pi}}
+		-K_0^\pi
+		-K_2^\pi
+	\right]
+\nonumber\\&\qquad 
+	+\frac{\D_{ju}^2}{4F^2} \frac{-1}{(m_X^2-m_\pi^2)} \frac{m_\pi^2}{4\pi^2} \frac{K_1^\pi}{x^{Ln}_{\pi}}
+\nonumber\\&\qquad 
+	-\frac{\D_{ju}^4}{24F^2} \left[
+	\frac{1}{(m_X^2-m_\pi^2)^2}\frac{-m_\pi^2}{4\pi^2} \frac{K_1^\pi}{x^{Ln}_{\pi}}
+	-\frac{1}{m_X^2 -m_\pi^2}\frac{1}{(4\pi)^2} \left[
+		\frac{2K_1^\pi}{x^{Ln}_{\pi}}
+		-K_0^\pi
+		-K_2^\pi
+	\right]
+	\right]
+\nonumber\\&\qquad 
+	+\frac{\D_{ju}^2\D_{rs}^2}{6F^2} \frac{1}{(m_\pi^2-m_X^2)(m_\pi^2-m_{ss}^2)}
+	\frac{m_\pi^2}{4\pi^2} \frac{K_1^\pi}{x^{Ln}_{\pi}}
+	\bigg\}
+\nonumber\\&= \sum_{|\mathbf{n}|\neq0} c_n \bigg\{
+	2\e_{ju}^2\frac{K_1^{ju}}{x^{Ln}_{ju}}
+	+\frac{\e_{\pi}^2}{2}\frac{K_1^\pi}{x^{Ln}_{\pi}}
+	-\frac{\e_{\D_{ju}}^2}{8} \left[
+		\frac{2K_1^\pi}{x^{Ln}_{\pi}}
+		-K_0^\pi
+		-K_2^\pi
+	\right]
+	-\frac{\e_{\D_{ju}}^2 \e_\pi^2}{\e_X^2-\e_\pi^2} \frac{K_1^\pi}{x^{Ln}_{\pi}}
+\nonumber\\&\qquad 
+	+\frac{\e_{\D_{ju}}^4}{24}(4\pi)^4F^2 \left[
+	\frac{4F^2\e_\pi^2 / (4\pi F)^4}{(\e_X^2-\e_\pi^2)^2} \frac{K_1^\pi}{x^{Ln}_{\pi}}
+	+\frac{1/(4\pi F)^2}{\e_X^2 -\e_\pi^2}\frac{1}{(4\pi)^2} \left[
+		\frac{2K_1^\pi}{x^{Ln}_{\pi}}
+		-K_0^\pi
+		-K_2^\pi
+	\right]
+	\right]
+\nonumber\\&\qquad 
+	+\frac{\e_{\D_{ju}}^2\e_{\D_{rs}}^2 4\e_\pi^2}{6(\e_\pi^2-\e_X^2)(\e_\pi^2-\e_{ss}^2)}
+	 \frac{K_1^\pi}{x^{Ln}_{\pi}}
+	\bigg\}
+%FINAL SIMPLIFICATION
+\nonumber\\&= \sum_{|\mathbf{n}|\neq0} c_n \bigg\{
+	2\e_{ju}^2\frac{K_1^{ju}}{x^{Ln}_{ju}}
+	+\frac{\e_{\pi}^2}{2}\frac{K_1^\pi}{x^{Ln}_{\pi}}
+	-\frac{\e_{\D_{ju}}^2}{8} \left[
+		\frac{2K_1^\pi}{x^{Ln}_{\pi}}
+		-K_0^\pi
+		-K_2^\pi
+	\right]
+	-\frac{\e_{\D_{ju}}^2 \e_\pi^2}{\e_X^2-\e_\pi^2} \frac{K_1^\pi}{x^{Ln}_{\pi}}
+\nonumber\\&\qquad 
+	+\frac{\e_{\D_{ju}}^4}{24} \left[
+	\frac{4\e_\pi^2}{(\e_X^2-\e_\pi^2)^2} \frac{K_1^\pi}{x^{Ln}_{\pi}}
+	+\frac{1}{\e_X^2 -\e_\pi^2} \left[
+		\frac{2K_1^\pi}{x^{Ln}_{\pi}}
+		-K_0^\pi
+		-K_2^\pi
+	\right]
+	\right]
+\nonumber\\&\qquad 
+	+\frac{2}{3}\frac{\e_{\D_{ju}}^2\e_{\D_{rs}}^2 \e_\pi^2}{(\e_\pi^2-\e_X^2)(\e_\pi^2-\e_{ss}^2)}
+	 \frac{K_1^\pi}{x^{Ln}_{\pi}}
+	\bigg\}
+\end{align}
+where $K_i^\phi = K_i(m_\phi L |\mathbf{n}|)$, $x^{LN}_\phi = m_\phi L |\mathbf{n}|$ and $\e_Y^2 = m_Y^2 / (4\pi F)^2$.
+The first 10 weights in the finite volume sum are listed in Table~\ref{tab:cn_weigths}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+% cN table
+\begin{table}
+\begin{ruledtabular}
+\begin{tabular}{c|cccccccccc}
+$|\mathbf{n}|$& 1 & $\sqrt{2}$& $\sqrt{3}$& $\sqrt{4}$& $\sqrt{5}$& $\sqrt{6}$& $\sqrt{7}$& $\sqrt{8}$& $\sqrt{9}$& $\sqrt{10}$\\
+\hline
+$c_n$& 6&12& 8& 6& 24& 24& 0& 12& 30& 24
+\end{tabular}
+\end{ruledtabular}
+\caption{\label{tab:cn_weigths}
+Finite volume weight factors for the first few finite volume modes.
+}
+\end{table}
+
+
+\section{Uncertainty and sensitivity analysis}
+
+\section{Conclusions and outlook}
+
+
+\citep{Aad:2012tfa} just so tex doesn't crash. Remove when we actually cite something.
+
+
+\bibliography{c51_bib}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
+
