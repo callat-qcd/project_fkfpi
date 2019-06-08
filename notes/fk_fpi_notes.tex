@@ -1,4 +1,4 @@
-\documentclass[prd,11pt,tightenlines,preprintnumbers,showpacs,superscriptaddress,notitlepage,nofootinbib,eqsecnum,floatfix]{revtex4-1}
+\documentclass[prd,11pt,tightenlines,preprintnumbers,showpacs,superscriptaddress,notitlepage,nofootinbib,eqsecnum,floatfix,longbibliography]{revtex4-1}
 % LOAD PREAMBLE
 \input{preamble.tex}
 % NEW COMMANDS
@@ -90,11 +90,20 @@ Notes on $F_K/F_\pi$ extrapolation
 
 \section{Strategy}
 We want to perform several extrapolations of our $F_K/F_\pi$ data and perform a weighted model average of these extrapolations.
-The four extrapolations to be performed are:
+The six extrapolations to be performed are:
 \begin{enumerate}
 \item NLO MA + NNLO c.t.: ratio of $F_K$ and $F_\pi$ fit functions
-
+\begin{enumerate}
+	\item Use full on-shell mixed meson mass as they appear
+	\item Use average mixed-meson mass splitting, where average is taken over all flavors and quark masses
+\end{enumerate}
 \item NLO MA + NNLO c.t.: Taylor expanded ratio of $F_K/F_\pi$ extrapolation functions
+\begin{enumerate}
+	\item Use full on-shell mixed meson mass as they appear
+	\item Use average mixed-meson mass splitting, where average is taken over all flavors and quark masses
+\end{enumerate}
+
+
 
 \item NLO $\chi$PT + discretization + NNLO c.t.: ratio of $F_K$ and $F_\pi$ fit functions
 
@@ -102,6 +111,20 @@ The four extrapolations to be performed are:
 
 \end{enumerate}
 In all cases, the predicted NLO finite volume corrections should be used.
+Also - we can change these 6 fits into 18 by treating the $F^2$ terms that appear in the NLO expressions and definitions of the $\e_\phi^2$ parameters as
+\begin{equation}
+F^2 \rightarrow \left\{
+	\begin{matrix}
+	F_\pi^2\\
+	F_\pi F_K\\
+	F_K^2
+	\end{matrix}\right.
+\end{equation}
+
+
+
+
+\subsection{Non analytic NLO loop integral functions}
 At NLO, the following functions arise in the extrapolation formulae (the $\ln$ terms arise from the infinite volume integrals and the sums over Bessel functions are the finite volume corrections):
 \begin{equation}
 \mc{I}(m) = \frac{m^2}{(4\pi)^2} \ln \left( \frac{m^2}{\mu^2} \right)
@@ -159,6 +182,34 @@ The NNLO and NNNLO counter term expressions are
 
 
 
+\subsection{NLO chiral extrapolation formulae}
+
+In these expressions, the $\eta$ meson mass can be approximated with the $SU(3)$ Gell-Mann--Okubo formula
+\begin{equation}
+m_\eta^2 = \frac{4}{3} m_K^2 - \frac{1}{3}m_\pi^2\, .
+\end{equation}
+The $X$ mass appearing in the MA formulae is
+\begin{equation}
+m_X^2 = m_\eta^2 + a^2 \D_{\rm I}
+\end{equation}
+where $a^2 \D_{\rm I}$ is the taste-identity mass splitting which MILC has determined~\cite{Bazavov:2012xda}.
+
+Given the quark mass tuning we have done, at LO in MA EFT~\cite{Chen:2006wf}, all partial quenching parameters are given by the taste-identity splitting
+\begin{equation}
+\D_{rs}^2 = \D_{ju}^2 = a^2 \D_{\rm I}\, .
+\end{equation}
+Also, all the mixed meson masses are given by
+\begin{equation}
+m_{val,sea}^2 = \frac{1}{2}m_{val,val}^2 + \frac{1}{2}m_{sea,sea,5}^2 + a^2 \Delta_{\rm Mix}
+	\simeq m_{val,val}^2 + a^2 \Delta_{\rm Mix}\, .
+\end{equation}
+We can plot the splitting over flavors and pion masses, and see how well this LO relation holds.  We will also fit using the full on-shell masses as they appear in the MA formula as well as use an average mixed-meson mass splitting, $a^2 \D_{\rm mix}$, averaged over the flavors and ensembles (possibly replace the average with extrapolation).
+
+
+
+
+
+
 
 \subsubsection{NLO MA + NNLO c.t. ratio}
 For these fits, we will do
@@ -167,15 +218,37 @@ For these fits, we will do
 \end{equation}
 where
 \begin{align}
-\frac{F_\pi^{\rm nlo}}{F_0} &= 
-	1 
+\frac{F_\pi^{\rm nlo}}{F_0} &= 1
 	- \frac{\mc{I}(m_{ju})}{F^2}
 	-\frac{\mc{I}(m_{ru})}{2F^2}
 	+4 \e_\pi^2 (4\pi)^2 (L_4 + L_5)
 	+8 \e_K^2 (4\pi)^2 L_4
 \end{align}
 
-
+\begin{align}
+\frac{F_K^{\rm nlo}}{F_0} &= 1
+	-\frac{\mc{I}(m_{ju})}{2F^2}
+	+\frac{\mc{I}(m_\pi)}{8F^2}
+	-\frac{\mc{I}(m_{ru})}{4F^2}
+	-\frac{\mc{I}(m_{sj})}{2F^2}
+	-\frac{\mc{I}(m_{rs})}{4F^2}
+	+\frac{\mc{I}(m_{ss})}{4F^2}
+	-\frac{3\mc{I}(m_X)}{8F^2}
+\nonumber\\&\phantom{=}
+	+4\e_\pi^2 L_4 + 4\e_K^2(L_5 + 2L_4)
+\nonumber\\&\phantom{=}
+	+\D_{ju}^2 \left[ -\frac{d\mc{I}(m_\pi)}{8F^2} + \frac{\mc{K(}m_\pi,m_X)}{4F^2} \right]
+	-\D_{ju}^4 \frac{\mc{K}_{21}(m_\pi,m_X)}{24 F^2}
+\nonumber\\&\phantom{=}
+	+\D_{ju}^2\D_{rs}^2 \left[ \frac{\mc{K}(m_\pi, m_{ss}, m_X)}{6F^2}
+		+\frac{\mc{K}_{21}(m_{ss},m_X)}{12F^2} \right]
+\nonumber\\&\phantom{=}
+	+\D_{rs}^2 \left[
+		\frac{\mc{K}(m_{ss},m_X)}{4F^2} 
+		-\frac{\mc{K}_{21}(m_{ss},m_X) m_K^2}{6F^2}
+		+\frac{\mc{K}_{21}(m_{ss},m_X) m_\pi^2}{6F^2}
+		\right]
+\end{align}
 
 
 \subsubsection{NLO MA + NNLO c.t. Taylor expanded ratio}
@@ -183,10 +256,10 @@ where
 \frac{F_K}{F_\pi} &= 1
 	+\frac{\mc{I(m_{ju})}}{2F^2}
 	+\frac{\mc{I}(m_\pi)}{8F^2}
-	-\frac{\mc{I}(m_{rs})}{4F^2}
 	+\frac{\mc{I}(m_{ru})}{4F^2}
 	-\frac{\mc{I}(m_{sj})}{2F^2}
 	+\frac{\mc{I}(m_{ss})}{4F^2}
+	-\frac{\mc{I}(m_{rs})}{4F^2}
 	-\frac{3\mc{I}(m_X)}{8F^2}
 \nonumber\\&\phantom{=}
 	+\D_{ju}^2 \left[ -\frac{d\mc{I}(m_\pi)}{8F^2} + \frac{\mc{K(}m_\pi,m_X)}{4F^2} \right]
@@ -205,18 +278,40 @@ where
 \end{align}
 
 \subsubsection{NLO $\chi$PT + NNLO c.t. ratio}
+For these fits, we will do
+\begin{equation}
+\frac{F_K}{F_\pi} = \frac{F_K^{\rm nlo}}{F_\pi^{\rm nlo}} + \d_{c.t.}^{\rm NNLO}
+\end{equation}
+where
+\begin{align}
+\frac{F_\pi^{\rm nlo}}{F_0} &= 1
+	- \frac{\mc{I}(m_\pi)}{F^2}
+	-\frac{1}{2}\frac{\mc{I}(m_K)}{F^2}
+	+4 \e_\pi^2 (4\pi)^2 (L_4 + L_5)
+	+8 \e_K^2 (4\pi)^2 L_4
+\end{align}
+and
+\begin{align}
+\frac{F_K^{\rm nlo}}{F_0} &= 1
+	-\frac{3}{8}\frac{\mc{I}(m_\pi)}{F^2}
+	-\frac{3}{4}\frac{\mc{I}(m_K)}{F^2}
+	-\frac{3\mc{I}(m_\eta)}{8F^2}
+%\nonumber\\&\phantom{=}
+	+4\e_\pi^2 L_4 + 4\e_K^2(L_5 + 2L_4)
+\end{align}
+
 
 
 \subsubsection{NLO $\chi$PT + NNLO c.t. Taylor expansion}
 \begin{align}\label{eq:fkfpi_chpt}
 \frac{F_K}{F_\pi} &= 1
-	+\frac{5}{8} \e_\pi^2 \ell_\pi
-	-\frac{1}{4} \e_K^2 \ell_K
-	-\frac{3}{8} \e_\eta^2 \ell_\eta
+	+\frac{5}{8} \frac{\mc{I}(m_\pi)}{F^2}
+	-\frac{1}{4} \frac{\mc{I}(m_K)}{F^2}
+	-\frac{3}{8} \frac{\mc{I}(m_\eta)}{F^2}
 %\nonumber\\&\phantom{=}
 	+4(\e_K^2 - \e_\pi^2) (4\pi)^2 L_5(\L_{\chi})
 %\nonumber\\&\phantom{=}
-	+ \d_{c.t.}^{NNLO}
+	+ \d_{c.t.}^{\rm NNLO}
 \end{align}
 
 
@@ -323,12 +418,6 @@ Finite volume weight factors for the first few finite volume modes.
 \end{table}
 
 
-\section{Uncertainty and sensitivity analysis}
-
-\section{Conclusions and outlook}
-
-
-\citep{Aad:2012tfa} just so tex doesn't crash. Remove when we actually cite something.
 
 
 \bibliography{c51_bib}
