@@ -12,26 +12,28 @@ from fitter import fitter
 
 class bootstrapper(object):
 
-    def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None, order=None):
+    def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
+                 order_fit=None, order_vol=None, order_latt_spacing=None, fit_type=None):
+
+        if fit_type is None:
+            fit_type = 'mix'
 
         if bs_N is None or bs_N==0:
             bs_N = len(fit_data[fit_data.keys()[0]]['mpi'])
 
-        if order is None:
-            order = 0
+        if order_fit is None:
+            order_fit = 0
+        if order_latt_spacing is None:
+            order_latt_spacing = 2
+        if order_vol is None:
+            order_vol = 1
 
         if prior is None:
             prior = {
-                'l_5lam' : '1(1)',
-                'l_ju' : '1(1)',
-                'l_pi' : '1(1)',
-                'l_rs' : '1(1)',
-                'l_ru' : '1(1)',
-                'l_sj' : '1(1)',
-                'l_ss' : '1(1)',
-                'l_x' : '1(1)',
-                'l_a2' : '1(1)',
-                'l_vol' : '1(1)'
+                'L_5_lam' : '0(0.5)',
+                'c_a' : np.repeat(gv.gvar('0(1)'), order_latt_spacing),
+                'c_mpia2' : '2(0.5)',
+                'c_vol' : np.repeat(gv.gvar('0(1)'), order_vol),
             }
             prior = gv.gvar(prior)
 
@@ -50,9 +52,13 @@ class bootstrapper(object):
                     data[abbr][data_parameter] = gv.gvar(means, np.repeat(unc, len(means)))
                 except IndexError:
                     pass
-                if data_parameter in ['a2DI', 'aw0']:
+                if data_parameter in ['a2DI']:
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
                     data[abbr][data_parameter] = np.repeat(to_gvar(fit_data[abbr][data_parameter]), bs_N)
+                elif data_parameter in ['aw0']:
+                    to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
+                    w0 = 5.81743
+                    data[abbr]['a'] = np.repeat(to_gvar(fit_data[abbr][data_parameter])/w0, bs_N)
 
         #abbrs = sorted(fit_data.keys())
         #to_gvar = lambda x : gv.gvar(x[0], x[1])
@@ -63,20 +69,24 @@ class bootstrapper(object):
         self.variable_names = sorted(fit_data[self.abbrs[0]].keys())
         self.fit_data = data
         self.prior = prior
-        self.order = order
-        self.w0 = 5.81743
+        self.order_fit = order_fit
+        self.order_latt_spacing = order_latt_spacing
+        self.order_vol = order_vol
         self.fits = None
         self.bs_fit_parameters = None
         self.fit_parameters = None
+        self.fit_type = fit_type
 
     def __str__(self):
         bs_fit_parameters = self.get_bootstrap_parameters()
         prior = self.prior
 
-        output = "\n\nFitting to order %s \n" %(self.order)
+        output = "\n\nFitting to order %s \n" %(self.order_fit)
+        output = output + " with lattice corrections O(%s) \n" %(self.order_latt_spacing)
+        output = output + " with volume corrections O(%s) \n" %(self.order_vol)
         output = output + "Fitted/[Experimental] values at physical point:\n"
         output = output + '\nF_K / F_pi = %s [%s]\n'%(
-                            self.fk_fpi_fit_fcn(self.get_phys_point_data()),
+                            self.extrapolate_to_phys_point(),
                             self.get_phys_point_data('FK')/self.get_phys_point_data('Fpi'))
         output = output + "\n"
 
@@ -119,12 +129,14 @@ class bootstrapper(object):
         prepped_data = self._make_fit_data(j)
         # Need to randomize prior in bayesian-bootstrap hybrid
         temp_prior = self._randomize_prior(self.prior, j)
-        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, order=self.order)
+        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior,
+                        order_fit=self.order_fit, order_latt_spacing=self.order_latt_spacing,
+                        order_vol=self.order_vol, fit_type=self.fit_type)
         return temp_fitter.get_fit()
 
     def _make_fit_data(self, j):
         prepped_data = {}
-        for parameter in ['a2DI', 'aw0', 'FK', 'Fpi', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'MpiL']:
+        for parameter in ['a2DI', 'a', 'FK', 'Fpi', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'MpiL']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter][j] for abbr in self.abbrs])
 
         y = ([self.fit_data[abbr]['FK'][j]/self.fit_data[abbr]['Fpi'][j] for abbr in self.abbrs])
@@ -166,6 +178,7 @@ class bootstrapper(object):
             sys.stdout.flush()
         end_time = time.time()
         print "Time (s): ",  end_time - start_time
+        print "Compiling results..."
 
     def create_prior_from_fit(self):
         output = {}
@@ -184,47 +197,42 @@ class bootstrapper(object):
         return to_gvar(self.fk_fpi_fit_fcn(self.fit_data[abbr]))
 
     def extrapolate_to_phys_point(self):
-        return self.fk_fpi_fit_fcn(self.get_phys_point_data())
+        return self.fk_fpi_fit_fcn(self.get_phys_point_data())[0]
 
-    def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None):
+    def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None, fit_type=None):
         if fit_data is None:
             fit_data = self.get_phys_point_data()
         if fit_parameters is None:
             fit_parameters = self.get_fit_parameters()
+        if fit_type is None:
+            fit_type = self.fit_type
 
-        model = fitter(order=self.order)._make_models(fit_data)[0]
+        model = fitter(order_fit=self.order_fit, order_vol=self.order_vol,
+                       order_latt_spacing=self.order_latt_spacing,
+                       fit_type=fit_type)._make_models(fit_data)[0]
         return model.fitfcn(p=fit_parameters, fit_data=fit_data)
 
     # Returns dictionary with keys fit parameters, entries bs results
     def get_bootstrap_parameters(self):
-        bs_fit_parameters = self.bs_fit_parameters
-        if self.bs_fit_parameters is None:
+        # Make fits if they haven't been made yet
+        if self.fits is None:
+            self.bootstrap_fits()
 
-            # Make fits if they haven't been made yet
-            if self.fits is None:
-                self.bootstrap_fits()
+        # Get all fit parameters
+        parameters = self.prior.keys()
 
-            # Get all fit parameters
-            parameters = self.prior.keys()
+        # Make dictionary
+        temp_fit = self.fits[0]
+        bs_fit_parameters = {parameter : np.array([gv.mean(temp_fit.p[parameter])]).flatten() for parameter in parameters}
 
-            # Make dictionary if it doesn't exist yet
-            if bs_fit_parameters is None:
-                bs_fit_parameters = {parameter : np.array([]) for parameter in parameters}
+        # Populate it with bs fits
+        for j in range(1, self.bs_N):
+            temp_fit = self.fits[j]
+            for parameter in parameters:
+                bs_fit_parameters[parameter] = np.vstack((bs_fit_parameters[parameter],
+                                                        np.array([gv.mean(temp_fit.p[parameter])]).flatten()))
 
-            print "Getting bs fit parameters..."
-            for j in range(self.bs_N):
-                temp_fit = self.fits[j]
-                for parameter in parameters:
-                    bs_fit_parameters[parameter] = np.append(bs_fit_parameters[parameter], gv.mean(temp_fit.p[parameter]))
-
-                sys.stdout.write("\r{0}% complete".format(int((float(j+1)/self.bs_N)*100)))
-                print "",
-                sys.stdout.flush()
-
-            self.bs_fit_parameters = bs_fit_parameters
-            return bs_fit_parameters
-        else:
-            return bs_fit_parameters
+        return bs_fit_parameters
 
     # Returns keys of fit parameters
     def get_fit_keys(self):
@@ -235,13 +243,12 @@ class bootstrapper(object):
         if self.fit_parameters is None:
             fit_parameters = gv.dataset.avg_data(self.get_bootstrap_parameters(), bstrap=True)
             self.fit_parameters = fit_parameters
-            print self.fit_parameters.keys()
         return self.fit_parameters
 
     # need to convert to/from lattice units
     def get_phys_point_data(self, parameter=None):
         phys_point_data = {
-            'aw0' : 0,
+            'a' : 0,
             'MpiL' : np.infty,
 
             'mpi' : gv.gvar('138.05638(37)'),
@@ -397,8 +404,7 @@ class bootstrapper(object):
             y = y + 1
 
             # fit result
-            fit_value = self.extrapolate_to_phys_point()[0]
-            print fit_value
+            fit_value = self.extrapolate_to_phys_point()
             x = gv.mean(fit_value)
             xerr = gv.sdev(fit_value)
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
@@ -479,7 +485,7 @@ class bootstrapper(object):
                 hbar_c = 197.327# used to convert to phys units
                 plot_data[j] = {}
                 for abbr in self.abbrs:
-                    plot_data[j][abbr] = myfcn[j](self.fit_data[abbr][parameter] *hbar_c / (self.fit_data[abbr]['aw0'] /self.w0))
+                    plot_data[j][abbr] = myfcn[j](self.fit_data[abbr][parameter] *hbar_c / (self.fit_data[abbr]['a']))
             else:
                 plot_data[j] = {abbr :  myfcn[j](self.fit_data[abbr][parameter]) for abbr in self.abbrs}
 
@@ -488,7 +494,7 @@ class bootstrapper(object):
             color_parameter = 'a'
 
         if color_parameter in ['a']:
-            color_data = {abbr : np.repeat(self.fit_data[abbr]['aw0'][0]/self.w0, self.bs_N).ravel() for abbr in self.abbrs}
+            color_data = {abbr : np.repeat(self.fit_data[abbr]['a'][0], self.bs_N).ravel() for abbr in self.abbrs}
         elif color_parameter in ['L']:
             color_data = {abbr : np.repeat(gv.mean(self.fit_data[abbr][color_parameter]), self.bs_N).ravel() for abbr in self.abbrs}
         elif color_parameter == 'MpiL':
@@ -526,12 +532,13 @@ class bootstrapper(object):
                              ecolor='C1', elinewidth=10.0)
 
             colors = ['black', 'purple', 'green', 'red']
-            for j, a in enumerate([0.0, 0.09, 0.12, 0.15]):
+            lattice_spacings = np.unique(self._make_fit_data(0)['a'])
+            for j, a in enumerate(np.concatenate(([0]), lattice_spacings)):
                 minimum = np.nanmin([np.nanmin(
-                    self.fit_data[abbr][xy_parameters[0]] *hbar_c / (self.fit_data[abbr]['aw0'] /self.w0)
+                    self.fit_data[abbr][xy_parameters[0]] *hbar_c / (self.fit_data[abbr]['a'])
                 ) for abbr in self.abbrs])
                 maximum = np.nanmax([np.nanmax(
-                    self.fit_data[abbr][xy_parameters[0]] *hbar_c / (self.fit_data[abbr]['aw0'] /self.w0)
+                    self.fit_data[abbr][xy_parameters[0]] *hbar_c / (self.fit_data[abbr]['a'])
                 ) for abbr in self.abbrs])
                 delta = maximum - minimum
 
@@ -541,7 +548,7 @@ class bootstrapper(object):
                 # Get phys point data, substituting x-data and current 'a' in loop
                 prepped_data = self.get_phys_point_data()
                 prepped_data[xy_parameters[0]] = x
-                prepped_data['aw0'] = a*self.w0
+                prepped_data['a'] = a
 
                 y = self.fk_fpi_fit_fcn(fit_data=prepped_data)
 
