@@ -239,11 +239,15 @@ class bootstrapper(object):
         return sorted(self.get_bootstrap_parameters().keys())
 
     # Returns dictionary with keys fit parameters, entries gvar results
-    def get_fit_parameters(self):
+    def get_fit_parameters(self, parameter=None):
         if self.fit_parameters is None:
             fit_parameters = gv.dataset.avg_data(self.get_bootstrap_parameters(), bstrap=True)
             self.fit_parameters = fit_parameters
-        return self.fit_parameters
+
+        if parameter is None:
+            return self.fit_parameters
+        else:
+            return self.fit_parameters[parameter]
 
     # need to convert to/from lattice units
     def get_phys_point_data(self, parameter=None):
