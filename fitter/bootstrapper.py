@@ -13,7 +13,7 @@ from fitter import fitter
 class bootstrapper(object):
 
     def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
-                 order_fit=None, order_vol=None, order_latt_spacing=None, fit_type=None):
+                 order=None, fit_type=None):
 
         if fit_type is None:
             fit_type = 'mix'
@@ -21,19 +21,19 @@ class bootstrapper(object):
         if bs_N is None or bs_N==0:
             bs_N = len(fit_data[fit_data.keys()[0]]['mpi'])
 
-        if order_fit is None:
-            order_fit = 0
-        if order_latt_spacing is None:
-            order_latt_spacing = 2
-        if order_vol is None:
-            order_vol = 1
+        if order is None:
+            order = {
+                'fit' : 1,
+                'latt_spacing' : 2, # no order 1 term -- starts at 2
+                'vol' : 1
+            }
 
         if prior is None:
             prior = {
                 'L_5_lam' : '0(0.5)',
-                'c_a' : np.repeat(gv.gvar('0(1)'), order_latt_spacing),
+                'c_a' : np.repeat(gv.gvar('0(1)'), order['latt_spacing']),
                 'c_mpia2' : '2(0.5)',
-                'c_vol' : np.repeat(gv.gvar('0(1)'), order_vol),
+                'c_vol' : np.repeat(gv.gvar('0(1)'), order['vol']),
             }
             prior = gv.gvar(prior)
 
@@ -60,30 +60,29 @@ class bootstrapper(object):
                     w0 = 5.81743
                     data[abbr]['a'] = np.repeat(to_gvar(fit_data[abbr][data_parameter])/w0, bs_N)
 
-        #abbrs = sorted(fit_data.keys())
-        #to_gvar = lambda x : gv.gvar(x[0], x[1])
-        #prior['a2DI'] = [to_gvar(fit_data[abbr]['a2DI']) for abbr in abbrs]
+        for abbr in abbrs:
+            hbar_c = 197.327
+            a = data[abbr]['a']
+            data[abbr]['lam2_chi'] = self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2
 
         self.bs_N = bs_N
         self.abbrs = sorted(abbrs)
         self.variable_names = sorted(fit_data[self.abbrs[0]].keys())
         self.fit_data = data
         self.prior = prior
-        self.order_fit = order_fit
-        self.order_latt_spacing = order_latt_spacing
-        self.order_vol = order_vol
+        self.order = order
         self.fits = None
         self.bs_fit_parameters = None
         self.fit_parameters = None
         self.fit_type = fit_type
 
     def __str__(self):
-        bs_fit_parameters = self.get_bootstrap_parameters()
+        bs_fit_parameters = self.get_bootstrapped_fit_parameters()
         prior = self.prior
 
-        output = "\n\nFitting to order %s \n" %(self.order_fit)
-        output = output + " with lattice corrections O(%s) \n" %(self.order_latt_spacing)
-        output = output + " with volume corrections O(%s) \n" %(self.order_vol)
+        output = "\n\nFitting to order %s \n" %(self.order['fit'])
+        output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
+        output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
         output = output + "Fitted/[Experimental] values at physical point:\n"
         output = output + '\nF_K / F_pi = %s [%s]\n'%(
                             self.extrapolate_to_phys_point(),
@@ -130,13 +129,12 @@ class bootstrapper(object):
         # Need to randomize prior in bayesian-bootstrap hybrid
         temp_prior = self._randomize_prior(self.prior, j)
         temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior,
-                        order_fit=self.order_fit, order_latt_spacing=self.order_latt_spacing,
-                        order_vol=self.order_vol, fit_type=self.fit_type)
+                        order=self.order, fit_type=self.fit_type)
         return temp_fitter.get_fit()
 
     def _make_fit_data(self, j):
         prepped_data = {}
-        for parameter in ['a2DI', 'a', 'FK', 'Fpi', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'MpiL']:
+        for parameter in ['a2DI', 'a', 'FK', 'Fpi', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'MpiL', 'lam2_chi']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter][j] for abbr in self.abbrs])
 
         y = ([self.fit_data[abbr]['FK'][j]/self.fit_data[abbr]['Fpi'][j] for abbr in self.abbrs])
@@ -207,13 +205,11 @@ class bootstrapper(object):
         if fit_type is None:
             fit_type = self.fit_type
 
-        model = fitter(order_fit=self.order_fit, order_vol=self.order_vol,
-                       order_latt_spacing=self.order_latt_spacing,
-                       fit_type=fit_type)._make_models(fit_data)[0]
+        model = fitter(order=self.order, fit_type=fit_type)._make_models(fit_data)[0]
         return model.fitfcn(p=fit_parameters, fit_data=fit_data)
 
     # Returns dictionary with keys fit parameters, entries bs results
-    def get_bootstrap_parameters(self):
+    def get_bootstrapped_fit_parameters(self):
         # Make fits if they haven't been made yet
         if self.fits is None:
             self.bootstrap_fits()
@@ -236,12 +232,12 @@ class bootstrapper(object):
 
     # Returns keys of fit parameters
     def get_fit_keys(self):
-        return sorted(self.get_bootstrap_parameters().keys())
+        return sorted(self.get_bootstrapped_fit_parameters().keys())
 
     # Returns dictionary with keys fit parameters, entries gvar results
     def get_fit_parameters(self, parameter=None):
         if self.fit_parameters is None:
-            fit_parameters = gv.dataset.avg_data(self.get_bootstrap_parameters(), bstrap=True)
+            fit_parameters = gv.dataset.avg_data(self.get_bootstrapped_fit_parameters(), bstrap=True)
             self.fit_parameters = fit_parameters
 
         if parameter is None:
@@ -263,12 +259,13 @@ class bootstrapper(object):
 
             'a2DI' : 0, # Need to check this
             'Fpi' : gv.gvar('91.9(3.5)'),
-            'FK' : gv.gvar('110.38(64)')
+            'FK' : gv.gvar('110.38(64)'),
         }
         phys_point_data['mss'] = np.sqrt((4*phys_point_data['mk']**2 - phys_point_data['mpi']**2)/3.0)
         phys_point_data['mss'] = phys_point_data['mss'] * 1.00000001
         phys_point_data['mrs'] = phys_point_data['mss']
         phys_point_data['FK/Fpi'] = phys_point_data['FK'] / phys_point_data['Fpi']
+        phys_point_data['lam2_chi'] = (4*np.pi)**2 *phys_point_data['FK'] * phys_point_data['Fpi']
         if parameter is None:
             return phys_point_data
         else:
@@ -279,14 +276,14 @@ class bootstrapper(object):
         figs.append(self.plot_fit_bar_graph())
 
         squared = lambda x : x**2
-        figs.append(self.plot_parameters(xy_parameters=['Fpi', 'FK/Fpi'],
-                    xlabel='$F_\pi$ (MeV)', color_parameter='a'))
-        figs.append(self.plot_parameters(xy_parameters=['FK', 'FK/Fpi'],
-                    xlabel='$F_K$ (MeV)', color_parameter='a'))
+        #figs.append(self.plot_parameters(xy_parameters=['mpi', 'FK/Fpi'],
+        #            xlabel='$F_\pi$ (MeV)', color_parameter='a'))
+        #figs.append(self.plot_parameters(xy_parameters=['FK', 'FK/Fpi'],
+        #            xlabel='$F_K$ (MeV)', color_parameter='a'))
         figs.append(self.plot_parameters(xy_parameters=['mpi', 'FK/Fpi'],
                     xfcn=squared, xlabel='$m_\pi^2$ (MeV)$^2$', color_parameter='a'))
-        figs.append(self.plot_parameters(xy_parameters=['mk', 'FK/Fpi'],
-                    xfcn=squared, xlabel='$m_K^2$ (MeV)$^2$', color_parameter='a'))
+        #figs.append(self.plot_parameters(xy_parameters=['mk', 'FK/Fpi'],
+        #            xfcn=squared, xlabel='$m_K^2$ (MeV)$^2$', color_parameter='a'))
 
         if show_bootstrap_histograms:
             # Make histograms
@@ -299,7 +296,7 @@ class bootstrapper(object):
             # Casts indixes of fit_keys as an upper-triangular matrix,
             # thereby allowing us to get all the 2-combinations
             # of the set of fit_keys
-            fit_keys = self.get_bootstrap_parameters().keys()
+            fit_keys = self.get_bootstrapped_fit_parameters().keys()
             rs,cs = np.triu_indices(len(fit_keys),1)
             for (i, j) in zip(rs, cs):
                 figs.append(self.plot_error_ellipsis([fit_keys[i], fit_keys[j]]))
@@ -308,8 +305,8 @@ class bootstrapper(object):
 
     # Takes an array (eg, ['l_ju', 'l_pi'])
     def plot_error_ellipsis(self, fit_keys):
-        x = self.get_bootstrap_parameters()[fit_keys[0]]
-        y = self.get_bootstrap_parameters()[fit_keys[1]]
+        x = self.get_bootstrapped_fit_parameters()[fit_keys[0]]
+        y = self.get_bootstrapped_fit_parameters()[fit_keys[1]]
 
 
         fig, ax = plt.subplots()
@@ -435,7 +432,7 @@ class bootstrapper(object):
 
 
     def plot_parameter_histogram(self, parameter):
-        data = self.get_bootstrap_parameters()[parameter]
+        data = self.get_bootstrapped_fit_parameters()[parameter]
         fig, ax = plt.subplots()
         n, bins, patches = plt.hist(data, self.bs_N/10, normed=True, facecolor='green', alpha=0.75)
 
@@ -466,9 +463,12 @@ class bootstrapper(object):
 
         return fig
 
-    # xy_parameters is an array (eg, ['mpi', 'Fpi'])
     def plot_parameters(self, xy_parameters, color_parameter=None,
                         xfcn=None, xlabel=None, yfcn=None, ylabel=None, show_fit=True):
+
+        # used to convert to phys units
+        hbar_c = 197.327
+
         if xlabel is None:
             xlabel = self._fmt_key_as_latex(xy_parameters[0])
         if ylabel is None:
@@ -483,10 +483,14 @@ class bootstrapper(object):
         myfcn = [xfcn, yfcn]
         for j, parameter in enumerate(xy_parameters):
             if parameter in ['FK/Fpi', 'FK / Fpi']:
-                plot_data[j] = {abbr :  myfcn[j](self.fit_data[abbr]['FK'] /self.fit_data[abbr]['Fpi']) for abbr in self.abbrs}
+                if xy_parameters[0] == 'mpi':
+                    # Shift FK/Fpi data in scatterplot to account for fitting at phys point
+                    plot_data[j] = {abbr : myfcn[j](self.shift_fk_fpi_for_phys_mk(abbr)) for abbr in self.abbrs}
+                else:
+                    plot_data[j] = {abbr :  myfcn[j](self.fit_data[abbr]['FK'] /self.fit_data[abbr]['Fpi']) for abbr in self.abbrs}
             elif parameter in ['mpi', 'mju', 'mru', 'mk', 'mrs', 'mss', 'FK', 'Fpi']:
                 # Convert to physical units
-                hbar_c = 197.327# used to convert to phys units
+
                 plot_data[j] = {}
                 for abbr in self.abbrs:
                     plot_data[j][abbr] = myfcn[j](self.fit_data[abbr][parameter] *hbar_c / (self.fit_data[abbr]['a']))
@@ -509,7 +513,7 @@ class bootstrapper(object):
         # Color by lattice spacing/length
         cmap = matplotlib.cm.get_cmap('rainbow')
         min_max = lambda x : [np.min(x), np.max(x)]
-        minimum, maximum = min_max(np.concatenate([color_data[abbr] for abbr in self.abbrs]))
+        minimum, maximum = min_max(np.concatenate([gv.mean(color_data[abbr]) for abbr in self.abbrs]))
         norm = matplotlib.colors.Normalize(vmin=minimum, vmax=maximum)
 
         # Get scatter plot & color data
@@ -519,14 +523,14 @@ class bootstrapper(object):
         for j, abbr in enumerate(self.abbrs):
             x[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(plot_data[0][abbr])
             y[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(plot_data[1][abbr])
-            z[j*self.bs_N:(j+1)*self.bs_N] = color_data[abbr]
+            z[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(color_data[abbr])
 
         sc = plt.scatter(x, y, c=z, vmin=minimum, vmax=maximum,
                          cmap=cmap, rasterized=True, marker=".", alpha=100.0/self.bs_N)
 
         if ((show_fit)
                 and (xy_parameters[1] in ['FK/Fpi', 'FK / Fpi'])
-                and (xy_parameters[0] in['mpi', 'mju', 'mru', 'mk', 'mrs', 'mss', 'FK', 'Fpi'])):
+                and (xy_parameters[0] in['mpi', 'mju', 'mru', 'mk', 'mrs', 'mss'])):
 
             plt.axvline(gv.mean(xfcn(self.get_phys_point_data(xy_parameters[0]))), label='Phys point')
             y_phys = self.get_phys_point_data('FK/Fpi')
@@ -537,16 +541,20 @@ class bootstrapper(object):
 
             colors = ['black', 'purple', 'green', 'red']
             lattice_spacings = np.unique(self._make_fit_data(0)['a'])
-            for j, a in enumerate(np.concatenate(([0]), lattice_spacings)):
+            for j, a in enumerate(np.append([gv.gvar('0(0)')], lattice_spacings)):
+
                 minimum = np.nanmin([np.nanmin(
                     self.fit_data[abbr][xy_parameters[0]] *hbar_c / (self.fit_data[abbr]['a'])
                 ) for abbr in self.abbrs])
                 maximum = np.nanmax([np.nanmax(
                     self.fit_data[abbr][xy_parameters[0]] *hbar_c / (self.fit_data[abbr]['a'])
                 ) for abbr in self.abbrs])
+                minimum = gv.mean(minimum)
+                maximum = gv.mean(maximum)
                 delta = maximum - minimum
 
                 x = np.linspace(np.max((minimum - 0.05*delta, 0)), maximum + 0.05*delta)
+
 
 
                 # Get phys point data, substituting x-data and current 'a' in loop
@@ -588,3 +596,32 @@ class bootstrapper(object):
         fig = plt.gcf()
         plt.close()
         return fig
+
+    def shift_fk_fpi_for_phys_mk(self, abbr):
+        pi = np.pi
+        hbar_c = 197.327
+        lam2_chi = self.get_phys_point_data('lam2_chi')
+
+        fkfpi_ens = self.fit_data[abbr]['FK'] / self.fit_data[abbr]['Fpi']
+
+        to_phys = lambda m : m *hbar_c / self.fit_data[abbr]['a']
+        eps2_k = (to_phys(self.fit_data[abbr]['mk']))**2 / lam2_chi
+        eps2_k_phys = (self.get_phys_point_data('mk'))**2 / lam2_chi
+        eps2_pi = (to_phys(self.fit_data[abbr]['mpi']))**2 / lam2_chi
+        eps2_pi_phys = (self.get_phys_point_data('mpi'))**2 / lam2_chi
+
+        to_eta = lambda xk, xpi : (4.0/3.0) *xk - (1.0/3.0) *xpi
+        eps2_x = to_eta(eps2_k, eps2_pi)
+        eps2_x_phys = to_eta(eps2_k_phys, eps2_pi_phys)
+
+        L_5_lam = self.get_fit_parameters('L_5_lam')
+
+        delta = lambda xphys, xens : (xphys *np.log(xphys) - xens *np.log(xens))
+        shifted_fkfpi = (
+            fkfpi_ens
+            - (1.0/4.0) *delta(eps2_k_phys, eps2_k)
+            - (3.0/8.0) *delta(eps2_x_phys, eps2_x)
+            + 4 *(4*pi)**2 *(eps2_k_phys - eps2_k) *L_5_lam
+        )
+
+        return shifted_fkfpi

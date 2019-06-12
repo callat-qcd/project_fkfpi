@@ -5,16 +5,15 @@ import gvar as gv
 
 class fitter(object):
 
-    def __init__(self, fit_data=None, prior=None, fit_type=None,
-                 order_fit=None, order_latt_spacing=None, order_vol=None):
+    def __init__(self, fit_data=None, prior=None, fit_type=None, order=None):
 
         # Renormalization momentum
-        if order_fit is None:
-            order_fit = 0
-        if order_latt_spacing is None:
-            order_latt_spacing = 2
-        if order_vol is None:
-            order_vol = 1
+        if order is None:
+            order = {
+                'fit' : 1,
+                'latt_spacing' : 2, # no order 1 term -- starts at 2
+                'vol' : 1
+            }
 
         if fit_type is None:
             fit_type = 'mix'
@@ -22,9 +21,7 @@ class fitter(object):
         self.prior = prior
         self.fit_data = fit_data
         self.fit = None
-        self.order_fit = order_fit
-        self.order_latt_spacing = order_latt_spacing
-        self.order_vol = order_vol
+        self.order = order
         self.fit_type = fit_type
 
     def get_fit(self):
@@ -46,33 +43,29 @@ class fitter(object):
 
         models = np.array([])
         models = np.append(models, fk_fpi_model(datatag='fk_fpi', fit_data=fit_data,
-                    order_fit=self.order_fit, order_latt_spacing=self.order_latt_spacing,
-                    order_vol=self.order_vol, fit_type=self.fit_type))
+                    order=self.order, fit_type=self.fit_type))
         return models
 
 
 
 class fk_fpi_model(lsqfit.MultiFitterModel):
 
-    def __init__(self, datatag, fit_data, fit_type=None,
-                 order_fit=None, order_latt_spacing=None, order_vol=None):
+    def __init__(self, datatag, fit_data, fit_type=None, order=None):
         super(fk_fpi_model, self).__init__(datatag)
 
-        if order_fit is None:
-            order_fit = 0
-        if order_latt_spacing is None:
-            order_latt_spacing = 2
-        if order_vol is None:
-            order_vol = 1
+        if order is None:
+            order = {
+                'fit' : 1,
+                'latt_spacing' : 2, # no order 1 term -- starts at 2
+                'vol' : 1
+            }
 
         if fit_type is None:
             fit_type = 'mix'
 
         # Fit data
         self.fit_data = fit_data
-        self.order_fit = order_fit
-        self.order_latt_spacing = order_latt_spacing
-        self.order_vol = order_vol
+        self.order = order
         self.fit_type = fit_type
 
     def fitfcn(self, p, fit_data=None):
@@ -96,8 +89,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
     def fitfcn_mpia_corrections(self, p):
         a = p['a']
         mpi = p['mpi']
-        lam2_chi = 16 *np.pi**2 *(p['Fpi'] *p['FK'])
-        output = (a *mpi /lam2_chi)**2 *p['c_mpia2']
+        lam2_chi = p['lam2_chi']
+        output = (a *mpi)**2 /lam2_chi *p['c_mpia2']
         return output
 
     # Look at arxiv/1001.4692, section 2.4
@@ -107,7 +100,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return output
 
     def fitfcn_latt_spacing_corections(self, p):
-        order = self.order_latt_spacing
+        order = self.order['latt_spacing']
         a = p['a']
         output = 0
 
@@ -124,10 +117,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         # Constants
         pi = np.pi
-        order = self.order_fit
+        order = self.order['fit']
 
         # Independent variables
-        lam2_chi = 16 *pi**2 *(p['Fpi'] *p['FK'])
+        lam2_chi = p['lam2_chi']
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
         eps2_x = (4.0/3.0) *eps2_k - (1.0/3.0) *eps2_pi
@@ -147,10 +140,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         # Constants
         pi = np.pi
-        order = self.order_fit
+        order = self.order['fit']
 
         # Independent variables
-        lam2_chi = 16 *pi**2 *(p['Fpi'] *p['FK'])
+        lam2_chi = p['lam2_chi']
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
         eps2_ss = p['mss']**2 / lam2_chi
@@ -217,9 +210,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def buildprior(self, prior, mopt=None, extend=False):
         newprior = gv.BufferDict()
-        order_fit = self.order_fit
-        order_latt_spacing = self.order_latt_spacing
-        order_vol = self.order_vol
+        order = self.order
 
         if True:
             fit_data = self.fit_data
@@ -232,6 +223,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             newprior['mru'] = fit_data['mru']
             newprior['mrs'] = fit_data['mrs']
             newprior['a2DI'] = fit_data['a2DI']
+            newprior['lam2_chi'] = fit_data['lam2_chi']
 
             newprior['a'] = fit_data['a']
             newprior['MpiL'] = fit_data['MpiL']
@@ -247,22 +239,22 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         for key in keys_0:
             newprior[key] = prior[key]
 
-        if order_fit >= 1:
+        if order['fit'] >= 1:
             for key in keys_1:
                 newprior[key] = prior[key]
 
-        if order_fit >= 2:
+        if order['fit'] >= 2:
             for key in keys_2:
                 newprior[key] = prior[key]
 
         # Lattice artifacts
-        newprior['c_a'] = np.empty(order_latt_spacing)
-        for j in range(order_latt_spacing):
+        newprior['c_a'] = np.empty(order['latt_spacing'])
+        for j in range(order['latt_spacing']):
             newprior['c_a'][j] = prior['c_a'][j]
 
         # Volume term
-        newprior['c_vol'] = np.empty(order_vol)
-        for j in range(order_vol):
+        newprior['c_vol'] = np.empty(order['vol'])
+        for j in range(order['vol']):
            newprior['c_vol'][j] = prior['c_vol'][j]
 
          # Other term
