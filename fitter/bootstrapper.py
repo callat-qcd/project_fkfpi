@@ -9,6 +9,7 @@ import re
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 
 from fitter import fitter
+from special_functions import *
 
 class bootstrapper(object):
 
