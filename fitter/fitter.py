@@ -2,6 +2,8 @@ import lsqfit
 import numpy as np
 import gvar as gv
 
+# import fcn_T_m, fcn_dI_m, etc
+from special_functions import *
 
 class fitter(object):
 
@@ -10,7 +12,7 @@ class fitter(object):
         # Renormalization momentum
         if order is None:
             order = {
-                'fit' : 1,
+                'fit' : 'nlo',
                 'latt_spacing' : 2, # no order 1 term -- starts at 2
                 'vol' : 1
             }
@@ -55,7 +57,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         if order is None:
             order = {
-                'fit' : 1,
+                'fit' : 'nlo',
                 'latt_spacing' : 2, # no order 1 term -- starts at 2
                 'vol' : 1
             }
@@ -74,15 +76,25 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 p[key] = fit_data[key]
 
         # Lattice artifact terms
-        output = (self.fitfcn_volume_corrections(p)
-                 + self.fitfcn_latt_spacing_corections(p)
+        output = (self.fitfcn_latt_spacing_corections(p)
                  + self.fitfcn_mpia_corrections(p))
 
-        # mixed-action/xpt fits
-        if self.fit_type == 'mix':
-            output = output + self.fitfcn_mixed_action(p)
-        elif self.fit_type == 'xpt':
-            output = output + self.fitfcn_xpt(p)
+        if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
+            # mixed-action/xpt fits
+            if self.fit_type == 'xpt':
+                output = output + self.fitfcn_xpt(p)
+            elif self.fit_type == 'xpt-taylor':
+                output = output + self.fitfcn_xpt_taylor(p)
+            elif self.fit_type == 'ma':
+                output = output + self.fitfcn_ma(p)
+            elif self.fit_type == 'ma-taylor':
+                output = output + self.fitfcn_ma_taylor(p)
+
+        if self.order['fit'] in ['nnlo', 'nnnlo']:
+            output = output + 0
+
+        if self.order['fit'] in ['nnnlo']:
+            output = output + 0
 
         return output
 
@@ -91,12 +103,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         mpi = p['mpi']
         lam2_chi = p['lam2_chi']
         output = (a *mpi)**2 /lam2_chi *p['c_mpia2']
-        return output
-
-    # Look at arxiv/1001.4692, section 2.4
-    def fitfcn_volume_corrections(self, p):
-        mpil = p['MpiL']
-        output = np.exp(-mpil) / np.sqrt(mpil) *p['c_vol']
         return output
 
     def fitfcn_latt_spacing_corections(self, p):
@@ -108,31 +114,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             return output
 
         for j in range(order):
-            output = output + a**(j+2) *p['c_a'][j]
-
-        return output
-
-
-    def fitfcn_mixed_action(self, p):
-
-        # Constants
-        pi = np.pi
-        order = self.order['fit']
-
-        # Independent variables
-        lam2_chi = p['lam2_chi']
-        eps2_pi = p['mpi']**2 / lam2_chi
-        eps2_k = p['mk']**2 / lam2_chi
-        eps2_x = (4.0/3.0) *eps2_k - (1.0/3.0) *eps2_pi
-
-        l_pi, l_k, l_x = [np.log(eps2) for eps2 in [eps2_pi, eps2_k, eps2_x]]
-
-        output = (1.0
-                 + 5.0/8.0 *(eps2_pi) *l_pi
-                 - 1.0/4.0 *(eps2_k) *l_k
-                 - 3.0/8.0 *(eps2_x) *l_x
-                 + 4 *(eps2_k - eps2_pi) *(4*pi)**2 *p['L_5_lam']
-                 )
+            if order > 2:
+                output = output + a**(j) *p['c_a'][j]
 
         return output
 
@@ -172,7 +155,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                  + (del2_pq)**2 / (24.0 *(eps2_x - eps2_pi))
                  - (del2_pq)**2 / (12.0 *(eps2_x - eps2_ss))
                  - del2_pq / 8.0
-                 + 4 *(eps2_k - eps2_pi) *(4*pi)**2 *p['L_5_lam']
+                 + 4 *(eps2_k - eps2_pi) *(4*pi)**2 *p['L_5']
                  )
         if order == 0:
             return output
@@ -208,6 +191,37 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output
 
+    def fitfcn_ma_taylor(self, p):
+
+        # Constants
+        order_fit = self.order['fit']
+        order_vol = self.order['vol']
+
+        # Independent variables
+        mpi = p['mpi']
+        mk = p['mk']
+        mx = (4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2)
+
+        lam2_chi = p['lam2_chi']
+        eps2_pi = mpi**2 / lam2_chi
+        eps2_k = mk**2 / lam2_chi
+        eps2_x = mx / lam2_chi
+
+        MpiL = p['MpiL']
+        mu = np.sqrt(lam2_chi)
+
+        output = (
+            1
+            + (5.0/8.0) *fcn_I_m(mpi, MpiL, mu, order_vol) / lam2_chi
+            - (1.0/4.0) *fcn_I_m(mk, MpiL, mu, order_vol) / lam2_chi
+            - (3.0/8.0) *fcn_I_m(mx, MpiL, mu, order_vol) / lam2_chi
+            + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
+        )
+
+        return output
+
+
+
     def buildprior(self, prior, mopt=None, extend=False):
         newprior = gv.BufferDict()
         order = self.order
@@ -229,23 +243,24 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             newprior['MpiL'] = fit_data['MpiL']
 
         # Sort keys by expansion order
-        keys_0 = ['L_5_lam']
-        keys_1 = []
-        keys_2 = []
+        keys_nlo = ['L_5', 'L_4']
+        keys_nnlo = []
+        keys_nnnlo = []
         keys_lat = ['c_a']
-        keys_vol = ['c_vol']
+        #keys_vol = ['c_vol']
         keys_other = ['c_mpia2']
 
-        for key in keys_0:
-            newprior[key] = prior[key]
-
-        if order['fit'] >= 1:
-            for key in keys_1:
+        # Fit parameters, depending on order
+        if order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
+            for key in keys_nlo:
+                newprior[key] = prior[key]
+        if order['fit'] in ['nnlo', 'nnnlo']:
+            for key in keys_nnlo:
+                newprior[key] = prior[key]
+        if order['fit'] in ['nnnlo']:
+            for key in keys_nnnlo:
                 newprior[key] = prior[key]
 
-        if order['fit'] >= 2:
-            for key in keys_2:
-                newprior[key] = prior[key]
 
         # Lattice artifacts
         newprior['c_a'] = np.empty(order['latt_spacing'])
@@ -253,9 +268,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             newprior['c_a'][j] = prior['c_a'][j]
 
         # Volume term
-        newprior['c_vol'] = np.empty(order['vol'])
-        for j in range(order['vol']):
-           newprior['c_vol'][j] = prior['c_vol'][j]
+        #newprior['c_vol'] = np.empty(order['vol'])
+        #for j in range(order['vol']):
+        #   newprior['c_vol'][j] = prior['c_vol'][j]
 
          # Other term
         for key in keys_other:

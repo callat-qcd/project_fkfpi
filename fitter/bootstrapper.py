@@ -9,7 +9,6 @@ import re
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 
 from fitter import fitter
-from special_functions import *
 
 class bootstrapper(object):
 
@@ -24,17 +23,18 @@ class bootstrapper(object):
 
         if order is None:
             order = {
-                'fit' : 1,
+                'fit' : 'nlo',
                 'latt_spacing' : 2, # no order 1 term -- starts at 2
                 'vol' : 1
             }
 
         if prior is None:
             prior = {
-                'L_5_lam' : '0(0.5)',
-                'c_a' : np.repeat(gv.gvar('0(1)'), order['latt_spacing']),
-                'c_mpia2' : '2(0.5)',
-                'c_vol' : np.repeat(gv.gvar('0(1)'), order['vol']),
+                'L_5' : '1(1)',
+                'L_4' : '1(1)',
+                'c_a' : np.repeat(gv.gvar('1(1)'), order['latt_spacing']),
+                'c_mpia2' : '1(1)',
+                #'c_vol' : np.repeat(gv.gvar('0(1)'), order['vol']),
             }
             prior = gv.gvar(prior)
 
@@ -46,14 +46,12 @@ class bootstrapper(object):
         for abbr in abbrs:
             data[abbr] = {}
             for data_parameter in fit_data[abbr].keys():
-                try:
+                if data_parameter in ['Fpi', 'FK', 'mpi', 'mk', 'mss', 'mju', 'mru', 'mrs', 'MpiL']:
                     means = fit_data[abbr][data_parameter][:bs_N]
                     unc = np.std(fit_data[abbr][data_parameter][:bs_N])
                     #print gv.gvar(means, np.repeat(unc, len(means)))
                     data[abbr][data_parameter] = gv.gvar(means, np.repeat(unc, len(means)))
-                except IndexError:
-                    pass
-                if data_parameter in ['a2DI']:
+                elif data_parameter in ['a2DI']:
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
                     data[abbr][data_parameter] = np.repeat(to_gvar(fit_data[abbr][data_parameter]), bs_N)
                 elif data_parameter in ['aw0']:
@@ -81,7 +79,7 @@ class bootstrapper(object):
         bs_fit_parameters = self.get_bootstrapped_fit_parameters()
         prior = self.prior
 
-        output = "\n\nFitting to order %s \n" %(self.order['fit'])
+        output = "\n\nFitting to %s \n" %(self.order['fit'])
         output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
         output = output + "Fitted/[Experimental] values at physical point:\n"
@@ -615,14 +613,14 @@ class bootstrapper(object):
         eps2_x = to_eta(eps2_k, eps2_pi)
         eps2_x_phys = to_eta(eps2_k_phys, eps2_pi_phys)
 
-        L_5_lam = self.get_fit_parameters('L_5_lam')
+        L_5 = self.get_fit_parameters('L_5')
 
         delta = lambda xphys, xens : (xphys *np.log(xphys) - xens *np.log(xens))
         shifted_fkfpi = (
             fkfpi_ens
             - (1.0/4.0) *delta(eps2_k_phys, eps2_k)
             - (3.0/8.0) *delta(eps2_x_phys, eps2_x)
-            + 4 *(4*pi)**2 *(eps2_k_phys - eps2_k) *L_5_lam
+            + 4 *(4*pi)**2 *(eps2_k_phys - eps2_k) *L_5
         )
 
         return shifted_fkfpi

@@ -12,10 +12,10 @@ def fcn_Kn(n, g):
 def fcn_I_m(m, mL, mu, order):
     c = [None, 6, 12, 8, 6, 24, 24, 0, 12, 30, 24]
 
-    output = (m/4*np.pi)**2 *np.log((m/mu)**2)
+    output = (m/(4*np.pi))**2 *np.log((m/mu)**2)
 
     for n in range(1, np.min((order, 11))):
-        output = output + (m/4*np.pi)**2 *(c[n]/(mL *np.sqrt(n))) *fcn_Kn(1, mL *np.sqrt(n))
+        output = output + (m/(4*np.pi))**2 *(c[n]/(mL *np.sqrt(n))) *fcn_Kn(1, mL *np.sqrt(n))
     return output
 
 # dI(m) in notes
