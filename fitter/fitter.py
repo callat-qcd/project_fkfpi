@@ -75,6 +75,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             for key in fit_data.keys():
                 p[key] = fit_data[key]
 
+        #print self.fit_type
         # Lattice artifact terms
         output = (self.fitfcn_latt_spacing_corections(p)
                  + self.fitfcn_mpia_corrections(p))
@@ -113,9 +114,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if order < 2:
             return output
 
-        for j in range(order):
-            if order > 2:
-                output = output + a**(j) *p['c_a'][j]
+        for j in range(order+1):
+            if j >= 2:
+                output = output + a**j *p['c_a'][j]
 
         return output
 
@@ -200,23 +201,27 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         # Independent variables
         mpi = p['mpi']
         mk = p['mk']
-        mx = (4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2)
+        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2))
+
+
 
         lam2_chi = p['lam2_chi']
         eps2_pi = mpi**2 / lam2_chi
         eps2_k = mk**2 / lam2_chi
-        eps2_x = mx / lam2_chi
+        eps2_x = mx**2 / lam2_chi
 
         MpiL = p['MpiL']
         mu = np.sqrt(lam2_chi)
+        F2 = lam2_chi /(4*np.pi)**2
 
         output = (
             1
-            + (5.0/8.0) *fcn_I_m(mpi, MpiL, mu, order_vol) / lam2_chi
-            - (1.0/4.0) *fcn_I_m(mk, MpiL, mu, order_vol) / lam2_chi
-            - (3.0/8.0) *fcn_I_m(mx, MpiL, mu, order_vol) / lam2_chi
+            + (5.0/8.0) *fcn_I_m(mpi, MpiL, mu, order_vol) / F2
+            - (1.0/4.0) *fcn_I_m(mk, MpiL, mu, order_vol) / F2
+            - (3.0/8.0) *fcn_I_m(mx, MpiL, mu, order_vol) / F2
             + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
         )
+
 
         return output
 
@@ -226,55 +231,53 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         newprior = gv.BufferDict()
         order = self.order
 
-        if True:
-            fit_data = self.fit_data
-            newprior['Fpi'] = fit_data['Fpi']
-            newprior['FK'] = fit_data['FK']
-            newprior['mpi'] = fit_data['mpi']
-            newprior['mk'] = fit_data['mk']
-            newprior['mss'] = fit_data['mss']
-            newprior['mju'] = fit_data['mju']
-            newprior['mru'] = fit_data['mru']
-            newprior['mrs'] = fit_data['mrs']
-            newprior['a2DI'] = fit_data['a2DI']
-            newprior['lam2_chi'] = fit_data['lam2_chi']
-
-            newprior['a'] = fit_data['a']
-            newprior['MpiL'] = fit_data['MpiL']
+        # Move fit_data into prior
+        fit_data = self.fit_data
+        newprior['Fpi'] = fit_data['Fpi']
+        newprior['FK'] = fit_data['FK']
+        newprior['mpi'] = fit_data['mpi']
+        newprior['mk'] = fit_data['mk']
+        newprior['mss'] = fit_data['mss']
+        newprior['mju'] = fit_data['mju']
+        newprior['mru'] = fit_data['mru']
+        newprior['mrs'] = fit_data['mrs']
+        newprior['a2DI'] = fit_data['a2DI']
+        newprior['lam2_chi'] = fit_data['lam2_chi']
+        newprior['a'] = fit_data['a']
+        newprior['MpiL'] = fit_data['MpiL']
 
         # Sort keys by expansion order
-        keys_nlo = ['L_5', 'L_4']
-        keys_nnlo = []
-        keys_nnnlo = []
-        keys_lat = ['c_a']
-        #keys_vol = ['c_vol']
         keys_other = ['c_mpia2']
 
+        # Fit parameters, depending on fit type
+        if self.fit_type == 'xpt':
+            newprior['L_4'] = prior['L_4']
+            newprior['L_5'] = prior['L_5']
+        elif self.fit_type == 'xpt-taylor':
+            newprior['L_5'] = prior['L_5']
+        elif self.fit_type == 'ma':
+            newprior['L_4'] = prior['L_4']
+            newprior['L_5'] = prior['L_5']
+        elif self.fit_type == 'ma-taylor':
+            newprior['L_5'] = prior['L_5']
+
         # Fit parameters, depending on order
-        if order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
-            for key in keys_nlo:
-                newprior[key] = prior[key]
         if order['fit'] in ['nnlo', 'nnnlo']:
-            for key in keys_nnlo:
-                newprior[key] = prior[key]
+            newprior['A_22'] = prior['A_22']
+            newprior['M_400'] = prior['M_400']
+            newprior['M_220'] = prior['M_220']
+            newprior['M_202'] = prior['M_202']
+
         if order['fit'] in ['nnnlo']:
-            for key in keys_nnnlo:
-                newprior[key] = prior[key]
+            newprior['A_42'] = prior['A_42']
+            newprior['A_24'] = prior['A_24']
+            newprior['A_2220'] = prior['A_2220']
+            newprior['A_2202'] = prior['A_2202']
 
 
         # Lattice artifacts
-        newprior['c_a'] = np.empty(order['latt_spacing'])
-        for j in range(order['latt_spacing']):
-            newprior['c_a'][j] = prior['c_a'][j]
-
-        # Volume term
-        #newprior['c_vol'] = np.empty(order['vol'])
-        #for j in range(order['vol']):
-        #   newprior['c_vol'][j] = prior['c_vol'][j]
-
-         # Other term
-        for key in keys_other:
-           newprior[key] = prior[key]
+        newprior['c_a'] = prior['c_a'][:order['latt_spacing']+1]
+        newprior['c_mpia2'] = prior['c_mpia2']
 
         return newprior
 

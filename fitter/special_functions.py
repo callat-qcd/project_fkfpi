@@ -5,8 +5,12 @@ import scipy.special as ss
 # gvar version of modified Bessel function of the second kind
 def fcn_Kn(n, g):
     ymean = ss.kn(n, gv.mean(g))
-    ysdev = np.abs(ss.kvp(n, gv.mean(g), 1)) * gv.sdev(g)
-    return gv.gvar(ymean, ysdev)
+    
+    if isinstance(g, gv._gvarcore.GVar):
+        ysdev = np.abs(ss.kvp(n, gv.mean(g), 1)) * gv.sdev(g)
+        return gv.gvar(ymean, ysdev)
+    else:
+        return ymean
 
 # I(m) in notes
 def fcn_I_m(m, mL, mu, order):
@@ -14,7 +18,7 @@ def fcn_I_m(m, mL, mu, order):
 
     output = (m/(4*np.pi))**2 *np.log((m/mu)**2)
 
-    for n in range(1, np.min((order, 11))):
+    for n in range(1, np.min((order+1, 11))):
         output = output + (m/(4*np.pi))**2 *(c[n]/(mL *np.sqrt(n))) *fcn_Kn(1, mL *np.sqrt(n))
     return output
 

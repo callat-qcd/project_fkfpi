@@ -28,13 +28,28 @@ class bootstrapper(object):
                 'vol' : 1
             }
 
+
         if prior is None:
             prior = {
+                # nlo terms
                 'L_5' : '1(1)',
                 'L_4' : '1(1)',
-                'c_a' : np.repeat(gv.gvar('1(1)'), order['latt_spacing']),
-                'c_mpia2' : '1(1)',
-                #'c_vol' : np.repeat(gv.gvar('0(1)'), order['vol']),
+
+                # nnlo terms
+                'A_22' : '1(1)',
+                'M_400' : '1(1)',
+                'M_220' : '1(1)',
+                'M_202' : '1(1)',
+
+                # nnnlo terms
+                'A_42' : '1(1)',
+                'A_24' : '1(1)',
+                'A_2220' : '1(1)',
+                'A_2202' : '1(1)',
+
+                # lattice artifact terms
+                'c_a' : ['0(1)', '0(1)', '-1(0.5)', '1(1)', '1(1)'][:order['latt_spacing']+1],
+                'c_mpia2' : '2(0.5)',
             }
             prior = gv.gvar(prior)
 
@@ -78,8 +93,8 @@ class bootstrapper(object):
     def __str__(self):
         bs_fit_parameters = self.get_bootstrapped_fit_parameters()
         prior = self.prior
-
-        output = "\n\nFitting to %s \n" %(self.order['fit'])
+        output = "\n\nFit type: %s" %(self.fit_type)
+        output = output + "\n\nFitting to %s \n" %(self.order['fit'])
         output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
         output = output + "Fitted/[Experimental] values at physical point:\n"
@@ -214,7 +229,9 @@ class bootstrapper(object):
             self.bootstrap_fits()
 
         # Get all fit parameters
-        parameters = self.prior.keys()
+        keys1 = self.prior.keys()
+        keys2 = self.fits[0].p.keys()
+        parameters = np.intersect1d(keys1, keys2)
 
         # Make dictionary
         temp_fit = self.fits[0]
@@ -350,8 +367,8 @@ class bootstrapper(object):
 
         # place a text box in upper left in axes coords
         text = self.__str__()#.expandtabs()
-        plt.text(1.0, 1.0, str(text),
-                 fontsize=12, ha='right', va='top', family='monospace', bbox=props)
+        plt.text(0.0, 1.0, str(text),
+                 fontsize=12, ha='left', va='top', family='monospace', bbox=props)
 
         plt.tight_layout()
         fig = plt.gcf()
@@ -553,8 +570,6 @@ class bootstrapper(object):
                 delta = maximum - minimum
 
                 x = np.linspace(np.max((minimum - 0.05*delta, 0)), maximum + 0.05*delta)
-
-
 
                 # Get phys point data, substituting x-data and current 'a' in loop
                 prepped_data = self.get_phys_point_data()
