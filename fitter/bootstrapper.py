@@ -13,10 +13,14 @@ from fitter import fitter
 class bootstrapper(object):
 
     def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
-                 order=None, fit_type=None):
+                 order=None, fit_type=None, F2=None):
 
         if fit_type is None:
             fit_type = 'mix'
+
+        if F2 is None:
+            F2 = 'FKFpi'
+        self.F2 = F2
 
         if bs_N is None or bs_N==0:
             bs_N = len(fit_data[fit_data.keys()[0]]['mpi'])
@@ -94,7 +98,7 @@ class bootstrapper(object):
     def __str__(self):
         bs_fit_parameters = self.get_bootstrapped_fit_parameters()
         prior = self.prior
-        output = "\n\nFit type: %s" %(self.fit_type)
+        output = "\n\nFit type: %s (F^2 = %s)" %(self.fit_type, self.F2)
         output = output + "\n\nFitting to %s \n" %(self.order['fit'])
         output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
@@ -279,7 +283,16 @@ class bootstrapper(object):
         phys_point_data['mss'] = phys_point_data['mss'] * 1.00000001
         phys_point_data['mrs'] = phys_point_data['mss']
         phys_point_data['FK/Fpi'] = phys_point_data['FK'] / phys_point_data['Fpi']
-        phys_point_data['lam2_chi'] = (4*np.pi)**2 *phys_point_data['FK'] * phys_point_data['Fpi']
+
+        FK = phys_point_data['FK']
+        Fpi = phys_point_data['Fpi']
+        if self.F2 == 'FKFpi':
+            phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *Fpi
+        elif self.F2 == 'FpiFpi':
+            phys_point_data['lam2_chi'] = (4*np.pi)**2 *Fpi *Fpi
+        elif self.F2 == 'FKFK':
+            phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *FK
+
         if parameter is None:
             return phys_point_data
         else:
