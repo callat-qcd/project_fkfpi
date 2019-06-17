@@ -52,10 +52,10 @@ class bootstrapper(object):
                 'A_2202' : '1(1)',
 
                 # lattice artifact terms
-                'c_a2' : '-1(0.5)',
+                'c_a2' : '1(1)',
                 'c_a3' : '1(1)',
                 'c_a4' : '1(1)',
-                'c_mpia2' : '2(0.5)',
+                'c_mpia2' : '1(1)',
             }
             prior = gv.gvar(prior)
 
@@ -614,7 +614,7 @@ class bootstrapper(object):
             xdelta = xmax - xmin
             ydelta = ymax - ymin
             plt.xlim(xmin-0.05*xdelta, xmax+0.05*xdelta) #xmin-0.05*xdelta
-            plt.ylim(ymin-0.05*ydelta, ymax+0.05*ydelta)
+            #plt.ylim(ymin-0.05*ydelta, ymax+0.05*ydelta)
         except ValueError:
             pass
 

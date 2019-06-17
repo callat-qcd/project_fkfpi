@@ -115,11 +115,11 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             return output
 
         if order >= 2:
-            output = output = a**2 *p['c_a2']
+            output = output + a**2 *p['c_a2']
         if order >= 3:
-            output = output = a**3 *p['c_a3']
+            output = output + a**3 *p['c_a3']
         if order >= 4:
-            output = output = a**4 *p['c_a4']
+            output = output + a**4 *p['c_a4']
 
         return output
 
