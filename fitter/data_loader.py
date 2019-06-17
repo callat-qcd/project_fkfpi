@@ -32,8 +32,8 @@ class data_loader(object):
             ensembles = f.keys()
         return sorted(ensembles)
 
-    def get_prior(self):
-        filepath = self.project_path + '/prior.csv'
+    def get_prior(self, fit_type):
+        filepath = self.project_path + '/priors/'+fit_type+'.csv'
         df_read = pd.read_csv(filepath, index_col=0)
         return gv.gvar({key : df_read.to_dict("index")[key]["0"]
                 for key in df_read.to_dict("index").keys()})
@@ -65,10 +65,11 @@ class data_loader(object):
         output_pdf.close()
         print "Done."
 
-    def save_prior(self, prior):
+    def save_prior(self, prior, fit_type):
+        filepath = self.project_path + '/priors/'+fit_type+'.csv'
         out_prior = {}
-        for key in prior.keys():
+        for key in sorted(prior.keys()):
             out_prior[key] = [str(prior[key])]
 
         df = pd.DataFrame.from_dict(out_prior).T
-        df.to_csv(self.project_path+'/prior.csv')
+        df.to_csv(filepath)

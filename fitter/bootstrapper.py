@@ -48,7 +48,9 @@ class bootstrapper(object):
                 'A_2202' : '1(1)',
 
                 # lattice artifact terms
-                'c_a' : ['0(1)', '0(1)', '-1(0.5)', '1(1)', '1(1)'][:order['latt_spacing']+1],
+                'c_a2' : '-1(0.5)',
+                'c_a3' : '1(1)',
+                'c_a4' : '1(1)',
                 'c_mpia2' : '2(0.5)',
             }
             prior = gv.gvar(prior)
@@ -87,7 +89,6 @@ class bootstrapper(object):
         self.order = order
         self.fits = None
         self.bs_fit_parameters = None
-        self.fit_parameters = None
         self.fit_type = fit_type
 
     def __str__(self):
@@ -195,7 +196,7 @@ class bootstrapper(object):
     def create_prior_from_fit(self):
         output = {}
         for key in self.get_fit_parameters().keys():
-            mean = gv.mean(self.get_fit_parameters()[key])
+            mean = gv.mean(np.asscalar(self.get_fit_parameters()[key]))
             unc = 0.5 #0.25*gv.mean(self.get_fit_parameters()[key])
             #mean = gv.mean(self.fits[0].p[key])
             #unc = gv.sdev(self.fits[0].p[key])
@@ -252,14 +253,11 @@ class bootstrapper(object):
 
     # Returns dictionary with keys fit parameters, entries gvar results
     def get_fit_parameters(self, parameter=None):
-        if self.fit_parameters is None:
-            fit_parameters = gv.dataset.avg_data(self.get_bootstrapped_fit_parameters(), bstrap=True)
-            self.fit_parameters = fit_parameters
-
-        if parameter is None:
-            return self.fit_parameters
+        fit_parameters = gv.dataset.avg_data(self.get_bootstrapped_fit_parameters(), bstrap=True)
+        if parameter is not None:
+            return fit_parameters[parameter]
         else:
-            return self.fit_parameters[parameter]
+            return fit_parameters
 
     # need to convert to/from lattice units
     def get_phys_point_data(self, parameter=None):

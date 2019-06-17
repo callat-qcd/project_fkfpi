@@ -114,9 +114,12 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if order < 2:
             return output
 
-        for j in range(order+1):
-            if j >= 2:
-                output = output + a**j *p['c_a'][j]
+        if order >= 2:
+            output = output = a**2 *p['c_a2']
+        if order >= 3:
+            output = output = a**3 *p['c_a3']
+        if order >= 4:
+            output = output = a**4 *p['c_a4']
 
         return output
 
@@ -276,7 +279,15 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
 
         # Lattice artifacts
-        newprior['c_a'] = prior['c_a'][:order['latt_spacing']+1]
+        if order['latt_spacing'] >= 2:
+            newprior['c_a2'] = prior['c_a2']
+
+        if order['latt_spacing'] >= 3:
+            newprior['c_a3'] = prior['c_a3']
+
+        if order['latt_spacing'] >= 4:
+            newprior['c_a4'] = prior['c_a4']
+
         newprior['c_mpia2'] = prior['c_mpia2']
 
         return newprior
