@@ -123,7 +123,37 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output
 
-    def fitfcn_xpt(self, p):
+    def fitfcn_nnlo_cts(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_a = 0 #????
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+
+        output = (
+              eps2_a *(eps2_k - eps2_pi) *p['A_22']
+            + (eps2_k - eps2_pi)**2 *p['M_400']
+            + eps2_K *(eps2_k - eps2_pi) *p['M_220']
+            + eps2_pi *(eps2_k - eps2_pi) *p['M_202']
+        )
+        return output
+
+    def fitfcn_nnnlo_cts(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_a = 0 #????
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+
+        output = (
+              (eps2_a)**2 *(eps2_k - eps2_pi) *p['A_42']
+            + eps2_a *(eps2_k - eps2_pi)**2 *p['A_24']
+            + eps2_a *eps2_K *(eps2_k - eps2_pi) *p['A_2220']
+            + eps2_a *eps2_pi *(eps2_k - eps2_pi) *p['A_2202']
+        )
+        return output
+
+
+
+    def fitfcn_ma(self, p):
 
         # Constants
         pi = np.pi
@@ -195,10 +225,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output
 
-    def fitfcn_ma_taylor(self, p):
-
+    def fitfcn_xpt(self, p):
         # Constants
-        order_fit = self.order['fit']
         order_vol = self.order['vol']
 
         # Independent variables
@@ -206,7 +234,41 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         mk = p['mk']
         mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2))
 
+        lam2_chi = p['lam2_chi']
+        eps2_pi = mpi**2 / lam2_chi
+        eps2_k = mk**2 / lam2_chi
+        eps2_x = mx**2 / lam2_chi
 
+        MpiL = p['MpiL']
+        mu = np.sqrt(lam2_chi)
+        F2 = lam2_chi /(4*np.pi)**2
+
+        Fpi_nlo_per_F0 = (1
+            - fcn_I_m(mpi, MpiL, mu, order_vol) / F2
+            - (1.0/2.0) *fcn_I_m(mk, MpiL, mu, order_vol) / F2
+            + 4 *eps2_pi *(4 *np.pi)**2 *(p['L_4'] + p['L_5'])
+            + 8 *eps2_k *(4 *np.pi)**2 *p['L_4']
+        )
+
+        FK_nlo_per_F0 = (1
+            - (3.0/8.0) *fcn_I_m(mpi, MpiL, mu, order_vol) / F2
+            - (3.0/4.0) *fcn_I_m(mk, MpiL, mu, order_vol) / F2
+            - (3.0/8.0) *fcn_I_m(mx, MpiL, mu, order_vol) / F2
+            + 4 *eps2_pi *p['L_4']
+            + 4 *eps2_k *(2 *p['L_4'] + p['L_5'])
+        )
+
+        return FK_nlo_per_F0 / Fpi_nlo_per_F0
+
+
+    def fitfcn_xpt_taylor(self, p):
+        # Constants
+        order_vol = self.order['vol']
+
+        # Independent variables
+        mpi = p['mpi']
+        mk = p['mk']
+        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2))
 
         lam2_chi = p['lam2_chi']
         eps2_pi = mpi**2 / lam2_chi
@@ -219,13 +281,12 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         output = (
             1
+            + 1*(
             + (5.0/8.0) *fcn_I_m(mpi, MpiL, mu, order_vol) / F2
             - (1.0/4.0) *fcn_I_m(mk, MpiL, mu, order_vol) / F2
-            - (3.0/8.0) *fcn_I_m(mx, MpiL, mu, order_vol) / F2
+            - (3.0/8.0) *fcn_I_m(mx, MpiL, mu, order_vol) / F2)
             + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
         )
-
-
         return output
 
 
@@ -248,9 +309,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         newprior['lam2_chi'] = fit_data['lam2_chi']
         newprior['a'] = fit_data['a']
         newprior['MpiL'] = fit_data['MpiL']
-
-        # Sort keys by expansion order
-        keys_other = ['c_mpia2']
 
         # Fit parameters, depending on fit type
         if self.fit_type == 'xpt':
@@ -289,6 +347,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             newprior['c_a4'] = prior['c_a4']
 
         newprior['c_mpia2'] = prior['c_mpia2']
+
+        # Fudge factor
+        #newprior['c_fudge'] = prior['c_fudge']
 
         return newprior
 

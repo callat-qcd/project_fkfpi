@@ -32,7 +32,6 @@ class bootstrapper(object):
                 'vol' : 1
             }
 
-
         if prior is None:
             prior = {
                 # nlo terms
@@ -56,6 +55,9 @@ class bootstrapper(object):
                 'c_a3' : '1(1)',
                 'c_a4' : '1(1)',
                 'c_mpia2' : '1(1)',
+
+                # fudge factor (for debugging)
+                'c_fudge' : '1(1)'
             }
             prior = gv.gvar(prior)
 
