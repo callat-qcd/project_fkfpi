@@ -16,7 +16,7 @@ class bootstrapper(object):
                  order=None, fit_type=None, F2=None):
 
         if fit_type is None:
-            fit_type = 'mix'
+            fit_type = 'xpt-taylor'
 
         if F2 is None:
             F2 = 'FKFpi'
@@ -69,9 +69,9 @@ class bootstrapper(object):
         for abbr in abbrs:
             data[abbr] = {}
             for data_parameter in fit_data[abbr].keys():
-                if data_parameter in ['Fpi', 'FK', 'mpi', 'mk', 'mss', 'mju', 'mru', 'mrs', 'MpiL']:
+                if data_parameter in ['Fpi', 'FK', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs', 'MpiL']:
                     means = fit_data[abbr][data_parameter][:bs_N]
-                    unc = np.std(fit_data[abbr][data_parameter][:bs_N])
+                    unc = np.std(fit_data[abbr][data_parameter])
                     #print gv.gvar(means, np.repeat(unc, len(means)))
                     data[abbr][data_parameter] = gv.gvar(means, np.repeat(unc, len(means)))
                 elif data_parameter in ['a2DI']:
@@ -89,18 +89,18 @@ class bootstrapper(object):
 
         self.bs_N = bs_N
         self.abbrs = sorted(abbrs)
-        self.variable_names = sorted(fit_data[self.abbrs[0]].keys())
+        #self.variable_names = sorted(fit_data[self.abbrs[0]].keys())
         self.fit_data = data
         self.prior = prior
         self.order = order
         self.fits = None
-        self.bs_fit_parameters = None
+        #self.bs_fit_parameters = None
         self.fit_type = fit_type
 
     def __str__(self):
         bs_fit_parameters = self.get_bootstrapped_fit_parameters()
         prior = self.prior
-        output = "\n\nFit type: %s (F^2 = %s)" %(self.fit_type, self.F2)
+        output = "\n\nFit type: %s (F^2 = %s, bsN = %s)" %(self.fit_type, self.F2, self.bs_N)
         output = output + "\n\nFitting to %s \n" %(self.order['fit'])
         output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
@@ -110,14 +110,16 @@ class bootstrapper(object):
                             self.get_phys_point_data('FK')/self.get_phys_point_data('Fpi'))
         output = output + "\n"
 
-        table = gv.dataset.avg_data(bs_fit_parameters, bstrap=True)
-        new_table = { key : [table[key], prior[key]] for key in sorted(table.keys())}
+        fit_parameters = self.get_fit_parameters()
+        new_table = { key : [fit_parameters[key], prior[key]] for key in sorted(fit_parameters.keys())}
+
         output = output + gv.tabulate(new_table, ncol=2, headers=['Parameter', 'Result[0] / Prior[1]'])
 
         output = output + '\n---\nboot0 fit results:\n'
         output = output + self.fits[0].format(pstyle=None)
 
         return output
+
 
     def _fmt_key_as_latex(self, key):
         convert = {
@@ -155,7 +157,7 @@ class bootstrapper(object):
 
     def _make_fit_data(self, j):
         prepped_data = {}
-        for parameter in ['a2DI', 'a', 'FK', 'Fpi', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'MpiL', 'lam2_chi']:
+        for parameter in ['a2DI', 'a', 'FK', 'Fpi', 'mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'MpiL', 'lam2_chi']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter][j] for abbr in self.abbrs])
 
         y = ([self.fit_data[abbr]['FK'][j]/self.fit_data[abbr]['Fpi'][j] for abbr in self.abbrs])
@@ -216,7 +218,13 @@ class bootstrapper(object):
         return to_gvar(self.fk_fpi_fit_fcn(self.fit_data[abbr]))
 
     def extrapolate_to_phys_point(self):
-        return self.fk_fpi_fit_fcn(self.get_phys_point_data())[0]
+        output = self.fk_fpi_fit_fcn(self.get_phys_point_data())
+
+        # Logic for frequentist vs bayesian fits
+        try:
+            return output[0]
+        except TypeError:
+            return output
 
     def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None, fit_type=None):
         if fit_data is None:
@@ -259,7 +267,19 @@ class bootstrapper(object):
 
     # Returns dictionary with keys fit parameters, entries gvar results
     def get_fit_parameters(self, parameter=None):
-        fit_parameters = gv.dataset.avg_data(self.get_bootstrapped_fit_parameters(), bstrap=True)
+        # If fitting only the central values
+        if self.bs_N == 1:
+            if self.fits is None:
+                self.bootstrap_fits()
+
+            keys1 = self.prior.keys()
+            keys2 = self.fits[0].p.keys()
+            parameters = np.intersect1d(keys1, keys2)
+
+            fit_parameters = {parameter : self.fits[0].p[parameter] for parameter in parameters}
+        else:
+            fit_parameters = gv.dataset.avg_data(self.get_bootstrapped_fit_parameters(), bstrap=True)
+
         if parameter is not None:
             return fit_parameters[parameter]
         else:
@@ -276,6 +296,7 @@ class bootstrapper(object):
 
             'mk' : gv.gvar('495.6479(92)'),
             'mru' : gv.gvar('495.6479(92)'),
+            'mjs' : gv.gvar('495.6479(92)'),
 
             'a2DI' : 0, # Need to check this
             'Fpi' : gv.gvar('91.9(3.5)'),

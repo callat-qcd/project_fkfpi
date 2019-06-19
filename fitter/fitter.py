@@ -82,20 +82,20 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             # mixed-action/xpt fits
-            if self.fit_type == 'xpt':
-                output = output + self.fitfcn_xpt(p)
-            elif self.fit_type == 'xpt-taylor':
-                output = output + self.fitfcn_xpt_taylor(p)
-            elif self.fit_type == 'ma':
+            if self.fit_type == 'ma':
                 output = output + self.fitfcn_ma(p)
             elif self.fit_type == 'ma-taylor':
                 output = output + self.fitfcn_ma_taylor(p)
+            elif self.fit_type == 'xpt':
+                output = output + self.fitfcn_xpt(p)
+            elif self.fit_type == 'xpt-taylor':
+                output = output + self.fitfcn_xpt_taylor(p)
 
         if self.order['fit'] in ['nnlo', 'nnnlo']:
-            output = output + 0
+            output = output + self.fitfcn_nnlo_cts(p)
 
         if self.order['fit'] in ['nnnlo']:
-            output = output + 0
+            output = output + self.fitfcn_nnnlo_cts(p)
 
         return output
 
@@ -124,29 +124,37 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return output
 
     def fitfcn_nnlo_cts(self, p):
+        # Will need to adjust this later!
+        w0 = 5.81743
+
         lam2_chi = p['lam2_chi']
-        eps2_a = 0 #????
+        eps2_a = p['a'] / (w0 *np.sqrt(4 *np.pi))
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
         output = (
               eps2_a *(eps2_k - eps2_pi) *p['A_22']
             + (eps2_k - eps2_pi)**2 *p['M_400']
-            + eps2_K *(eps2_k - eps2_pi) *p['M_220']
+            + eps2_k *(eps2_k - eps2_pi) *p['M_220']
             + eps2_pi *(eps2_k - eps2_pi) *p['M_202']
         )
         return output
 
     def fitfcn_nnnlo_cts(self, p):
+
+
+        # Will need to adjust this later!
+        w0 = 5.81743
+
         lam2_chi = p['lam2_chi']
-        eps2_a = 0 #????
+        eps2_a = p['a'] / (w0 *np.sqrt(4 *np.pi))
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
         output = (
               (eps2_a)**2 *(eps2_k - eps2_pi) *p['A_42']
             + eps2_a *(eps2_k - eps2_pi)**2 *p['A_24']
-            + eps2_a *eps2_K *(eps2_k - eps2_pi) *p['A_2220']
+            + eps2_a *eps2_k *(eps2_k - eps2_pi) *p['A_2220']
             + eps2_a *eps2_pi *(eps2_k - eps2_pi) *p['A_2202']
         )
         return output
@@ -225,6 +233,60 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output
 
+    def fitfcn_ma_taylor(self, p):
+        # Constants
+        order_vol = self.order['vol']
+
+        # Independent variables
+        mju = p['mju']
+        mpi = p['mpi']
+        mk = p['mk']
+        mru = p['mru']
+        msj = p['mjs'] #msj = mjs
+        mss = p['mss']
+        mrs = p['mrs']
+        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2) + p['a2DI'])
+
+        del2_ju = p['a2DI']
+        del2_rs = del2_ju
+        MpiL = p['MpiL']
+
+        lam2_chi = p['lam2_chi']
+        mu = np.sqrt(lam2_chi)
+        F2 = lam2_chi /(4*np.pi)**2
+
+        output = (
+            1
+
+            + (1.0/2.0) *fcn_I_m(mju, MpiL, mu, order_vol) / F2
+            + (1.0/8.0) *fcn_I_m(mpi, MpiL, mu, order_vol) / F2
+            + (1.0/4.0) *fcn_I_m(mru, MpiL, mu, order_vol) / F2
+            - (1.0/2.0) *fcn_I_m(msj, MpiL, mu, order_vol) / F2
+            + (1.0/4.0) *fcn_I_m(mss, MpiL, mu, order_vol) / F2
+            - (1.0/4.0) *fcn_I_m(mrs, MpiL, mu, order_vol) / F2
+            - (3.0/8.0) *fcn_I_m(mx, MpiL, mu, order_vol) / F2
+
+            + del2_ju *(
+                - fcn_dI_m(mpi, MpiL, mu, order_vol) / (8 *F2)
+                + fcn_K_mM((mpi, mx), MpiL, mu, order_vol) / (4 *F2)
+            )
+            - (del2_ju)**2 *fcn_K21_mM((mpi, mx), MpiL, mu, order_vol) / (24 *F2)
+            + del2_ju *del2_rs *(
+                + fcn_K_m1m2m3((mpi, mss, mx), MpiL, mu, order_vol) / (6 *F2)
+                + fcn_K21_mM((mss, mx), MpiL, mu, order_vol) / (12 *F2)
+            )
+            + del2_rs *(
+                + fcn_K_mM((mss, mx), MpiL, mu, order_vol) / (4 *F2)
+                - (mk)**2 *fcn_K21_mM((mss, mx), MpiL, mu, order_vol) / (6 *F2)
+                + (mpi)**2 *fcn_K21_mM((mss, mx), MpiL, mu, order_vol) / (6 *F2)
+            )
+
+            + 4 *(4 *np.pi)**2 *(mk**2 - mpi**2) / lam2_chi *p['L_5']
+        )
+
+        return output
+
+
     def fitfcn_xpt(self, p):
         # Constants
         order_vol = self.order['vol']
@@ -232,12 +294,12 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         # Independent variables
         mpi = p['mpi']
         mk = p['mk']
-        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2))
+        meta = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2))
 
         lam2_chi = p['lam2_chi']
         eps2_pi = mpi**2 / lam2_chi
         eps2_k = mk**2 / lam2_chi
-        eps2_x = mx**2 / lam2_chi
+        #eps2_eta = meta**2 / lam2_chi
 
         MpiL = p['MpiL']
         mu = np.sqrt(lam2_chi)
@@ -253,7 +315,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         FK_nlo_per_F0 = (1
             - (3.0/8.0) *fcn_I_m(mpi, MpiL, mu, order_vol) / F2
             - (3.0/4.0) *fcn_I_m(mk, MpiL, mu, order_vol) / F2
-            - (3.0/8.0) *fcn_I_m(mx, MpiL, mu, order_vol) / F2
+            - (3.0/8.0) *fcn_I_m(meta, MpiL, mu, order_vol) / F2
             + 4 *eps2_pi *p['L_4']
             + 4 *eps2_k *(2 *p['L_4'] + p['L_5'])
         )
@@ -268,12 +330,12 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         # Independent variables
         mpi = p['mpi']
         mk = p['mk']
-        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2))
+        meta = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2))
 
         lam2_chi = p['lam2_chi']
         eps2_pi = mpi**2 / lam2_chi
         eps2_k = mk**2 / lam2_chi
-        eps2_x = mx**2 / lam2_chi
+        #eps2_eta = mx**2 / lam2_chi
 
         MpiL = p['MpiL']
         mu = np.sqrt(lam2_chi)
@@ -284,7 +346,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             + 1*(
             + (5.0/8.0) *fcn_I_m(mpi, MpiL, mu, order_vol) / F2
             - (1.0/4.0) *fcn_I_m(mk, MpiL, mu, order_vol) / F2
-            - (3.0/8.0) *fcn_I_m(mx, MpiL, mu, order_vol) / F2)
+            - (3.0/8.0) *fcn_I_m(meta, MpiL, mu, order_vol) / F2)
             + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
         )
         return output
@@ -303,6 +365,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         newprior['mk'] = fit_data['mk']
         newprior['mss'] = fit_data['mss']
         newprior['mju'] = fit_data['mju']
+        newprior['mjs'] = fit_data['mjs']
         newprior['mru'] = fit_data['mru']
         newprior['mrs'] = fit_data['mrs']
         newprior['a2DI'] = fit_data['a2DI']
