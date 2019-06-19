@@ -16,7 +16,7 @@ class bootstrapper(object):
                  order=None, fit_type=None, F2=None):
 
         if fit_type is None:
-            fit_type = 'xpt-taylor'
+            fit_type = 'ma-taylor'
 
         if F2 is None:
             F2 = 'FKFpi'

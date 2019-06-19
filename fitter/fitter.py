@@ -18,7 +18,7 @@ class fitter(object):
             }
 
         if fit_type is None:
-            fit_type = 'mix'
+            fit_type = 'ma-taylor'
 
         self.prior = prior
         self.fit_data = fit_data
@@ -63,7 +63,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             }
 
         if fit_type is None:
-            fit_type = 'mix'
+            fit_type = 'ma-taylor'
 
         # Fit data
         self.fit_data = fit_data
@@ -233,6 +233,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             )
         )
 
+        print FK_nlo_per_F0 / Fpi_nlo_per_F0
         return FK_nlo_per_F0 / Fpi_nlo_per_F0
 
 
@@ -361,7 +362,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         # Constants
         pi = np.pi
-        order = self.order['fit']
 
         # Independent variables
         lam2_chi = p['lam2_chi']
@@ -390,8 +390,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                  - del2_pq / 8.0
                  + 4 *(eps2_k - eps2_pi) *(4*pi)**2 *p['L_5']
                  )
-        if order == 0:
-            return output
 
         # Order = 1
         output = (output +
@@ -418,9 +416,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                     - 2 *(del2_pq)**2 *(2 *eps2_ss - eps2_pi - eps2_x) / (9.0 *(eps2_x - eps2_ss)**2 *(eps2_x - eps2_pi))
                  )
         )
-
-        if order == 1:
-            return output
 
         return output
 
@@ -457,6 +452,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             newprior['L_5'] = prior['L_5']
         elif self.fit_type == 'ma-taylor':
             newprior['L_5'] = prior['L_5']
+        elif self.fit_type == 'ma-old':
+            newprior['L_5'] = prior['L_5']
+
 
         # Fit parameters, depending on order
         if order['fit'] in ['nnlo', 'nnnlo']:
