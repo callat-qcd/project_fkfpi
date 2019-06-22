@@ -35,7 +35,7 @@ class bootstrapper(object):
         if prior is None:
             prior = {
                 # nlo terms
-                'L_5' : '1(1)',
+                'L_5' : '1(1)', #0.0002(1)
                 'L_4' : '1(1)',
 
                 # nnlo terms
@@ -79,7 +79,8 @@ class bootstrapper(object):
                     data[abbr][data_parameter] = np.repeat(to_gvar(fit_data[abbr][data_parameter]), bs_N)
                 elif data_parameter in ['aw0']:
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
-                    w0 = 5.81743
+                    w0 = gv.gvar(5.81743, 0)
+                    data[abbr]['w0'] = np.repeat(w0, bs_N)
                     data[abbr]['a'] = np.repeat(to_gvar(fit_data[abbr][data_parameter])/w0, bs_N)
 
         for abbr in abbrs:
@@ -157,7 +158,7 @@ class bootstrapper(object):
 
     def _make_fit_data(self, j):
         prepped_data = {}
-        for parameter in ['a2DI', 'a', 'FK', 'Fpi', 'mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'MpiL', 'lam2_chi']:
+        for parameter in ['a2DI', 'a', 'FK', 'Fpi', 'lam2_chi', 'mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'MpiL', 'w0']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter][j] for abbr in self.abbrs])
 
         y = ([self.fit_data[abbr]['FK'][j]/self.fit_data[abbr]['Fpi'][j] for abbr in self.abbrs])
@@ -301,6 +302,7 @@ class bootstrapper(object):
             'a2DI' : 0, # Need to check this
             'Fpi' : gv.gvar('91.9(3.5)'),
             'FK' : gv.gvar('110.38(64)'),
+            'w0' : np.infty # ????
         }
         phys_point_data['mss'] = np.sqrt((4*phys_point_data['mk']**2 - phys_point_data['mpi']**2)/3.0)
         phys_point_data['mss'] = phys_point_data['mss'] * 1.00000001

@@ -127,7 +127,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_nnlo_cts(self, p):
         # Will need to adjust this later!
-        w0 = 5.81743
+        w0 = p['w0']
 
         lam2_chi = p['lam2_chi']
         eps2_a = p['a'] / (w0 *np.sqrt(4 *np.pi))
@@ -146,7 +146,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
 
         # Will need to adjust this later!
-        w0 = 5.81743
+        w0 = p['w0']
 
         lam2_chi = p['lam2_chi']
         eps2_a = p['a'] / (w0 *np.sqrt(4 *np.pi))
@@ -233,7 +233,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             )
         )
 
-        print FK_nlo_per_F0 / Fpi_nlo_per_F0
+        #print FK_nlo_per_F0 / Fpi_nlo_per_F0
         return FK_nlo_per_F0 / Fpi_nlo_per_F0
 
 
@@ -440,6 +440,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         newprior['lam2_chi'] = fit_data['lam2_chi']
         newprior['a'] = fit_data['a']
         newprior['MpiL'] = fit_data['MpiL']
+        newprior['w0'] = fit_data['w0']
 
         # Fit parameters, depending on fit type
         if self.fit_type == 'xpt':
