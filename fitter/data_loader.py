@@ -32,8 +32,13 @@ class data_loader(object):
                         data[ensemble][key] = dset[()]
         return data
 
-    def get_fit_info(self):
-        filepath = os.path.normpath(self.project_path + '/results/fit_results.csv')
+    # whose: 'mine', 'others'
+    def get_fit_info(self, whose=None):
+        filepath = None
+        if whose=='mine' or whose is None:
+            filepath = os.path.normpath(self.project_path + '/results/fit_results.csv')
+        elif whose=='others':
+            filepath = os.path.normpath(self.project_path + '/results/other_results.csv')
 
         if not os.path.isfile(filepath):
             return None
@@ -41,13 +46,14 @@ class data_loader(object):
 
         df_fit = pd.read_csv(filepath, header=0)
         cols = ['fit', 'logGBF', 'chi2/df', 'Q', 'vol corr', 'latt corr']
+        cols = np.intersect1d(cols, df_fit.columns.values)
 
         fit_types = df_fit['name'].values
         output_dict = {}
         for name in fit_types:
             index = np.argwhere(df_fit['name'].values == name)
-            for key in cols:
-                output_dict[name]= { key: np.asscalar(df_fit[key].values[index]) for key in cols}
+
+            output_dict[name]= {key: np.asscalar(df_fit[key].values[index]) for key in cols}
 
         return output_dict
 
@@ -121,14 +127,17 @@ class data_loader(object):
 
         return None
 
-    def save_plots(self, figs=None, bootstrapper=None, output_file=None):
+    def save_plots(self, figs=None, bootstrapper=None, output_filename=None):
         if figs is None:
             figs = bootstrapper.make_plots()
 
-        if output_file is None:
-            if not os.path.exists(os.path.normpath(self.project_path+'/tmp/')):
-                os.makedirs(os.path.normpath(self.project_path+'/tmp/'))
+        if not os.path.exists(os.path.normpath(self.project_path+'/tmp/')):
+            os.makedirs(os.path.normpath(self.project_path+'/tmp/'))
+
+        if output_filename is None:
             output_file = os.path.normpath(self.project_path+'/tmp/temp.pdf')
+        else:
+            output_file = os.path.normpath(self.project_path+'/tmp/'+output_filename+'.pdf')
 
         output_pdf = PdfPages(output_file)
         try:
