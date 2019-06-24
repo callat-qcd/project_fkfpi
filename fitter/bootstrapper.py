@@ -35,8 +35,8 @@ class bootstrapper(object):
         if prior is None:
             prior = {
                 # nlo terms
-                'L_5' : '1(1)', #0.0002(1)
-                'L_4' : '1(1)',
+                'L_5' : '0.00(1)', #0.0002(1)
+                'L_4' : '0.00(1)',
 
                 # nnlo terms
                 'A_22' : '1(1)',
@@ -69,19 +69,23 @@ class bootstrapper(object):
         for abbr in abbrs:
             data[abbr] = {}
             for data_parameter in fit_data[abbr].keys():
-                if data_parameter in ['Fpi', 'FK', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs', 'MpiL']:
+                if data_parameter in ['Fpi', 'FK', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs']:
                     means = fit_data[abbr][data_parameter][:bs_N]
                     unc = np.std(fit_data[abbr][data_parameter])
                     #print gv.gvar(means, np.repeat(unc, len(means)))
                     data[abbr][data_parameter] = gv.gvar(means, np.repeat(unc, len(means)))
                 elif data_parameter in ['a2DI']:
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
-                    data[abbr][data_parameter] = np.repeat(to_gvar(fit_data[abbr][data_parameter]), bs_N)
+                    data[abbr][data_parameter] = to_gvar(fit_data[abbr][data_parameter]) #np.repeat(to_gvar(fit_data[abbr][data_parameter]), bs_N)
                 elif data_parameter in ['aw0']:
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
-                    w0 = gv.gvar(5.81743, 0)
-                    data[abbr]['w0'] = np.repeat(w0, bs_N)
-                    data[abbr]['a'] = np.repeat(to_gvar(fit_data[abbr][data_parameter])/w0, bs_N)
+                    w0 = gv.gvar('5.81743(10)')
+                    data[abbr]['w0'] = w0 #np.repeat(w0, bs_N)
+                    data[abbr]['a'] = to_gvar(fit_data[abbr][data_parameter])/w0 #np.repeat(to_gvar(fit_data[abbr][data_parameter])/w0, bs_N)
+                elif data_parameter in ['MpiL']:
+                    L = int(np.median(fit_data[abbr]['MpiL'] / fit_data[abbr]['mpi']))
+                    data[abbr]['L'] = gv.gvar(L, L/100000.0) # Pretty certain about this value....
+
 
         for abbr in abbrs:
             hbar_c = 197.327
@@ -158,8 +162,13 @@ class bootstrapper(object):
 
     def _make_fit_data(self, j):
         prepped_data = {}
-        for parameter in ['a2DI', 'a', 'FK', 'Fpi', 'lam2_chi', 'mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'MpiL', 'w0']:
+        for parameter in ['FK', 'Fpi', 'mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter][j] for abbr in self.abbrs])
+        for parameter in ['w0']:
+            prepped_data[parameter] = self.fit_data[abbr][parameter]
+        for parameter in ['a', 'a2DI', 'L', 'lam2_chi',]:
+            prepped_data[parameter] =  np.array([self.fit_data[abbr][parameter] for abbr in self.abbrs])
+
 
         y = ([self.fit_data[abbr]['FK'][j]/self.fit_data[abbr]['Fpi'][j] for abbr in self.abbrs])
         prepped_data['y'] = y
@@ -290,7 +299,7 @@ class bootstrapper(object):
     def get_phys_point_data(self, parameter=None):
         phys_point_data = {
             'a' : 0,
-            'MpiL' : np.infty,
+            'L' : np.infty,
 
             'mpi' : gv.gvar('138.05638(37)'),
             'mju' : gv.gvar('138.05638(37)'),
@@ -554,7 +563,7 @@ class bootstrapper(object):
             color_parameter = 'a'
 
         if color_parameter in ['a']:
-            color_data = {abbr : np.repeat(self.fit_data[abbr]['a'][0], self.bs_N).ravel() for abbr in self.abbrs}
+            color_data = {abbr : np.repeat(self.fit_data[abbr]['a'], self.bs_N).ravel() for abbr in self.abbrs}
         elif color_parameter in ['L']:
             color_data = {abbr : np.repeat(gv.mean(self.fit_data[abbr][color_parameter]), self.bs_N).ravel() for abbr in self.abbrs}
         elif color_parameter == 'MpiL':
@@ -593,7 +602,7 @@ class bootstrapper(object):
 
             colors = ['black', 'purple', 'green', 'red']
             lattice_spacings = np.unique(self._make_fit_data(0)['a'])
-            for j, a in enumerate(np.append([gv.gvar('0(0)')], lattice_spacings)):
+            for j, a in enumerate(sorted(np.append([gv.gvar('0(0)')], lattice_spacings))):
 
                 minimum = np.nanmin([np.nanmin(
                     self.fit_data[abbr][xy_parameters[0]] *hbar_c / (self.fit_data[abbr]['a'])
