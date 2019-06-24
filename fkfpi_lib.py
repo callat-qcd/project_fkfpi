@@ -96,12 +96,9 @@ def format_h5_data(switches,data,priors):
         #fkfpi = data_dict['FK']/data_dict['Fpi']
         #print('  FK/Fpi = %.5f +- %.5f' %(fkfpi.mean(),fkfpi.std()))
         gvdata = gv.dataset.avg_data(data_dict,bstrap=True)
-        print(gvdata)
+        if switches['debug']:
+            print(gvdata)
     '''
-        data2pt = data.sort_values(by='nbs').query("ensemble=='%s'" %e)[['e0_pion','z0p_pion','e0_kaon','z0p_kaon','e0_etas','z0p_etas','mresl','mress']].to_dict(orient='list')
-        datamerge = dict(data2pt,**datamix)
-        gvdata = gv.dataset.avg_data(datamerge,bstrap=True)
-        mval = data.query("ensemble=='%s'" %e)[['mq1','mq2']].iloc[0].to_dict()
         data_dict = decay_constant(switches,mval,gvdata)
         Lchi.append(data_dict['x']['Lchi'])
         x.append(data_dict['x']['Lchi'])
