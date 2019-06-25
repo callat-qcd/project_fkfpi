@@ -339,13 +339,14 @@ class bootstrapper(object):
         figs = [self.plot_fit_info()]
         figs.append(self.plot_fit_bar_graph())
 
-        squared = lambda x : x**2
+        figs.append(self.plot_fit_vs_eps2pi())
+        #squared = lambda x : x**2
         #figs.append(self.plot_parameters(xy_parameters=['mpi', 'FK/Fpi'],
         #            xlabel='$F_\pi$ (MeV)', color_parameter='a'))
         #figs.append(self.plot_parameters(xy_parameters=['FK', 'FK/Fpi'],
         #            xlabel='$F_K$ (MeV)', color_parameter='a'))
-        figs.append(self.plot_parameters(xy_parameters=['mpi', 'FK/Fpi'],
-                    xfcn=squared, xlabel='$m_\pi^2$ (MeV)$^2$', color_parameter='a'))
+        #figs.append(self.plot_parameters(xy_parameters=['mpi', 'FK/Fpi'],
+        #            xfcn=squared, xlabel='$m_\pi^2$ (MeV)$^2$', color_parameter='a'))
         #figs.append(self.plot_parameters(xy_parameters=['mk', 'FK/Fpi'],
         #            xfcn=squared, xlabel='$m_K^2$ (MeV)$^2$', color_parameter='a'))
 
@@ -501,6 +502,109 @@ class bootstrapper(object):
         return fig
 
 
+    def plot_fit_vs_eps2pi(self):
+        # used to convert to phys units
+        hbar_c = 197.327
+
+        plot_data = {
+            0 :  {abbr : (self.fit_data[abbr]['mpi'] *hbar_c / self.fit_data[abbr]['a'])**2 /self.get_phys_point_data('lam2_chi')
+                              for abbr in self.abbrs},
+            1 : {abbr : self.shift_fk_fpi_for_phys_mk(abbr) for abbr in self.abbrs}
+        }
+
+        color_data = {abbr : np.repeat(self.fit_data[abbr]['a'], self.bs_N).ravel() for abbr in self.abbrs}
+
+        # Color by lattice spacing/length
+        cmap = matplotlib.cm.get_cmap('rainbow')
+        min_max = lambda x : [np.min(x), np.max(x)]
+        minimum, maximum = min_max(np.concatenate([gv.mean(color_data[abbr]) for abbr in self.abbrs]))
+        norm = matplotlib.colors.Normalize(vmin=minimum, vmax=maximum)
+
+        # Get scatter plot & color data
+        x = np.zeros(self.bs_N * len(self.abbrs))
+        y = np.zeros(self.bs_N * len(self.abbrs))
+        z = np.zeros(self.bs_N * len(self.abbrs))
+        for j, abbr in enumerate(self.abbrs):
+            x[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(plot_data[0][abbr])
+            y[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(plot_data[1][abbr])
+            z[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(color_data[abbr])
+
+        # Plot data
+        sc = plt.scatter(x, y, c=z, vmin=minimum, vmax=maximum,
+                         cmap=cmap, rasterized=True, marker=".", alpha=100.0/self.bs_N)
+
+
+        # Plot FLAG result
+        x_phys = self.get_phys_point_data('mpi')**2 / self.get_phys_point_data('lam2_chi')
+        plt.axvline(gv.mean(x_phys), label='Phys point')
+        y_phys = self.get_phys_point_data('FK/Fpi')
+
+        plt.errorbar(x=gv.mean(x_phys), xerr=0,
+                     y=gv.mean(y_phys), yerr=gv.sdev(y_phys), label='FLAG',
+                    color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
+                         ecolor='C1', elinewidth=10.0)
+
+        # Plot fit
+        colors = ['black', 'purple', 'green', 'red']
+        lattice_spacings = np.unique(self._make_fit_data(0)['a'])
+        for j, a in enumerate(sorted(np.append([gv.gvar('0(0)')], lattice_spacings))):
+
+            # Get the range of pion masses (in phys units)
+            minimum = np.nanmin([np.nanmin(
+                np.sqrt([plot_data[0][abbr] *self.get_phys_point_data('lam2_chi') for abbr in self.abbrs])
+            ) for abbr in self.abbrs])
+            maximum = np.nanmax([np.nanmax(
+                np.sqrt([plot_data[0][abbr] *self.get_phys_point_data('lam2_chi')  for abbr in self.abbrs])
+            ) for abbr in self.abbrs])
+            minimum = gv.mean(minimum)
+            maximum = gv.mean(maximum)
+            delta = maximum - minimum
+
+            x = np.linspace(np.max((minimum - 0.05*delta, 0)), maximum + 0.05*delta)
+
+            # Get phys point data, substituting x-data and current 'a' in loop
+            prepped_data = self.get_phys_point_data()
+            prepped_data['mpi'] = x
+            prepped_data['a'] = a
+
+            # Covert m_pi -> (eps_pi)^2
+            x = x**2/self.get_phys_point_data('lam2_chi')
+            y = self.fk_fpi_fit_fcn(fit_data=prepped_data)
+
+            pm = lambda g, k : gv.mean(g) + k*gv.sdev(g)
+            plt.plot(pm(x, 0), pm(y, 0), '--', color=colors[j], label='$a=$%s (fm)'%(str(a)), rasterized=True)
+            plt.fill_between(pm(x, 0), pm(y, -1), pm(y, 1), alpha=0.20, color=colors[j], rasterized=True)
+
+        # Plot labels
+        plt.legend()
+        plt.grid()
+        plt.xlabel('$\epsilon_\pi^2$', fontsize = 24)
+        plt.ylabel('$F_K/F_\pi$', fontsize = 24)
+
+        # Format colorbar
+        color_bar = plt.colorbar(sc)
+        color_bar.set_alpha(0.8)
+        color_bar.draw_all()
+        color_bar.set_label('$a$ (fm)', fontsize = 24)
+
+        # Set xlim, ylim -- only works if xy_parameters[i] is a vector, not a scalar
+        min_max = lambda x : [np.min(x), np.max(x)]
+        try:
+            xmin, xmax = min_max(np.concatenate([gv.mean(plot_data[0][abbr]) for abbr in self.abbrs]))
+            ymin, ymax = min_max(np.concatenate([gv.mean(plot_data[1][abbr]) for abbr in self.abbrs]))
+            xdelta = xmax - xmin
+            ydelta = ymax - ymin
+            plt.xlim(xmin-0.05*xdelta, xmax+0.05*xdelta) #xmin-0.05*xdelta
+            #plt.ylim(ymin-0.05*ydelta, ymax+0.05*ydelta)
+            plt.ylim(1.04, 1.20)
+        except ValueError:
+            pass
+
+        fig = plt.gcf()
+        plt.close()
+        return fig
+
+
     def plot_parameter_histogram(self, parameter):
         data = self.get_bootstrapped_fit_parameters()[parameter]
         fig, ax = plt.subplots()
@@ -534,7 +638,7 @@ class bootstrapper(object):
         return fig
 
     def plot_parameters(self, xy_parameters, color_parameter=None,
-                        xfcn=None, xlabel=None, yfcn=None, ylabel=None, show_fit=True):
+                        xfcn=None, xlabel=None, yfcn=None, ylabel=None):
 
         # used to convert to phys units
         hbar_c = 197.327
@@ -549,15 +653,12 @@ class bootstrapper(object):
         if yfcn is None:
             yfcn = lambda y : 1 * y
 
+        # Make plot data
         plot_data = {}
         myfcn = [xfcn, yfcn]
         for j, parameter in enumerate(xy_parameters):
             if parameter in ['FK/Fpi', 'FK / Fpi']:
-                if xy_parameters[0] == 'mpi':
-                    # Shift FK/Fpi data in scatterplot to account for fitting at phys point
-                    plot_data[j] = {abbr : myfcn[j](self.shift_fk_fpi_for_phys_mk(abbr)) for abbr in self.abbrs}
-                else:
-                    plot_data[j] = {abbr :  myfcn[j](self.fit_data[abbr]['FK'] /self.fit_data[abbr]['Fpi']) for abbr in self.abbrs}
+                plot_data[j] = {abbr :  myfcn[j](self.fit_data[abbr]['FK'] /self.fit_data[abbr]['Fpi']) for abbr in self.abbrs}
             elif parameter in ['mpi', 'mju', 'mru', 'mk', 'mrs', 'mss', 'FK', 'Fpi']:
                 # Convert to physical units
 
@@ -568,6 +669,7 @@ class bootstrapper(object):
                 plot_data[j] = {abbr :  myfcn[j](self.fit_data[abbr][parameter]) for abbr in self.abbrs}
 
 
+        # Get data for color coding graph
         if color_parameter is None:
             color_parameter = 'a'
 
@@ -595,48 +697,9 @@ class bootstrapper(object):
             y[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(plot_data[1][abbr])
             z[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(color_data[abbr])
 
+        # Plot data
         sc = plt.scatter(x, y, c=z, vmin=minimum, vmax=maximum,
                          cmap=cmap, rasterized=True, marker=".", alpha=100.0/self.bs_N)
-
-        if ((show_fit)
-                and (xy_parameters[1] in ['FK/Fpi', 'FK / Fpi'])
-                and (xy_parameters[0] in['mpi', 'mju', 'mru', 'mk', 'mrs', 'mss'])):
-
-            plt.axvline(gv.mean(xfcn(self.get_phys_point_data(xy_parameters[0]))), label='Phys point')
-            y_phys = self.get_phys_point_data('FK/Fpi')
-            plt.errorbar(x=gv.mean(xfcn(self.get_phys_point_data(xy_parameters[0]))), xerr=0,
-                         y=gv.mean(y_phys), yerr=gv.sdev(y_phys), label='FLAG',
-                        color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
-                             ecolor='C1', elinewidth=10.0)
-
-            colors = ['black', 'purple', 'green', 'red']
-            lattice_spacings = np.unique(self._make_fit_data(0)['a'])
-            for j, a in enumerate(sorted(np.append([gv.gvar('0(0)')], lattice_spacings))):
-
-                minimum = np.nanmin([np.nanmin(
-                    self.fit_data[abbr][xy_parameters[0]] *hbar_c / (self.fit_data[abbr]['a'])
-                ) for abbr in self.abbrs])
-                maximum = np.nanmax([np.nanmax(
-                    self.fit_data[abbr][xy_parameters[0]] *hbar_c / (self.fit_data[abbr]['a'])
-                ) for abbr in self.abbrs])
-                minimum = gv.mean(minimum)
-                maximum = gv.mean(maximum)
-                delta = maximum - minimum
-
-                x = np.linspace(np.max((minimum - 0.05*delta, 0)), maximum + 0.05*delta)
-
-                # Get phys point data, substituting x-data and current 'a' in loop
-                prepped_data = self.get_phys_point_data()
-                prepped_data[xy_parameters[0]] = x
-                prepped_data['a'] = a
-
-                y = self.fk_fpi_fit_fcn(fit_data=prepped_data)
-
-                pm = lambda g, k : gv.mean(g) + k*gv.sdev(g)
-                plt.plot(xfcn(x), pm(y, 0), '--', color=colors[j], label='$a=$%s (fm)'%(str(a)), rasterized=True)
-                plt.fill_between(xfcn(x), pm(y, -1), pm(y, 1), alpha=0.20, color=colors[j], rasterized=True)
-
-            plt.legend()
 
         # Plot labels
         plt.grid()
@@ -658,7 +721,6 @@ class bootstrapper(object):
             ydelta = ymax - ymin
             plt.xlim(xmin-0.05*xdelta, xmax+0.05*xdelta) #xmin-0.05*xdelta
             #plt.ylim(ymin-0.05*ydelta, ymax+0.05*ydelta)
-            plt.ylim(1.04, 1.20)
         except ValueError:
             pass
 
