@@ -15,6 +15,9 @@ class bootstrapper(object):
     def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
                  order=None, fit_type=None, F2=None):
 
+        w0 = gv.gvar('5.81743(10)')
+        self.w0 = w0
+
         if fit_type is None:
             fit_type = 'ma-taylor'
 
@@ -51,10 +54,10 @@ class bootstrapper(object):
                 'A_2202' : '1(1)',
 
                 # lattice artifact terms
-                'c_a2' : '1(1)',
-                'c_a3' : '1(1)',
-                'c_a4' : '1(1)',
-                'c_mpia2' : '1(1)',
+                'c_a2' : '-1(1)',
+                'c_a3' : '0(1)',
+                'c_a4' : '0(1)',
+                'c_mpia2' : '0(1)',
 
                 # fudge factor (for debugging)
                 'c_fudge' : '1(1)'
@@ -311,7 +314,7 @@ class bootstrapper(object):
             'a2DI' : 0, # Need to check this
             'Fpi' : gv.gvar('91.9(3.5)'),
             'FK' : gv.gvar('110.38(64)'),
-            'w0' : np.infty # ????
+            'w0' : self.w0
         }
         phys_point_data['mss'] = np.sqrt((4*phys_point_data['mk']**2 - phys_point_data['mpi']**2)/3.0)
         phys_point_data['mss'] = phys_point_data['mss'] * 1.00000001
