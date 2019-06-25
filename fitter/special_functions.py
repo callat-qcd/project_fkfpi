@@ -19,7 +19,7 @@ def fcn_I_m(m, L, mu, order):
     output = (m/(4*np.pi))**2 *np.log((m/mu)**2)
 
     for n in range(1, np.min((order+1, 11))):
-        output = output + (m/(4*np.pi))**2 *(c[n]/(m *L *np.sqrt(n))) *fcn_Kn(1, m *L *np.sqrt(n))
+        output = output + (m**2/(4*np.pi)**2) *(c[n]/(m *L *np.sqrt(n))) *fcn_Kn(1, m *L *np.sqrt(n))
     return output
 
 # dI(m) in notes

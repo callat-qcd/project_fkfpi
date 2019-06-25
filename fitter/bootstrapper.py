@@ -115,7 +115,7 @@ class bootstrapper(object):
         output = output + "Fitted/[Experimental] values at physical point:\n"
         output = output + '\nF_K / F_pi = %s [%s]\n'%(
                             self.extrapolate_to_phys_point(),
-                            self.get_phys_point_data('FK')/self.get_phys_point_data('Fpi'))
+                            self.get_phys_point_data('FK/Fpi'))
         output = output + "\n"
 
         fit_parameters = self.get_fit_parameters()
@@ -319,7 +319,7 @@ class bootstrapper(object):
         phys_point_data['mss'] = np.sqrt((4*phys_point_data['mk']**2 - phys_point_data['mpi']**2)/3.0)
         phys_point_data['mss'] = phys_point_data['mss'] * 1.00000001
         phys_point_data['mrs'] = phys_point_data['mss']
-        phys_point_data['FK/Fpi'] = phys_point_data['FK'] / phys_point_data['Fpi']
+        phys_point_data['FK/Fpi'] = gv.gvar('1.1932(19)')
 
         FK = phys_point_data['FK']
         Fpi = phys_point_data['Fpi']
@@ -427,6 +427,38 @@ class bootstrapper(object):
     def plot_fit_bar_graph(self):
         y = 0
         labels = np.array([])
+
+        # Physical point:
+        for j in range(1):
+            plt.axhline(y-1, ls ='-', color='C4')
+            data = self.get_phys_point_data('FK/Fpi')
+            x = gv.mean(data)
+            xerr = gv.sdev(data)
+            plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
+                         color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
+                         ecolor='C1', elinewidth=10.0, label='Exp/Lat')
+
+            labels = np.append(labels, str(""))
+            y = y + 1
+
+            # fit result
+            fit_value = self.extrapolate_to_phys_point()
+            x = gv.mean(fit_value)
+            xerr = gv.sdev(fit_value)
+            plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
+                         color='C2', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
+                         ecolor='C3', elinewidth=10.0, label='Fit')
+
+            y = y + 1
+            labels = np.append(labels, str("Phys. point"))
+            plt.axhline(y, ls='--')
+
+            y = y + 1
+            labels = np.append(labels, str(""))
+            plt.axhline(y-1, ls ='-', color='C4')
+
+
+
         for abbr in self.abbrs:
             # data
             data = self.fit_data[abbr]['FK'] / self.fit_data[abbr]['Fpi']
@@ -454,35 +486,6 @@ class bootstrapper(object):
 
             y = y + 1
             labels = np.append(labels, str(""))
-
-        # Physical point:
-        for j in range(1):
-            plt.axhline(y-1, ls ='-', color='C4')
-            data = self.get_phys_point_data('FK') / self.get_phys_point_data('Fpi')
-            x = gv.mean(data)
-            xerr = gv.sdev(data)
-            plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
-                         color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
-                         ecolor='C1', elinewidth=10.0, label='Exp/Lat')
-
-            labels = np.append(labels, str(""))
-            y = y + 1
-
-            # fit result
-            fit_value = self.extrapolate_to_phys_point()
-            x = gv.mean(fit_value)
-            xerr = gv.sdev(fit_value)
-            plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
-                         color='C2', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
-                         ecolor='C3', elinewidth=10.0, label='Fit')
-
-            y = y + 1
-            labels = np.append(labels, str("Phys. point"))
-            plt.axhline(y, ls='--')
-
-            y = y + 1
-            labels = np.append(labels, str(""))
-            plt.axhline(y-1, ls ='-', color='C4')
 
         plt.legend()
         plt.yticks(1*range(len(labels)), labels, fontsize=15, rotation=45)
@@ -547,7 +550,7 @@ class bootstrapper(object):
         myfcn = [xfcn, yfcn]
         for j, parameter in enumerate(xy_parameters):
             if parameter in ['FK/Fpi', 'FK / Fpi']:
-                if xy_parameters[0] == 'mpi':
+                if False and xy_parameters[0] == 'mpi':
                     # Shift FK/Fpi data in scatterplot to account for fitting at phys point
                     plot_data[j] = {abbr : myfcn[j](self.shift_fk_fpi_for_phys_mk(abbr)) for abbr in self.abbrs}
                 else:
