@@ -54,7 +54,7 @@ class bootstrapper(object):
                 'A_2202' : '1(1)',
 
                 # lattice artifact terms
-                'c_a2' : '-1(1)',
+                'c_a2' : '0(1)',
                 'c_a3' : '0(1)',
                 'c_a4' : '0(1)',
                 'c_mpia2' : '0(1)',
@@ -112,7 +112,7 @@ class bootstrapper(object):
         output = output + "\n\nFitting to %s \n" %(self.order['fit'])
         output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
-        output = output + "Fitted/[Experimental] values at physical point:\n"
+        output = output + "Fitted/[FLAG] values at physical point:\n"
         output = output + '\nF_K / F_pi = %s [%s]\n'%(
                             self.extrapolate_to_phys_point(),
                             self.get_phys_point_data('FK/Fpi'))
@@ -425,21 +425,22 @@ class bootstrapper(object):
         return fig
 
     def plot_fit_bar_graph(self):
-        y = 0
+        y = 1
         labels = np.array([])
 
         # Physical point:
         for j in range(1):
-            plt.axhline(y-1, ls ='-', color='C4')
+            plt.axhline(y-2, ls ='-', color='C4')
+
+            # FLAG
             data = self.get_phys_point_data('FK/Fpi')
             x = gv.mean(data)
             xerr = gv.sdev(data)
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
                          color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
-                         ecolor='C1', elinewidth=10.0, label='Exp/Lat')
-
+                         ecolor='C1', elinewidth=10.0, label='FLAG/Lat')
             labels = np.append(labels, str(""))
-            y = y + 1
+            y = y - 1
 
             # fit result
             fit_value = self.extrapolate_to_phys_point()
@@ -448,8 +449,10 @@ class bootstrapper(object):
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
                          color='C2', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
                          ecolor='C3', elinewidth=10.0, label='Fit')
+            y = y + 2
 
-            y = y + 1
+
+
             labels = np.append(labels, str("Phys. point"))
             plt.axhline(y, ls='--')
 
@@ -458,8 +461,16 @@ class bootstrapper(object):
             plt.axhline(y-1, ls ='-', color='C4')
 
 
-
         for abbr in self.abbrs:
+            # fit result
+            fit_value = self.extrapolate_to_ensemble(abbr)
+            x = gv.mean(fit_value)
+            xerr = gv.sdev(fit_value)
+            plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
+                         color='C2', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
+                         ecolor='C3', elinewidth=10.0)
+            y = y + 1
+
             # data
             data = self.fit_data[abbr]['FK'] / self.fit_data[abbr]['Fpi']
             x = gv.mean(np.mean(data))
@@ -468,26 +479,18 @@ class bootstrapper(object):
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
                          color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
                          ecolor='C1', elinewidth=10.0)
-
             labels = np.append(labels, str(""))
             y = y + 1
 
-            # fit result
-            fit_value = self.extrapolate_to_ensemble(abbr)
-            x = gv.mean(fit_value)
-            xerr = gv.sdev(fit_value)
-            plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
-                         color='C2', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
-                         ecolor='C3', elinewidth=10.0)
-
-            y = y + 1
             labels = np.append(labels, str(abbr))
             plt.axhline(y, ls='--')
 
             y = y + 1
             labels = np.append(labels, str(""))
 
+
         plt.legend()
+
         plt.yticks(1*range(len(labels)), labels, fontsize=15, rotation=45)
         plt.ylim(-1, y)
         plt.xlabel(self._fmt_key_as_latex('FK/Fpi'), fontsize = 24)
@@ -550,7 +553,7 @@ class bootstrapper(object):
         myfcn = [xfcn, yfcn]
         for j, parameter in enumerate(xy_parameters):
             if parameter in ['FK/Fpi', 'FK / Fpi']:
-                if False and xy_parameters[0] == 'mpi':
+                if xy_parameters[0] == 'mpi':
                     # Shift FK/Fpi data in scatterplot to account for fitting at phys point
                     plot_data[j] = {abbr : myfcn[j](self.shift_fk_fpi_for_phys_mk(abbr)) for abbr in self.abbrs}
                 else:
@@ -602,7 +605,7 @@ class bootstrapper(object):
             plt.axvline(gv.mean(xfcn(self.get_phys_point_data(xy_parameters[0]))), label='Phys point')
             y_phys = self.get_phys_point_data('FK/Fpi')
             plt.errorbar(x=gv.mean(xfcn(self.get_phys_point_data(xy_parameters[0]))), xerr=0,
-                         y=gv.mean(y_phys), yerr=gv.sdev(y_phys), label='Exp',
+                         y=gv.mean(y_phys), yerr=gv.sdev(y_phys), label='FLAG',
                         color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
                              ecolor='C1', elinewidth=10.0)
 
@@ -655,12 +658,27 @@ class bootstrapper(object):
             ydelta = ymax - ymin
             plt.xlim(xmin-0.05*xdelta, xmax+0.05*xdelta) #xmin-0.05*xdelta
             #plt.ylim(ymin-0.05*ydelta, ymax+0.05*ydelta)
+            plt.ylim(1.04, 1.20)
         except ValueError:
             pass
 
         fig = plt.gcf()
         plt.close()
         return fig
+
+
+    def shift_fk_fpi_for_phys_mk_alt(self, abbr):
+        hbar_c = 197.327
+        lam2_chi = self.get_phys_point_data('lam2_chi')
+
+        fkfpi_data = self.fit_data[abbr]['FK'] / self.fit_data[abbr]['Fpi']
+        fkfpi_fit_mk_phys = self.extrapolate_to_phys_point()
+
+        data = self.get_phys_point_data()
+        data['mk'] = self.fit_data[abbr]['mk'] * hbar_c / self.fit_data[abbr]['a']
+        fkfpi_fit_mk_ens = self.fk_fpi_fit_fcn(data)
+
+        return fkfpi_data *(fkfpi_fit_mk_phys / fkfpi_fit_mk_ens)
 
     def shift_fk_fpi_for_phys_mk(self, abbr):
         pi = np.pi
