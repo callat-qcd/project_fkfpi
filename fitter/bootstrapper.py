@@ -274,9 +274,32 @@ class bootstrapper(object):
 
         return bs_fit_parameters
 
+    def get_fit_info(self):
+        fit_type = self.fit_type+'_'+self.order['fit']
+        fit_info = {
+            'name' : self.fit_type+'_'+self.order['fit'],
+            'fit' : self.extrapolate_to_phys_point(),
+            'logGBF' : self.fits[0].logGBF,
+            'chi2/df' : self.fits[0].chi2 / self.fits[0].dof,
+            'Q' : self.fits[0].Q,
+            'vol corr' : self.order['vol'],
+            'latt corr' : self.order['latt_spacing']
+        }
+        for key in self.get_fit_keys():
+            fit_info[key] = self.get_fit_parameters(key)
+
+        return fit_info
+
+
     # Returns keys of fit parameters
     def get_fit_keys(self):
-        return sorted(self.get_bootstrapped_fit_parameters().keys())
+        if self.fits is None:
+            self.bootstrap_fits()
+
+        keys1 = self.prior.keys()
+        keys2 = self.fits[0].p.keys()
+        parameters = np.intersect1d(keys1, keys2)
+        return sorted(parameters)
 
     # Returns dictionary with keys fit parameters, entries gvar results
     def get_fit_parameters(self, parameter=None):

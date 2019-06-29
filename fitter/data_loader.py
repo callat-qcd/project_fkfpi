@@ -71,52 +71,75 @@ class data_loader(object):
                     names.append(key)
         return sorted(np.unique([names]))
 
-    def save_fit_info(self, bootstrapper):
+    def save_fit_info(self, fit_info):
         print "Saving..."
 
         if not os.path.exists(self.project_path + '/results/'):
             os.makedirs(self.project_path + '/results/')
         filepath = os.path.normpath(self.project_path + '/results/fit_results.csv')
 
-        fit_type = bootstrapper.fit_type+'_'+bootstrapper.order['fit']
-        fit_info = {
-            'name' : bootstrapper.fit_type+'_'+bootstrapper.order['fit'],
-            'fit' : bootstrapper.extrapolate_to_phys_point(),
-            'logGBF' : bootstrapper.fits[0].logGBF,
-            'chi2/df' : bootstrapper.fits[0].chi2 / bootstrapper.fits[0].dof,
-            'Q' : bootstrapper.fits[0].Q,
-            'vol corr' : bootstrapper.order['vol'],
-            'latt corr' : bootstrapper.order['latt_spacing']
-        }
-        cols = ['name', 'fit', 'logGBF', 'chi2/df', 'Q', 'vol corr', 'latt corr']
+        # get fit info
+        cols = np.array(['name', 'fit', 'logGBF', 'chi2/df', 'Q', 'vol corr', 'latt corr'])
+        lecs_cols = ['L_4', 'L_5', # nlo terms
+                     'A_22', 'M_400', 'M_220', 'M_202', # nnlo terms
+                     'A_42', 'A_24', 'A_2220', 'A_2202', # nnnlo terms
+                     'c_a2', 'c_a3', 'c_a4', 'c_mpia2'] # lattice terms
+        # append LEC results
+        cols = np.concatenate((cols,lecs_cols), axis=0)
+        #diff = sorted(list(set(cols).symmetric_difference(fit_info.keys()))) # Gets set difference (ie, LEC keys)
+        #cols = np.concatenate((cols, diff), axis=0) # Append LEC keys to columns
+        #print "\n\n---"
+        #print cols
+        #print"---"
 
-        #return fit_info
+        # fit_info keys not in cols -> create key in fit_info
+        for key in cols:
+            if key not in fit_info.keys():
+                #print "fit info key not in col: ", key
+                fit_info[key] = np.nan
 
         # Add result to file if file exists
         if os.path.isfile(filepath):
             df_best_fits = pd.read_csv(filepath, index_col=0).to_dict()
+            #print df_best_fits.keys()
+            #print sorted(list(set(cols).symmetric_difference(df_best_fits.keys())))
+
+
+            # Get keys in df but not in cols
+            #diff = sorted(list(set(cols).symmetric_difference(df_best_fits.keys())))
+            #cols = np.concatenate((cols, diff), axis=0)
+            #print "\n\n---"
+            #print cols
+            #print"---"
 
             output_dict = {}
             for key in df_best_fits.keys():
-                output_dict[key] = np.array(df_best_fits[key].values())
+                output_dict[key] = np.array(df_best_fits[key].values(), dtype="object")
 
-            if fit_type in output_dict['name']:
-                index = np.asscalar(np.argwhere(output_dict['name'] == fit_type))
+
+            # df keys not in cols -> create keys in df
+            for key in cols:
+                if key not in output_dict.keys():
+                    print "df key not in col: ", key
+                    output_dict[key] = np.repeat(np.nan, len(output_dict['name']))
+
+
+
+            if fit_info['name'] in output_dict['name']:
+                index = np.asscalar(np.argwhere(output_dict['name'] == fit_info['name']))
                 for key in fit_info.keys():
                     output_dict[key][index] = fit_info[key]
             else:
-                # We want the abbr to be listed in alphabetical order
-                index = np.asscalar(np.argwhere(np.sort(np.append(output_dict['name'], fit_type), axis=None)
-                                  ==  fit_type))
                 for key in output_dict.keys():
-                    if index > len(output_dict[key]) - 1:
-                        output_dict[key]= np.append(output_dict[key], fit_info[key])
-                    else:
-                        output_dict[key] = np.insert(output_dict[key], index, fit_info[key])
+                    output_dict[key] = np.append(output_dict[key], fit_info[key])
 
             df = pd.DataFrame.from_dict(output_dict)
             df = df[cols]
+            df.sort_values('name')
             df.to_csv(filepath)
+
+            #print
+            #print df
 
         # Create new file if it doesn't exist
         else:
@@ -125,6 +148,7 @@ class data_loader(object):
             df = df[cols] # rearrange in logical order
             df.to_csv(filepath)
 
+        print "Done."
         return None
 
     def save_plots(self, figs=None, bootstrapper=None, output_filename=None):
