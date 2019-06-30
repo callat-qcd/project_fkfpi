@@ -26,47 +26,139 @@ class fitter(object):
         self.order = order
         self.fit_type = fit_type
 
+    def _make_fit(self):
+        models = self._make_models()
+        y_data = self._make_y_data()
+        prior = self._make_prior()
+
+        fitter = lsqfit.MultiFitter(models=models)
+        fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
+        #fit = fitter.chained_lsqfit(data=y_data, prior=prior)
+
+
+        self.fit = fit
+        return fit
+
+    def _make_models(self):
+        models = np.array([])
+        if self.fit_type == 'simultaneous':
+            for fit_type in ['ma','ma-taylor', 'xpt', 'xpt-taylor']:
+                models = np.append(models, fk_fpi_model(datatag=fit_type,
+                            order=self.order, fit_type=fit_type))
+        else:
+            models = np.append(models, fk_fpi_model(datatag=self.fit_type,
+                        order=self.order, fit_type=self.fit_type))
+        return models
+
+    def _make_prior(self, fit_data=None):
+        if fit_data is None:
+            fit_data = self.fit_data
+
+        prior = self.prior
+
+        newprior = gv.BufferDict()
+        order = self.order
+
+        # Move fit_data into prior
+        #newprior['Fpi'] = fit_data['Fpi']
+        #newprior['FK'] = fit_data['FK']
+        newprior['mpi'] = fit_data['mpi']
+        newprior['mk'] = fit_data['mk']
+        newprior['mss'] = fit_data['mss']
+        newprior['mju'] = fit_data['mju']
+        newprior['mjs'] = fit_data['mjs']
+        newprior['mru'] = fit_data['mru']
+        newprior['mrs'] = fit_data['mrs']
+        newprior['a2DI'] = fit_data['a2DI']
+        newprior['lam2_chi'] = fit_data['lam2_chi']
+        newprior['a'] = fit_data['a']
+        newprior['L'] = fit_data['L']
+        newprior['w0'] = fit_data['w0']
+
+        #for key in newprior.keys():
+        #    newprior[key] = gv.gvar(gv.mean(newprior[key]), gv.sdev(newprior[key])/100)
+
+        # Fit parameters, depending on fit type
+        if self.fit_type == 'xpt':
+            newprior['L_4'] = prior['L_4']
+            newprior['L_5'] = prior['L_5']
+        elif self.fit_type == 'xpt-taylor':
+            newprior['L_5'] = prior['L_5']
+        elif self.fit_type == 'ma':
+            newprior['L_4'] = prior['L_4']
+            newprior['L_5'] = prior['L_5']
+        elif self.fit_type == 'ma-taylor':
+            newprior['L_5'] = prior['L_5']
+        elif self.fit_type == 'ma-old':
+            newprior['L_5'] = prior['L_5']
+        elif self.fit_type == 'simultaneous':
+            newprior['L_4'] = prior['L_4']
+            newprior['L_5'] = prior['L_5']
+
+
+        # Fit parameters, depending on order
+        if order['fit'] in ['nnlo', 'nnnlo']:
+            newprior['A_22'] = prior['A_22']
+            newprior['M_400'] = prior['M_400']
+            newprior['M_220'] = prior['M_220']
+            newprior['M_202'] = prior['M_202']
+
+        if order['fit'] in ['nnnlo']:
+            newprior['A_42'] = prior['A_42']
+            newprior['A_24'] = prior['A_24']
+            newprior['A_2220'] = prior['A_2220']
+            newprior['A_2202'] = prior['A_2202']
+
+
+        # Lattice artifacts
+        if order['latt_spacing'] >= 2:
+            newprior['c_a2'] = prior['c_a2']
+
+        if order['latt_spacing'] >= 3:
+            newprior['c_a3'] = prior['c_a3']
+
+        if order['latt_spacing'] >= 4:
+            newprior['c_a4'] = prior['c_a4']
+
+        newprior['c_mpia2'] = prior['c_mpia2']
+
+        # Fudge factor
+        #newprior['c_fudge'] = prior['c_fudge']
+
+        return newprior
+
+    def _make_y_data(self, fit_data=None):
+        if fit_data is None:
+            fit_data = self.fit_data
+
+        if 'y' not in fit_data.keys():
+            return None
+        else:
+            return fit_data['y']
+
     def get_fit(self):
         if self.fit is None:
             return self._make_fit()
         else:
             return self.fit
 
-    def _make_fit(self):
-        models = self._make_models()
-        fitter = lsqfit.MultiFitter(models=models)
-        fit = fitter.lsqfit(data=self.fit_data, prior=self.prior)
-        self.fit = fit
-        return fit
-
-    def _make_models(self, fit_data=None):
-        if fit_data is None:
-            fit_data=self.fit_data
-
-        models = np.array([])
-        models = np.append(models, fk_fpi_model(datatag='fk_fpi', fit_data=fit_data,
-                    order=self.order, fit_type=self.fit_type))
-        return models
-
-
 
 class fk_fpi_model(lsqfit.MultiFitterModel):
 
-    def __init__(self, datatag, fit_data, fit_type=None, order=None):
+    def __init__(self, datatag, fit_type, order):
         super(fk_fpi_model, self).__init__(datatag)
 
-        if order is None:
-            order = {
-                'fit' : 'nlo',
-                'latt_spacing' : 2, # no order 1 term -- starts at 2
-                'vol' : 1
-            }
+        #if order is None:
+        #    order = {
+        #        'fit' : 'nlo',
+        #        'latt_spacing' : 2, # no order 1 term -- starts at 2
+        #        'vol' : 1
+        #    }
 
-        if fit_type is None:
-            fit_type = 'ma-taylor'
+        #if fit_type is None:
+        #    fit_type = 'ma-taylor'
 
         # Fit data
-        self.fit_data = fit_data
         self.order = order
         self.fit_type = fit_type
 
@@ -413,74 +505,71 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output
 
-
-
     def buildprior(self, prior, mopt=None, extend=False):
-        newprior = gv.BufferDict()
         order = self.order
 
-        # Move fit_data into prior
-        fit_data = self.fit_data
-        #newprior['Fpi'] = fit_data['Fpi']
-        #newprior['FK'] = fit_data['FK']
-        newprior['mpi'] = fit_data['mpi']
-        newprior['mk'] = fit_data['mk']
-        newprior['mss'] = fit_data['mss']
-        newprior['mju'] = fit_data['mju']
-        newprior['mjs'] = fit_data['mjs']
-        newprior['mru'] = fit_data['mru']
-        newprior['mrs'] = fit_data['mrs']
-        newprior['a2DI'] = fit_data['a2DI']
-        newprior['lam2_chi'] = fit_data['lam2_chi']
-        newprior['a'] = fit_data['a']
-        newprior['L'] = fit_data['L']
-        newprior['w0'] = fit_data['w0']
+        mprior = gv.BufferDict()
+        mprior['mpi'] = prior['mpi']
+        mprior['mk'] = prior['mk']
+        mprior['lam2_chi'] = prior['lam2_chi']
+        mprior['a'] = prior['a']
+        mprior['L'] = prior['L']
+        mprior['w0'] = prior['w0']
 
         # Fit parameters, depending on fit type
         if self.fit_type == 'xpt':
-            newprior['L_4'] = prior['L_4']
-            newprior['L_5'] = prior['L_5']
+            mprior['L_4'] = prior['L_4']
+            mprior['L_5'] = prior['L_5']
         elif self.fit_type == 'xpt-taylor':
-            newprior['L_5'] = prior['L_5']
+            mprior['L_5'] = prior['L_5']
         elif self.fit_type == 'ma':
-            newprior['L_4'] = prior['L_4']
-            newprior['L_5'] = prior['L_5']
+            mprior['L_4'] = prior['L_4']
+            mprior['L_5'] = prior['L_5']
+            mprior['a2DI'] = prior['a2DI']
+            mprior['mss'] = prior['mss']
+            mprior['mju'] = prior['mju']
+            mprior['mjs'] = prior['mjs']
+            mprior['mru'] = prior['mru']
+            mprior['mrs'] = prior['mrs']
         elif self.fit_type == 'ma-taylor':
-            newprior['L_5'] = prior['L_5']
+            mprior['L_5'] = prior['L_5']
+            mprior['a2DI'] = prior['a2DI']
+            mprior['mss'] = prior['mss']
+            mprior['mju'] = prior['mju']
+            mprior['mjs'] = prior['mjs']
+            mprior['mru'] = prior['mru']
+            mprior['mrs'] = prior['mrs']
         elif self.fit_type == 'ma-old':
-            newprior['L_5'] = prior['L_5']
+            mprior['L_5'] = prior['L_5']
 
 
         # Fit parameters, depending on order
         if order['fit'] in ['nnlo', 'nnnlo']:
-            newprior['A_22'] = prior['A_22']
-            newprior['M_400'] = prior['M_400']
-            newprior['M_220'] = prior['M_220']
-            newprior['M_202'] = prior['M_202']
+            mprior['A_22'] = prior['A_22']
+            mprior['M_400'] = prior['M_400']
+            mprior['M_220'] = prior['M_220']
+            mprior['M_202'] = prior['M_202']
 
         if order['fit'] in ['nnnlo']:
-            newprior['A_42'] = prior['A_42']
-            newprior['A_24'] = prior['A_24']
-            newprior['A_2220'] = prior['A_2220']
-            newprior['A_2202'] = prior['A_2202']
+            mprior['A_42'] = prior['A_42']
+            mprior['A_24'] = prior['A_24']
+            mprior['A_2220'] = prior['A_2220']
+            mprior['A_2202'] = prior['A_2202']
 
 
         # Lattice artifacts
         if order['latt_spacing'] >= 2:
-            newprior['c_a2'] = prior['c_a2']
+            mprior['c_a2'] = prior['c_a2']
 
         if order['latt_spacing'] >= 3:
-            newprior['c_a3'] = prior['c_a3']
+            mprior['c_a3'] = prior['c_a3']
 
         if order['latt_spacing'] >= 4:
-            newprior['c_a4'] = prior['c_a4']
+            mprior['c_a4'] = prior['c_a4']
 
-        newprior['c_mpia2'] = prior['c_mpia2']
+        mprior['c_mpia2'] = prior['c_mpia2']
 
-        # Fudge factor
-        #newprior['c_fudge'] = prior['c_fudge']
-
-        return newprior
+        return mprior
 
     def builddata(self, data):
-        return data['y']
+        return data

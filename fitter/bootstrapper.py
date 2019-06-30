@@ -38,8 +38,8 @@ class bootstrapper(object):
         if prior is None:
             prior = {
                 # nlo terms
-                'L_5' : '0.00(1)', #0.0002(1)
-                'L_4' : '0.00(1)',
+                'L_5' : '0(1)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
+                'L_4' : '0(1)', #'-0.000710 (24)', #'0.00(1)',
 
                 # nnlo terms
                 'A_22' : '1(1)',
@@ -54,7 +54,7 @@ class bootstrapper(object):
                 'A_2202' : '1(1)',
 
                 # lattice artifact terms
-                'c_a2' : '0(1)',
+                'c_a2' : '0(1)', #'0.32 (19)', #'0(1)',
                 'c_a3' : '0(1)',
                 'c_a4' : '0(1)',
                 'c_mpia2' : '0(1)',
@@ -247,7 +247,7 @@ class bootstrapper(object):
         if fit_type is None:
             fit_type = self.fit_type
 
-        model = fitter(order=self.order, fit_type=fit_type)._make_models(fit_data)[0]
+        model = fitter(order=self.order, fit_type=fit_type)._make_models()[0]
         return model.fitfcn(p=fit_parameters, fit_data=fit_data)
 
     # Returns dictionary with keys fit parameters, entries bs results
