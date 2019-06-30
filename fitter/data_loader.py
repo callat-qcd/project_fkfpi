@@ -45,8 +45,9 @@ class data_loader(object):
 
 
         df_fit = pd.read_csv(filepath, header=0)
-        cols = ['fit', 'logGBF', 'chi2/df', 'Q', 'vol corr', 'latt corr']
-        cols = np.intersect1d(cols, df_fit.columns.values)
+        cols = df_fit.columns.values
+        #cols = ['fit', 'logGBF', 'chi2/df', 'Q', 'vol corr', 'latt corr']
+        #cols = np.intersect1d(cols, df_fit.columns.values)
 
         fit_types = df_fit['name'].values
         output_dict = {}
