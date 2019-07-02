@@ -15,7 +15,7 @@ class bootstrapper(object):
     def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
                  order=None, fit_type=None, F2=None):
 
-        w0 = gv.gvar('5.81743(10)')
+        w0 = gv.gvar('5.80(10)')
         self.w0 = w0
 
         if fit_type is None:
@@ -36,6 +36,7 @@ class bootstrapper(object):
             }
 
         if prior is None:
+            print "Using default prior."
             prior = {
                 # nlo terms
                 'L_5' : '0(1)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
@@ -82,7 +83,6 @@ class bootstrapper(object):
                     data[abbr][data_parameter] = to_gvar(fit_data[abbr][data_parameter]) #np.repeat(to_gvar(fit_data[abbr][data_parameter]), bs_N)
                 elif data_parameter in ['aw0']:
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
-                    w0 = gv.gvar('5.80(10)') #gv.gvar('5.81743(10)')
                     data[abbr]['w0'] = w0 #np.repeat(w0, bs_N)
                     data[abbr]['a'] = to_gvar(fit_data[abbr][data_parameter])/w0 #np.repeat(to_gvar(fit_data[abbr][data_parameter])/w0, bs_N)
                 elif data_parameter in ['MpiL']:

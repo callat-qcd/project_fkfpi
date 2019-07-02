@@ -42,7 +42,7 @@ class fitter(object):
     def _make_models(self):
         models = np.array([])
         if self.fit_type == 'simultaneous':
-            for fit_type in ['xpt', 'xpt-taylor']:
+            for fit_type in ['ma-taylor', 'xpt-taylor']:
                 models = np.append(models, fk_fpi_model(datatag=fit_type,
                             order=self.order, fit_type=fit_type))
         else:
@@ -169,8 +169,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         #print self.fit_type
         # Lattice artifact terms
-        output = (self.fitfcn_latt_spacing_corections(p)
-                 + self.fitfcn_mpia_corrections(p))
+        output = (self.fitfcn_latt_spacing_corrections(p)
+                  - self.fitfcn_finite_vol_corrections(p))
+                 #+ self.fitfcn_mpia_corrections(p)) # Doesn't seem to be doing anything
 
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             # mixed-action/xpt fits
@@ -200,7 +201,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         output = (a *mpi)**2 /lam2_chi *p['c_mpia2']
         return output
 
-    def fitfcn_latt_spacing_corections(self, p):
+    def fitfcn_latt_spacing_corrections(self, p):
         order = self.order['latt_spacing']
         a = p['a']
         output = 0
@@ -214,6 +215,50 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             output = output + a**3 *p['c_a3']
         if order >= 4:
             output = output + a**4 *p['c_a4']
+
+        return output
+
+    def fitfcn_finite_vol_corrections(self, p):
+
+        # Constants
+        c = [None, 6, 12, 8, 6, 24, 24, 0, 12, 30, 24]
+        order = self.order['vol']
+
+        # Variables
+        L = L = p['L']
+        lam2_chi = p['lam2_chi']
+        to_eps2 = lambda x : x**2/lam2_chi
+
+        mju = p['mju']
+        mpi = p['mpi']
+        mk = p['mk']
+        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2) + p['a2DI'])
+
+        del2_ju = p['a2DI']
+        del2_rs = p['a2DI']
+
+        eps2_ju = to_eps2(mju)
+        eps2_pi = to_eps2(mpi)
+        eps2_x = to_eps2(mx)
+
+        eps2_D_ju = (del2_ju/lam2_chi)
+        eps2_D_rs = (del2_rs/lam2_chi)
+
+        output = 0
+        for n in range(1, np.min((order, 11))):
+            xju = mju *L *n
+            xpi = mpi *L *n
+
+            output = output + c[n]*(
+                + 2 *eps2_ju *fcn_Kn(1, xju) / xju
+                + (1.0/2.0) *eps2_pi *fcn_Kn(1, xpi) / xpi
+                - (1.0/8.0) *eps2_D_ju *(
+                    + 2 *fcn_Kn(1, xpi) / xpi
+                    - fcn_Kn(0, xpi)
+                    - fcn_Kn(2, xpi)
+                )
+                - eps2_D_ju *eps2_pi / (eps2_x - eps2_pi) *fcn_Kn(1, xpi) / xpi
+            )
 
         return output
 
