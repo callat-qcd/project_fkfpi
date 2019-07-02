@@ -60,6 +60,8 @@ class data_loader(object):
 
     def get_prior(self, fit_type):
         filepath = self.project_path + '/priors/'+fit_type+'.csv'
+        if not os.path.isfile(filepath):
+            return None
         df_read = pd.read_csv(filepath, index_col=0)
         return gv.gvar({key : df_read.to_dict("index")[key]["0"]
                 for key in df_read.to_dict("index").keys()})
@@ -174,11 +176,25 @@ class data_loader(object):
         output_pdf.close()
         print "Done."
 
+        return None
+
     def save_prior(self, prior, fit_type):
         filepath = self.project_path + '/priors/'+fit_type+'.csv'
+
+        current_prior = self.get_prior(fit_type)
+
+        #for key in out_prior.keys():
+        #    out_prior[key] = [str(prior[out_prior])]
+
         out_prior = {}
-        for key in sorted(prior.keys()):
+        if current_prior is not None:
+            for key in current_prior.keys():
+                out_prior[key] = [str(current_prior[key])]
+
+        for key in prior.keys():
             out_prior[key] = [str(prior[key])]
 
         df = pd.DataFrame.from_dict(out_prior).T
         df.to_csv(filepath)
+
+        return None

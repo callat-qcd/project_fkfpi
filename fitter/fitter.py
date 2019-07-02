@@ -42,7 +42,7 @@ class fitter(object):
     def _make_models(self):
         models = np.array([])
         if self.fit_type == 'simultaneous':
-            for fit_type in ['ma','ma-taylor', 'xpt', 'xpt-taylor']:
+            for fit_type in ['xpt', 'xpt-taylor']:
                 models = np.append(models, fk_fpi_model(datatag=fit_type,
                             order=self.order, fit_type=fit_type))
         else:

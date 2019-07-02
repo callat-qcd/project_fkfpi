@@ -82,7 +82,7 @@ class bootstrapper(object):
                     data[abbr][data_parameter] = to_gvar(fit_data[abbr][data_parameter]) #np.repeat(to_gvar(fit_data[abbr][data_parameter]), bs_N)
                 elif data_parameter in ['aw0']:
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
-                    w0 = gv.gvar('5.81743(10)')
+                    w0 = gv.gvar('5.80(10)') #gv.gvar('5.81743(10)')
                     data[abbr]['w0'] = w0 #np.repeat(w0, bs_N)
                     data[abbr]['a'] = to_gvar(fit_data[abbr][data_parameter])/w0 #np.repeat(to_gvar(fit_data[abbr][data_parameter])/w0, bs_N)
                 elif data_parameter in ['MpiL']:
@@ -217,10 +217,9 @@ class bootstrapper(object):
     def create_prior_from_fit(self):
         output = {}
         for key in self.get_fit_parameters().keys():
-            mean = gv.mean(np.asscalar(self.get_fit_parameters()[key]))
-            unc = 0.5 #0.25*gv.mean(self.get_fit_parameters()[key])
-            #mean = gv.mean(self.fits[0].p[key])
-            #unc = gv.sdev(self.fits[0].p[key])
+            mean = gv.mean(self.get_fit_parameters(key))
+            sdev = gv.sdev(self.get_fit_parameters(key))
+            unc = np.min((0.5, 5*sdev)) #0.25*gv.mean(self.get_fit_parameters()[key])
 
             output[key] = gv.gvar(mean, unc)
 
