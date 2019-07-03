@@ -42,7 +42,7 @@ class fitter(object):
     def _make_models(self):
         models = np.array([])
         if self.fit_type == 'simultaneous':
-            for fit_type in ['ma-taylor', 'xpt-taylor']:
+            for fit_type in ['xpt', 'xpt-taylor']:
                 models = np.append(models, fk_fpi_model(datatag=fit_type,
                             order=self.order, fit_type=fit_type))
         else:
@@ -170,8 +170,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         #print self.fit_type
         # Lattice artifact terms
         output = (self.fitfcn_latt_spacing_corrections(p)
-                  - self.fitfcn_finite_vol_corrections(p))
-                 #+ self.fitfcn_mpia_corrections(p)) # Doesn't seem to be doing anything
+                  + self.fitfcn_finite_vol_corrections(p)
+                 + self.fitfcn_mpia_corrections(p)) # Doesn't seem to be doing anything
 
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             # mixed-action/xpt fits
@@ -222,7 +222,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         # Constants
         c = [None, 6, 12, 8, 6, 24, 24, 0, 12, 30, 24]
-        order = self.order['vol']
+        order_vol = self.order['vol']
+        order_fit = self.order['fit']
 
         # Variables
         L = L = p['L']
@@ -231,6 +232,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         mju = p['mju']
         mpi = p['mpi']
+        mss = p['mss']
         mk = p['mk']
         mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2) + p['a2DI'])
 
@@ -239,13 +241,14 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         eps2_ju = to_eps2(mju)
         eps2_pi = to_eps2(mpi)
+        eps2_ss = to_eps2(mss)
         eps2_x = to_eps2(mx)
 
         eps2_D_ju = (del2_ju/lam2_chi)
         eps2_D_rs = (del2_rs/lam2_chi)
 
         output = 0
-        for n in range(1, np.min((order, 11))):
+        for n in range(1, np.min((order_vol, 11))):
             xju = mju *L *n
             xpi = mpi *L *n
 
@@ -258,6 +261,15 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                     - fcn_Kn(2, xpi)
                 )
                 - eps2_D_ju *eps2_pi / (eps2_x - eps2_pi) *fcn_Kn(1, xpi) / xpi
+                + (1/24) *(eps2_D_ju)**2 *(
+                    + 4 *eps2_pi / (eps2_x - eps2_pi)**2 *fcn_Kn(1, xpi) / xpi
+                    + 1 / (eps2_x - eps2_pi) *(
+                        + 2 *fcn_Kn(1, xpi) / xpi
+                        - fcn_Kn(0, xpi)
+                        - fcn_Kn(2, xpi)
+                    )
+                )
+                + (2.0/3.0) *eps2_D_ju *eps2_D_rs *eps2_pi / ((eps2_pi - eps2_x) *(eps2_pi - eps2_ss)) *fcn_Kn(1, xpi) / xpi
             )
 
         return output
