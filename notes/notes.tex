@@ -1,0 +1,44 @@
+\documentclass[prd,tightenlines,preprintnumbers,showpacs,superscriptaddress,notitlepage,nofootinbib,eqsecnum,floatfix,notitlepage]{revtex4-1}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{braket}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usepackage{float}
+
+\newcount\hour \newcount\hourminute \newcount\minute 
+\hour=\time \divide \hour by 60
+\hourminute=\hour \multiply \hourminute by 60
+\minute=\time \advance \minute by -\hourminute
+\newcommand{\mydate}{\ \today \ - \number\hour :\number\minute}
+
+
+\begin{document}
+	
+\title{$F_K / F_\pi$ Notes}
+\author{Nolan Miller}
+\date{\mydate}
+
+
+\begin{abstract}
+In these notes, we explain our general fitting strategy for determining $F_K / F_\pi$.
+\end{abstract}
+\maketitle
+
+\section{Fit Functions}
+
+\subsection{Models}
+
+\subsection{Corrections}
+
+\section{Fit Strategy}
+
+\subsection{Prior}
+
+
+
+\bibliography{notes}
+
+\end{document}
+

@@ -170,7 +170,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         #print self.fit_type
         # Lattice artifact terms
         output = (self.fitfcn_latt_spacing_corrections(p)
-                  + self.fitfcn_finite_vol_corrections(p)
+                  #+ self.fitfcn_finite_vol_corrections(p) # Don't need this -- already in fcn_I_m definitions
                  + self.fitfcn_mpia_corrections(p)) # Doesn't seem to be doing anything
 
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
@@ -198,11 +198,18 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         a = p['a']
         mpi = p['mpi']
         lam2_chi = p['lam2_chi']
-        output = (a *mpi)**2 /lam2_chi *p['c_mpia2']
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+
+
+        output = (eps2_k - eps2_pi) *(a *mpi)**2 /lam2_chi *p['c_mpia2']
         return output
 
     def fitfcn_latt_spacing_corrections(self, p):
         order = self.order['latt_spacing']
+        lam2_chi = p['lam2_chi']
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
         a = p['a']
         output = 0
 
@@ -216,7 +223,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if order >= 4:
             output = output + a**4 *p['c_a4']
 
-        return output
+        return output *(eps2_k - eps2_pi)
 
     def fitfcn_finite_vol_corrections(self, p):
 

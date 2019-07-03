@@ -55,7 +55,7 @@ class bootstrapper(object):
                 'A_2202' : '1(1)',
 
                 # lattice artifact terms
-                'c_a2' : '0(1)', #'0.32 (19)', #'0(1)',
+                'c_a2' : '0(10)', #'0.32 (19)', #'0(1)',
                 'c_a3' : '0(1)',
                 'c_a4' : '0(1)',
                 'c_mpia2' : '0(1)',
@@ -338,8 +338,9 @@ class bootstrapper(object):
             'FK' : gv.gvar('110.38(64)'),
             'w0' : self.w0
         }
-        phys_point_data['mss'] = np.sqrt((4*phys_point_data['mk']**2 - phys_point_data['mpi']**2)/3.0)
-        phys_point_data['mss'] = phys_point_data['mss'] * 1.00000001
+        #phys_point_data['mss'] = np.sqrt((4*phys_point_data['mk']**2 - phys_point_data['mpi']**2)/3.0)
+        phys_point_data['mss'] = gv.gvar('685.8(4.0)') # eta_s
+        #phys_point_data['mss'] = phys_point_data['mss'] * 1.00000001
         phys_point_data['mrs'] = phys_point_data['mss']
         phys_point_data['FK/Fpi'] = gv.gvar('1.1932(19)')
 
