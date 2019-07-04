@@ -333,16 +333,16 @@ class bootstrapper(object):
             'mru' : gv.gvar('495.6479(92)'),
             'mjs' : gv.gvar('495.6479(92)'),
 
+            'mss' : gv.gvar('688.5(2.2)'), # arxiv/1303.1670
+            'mrs' : gv.gvar('688.5(2.2)'),
+
             'a2DI' : 0, # Need to check this
             'Fpi' : gv.gvar('91.9(3.5)'),
             'FK' : gv.gvar('110.38(64)'),
-            'w0' : self.w0
+            'w0' : self.w0,
+
+            'FK/Fpi' : gv.gvar('1.1932(19)') # FLAG
         }
-        #phys_point_data['mss'] = np.sqrt((4*phys_point_data['mk']**2 - phys_point_data['mpi']**2)/3.0)
-        phys_point_data['mss'] = gv.gvar('685.8(4.0)') # eta_s
-        #phys_point_data['mss'] = phys_point_data['mss'] * 1.00000001
-        phys_point_data['mrs'] = phys_point_data['mss']
-        phys_point_data['FK/Fpi'] = gv.gvar('1.1932(19)')
 
         FK = phys_point_data['FK']
         Fpi = phys_point_data['Fpi']
