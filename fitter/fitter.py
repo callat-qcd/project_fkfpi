@@ -225,6 +225,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output *(eps2_k - eps2_pi)
 
+
+    # This function shouldn't be used since the finite volume corrections
+    # are already embedded in the models
     def fitfcn_finite_vol_corrections(self, p):
 
         # Constants
@@ -285,7 +288,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         w0 = p['w0']
 
         lam2_chi = p['lam2_chi']
-        eps2_a = p['a'] / (w0 *np.sqrt(4 *np.pi))
+        eps2_a = (p['a'] / (w0 *np.sqrt(4 *np.pi)))**2
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
@@ -302,7 +305,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         w0 = p['w0']
 
         lam2_chi = p['lam2_chi']
-        eps2_a = p['a'] / (w0 *np.sqrt(4 *np.pi))
+        eps2_a = (p['a'] / (w0 *np.sqrt(4 *np.pi)))**2
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 

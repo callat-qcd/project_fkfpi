@@ -31,6 +31,15 @@ In these notes, we explain our general fitting strategy for determining $F_K / F
 
 \section{Fit Functions}
 
+In general, our fits are of the form
+
+\begin{equation}
+\frac{F_K}{F_\pi} = \left(\frac{F_K}{F_\pi}\right)_\text{model} + 
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} + 
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO} + 
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{latt spacing} + 
+\delta\left(\frac{F_K}{F_\pi}\right)_{m_\pi a}.
+\end{equation}
 \subsection{Special Functions}
 For reference, we use the following special functions in our fits, which encapsulate the finite volume dependence. The values for the $c_n$'s are given in Table \ref{tab:cN_weights}.
 \begin{align}
@@ -100,12 +109,19 @@ We can plot the splitting over flavors and pion masses, and see how well this LO
 
 
 
+\subsection{Models}
+In the following descriptions of the models, we make use of the definitions
+\begin{equation}
+\epsilon_\pi^2 = \frac{m_\pi^2}{\Lambda_\chi^2} \qquad
+\epsilon_K^2 = \frac{m_K^2}{\Lambda_\chi^2} \qquad
+\epsilon_a^2 = \frac{a^2}{4 \pi \omega_0} \qquad
+\end{equation}
+where we set $\Lambda_\chi^2$ to $F_\pi^2$, $F_K^2$, or $F_\pi F_K$.
 
-
-\subsubsection{NLO MA + NNLO c.t. ratio}
+\subsubsection{NLO MA}
 For these fits, we will do
 \begin{equation}
-\frac{F_K}{F_\pi} = \frac{F_K^{\text nlo}}{F_\pi^{\rm nlo}} + \delta_{c.t.}^{\rm NNLO}
+\left(\frac{F_K}{F_\pi}\right)_\text{MA} = \frac{F_K^\text{nlo}}{F_\pi^\text{nlo}}
 \end{equation}
 where
 \begin{align}
@@ -142,10 +158,12 @@ where
 \end{align}
 
 
-\subsubsection{NLO MA + NNLO c.t. Taylor expanded ratio}
+\subsubsection{NLO MA Taylor expanded ratio}
+For these fits, 
+
 \begin{align}\label{eq:fkfpi_ma}
-\frac{F_K}{F_\pi} &= 1
-+\frac{\mathcal{I(m_{ju})}}{2F^2}
+\left(\frac{F_K}{F_\pi}\right)_\text{MA Taylor} &= 1
++\frac{\mathcal{I}(m_{ju})}{2F^2}
 +\frac{\mathcal{I}(m_\pi)}{8F^2}
 +\frac{\mathcal{I}(m_{ru})}{4F^2}
 -\frac{\mathcal{I}(m_{sj})}{2F^2}
@@ -168,10 +186,10 @@ where
 + 4 (4\pi)^2 L_5(\mu) \frac{m_K^2 - m_\pi^2}{(4\pi F)^2}
 \end{align}
 
-\subsubsection{NLO $\chi$PT + NNLO c.t. ratio}
+\subsubsection{NLO $\chi$PT}
 For these fits, we will do
 \begin{equation}
-\frac{F_K}{F_\pi} = \frac{F_K^{\rm nlo}}{F_\pi^{\rm nlo}} + \delta_{c.t.}^{\rm NNLO}
+\left(\frac{F_K}{F_\pi}\right)_\text{$\chi$PT} = \frac{F_K^{\rm nlo}}{F_\pi^{\rm nlo}}
 \end{equation}
 where
 \begin{align}
@@ -179,23 +197,19 @@ where
 - \frac{\mathcal{I}(m_\pi)}{F^2}
 -\frac{1}{2}\frac{\mathcal{I}(m_K)}{F^2}
 +4 \epsilon_\pi^2 (4\pi)^2 (L_4 + L_5)
-+8 \epsilon_K^2 (4\pi)^2 L_4
-\end{align}
-and
-\begin{align}
++8 \epsilon_K^2 (4\pi)^2 L_4 \, , \\
 \frac{F_K^{\rm nlo}}{F_0} &= 1
 -\frac{3}{8}\frac{\mathcal{I}(m_\pi)}{F^2}
 -\frac{3}{4}\frac{\mathcal{I}(m_K)}{F^2}
 -\frac{3\mathcal{I}(m_\eta)}{8F^2}
-%\nonumber\\&\phantom{=}
 +4\epsilon_\pi^2 L_4 + 4\epsilon_K^2(L_5 + 2L_4)
 \end{align}
 
 
-
-\subsubsection{NLO $\chi$PT + NNLO c.t. Taylor expansion}
+\subsubsection{NLO $\chi$PT Taylor expansion}
+For these fits, 
 \begin{align}\label{eq:fkfpi_chpt}
-\frac{F_K}{F_\pi} &= 1
+\left(\frac{F_K}{F_\pi}\right)_\text{$\chi$PT Taylor} &= 1
 +\frac{5}{8} \frac{\mathcal{I}(m_\pi)}{F^2}
 -\frac{1}{4} \frac{\mathcal{I}(m_K)}{F^2}
 -\frac{3}{8} \frac{\mathcal{I}(m_\eta)}{F^2}
@@ -206,8 +220,12 @@ and
 \end{align}
 
 
-\subsection{NNLO counter terms}
-The NNLO and NNNLO counter term expressions are 
+
+
+\subsection{Corrections}
+
+\subsubsection{NNLO \& NNNLO counter terms}
+The NNLO and NNNLO counter terms are formed by taking powers of $\epsilon^2_\xi$ ($\xi = K, \pi, a$), along with $(\epsilon_K^2 - \epsilon_\pi^2)$ (which ensures $F_K / F_\pi$ tends to 1 in the chiral limit), to a desired order. For NNLO, we take one power of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$. For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$.
 \begin{equation}
 \delta_{c.t.}^{\rm NNLO} = \epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2) A_{2,2}
 +(\epsilon_K^2 - \epsilon_\pi^2)^2 M_{4,0,0}
@@ -219,11 +237,8 @@ The NNLO and NNNLO counter term expressions are
 +\epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2)^2 A_{2,4}
 +\epsilon_a^2 \epsilon_K^2 (\epsilon_K^2 - \epsilon_\pi^2) A_{2,2,2,0}
 +\epsilon_a^2 \epsilon_\pi^2 (\epsilon_K^2 - \epsilon_\pi^2) A_{2,2,0,2}
++\cdots
 \end{equation}
-
-\subsection{Corrections}
-
-
 
 
 
