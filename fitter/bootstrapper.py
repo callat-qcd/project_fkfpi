@@ -15,7 +15,7 @@ class bootstrapper(object):
     def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
                  order=None, fit_type=None, F2=None):
 
-        w0 = gv.gvar('5.80(10)')
+        w0 = gv.gvar('5.80(10)') # This isn't right
         self.w0 = w0
 
         if fit_type is None:
