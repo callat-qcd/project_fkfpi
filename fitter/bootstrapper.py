@@ -15,7 +15,7 @@ class bootstrapper(object):
     def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
                  order=None, fit_type=None, F2=None):
 
-        w0 = gv.gvar('5.80(10)') # This isn't right
+        w0 = gv.gvar('0.17(10)') # Still needs to be determined, but something like this
         self.w0 = w0
 
         if fit_type is None:
@@ -39,8 +39,8 @@ class bootstrapper(object):
             print "Using default prior."
             prior = {
                 # nlo terms
-                'L_5' : '0(1)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
-                'L_4' : '0(1)', #'-0.000710 (24)', #'0.00(1)',
+                'L_5' : '0.0002(1)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
+                'L_4' : '0.00(1)', #'-0.000710 (24)', #'0.00(1)',
 
                 # nnlo terms
                 'A_22' : '1(1)',
@@ -81,10 +81,11 @@ class bootstrapper(object):
                 elif data_parameter in ['a2DI']:
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
                     data[abbr][data_parameter] = to_gvar(fit_data[abbr][data_parameter]) #np.repeat(to_gvar(fit_data[abbr][data_parameter]), bs_N)
-                elif data_parameter in ['aw0']:
+                elif data_parameter in ['aw0']: # this is a/w0
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
-                    data[abbr]['w0'] = w0 #np.repeat(w0, bs_N)
-                    data[abbr]['a'] = to_gvar(fit_data[abbr][data_parameter])/w0 #np.repeat(to_gvar(fit_data[abbr][data_parameter])/w0, bs_N)
+                    #data[abbr]['w0'] = w0 #np.repeat(w0, bs_N)
+                    #data[abbr]['a'] = to_gvar(fit_data[abbr]['aw0'])/w0 #np.repeat(to_gvar(fit_data[abbr][data_parameter])/w0, bs_N)
+                    data[abbr]['a/w0'] = to_gvar(fit_data[abbr]['aw0'])
                 elif data_parameter in ['MpiL']:
                     L = int(np.median(fit_data[abbr]['MpiL'] / fit_data[abbr]['mpi']))
                     data[abbr]['L'] = gv.gvar(L, L/100000.0) # Pretty certain about this value....
@@ -92,7 +93,7 @@ class bootstrapper(object):
 
         for abbr in abbrs:
             hbar_c = 197.327
-            a = data[abbr]['a']
+            a = data[abbr]['a/w0'] *w0
             data[abbr]['lam2_chi'] = self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2
 
         self.bs_N = bs_N
@@ -132,7 +133,7 @@ class bootstrapper(object):
     def _fmt_key_as_latex(self, key):
         convert = {
             # data parameters
-            'a' : r'$a$ (fm)',
+            'a/w0' : r'$a$ (fm)',
             'L' : r'$L$ (fm)',
 
             'mpi' : r'$m_\pi$',
@@ -167,9 +168,9 @@ class bootstrapper(object):
         prepped_data = {}
         for parameter in ['FK', 'Fpi', 'mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter][j] for abbr in self.abbrs])
-        for parameter in ['w0']:
-            prepped_data[parameter] = self.fit_data[abbr][parameter]
-        for parameter in ['a', 'a2DI', 'L', 'lam2_chi',]:
+        #for parameter in ['w0']:
+        #    prepped_data[parameter] = self.fit_data[abbr][parameter]
+        for parameter in ['a/w0', 'a2DI', 'L', 'lam2_chi',]:
             prepped_data[parameter] =  np.array([self.fit_data[abbr][parameter] for abbr in self.abbrs])
 
 
@@ -323,6 +324,7 @@ class bootstrapper(object):
     # need to convert to/from lattice units
     def get_phys_point_data(self, parameter=None):
         phys_point_data = {
+            'a/w0' : 0,
             'a' : 0,
             'L' : np.infty,
 
@@ -530,12 +532,12 @@ class bootstrapper(object):
         hbar_c = 197.327
 
         plot_data = {
-            0 :  {abbr : (self.fit_data[abbr]['mpi'] *hbar_c / self.fit_data[abbr]['a'])**2 /self.get_phys_point_data('lam2_chi')
+            0 :  {abbr : (self.fit_data[abbr]['mpi'] *hbar_c / (self.fit_data[abbr]['a/w0'] *self.w0)**2 /self.get_phys_point_data('lam2_chi'))
                               for abbr in self.abbrs},
             1 : {abbr : self.shift_fk_fpi_for_phys_mk(abbr) for abbr in self.abbrs}
         }
 
-        color_data = {abbr : np.repeat(self.fit_data[abbr]['a'], self.bs_N).ravel() for abbr in self.abbrs}
+        color_data = {abbr : np.repeat(self.fit_data[abbr]['a/w0'] *self.w0, self.bs_N).ravel() for abbr in self.abbrs}
 
         # Color by lattice spacing/length
         cmap = matplotlib.cm.get_cmap('rainbow')
@@ -569,7 +571,7 @@ class bootstrapper(object):
 
         # Plot fit
         colors = ['black', 'purple', 'green', 'red']
-        lattice_spacings = np.unique(self._make_fit_data(0)['a'])
+        lattice_spacings = np.unique(self._make_fit_data(0)['a/w0']) *self.w0
         for j, a in enumerate(sorted(np.append([gv.gvar('0(0)')], lattice_spacings))):
 
             # Get the range of pion masses (in phys units)
@@ -588,7 +590,7 @@ class bootstrapper(object):
             # Get phys point data, substituting x-data and current 'a' in loop
             prepped_data = self.get_phys_point_data()
             prepped_data['mpi'] = x
-            prepped_data['a'] = a
+            prepped_data['a/w0'] = a *self.w0
 
             # Covert m_pi -> (eps_pi)^2
             x = x**2/self.get_phys_point_data('lam2_chi')
@@ -687,7 +689,7 @@ class bootstrapper(object):
 
                 plot_data[j] = {}
                 for abbr in self.abbrs:
-                    plot_data[j][abbr] = myfcn[j](self.fit_data[abbr][parameter] *hbar_c / (self.fit_data[abbr]['a']))
+                    plot_data[j][abbr] = myfcn[j](self.fit_data[abbr][parameter] *hbar_c / (self.fit_data[abbr]['a/w0'] *self.w0))
             else:
                 plot_data[j] = {abbr :  myfcn[j](self.fit_data[abbr][parameter]) for abbr in self.abbrs}
 
@@ -697,7 +699,7 @@ class bootstrapper(object):
             color_parameter = 'a'
 
         if color_parameter in ['a']:
-            color_data = {abbr : np.repeat(self.fit_data[abbr]['a'], self.bs_N).ravel() for abbr in self.abbrs}
+            color_data = {abbr : np.repeat(self.fit_data[abbr]['a/w0'] *self.w0, self.bs_N).ravel() for abbr in self.abbrs}
         elif color_parameter in ['L']:
             color_data = {abbr : np.repeat(gv.mean(self.fit_data[abbr][color_parameter]), self.bs_N).ravel() for abbr in self.abbrs}
         elif color_parameter == 'MpiL':
@@ -760,7 +762,7 @@ class bootstrapper(object):
         fkfpi_fit_mk_phys = self.extrapolate_to_phys_point()
 
         data = self.get_phys_point_data()
-        data['mk'] = self.fit_data[abbr]['mk'] * hbar_c / self.fit_data[abbr]['a']
+        data['mk'] = self.fit_data[abbr]['mk'] * hbar_c / (self.fit_data[abbr]['a/w0'] *self.w0)
         fkfpi_fit_mk_ens = self.fk_fpi_fit_fcn(data)
 
         return fkfpi_data *(fkfpi_fit_mk_phys / fkfpi_fit_mk_ens)
@@ -772,7 +774,7 @@ class bootstrapper(object):
 
         fkfpi_ens = self.fit_data[abbr]['FK'] / self.fit_data[abbr]['Fpi']
 
-        to_phys = lambda m : m *hbar_c / self.fit_data[abbr]['a']
+        to_phys = lambda m : m *hbar_c / (self.fit_data[abbr]['a/w0'] *self.w0)
         eps2_k = (to_phys(self.fit_data[abbr]['mk']))**2 / lam2_chi
         eps2_k_phys = (self.get_phys_point_data('mk'))**2 / lam2_chi
         eps2_pi = (to_phys(self.fit_data[abbr]['mpi']))**2 / lam2_chi

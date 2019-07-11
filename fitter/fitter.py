@@ -71,9 +71,10 @@ class fitter(object):
         newprior['mrs'] = fit_data['mrs']
         newprior['a2DI'] = fit_data['a2DI']
         newprior['lam2_chi'] = fit_data['lam2_chi']
-        newprior['a'] = fit_data['a']
+        #newprior['a'] = fit_data['a']
         newprior['L'] = fit_data['L']
-        newprior['w0'] = fit_data['w0']
+        #newprior['w0'] = fit_data['w0']
+        newprior['a/w0'] = fit_data['a/w0']
 
         #for key in newprior.keys():
         #    newprior[key] = gv.gvar(gv.mean(newprior[key]), gv.sdev(newprior[key])/100)
@@ -169,9 +170,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         #print self.fit_type
         # Lattice artifact terms
-        output = (self.fitfcn_latt_spacing_corrections(p)
+        output = (self.fitfcn_latt_spacing_corrections(p))
                   #+ self.fitfcn_finite_vol_corrections(p) # Don't need this -- already in fcn_I_m definitions
-                 + self.fitfcn_mpia_corrections(p)) # Doesn't seem to be doing anything
+                 #+ self.fitfcn_mpia_corrections(p)) # Doesn't seem to be doing anything
 
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             # mixed-action/xpt fits
@@ -210,18 +211,18 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         lam2_chi = p['lam2_chi']
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
-        a = p['a']
+        eps_a = (p['a/w0'] / (4 *np.pi))
         output = 0
 
         if order < 2:
             return output
 
         if order >= 2:
-            output = output + a**2 *p['c_a2']
+            output = output + eps_a**2 *p['c_a2']
         if order >= 3:
-            output = output + a**3 *p['c_a3']
+            output = output + eps_a**3 *p['c_a3']
         if order >= 4:
-            output = output + a**4 *p['c_a4']
+            output = output + eps_a**4 *p['c_a4']
 
         return output *(eps2_k - eps2_pi)
 
@@ -285,10 +286,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return output
 
     def fitfcn_nnlo_cts(self, p):
-        w0 = p['w0']
+        #w0 = p['w0']
 
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a'] / (w0 *np.sqrt(4 *np.pi)))**2
+        eps2_a = (p['a/w0'] / (4 *np.pi))**2
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
@@ -302,10 +303,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_nnnlo_cts(self, p):
 
-        w0 = p['w0']
+        #w0 = p['w0']
 
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a'] / (w0 *np.sqrt(4 *np.pi)))**2
+        eps2_a = (p['a/w0'] / (4 *np.pi))**2
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
@@ -579,9 +580,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         mprior['mpi'] = prior['mpi']
         mprior['mk'] = prior['mk']
         mprior['lam2_chi'] = prior['lam2_chi']
-        mprior['a'] = prior['a']
+        #mprior['a'] = prior['a']
         mprior['L'] = prior['L']
-        mprior['w0'] = prior['w0']
+        #mprior['w0'] = prior['w0']
+        mprior['a/w0'] = prior['a/w0']
 
         # Fit parameters, depending on fit type
         if self.fit_type == 'xpt':
