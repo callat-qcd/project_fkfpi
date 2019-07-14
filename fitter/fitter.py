@@ -170,9 +170,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         #print self.fit_type
         # Lattice artifact terms
-        output = (self.fitfcn_latt_spacing_corrections(p))
+        output = (self.fitfcn_latt_spacing_corrections(p)
                   #+ self.fitfcn_finite_vol_corrections(p) # Don't need this -- already in fcn_I_m definitions
-                 #+ self.fitfcn_mpia_corrections(p)) # Doesn't seem to be doing anything
+                 + self.fitfcn_mpia_corrections(p)) # Doesn't seem to be doing anything
 
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             # mixed-action/xpt fits
@@ -196,7 +196,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return output
 
     def fitfcn_mpia_corrections(self, p):
-        a = p['a']
+        a = p['a/w0']
         mpi = p['mpi']
         lam2_chi = p['lam2_chi']
         eps2_pi = p['mpi']**2 / lam2_chi

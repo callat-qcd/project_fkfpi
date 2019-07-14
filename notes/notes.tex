@@ -35,12 +35,9 @@ In general, our fits are of the form
 \begin{equation}
 \left(\frac{F_K}{F_\pi}\right)_\text{lattice} = \left(\frac{F_K}{F_\pi}\right)_\text{model}^{(n_V)} + 
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} + 
-\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO} + 
-\delta\left(\frac{F_K}{F_\pi}\right)_\text{latt spacing}^{(n_a)} + 
-\delta\left(\frac{F_K}{F_\pi}\right)_{am_\pi}^{(n_{am})}.
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO}
 \end{equation}
-where the $n$ denote to which order we fit the volume, lattice spacing, and $ma$ terms, respectively.
-
+where the $n_V$ denotes to which order we fit the finite volume effects.
 \subsection{Special Functions}
 For reference, we use the following special functions in our fits, which encapsulate the finite volume dependence. The values for the $c_n$'s are given in Table \ref{tab:cN_weights}.
 \begin{align}
@@ -229,39 +226,25 @@ For these fits,
 \subsection{Corrections}
 
 \subsubsection{NNLO \& NNNLO counter terms}
-The NNLO and NNNLO counter terms are formed by taking powers of $\epsilon^2_\xi$ ($\xi = K, \pi, a$), along with $(\epsilon_K^2 - \epsilon_\pi^2)$ (which ensures $F_K / F_\pi$ tends to 1 in the chiral limit), to the desired order. For NNLO, we take one power of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$. For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$ (and vice-versa).
+The NNLO and NNNLO counter terms are formed by taking powers of $\epsilon^2_\xi$ ($\xi = K, \pi, a$), along with $(\epsilon_K^2 - \epsilon_\pi^2)$ (which ensures $F_K / F_\pi$ tends to 1 in the chiral limit), to the desired order. For NNLO, we take one power of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$. 
 \begin{equation}
-\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} = \epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2) A_{2,2}
-+(\epsilon_K^2 - \epsilon_\pi^2)^2 M_{4,0,0}
-+\epsilon_K^2 (\epsilon_K^2 - \epsilon_\pi^2) M_{2,2,0}
-+\epsilon_\pi^2 (\epsilon_K^2 - \epsilon_\pi^2) M_{2,0,2}
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} = \bigg[ 
+\epsilon_a^2  A_{a}
++(\epsilon_K^2 - \epsilon_\pi^2) A_{\chi}
++\epsilon_K^2  A_{K}
++\epsilon_\pi^2  A_{\pi}
+\bigg] (\epsilon_K^2 - \epsilon_\pi^2)
 \end{equation}
-\begin{equation}
-\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO} = \epsilon_a^4 (\epsilon_K^2 - \epsilon_\pi^2) A_{4,2}
-+\epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2)^2 A_{2,4}
-+\epsilon_a^2 \epsilon_K^2 (\epsilon_K^2 - \epsilon_\pi^2) A_{2,2,2,0}
-+\epsilon_a^2 \epsilon_\pi^2 (\epsilon_K^2 - \epsilon_\pi^2) A_{2,2,0,2}
-+\cdots
-\end{equation}
-{\color{red} (Probably need better names for $A_{2, 2}$, $M_{2, 2, 0}$, etc -- convention make no sense to me.)}
+For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$ (and vice-versa).
+\begin{align}
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO} &= \bigg[
+\epsilon_a^4  A_{a, a} + \epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2)  A_{a, \chi} + \epsilon_a^2 \epsilon_K^2  A_{a, K} + \epsilon_a^2 \epsilon_\pi^2  A_{a, \pi} \\ \nonumber
+&\phantom{[ =} + (\epsilon_K^2 - \epsilon_\pi^2)^2  A_{\chi, \chi} + (\epsilon_K^2 - \epsilon_\pi^2) \epsilon_K^2  A_{\chi, K} + (\epsilon_K^2 - \epsilon_\pi^2) \epsilon_\pi^2  A_{\chi, \pi} \\ \nonumber
+&\phantom{[ =} + \epsilon_K^4  A_{K, K} + \epsilon_K^2 \epsilon_\pi^2  A_{K, \pi} \\ \nonumber
+&\phantom{[ =} + \epsilon_\pi^4  A_{\pi, \pi} \bigg] (\epsilon_K^2 - \epsilon_\pi^2)
+\end{align}
 
-\subsubsection{Lattice Spacing Corrections}
-These corrections come as 
-\begin{equation}
-\delta\left(\frac{F_K}{F_\pi}\right)_\text{latt spacing}^{(n_a)} = \sum_{n=2}^{n_a} (\epsilon_K^2 - \epsilon_\pi^2) a^n
-\end{equation}
-where we reiterate that the $(\epsilon_K^2 - \epsilon_\pi^2)$ factor is included to ensure that $F_K/F_\pi$ tends to 1 in the chiral limit. Note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of $n=1$ the term.
-
-{\color{red} (Should the odd numbered terms also disappear?)}
-
-\subsubsection{$am_\pi$ Corrections}
-Similarly, the corrections are 
-\begin{equation}
-\delta\left(\frac{F_K}{F_\pi}\right)_{am_\pi}^{(n_{am})} = \sum_{n=2}^{n_{am}} (\epsilon_K^2 - \epsilon_\pi^2) (am_\pi)^n \, .
-\end{equation}
-
-{\color{red} (Should these corrections also include terms of the form $am_K$, $am_{ju}$, etc? Does this have an $n=1$ term?)}
-
+Notice that the lattice spacing and $am_\xi$ ($\xi \in \{\pi, K, \eta\}$) corrections are included in these counterterms. For example, the term $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$ accounts for the lowest order lattice spacing correction. Further note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of terms at that order.
 
 %%%%%%%%%%%%%%%%%%
 %%%%% FIT STRATEGY
@@ -293,17 +276,17 @@ which can be converted to physical units by multiplying by $\hbar c$ (ie, $a_\te
 \begin{equation}
 \omega_0 = \frac{(\omega_0 m_\Omega)^\text{latt}}{m_\Omega^\text{exp}} \, , 
 \end{equation}
-a task currently underway in another project.  {\color{red} (Is this right?)}
-
-
-Given the following observable
+a task currently underway in another project.  {\color{red} (Is this right?)} In particular, given the following observable
 \begin{equation}
-W(t) \equiv t \frac{d}{dt} \Big[ t^2 \langle E(t) \rangle \Big]
+W(t) \equiv t \frac{d}{dt} \Big[ t^2 \langle E(t) \rangle \Big] \, ,
 \end{equation}
 the scale $\omega_0$ is the value such that 
 \begin{equation}
-W(t) \Big|_{t=\omega_0^2} = 0.3
+W(t) \Big|_{t=\omega_0^2} = 0.3 \, .
 \end{equation}
+
+\subsection{The pion and kaon decay constants, $F_K$ and $F_\pi$}
+{\color{red} (How are these determined?)}
 
 
 
@@ -311,7 +294,7 @@ W(t) \Big|_{t=\omega_0^2} = 0.3
 
 
 \section{The Weeds}
-The actual fit here is being done in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
+The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
 
 
 \bibliography{notes}
