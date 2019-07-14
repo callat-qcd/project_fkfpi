@@ -31,7 +31,6 @@ class bootstrapper(object):
         if order is None:
             order = {
                 'fit' : 'nlo',
-                'latt_spacing' : 2, # no order 1 term -- starts at 2
                 'vol' : 1
             }
 
@@ -43,25 +42,22 @@ class bootstrapper(object):
                 'L_4' : '0.00(1)', #'-0.000710 (24)', #'0.00(1)',
 
                 # nnlo terms
-                'A_22' : '1(1)',
-                'M_400' : '1(1)',
-                'M_220' : '1(1)',
-                'M_202' : '1(1)',
+                'A_a' : '0(1)',
+                'A_x' : '0(1)',
+                'A_k' : '0(1)',
+                'A_p' : '0(1)',
 
                 # nnnlo terms
-                'A_42' : '1(1)',
-                'A_24' : '1(1)',
-                'A_2220' : '1(1)',
-                'A_2202' : '1(1)',
-
-                # lattice artifact terms
-                'c_a2' : '0(10)', #'0.32 (19)', #'0(1)',
-                'c_a3' : '0(1)',
-                'c_a4' : '0(1)',
-                'c_mpia2' : '0(1)',
-
-                # fudge factor (for debugging)
-                'c_fudge' : '1(1)'
+                'A_aa' : '0(1)',
+                'A_ax' : '0(1)',
+                'A_ak' : '0(1)',
+                'A_ap' : '0(1)',
+                'A_xx' : '0(1)',
+                'A_xk' : '0(1)',
+                'A_xp' : '0(1)',
+                'A_kk' : '0(1)',
+                'A_kp' : '0(1)',
+                'A_pp' : '0(1)',
             }
             prior = gv.gvar(prior)
 
@@ -111,7 +107,7 @@ class bootstrapper(object):
         prior = self.prior
         output = "\n\nFit type: %s (F^2 = %s, bsN = %s)" %(self.fit_type, self.F2, self.bs_N)
         output = output + "\n\nFitting to %s \n" %(self.order['fit'])
-        output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
+        #output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
         output = output + "Fitted/[FLAG] values at physical point:\n"
         output = output + '\nF_K / F_pi = %s [%s]\n'%(

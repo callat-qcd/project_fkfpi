@@ -84,11 +84,11 @@ class data_loader(object):
         # get fit info
         cols = np.array(['name', 'fit', 'logGBF', 'chi2/df', 'Q', 'vol corr', 'latt corr'])
         lecs_cols = ['L_4', 'L_5', # nlo terms
-                     'A_22', 'M_400', 'M_220', 'M_202', # nnlo terms
-                     'A_42', 'A_24', 'A_2220', 'A_2202', # nnnlo terms
-                     'c_a2', 'c_a3', 'c_a4', 'c_mpia2'] # lattice terms
+                     'A_a', 'A_x', 'A_k', 'A_p', # nnlo terms
+                     'A_aa', 'A_ax', 'A_ak', 'A_ap', # nnnlo terms
+                     'A_xx', 'A_xk', 'A_xp', # more nnnlo terms
+                     'A_kk', 'A_kp', 'A_pp'] # more nnnlo terms
 
-        #lecs_cols = ['']
         # append LEC results
         cols = np.concatenate((cols,lecs_cols), axis=0)
         #diff = sorted(list(set(cols).symmetric_difference(fit_info.keys()))) # Gets set difference (ie, LEC keys)

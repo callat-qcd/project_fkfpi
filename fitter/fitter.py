@@ -7,19 +7,7 @@ from special_functions import *
 
 class fitter(object):
 
-    def __init__(self, fit_data=None, prior=None, fit_type=None, order=None):
-
-        # Renormalization momentum
-        if order is None:
-            order = {
-                'fit' : 'nlo',
-                'latt_spacing' : 2, # no order 1 term -- starts at 2
-                'vol' : 1
-            }
-
-        if fit_type is None:
-            fit_type = 'ma-taylor'
-
+    def __init__(self, order, fit_type, fit_data=None, prior=None, ):
         self.prior = prior
         self.fit_data = fit_data
         self.fit = None
@@ -97,34 +85,23 @@ class fitter(object):
             newprior['L_5'] = prior['L_5']
 
 
-        # Fit parameters, depending on order
         if order['fit'] in ['nnlo', 'nnnlo']:
-            newprior['A_22'] = prior['A_22']
-            newprior['M_400'] = prior['M_400']
-            newprior['M_220'] = prior['M_220']
-            newprior['M_202'] = prior['M_202']
+            newprior['A_a'] = prior['A_a']
+            newprior['A_x'] = prior['A_x']
+            newprior['A_k'] = prior['A_k']
+            newprior['A_p'] = prior['A_p']
 
         if order['fit'] in ['nnnlo']:
-            newprior['A_42'] = prior['A_42']
-            newprior['A_24'] = prior['A_24']
-            newprior['A_2220'] = prior['A_2220']
-            newprior['A_2202'] = prior['A_2202']
-
-
-        # Lattice artifacts
-        if order['latt_spacing'] >= 2:
-            newprior['c_a2'] = prior['c_a2']
-
-        if order['latt_spacing'] >= 3:
-            newprior['c_a3'] = prior['c_a3']
-
-        if order['latt_spacing'] >= 4:
-            newprior['c_a4'] = prior['c_a4']
-
-        newprior['c_mpia2'] = prior['c_mpia2']
-
-        # Fudge factor
-        #newprior['c_fudge'] = prior['c_fudge']
+            newprior['A_aa'] = prior['A_aa']
+            newprior['A_ax'] = prior['A_ax']
+            newprior['A_ak'] = prior['A_ak']
+            newprior['A_ap'] = prior['A_ap']
+            newprior['A_xx'] = prior['A_xx']
+            newprior['A_xk'] = prior['A_xk']
+            newprior['A_xp'] = prior['A_xp']
+            newprior['A_kk'] = prior['A_kk']
+            newprior['A_kp'] = prior['A_kp']
+            newprior['A_pp'] = prior['A_pp']
 
         return newprior
 
@@ -168,120 +145,24 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             for key in fit_data.keys():
                 p[key] = fit_data[key]
 
-        #print self.fit_type
-        # Lattice artifact terms
-        output = (self.fitfcn_latt_spacing_corrections(p)
-                  #+ self.fitfcn_finite_vol_corrections(p) # Don't need this -- already in fcn_I_m definitions
-                 + self.fitfcn_mpia_corrections(p)) # Doesn't seem to be doing anything
-
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             # mixed-action/xpt fits
             if self.fit_type == 'ma':
-                output = output + self.fitfcn_ma(p)
+                output = self.fitfcn_ma(p)
             elif self.fit_type == 'ma-taylor':
-                output = output + self.fitfcn_ma_taylor(p)
+                output = self.fitfcn_ma_taylor(p)
             elif self.fit_type == 'xpt':
-                output = output + self.fitfcn_xpt(p)
+                output = self.fitfcn_xpt(p)
             elif self.fit_type == 'xpt-taylor':
-                output = output + self.fitfcn_xpt_taylor(p)
+                output = self.fitfcn_xpt_taylor(p)
             elif self.fit_type == 'ma-old':
-                output = output + self.fitfcn_ma_old(p)
+                output = self.fitfcn_ma_old(p)
 
         if self.order['fit'] in ['nnlo', 'nnnlo']:
             output = output + self.fitfcn_nnlo_cts(p)
 
         if self.order['fit'] in ['nnnlo']:
             output = output + self.fitfcn_nnnlo_cts(p)
-
-        return output
-
-    def fitfcn_mpia_corrections(self, p):
-        a = p['a/w0']
-        mpi = p['mpi']
-        lam2_chi = p['lam2_chi']
-        eps2_pi = p['mpi']**2 / lam2_chi
-        eps2_k = p['mk']**2 / lam2_chi
-
-
-        output = (eps2_k - eps2_pi) *(a *mpi)**2 /lam2_chi *p['c_mpia2']
-        return output
-
-    def fitfcn_latt_spacing_corrections(self, p):
-        order = self.order['latt_spacing']
-        lam2_chi = p['lam2_chi']
-        eps2_pi = p['mpi']**2 / lam2_chi
-        eps2_k = p['mk']**2 / lam2_chi
-        eps_a = (p['a/w0'] / (4 *np.pi))
-        output = 0
-
-        if order < 2:
-            return output
-
-        if order >= 2:
-            output = output + eps_a**2 *p['c_a2']
-        if order >= 3:
-            output = output + eps_a**3 *p['c_a3']
-        if order >= 4:
-            output = output + eps_a**4 *p['c_a4']
-
-        return output *(eps2_k - eps2_pi)
-
-
-    # This function shouldn't be used since the finite volume corrections
-    # are already embedded in the models
-    def fitfcn_finite_vol_corrections(self, p):
-
-        # Constants
-        c = [None, 6, 12, 8, 6, 24, 24, 0, 12, 30, 24]
-        order_vol = self.order['vol']
-        order_fit = self.order['fit']
-
-        # Variables
-        L = L = p['L']
-        lam2_chi = p['lam2_chi']
-        to_eps2 = lambda x : x**2/lam2_chi
-
-        mju = p['mju']
-        mpi = p['mpi']
-        mss = p['mss']
-        mk = p['mk']
-        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2) + p['a2DI'])
-
-        del2_ju = p['a2DI']
-        del2_rs = p['a2DI']
-
-        eps2_ju = to_eps2(mju)
-        eps2_pi = to_eps2(mpi)
-        eps2_ss = to_eps2(mss)
-        eps2_x = to_eps2(mx)
-
-        eps2_D_ju = (del2_ju/lam2_chi)
-        eps2_D_rs = (del2_rs/lam2_chi)
-
-        output = 0
-        for n in range(1, np.min((order_vol, 11))):
-            xju = mju *L *n
-            xpi = mpi *L *n
-
-            output = output + c[n]*(
-                + 2 *eps2_ju *fcn_Kn(1, xju) / xju
-                + (1.0/2.0) *eps2_pi *fcn_Kn(1, xpi) / xpi
-                - (1.0/8.0) *eps2_D_ju *(
-                    + 2 *fcn_Kn(1, xpi) / xpi
-                    - fcn_Kn(0, xpi)
-                    - fcn_Kn(2, xpi)
-                )
-                - eps2_D_ju *eps2_pi / (eps2_x - eps2_pi) *fcn_Kn(1, xpi) / xpi
-                + (1/24) *(eps2_D_ju)**2 *(
-                    + 4 *eps2_pi / (eps2_x - eps2_pi)**2 *fcn_Kn(1, xpi) / xpi
-                    + 1 / (eps2_x - eps2_pi) *(
-                        + 2 *fcn_Kn(1, xpi) / xpi
-                        - fcn_Kn(0, xpi)
-                        - fcn_Kn(2, xpi)
-                    )
-                )
-                + (2.0/3.0) *eps2_D_ju *eps2_D_rs *eps2_pi / ((eps2_pi - eps2_x) *(eps2_pi - eps2_ss)) *fcn_Kn(1, xpi) / xpi
-            )
 
         return output
 
@@ -294,12 +175,12 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_k = p['mk']**2 / lam2_chi
 
         output = (
-              eps2_a *(eps2_k - eps2_pi) *p['A_22']
-            + (eps2_k - eps2_pi)**2 *p['M_400']
-            + eps2_k *(eps2_k - eps2_pi) *p['M_220']
-            + eps2_pi *(eps2_k - eps2_pi) *p['M_202']
+            + (eps2_a) *p['A_a']
+            + (eps2_k - eps2_pi) *p['A_x']
+            + (eps2_k) *p['A_k']
+            + (eps2_pi) *p['A_p']
         )
-        return output
+        return output *(eps2_k - eps2_pi)
 
     def fitfcn_nnnlo_cts(self, p):
 
@@ -311,12 +192,26 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_k = p['mk']**2 / lam2_chi
 
         output = (
-              (eps2_a)**2 *(eps2_k - eps2_pi) *p['A_42']
-            + eps2_a *(eps2_k - eps2_pi)**2 *p['A_24']
-            + eps2_a *eps2_k *(eps2_k - eps2_pi) *p['A_2220']
-            + eps2_a *eps2_pi *(eps2_k - eps2_pi) *p['A_2202']
+              + (eps2_a) *(
+                + eps2_a *p['A_aa']
+                + (eps2_k - eps2_pi) *p['A_ax']
+                + eps2_k *p['A_ak']
+                + eps2_pi *p['A_ap']
+              )
+              + (eps2_k - eps2_pi) *(
+                + (eps2_k - eps2_pi) *p['A_xx']
+                + eps2_k *p['A_xk']
+                + eps2_pi *p['A_xp']
+              )
+              + (eps2_k) *(
+                + eps2_k *p['A_kk']
+                + eps2_pi *p['A_kp']
+              )
+              + (eps2_pi) *(
+                + eps2_pi *p['A_pp']
+              )
         )
-        return output
+        return output *(eps2_k - eps2_pi)
 
 
 
@@ -614,29 +509,22 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         # Fit parameters, depending on order
         if order['fit'] in ['nnlo', 'nnnlo']:
-            mprior['A_22'] = prior['A_22']
-            mprior['M_400'] = prior['M_400']
-            mprior['M_220'] = prior['M_220']
-            mprior['M_202'] = prior['M_202']
+            mprior['A_a'] = prior['A_a']
+            mprior['A_x'] = prior['A_x']
+            mprior['A_k'] = prior['A_k']
+            mprior['A_p'] = prior['A_p']
 
         if order['fit'] in ['nnnlo']:
-            mprior['A_42'] = prior['A_42']
-            mprior['A_24'] = prior['A_24']
-            mprior['A_2220'] = prior['A_2220']
-            mprior['A_2202'] = prior['A_2202']
-
-
-        # Lattice artifacts
-        if order['latt_spacing'] >= 2:
-            mprior['c_a2'] = prior['c_a2']
-
-        if order['latt_spacing'] >= 3:
-            mprior['c_a3'] = prior['c_a3']
-
-        if order['latt_spacing'] >= 4:
-            mprior['c_a4'] = prior['c_a4']
-
-        mprior['c_mpia2'] = prior['c_mpia2']
+            mprior['A_aa'] = prior['A_aa']
+            mprior['A_ax'] = prior['A_ax']
+            mprior['A_ak'] = prior['A_ak']
+            mprior['A_ap'] = prior['A_ap']
+            mprior['A_xx'] = prior['A_xx']
+            mprior['A_xk'] = prior['A_xk']
+            mprior['A_xp'] = prior['A_xp']
+            mprior['A_kk'] = prior['A_kk']
+            mprior['A_kp'] = prior['A_kp']
+            mprior['A_pp'] = prior['A_pp']
 
         return mprior
 
