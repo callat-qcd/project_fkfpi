@@ -39,7 +39,7 @@ class bootstrapper(object):
             prior = {
                 # nlo terms
                 'L_5' : '0.0002(1)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
-                'L_4' : '0.00(1)', #'-0.000710 (24)', #'0.00(1)',
+                'L_4' : '-0.0002(2) ', #'-0.000710 (24)', #'0.00(1)',
 
                 # nnlo terms
                 'A_a' : '0(1)',
@@ -279,7 +279,7 @@ class bootstrapper(object):
             'chi2/df' : self.fits[0].chi2 / self.fits[0].dof,
             'Q' : self.fits[0].Q,
             'vol corr' : self.order['vol'],
-            'latt corr' : self.order['latt_spacing']
+            #'latt corr' : self.order['latt_spacing']
         }
         for key in self.get_fit_keys():
             fit_info[key] = self.get_fit_parameters(key)
