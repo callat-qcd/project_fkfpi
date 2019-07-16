@@ -91,6 +91,7 @@ class bootstrapper(object):
             hbar_c = 197.327
             a = data[abbr]['a/w0'] *w0
             data[abbr]['lam2_chi'] = self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2
+            #print abbr, self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2
 
         self.bs_N = bs_N
         self.abbrs = sorted(abbrs)
@@ -223,8 +224,19 @@ class bootstrapper(object):
         return output
 
     def extrapolate_to_ensemble(self, abbr):
-        to_gvar = lambda x : gv.gvar(np.median(gv.mean(x)), np.median(gv.sdev(x)))
-        return to_gvar(self.fk_fpi_fit_fcn(self.fit_data[abbr]))
+        abbr_n = self.abbrs.index(abbr)
+        model_name = self.fits[0].fcn_p.keys()[-1]
+
+        if self.bs_N == 1:
+            temp_fit = self.fits[0]
+            return temp_fit.fcn_p[model_name][abbr_n]
+
+        else:
+            results = []
+            for j in self.bs_N:
+                temp_fit = self.fits[j]
+                results.append(gv.mean(temp_fit.fcn_p[model_name][abbr_n]))
+            return gv.gvar(np.mean(results), np.std(results))
 
     def extrapolate_to_phys_point(self):
         output = self.fk_fpi_fit_fcn(self.get_phys_point_data())
@@ -239,13 +251,16 @@ class bootstrapper(object):
         if fit_data is None:
             fit_data = self.get_phys_point_data()
         if fit_parameters is None:
-            fit_parameters = self.get_fit_parameters()
+            fit_parameters = self.get_fit_parameters().copy()
         if fit_type is None:
             fit_type = self.fit_type
 
-        model = fitter(order=self.order, fit_type=fit_type)._make_models()[-1]
-        #print "model", model.datatag
-        return model.fitfcn(p=fit_parameters, fit_data=fit_data)
+        for key in fit_data.keys():
+            fit_parameters[key] = fit_data[key]
+            temp_fit = self.fits[0]
+            model_name = temp_fit.fcn_p.keys()[-1]
+            
+        return temp_fit.fcn(p=fit_parameters)[model_name]
 
     # Returns dictionary with keys fit parameters, entries bs results
     def get_bootstrapped_fit_parameters(self):
@@ -342,7 +357,11 @@ class bootstrapper(object):
 
             'FK/Fpi' : gv.gvar('1.1932(19)') # FLAG
         }
-
+        # Or get mss, mrs with Gell-Mann-Oakes-Renner relations: arxiv/0505265 (3.45)
+        #mpi = phys_point_data['mpi']
+        #mk = phys_point_data['mk']
+        #phys_point_data['mss'] = np.sqrt(2 *(mk)**2 - (mpi)**2) *1.0000001 # prevents division by 0
+        #phys_point_data['mrs'] = phys_point_data['mss']
         FK = phys_point_data['FK']
         Fpi = phys_point_data['Fpi']
         if self.F2 == 'FKFpi':
@@ -529,7 +548,7 @@ class bootstrapper(object):
         hbar_c = 197.327
 
         plot_data = {
-            0 :  {abbr : (self.fit_data[abbr]['mpi'] *hbar_c / (self.fit_data[abbr]['a/w0'] *self.w0)**2 /self.get_phys_point_data('lam2_chi'))
+            0 :  {abbr : ((self.fit_data[abbr]['mpi'] *hbar_c / (self.fit_data[abbr]['a/w0'] *self.w0))**2 /self.get_phys_point_data('lam2_chi'))
                               for abbr in self.abbrs},
             1 : {abbr : self.shift_fk_fpi_for_phys_mk(abbr) for abbr in self.abbrs}
         }

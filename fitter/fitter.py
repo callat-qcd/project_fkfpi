@@ -7,7 +7,7 @@ from special_functions import *
 
 class fitter(object):
 
-    def __init__(self, order, fit_type, fit_data=None, prior=None, ):
+    def __init__(self, order, fit_type, fit_data=None, prior=None):
         self.prior = prior
         self.fit_data = fit_data
         self.fit = None
