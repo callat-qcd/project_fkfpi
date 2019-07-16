@@ -243,7 +243,8 @@ class bootstrapper(object):
         if fit_type is None:
             fit_type = self.fit_type
 
-        model = fitter(order=self.order, fit_type=fit_type)._make_models()[0]
+        model = fitter(order=self.order, fit_type=fit_type)._make_models()[-1]
+        #print "model", model.datatag
         return model.fitfcn(p=fit_parameters, fit_data=fit_data)
 
     # Returns dictionary with keys fit parameters, entries bs results
