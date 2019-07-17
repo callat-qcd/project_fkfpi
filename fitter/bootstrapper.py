@@ -15,7 +15,7 @@ class bootstrapper(object):
     def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
                  order=None, fit_type=None, F2=None):
 
-        w0 = gv.gvar('0.17(10)') # Still needs to be determined, but something like this
+        w0 = gv.gvar('0.175(10)') # Still needs to be determined, but something like this
         self.w0 = w0
 
         if fit_type is None:
@@ -38,26 +38,26 @@ class bootstrapper(object):
             print "Using default prior."
             prior = {
                 # nlo terms
-                'L_5' : '0.0002(1)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
-                'L_4' : '-0.0002(2) ', #'-0.000710 (24)', #'0.00(1)',
+                'L_5' : '0.00025(0.00025)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
+                'L_4' : '0(0.001)', #'-0.000710 (24)', #'0.00(1)',
 
                 # nnlo terms
-                'A_a' : '0(1)',
-                'A_x' : '0(1)',
-                'A_k' : '0(1)',
-                'A_p' : '0(1)',
+                'A_a' : '0(10)',
+                'A_x' : '0(10)',
+                'A_k' : '0(10)',
+                'A_p' : '0(10)',
 
                 # nnnlo terms
-                'A_aa' : '0(1)',
-                'A_ax' : '0(1)',
-                'A_ak' : '0(1)',
-                'A_ap' : '0(1)',
-                'A_xx' : '0(1)',
-                'A_xk' : '0(1)',
-                'A_xp' : '0(1)',
-                'A_kk' : '0(1)',
-                'A_kp' : '0(1)',
-                'A_pp' : '0(1)',
+                'A_aa' : '0(10)',
+                'A_ax' : '0(10)',
+                'A_ak' : '0(10)',
+                'A_ap' : '0(10)',
+                'A_xx' : '0(10)',
+                'A_xk' : '0(10)',
+                'A_xp' : '0(10)',
+                'A_kk' : '0(10)',
+                'A_kp' : '0(10)',
+                'A_pp' : '0(10)',
             }
             prior = gv.gvar(prior)
 
@@ -259,7 +259,7 @@ class bootstrapper(object):
             fit_parameters[key] = fit_data[key]
             temp_fit = self.fits[0]
             model_name = temp_fit.fcn_p.keys()[-1]
-            
+
         return temp_fit.fcn(p=fit_parameters)[model_name]
 
     # Returns dictionary with keys fit parameters, entries bs results
