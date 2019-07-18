@@ -296,6 +296,17 @@ W(t) \Big|_{t=\omega_0^2} = 0.3 \, .
 \section{The Weeds}
 The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
 
+\subsection{Shifting lattice data to physical point}
+Notice that the fit of $F_K/F_\pi$ depends on multiple input parameters: $\epsilon^2_\pi$, $w_0$, $a$, etc; that is, we are fitting a many-dimensional surface, so in order to plot $F_k/F_\pi$ vs some parameter, we must carefully take a slice of that surface. In our case, we fit $F_K / F_\pi$ at the physical point with the exception of some input parameter, which we allow to vary.  
+
+Of course, our set of data is not at the physical point, so we must account for this when making these plots. We therefore ``shift" the lattice data to the physical point (while allowing a single parameter to vary) using the following heuristic. Let $\{p_j\} = \{\epsilon^2_\pi, w_0, a, \cdots\}$ be the set of input parameters in the fit for some ensemble and $\{p^*_j\}$ the physical value of these parameters. Now suppose we are interested in the dependence of $F_K / F_\pi$ on the single parameter $q$ Then to shift the data to the physical point without shifting $q$, we calculate
+\begin{equation}
+\left( \frac{F_K}{F_\pi} \right)_\text{shifted data} =
+\left( \frac{F_K}{F_\pi} \right)_\text{data}
++ \left( \frac{F_K}{F_\pi} \right) \bigg|_{\text{fit at } \{p^*_j, q\}}
+- \left( \frac{F_K}{F_\pi} \right) \bigg|_{\text{fit at } \{p_j, q\}} \, .
+\end{equation}
+
 
 \bibliography{notes}
 

@@ -789,6 +789,22 @@ class bootstrapper(object):
         lam2_chi = self.get_phys_point_data('lam2_chi')
 
         fkfpi_ens = self.fit_data[abbr]['FK'] / self.fit_data[abbr]['Fpi']
+        fkfpi_fit_ens = self.extrapolate_to_ensemble(abbr)
+
+        temp_data = self.get_phys_point_data()
+        temp_data['mpi'] = self.fit_data[abbr]['mpi'] *hbar_c / (self.fit_data['a09m220']['a/w0'] *self.w0)
+        fkfpi_fit_phys_vary_mpi = self.fk_fpi_fit_fcn(fit_data=temp_data)
+
+        shifted_fkfpi = fkfpi_ens + fkfpi_fit_phys_vary_mpi - fkfpi_fit_ens
+
+        return shifted_fkfpi
+
+    def shift_fk_fpi_for_phys_mk_old(self, abbr):
+        pi = np.pi
+        hbar_c = 197.327
+        lam2_chi = self.get_phys_point_data('lam2_chi')
+
+        fkfpi_ens = self.fit_data[abbr]['FK'] / self.fit_data[abbr]['Fpi']
 
         to_phys = lambda m : m *hbar_c / (self.fit_data[abbr]['a/w0'] *self.w0)
         eps2_k = (to_phys(self.fit_data[abbr]['mk']))**2 / lam2_chi
@@ -807,7 +823,20 @@ class bootstrapper(object):
             fkfpi_ens
             - (1.0/4.0) *delta(eps2_k_phys, eps2_k)
             - (3.0/8.0) *delta(eps2_x_phys, eps2_x)
-            + 4 *(4*pi)**2 *(eps2_k_phys - eps2_k) *L_5
+            #+ 4 *(4*pi)**2 *(eps2_k_phys - eps2_k) *L_5
         )
+        #print 'nlo: ', shifted_fkfpi
+        return shifted_fkfpi
+
+        if self.order['fit'] in ['nnlo', 'nnnlo']:
+            eps2_a = (self.fit_data[abbr]['a/w0'] / (4 *np.pi))**2
+            A_a = self.get_fit_parameters('A_a')
+            shifted_fkfpi = shifted_fkfpi - 4 *(4*pi)**2 *(eps2_k_phys - eps2_k) *A_a *eps2_a
+            print 'nnlo: ', shifted_fkfpi
+
+        if self.order['fit'] in ['nnnlo']:
+            A_aa = self.get_fit_parameters('A_aa')
+            shifted_fkfpi = shifted_fkfpi - 4 *(4*pi)**2 *(eps2_k_phys - eps2_k) *A_aa *eps2_a
+            print 'nnnlo: ', shifted_fkfpi
 
         return shifted_fkfpi
