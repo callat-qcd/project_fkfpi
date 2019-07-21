@@ -86,6 +86,9 @@ class fitter(object):
             newprior['L_5'] = prior['L_5']
         elif self.fit_type == 'xpt-taylor':
             newprior['L_5'] = prior['L_5']
+
+            #newprior['A_a'] = prior['A_a']
+
         elif self.fit_type == 'ma':
             newprior['L_4'] = prior['L_4']
             newprior['L_5'] = prior['L_5']
@@ -419,9 +422,23 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             + (5.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
             - (1.0/4.0) *fcn_I_m(mk, L, mu, order_vol) / F2
             - (3.0/8.0) *fcn_I_m(meta, L, mu, order_vol) / F2)
-            + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
+            #+ 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
         )
+
+        #print "w/o LECs: ", output
+
+        output = output + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
+        #print "w/ L5: " , output
+
+        #eps2_a = (p['a/w0'] / (4 *np.pi))**2
+        #output = output + (eps2_a) *p['A_a'] *(eps2_k - eps2_pi)
+        #print  "w/ a: ", output
+        #print "(eps2_a: ", eps2_a, ")"
+
+        #print ""
+
         return output
+
 
     # Taken from arxiv/1701.07559, eqn (17);
     # finite volume correction from notes
@@ -558,6 +575,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             mprior['L_5'] = prior['L_5']
         elif self.fit_type == 'xpt-taylor':
             mprior['L_5'] = prior['L_5']
+
+            #mprior['A_a'] = prior['A_a']
+
         elif self.fit_type == 'ma':
             mprior['L_4'] = prior['L_4']
             mprior['L_5'] = prior['L_5']

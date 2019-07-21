@@ -184,7 +184,7 @@ For these fits,
 +\frac{\mathcal{K}_{21}(m_{ss},m_X) m_\pi^2}{6F^2}
 \right]
 \nonumber\\&\phantom{=}
-+ 4 (4\pi)^2 L_5(\mu) \frac{m_K^2 - m_\pi^2}{(4\pi F)^2}
++ 4 (4\pi)^2 L_5 \frac{m_K^2 - m_\pi^2}{(4\pi F)^2}
 \end{align}
 
 \subsubsection{NLO $\chi$PT}
@@ -215,7 +215,7 @@ For these fits,
 -\frac{1}{4} \frac{\mathcal{I}(m_K)}{F^2}
 -\frac{3}{8} \frac{\mathcal{I}(m_\eta)}{F^2}
 %\nonumber\\&\phantom{=}
-+4(\epsilon_K^2 - \epsilon_\pi^2) (4\pi)^2 L_5(\L_{\chi})
++4(\epsilon_K^2 - \epsilon_\pi^2) (4\pi)^2 L_5
 %\nonumber\\&\phantom{=}
 + \delta_{c.t.}^{\rm NNLO}
 \end{align}
@@ -297,14 +297,14 @@ W(t) \Big|_{t=\omega_0^2} = 0.3 \, .
 The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
 
 \subsection{Shifting lattice data to physical point}
-Notice that the fit of $F_K/F_\pi$ depends on multiple input parameters: $\epsilon^2_\pi$, $w_0$, $a$, etc; that is, we are fitting a many-dimensional surface, so in order to plot $F_k/F_\pi$ vs some parameter, we must carefully take a slice of that surface. In our case, we fit $F_K / F_\pi$ at the physical point with the exception of some input parameter, which we allow to vary.  
+Notice that the fit of $F_K/F_\pi$ depends on multiple input parameters: $\epsilon^2_\pi$, $w_0$, $a$, etc; that is, we are fitting a many-dimensional surface, so in order to plot $F_k/F_\pi$ vs some parameter, we must carefully take a slice of that surface. In our case, we fit $F_K / F_\pi$ at the physical point with the exception of some input parameters, which we allow to vary.  
 
-Of course, our set of data is not at the physical point, so we must account for this when making these plots. We therefore ``shift" the lattice data to the physical point (while allowing a single parameter to vary) using the following heuristic. Let $\{p_j\} = \{\epsilon^2_\pi, w_0, a, \cdots\}$ be the set of input parameters in the fit for some ensemble and $\{p^*_j\}$ the physical value of these parameters. Now suppose we are interested in the dependence of $F_K / F_\pi$ on the single parameter $q$ Then to shift the data to the physical point without shifting $q$, we calculate
+Of course, our set of data is not at the physical point, so we must account for this when making these plots. We therefore ``shift" the lattice data to the physical point (while allowing a single parameter to vary) using the following heuristic. Let $\{p_j\} = \{\epsilon^2_\pi, w_0, a, \cdots\}$ be the set of input parameters in the fit for some ensemble and $\{p^*_j\}$ the physical value of these parameters. Now suppose we are interested in the dependence of $F_K / F_\pi$ on some subset of the parameters $\{q_k\}$. Then to shift the data to the physical point without shifting $\{q_k\}$, we calculate
 \begin{equation}
 \left( \frac{F_K}{F_\pi} \right)_\text{shifted data} =
 \left( \frac{F_K}{F_\pi} \right)_\text{data}
-+ \left( \frac{F_K}{F_\pi} \right) \bigg|_{\text{fit at } \{p^*_j, q\}}
-- \left( \frac{F_K}{F_\pi} \right) \bigg|_{\text{fit at } \{p_j, q\}} \, .
++ \left( \frac{F_K}{F_\pi} \right) \bigg|_{\text{fit at } \{p^*_j, q_k\}}
+- \left( \frac{F_K}{F_\pi} \right) \bigg|_{\text{fit at } \{p_j, q_k\}} \, .
 \end{equation}
 
 
