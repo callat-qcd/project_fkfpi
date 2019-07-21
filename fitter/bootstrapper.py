@@ -39,26 +39,26 @@ class bootstrapper(object):
             print "Using default prior."
             prior = {
                 # nlo terms
-                'L_5' : '0.00025(0.00025)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
+                'L_5' : '0(1)', #'0.00025(0.00025)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
                 'L_4' : '0(0.001)', #'-0.000710 (24)', #'0.00(1)',
 
                 # nnlo terms
-                'A_a' : '-0(100)',
-                'A_x' : '-0(100)',
-                'A_k' : '-0(100)',
-                'A_p' : '-0(100)',
+                'A_a' : '0(50)',
+                'A_x' : '0(5)',
+                'A_k' : '0(5)',
+                'A_p' : '0(5)',
 
                 # nnnlo terms
-                'A_aa' : '0(10)',
-                'A_ax' : '0(10)',
-                'A_ak' : '0(10)',
-                'A_ap' : '0(10)',
-                'A_xx' : '0(10)',
-                'A_xk' : '0(10)',
-                'A_xp' : '0(10)',
-                'A_kk' : '0(10)',
-                'A_kp' : '0(10)',
-                'A_pp' : '0(10)',
+                'A_aa' : '0(500)',
+                'A_ax' : '0(50)',
+                'A_ak' : '0(50)',
+                'A_ap' : '0(50)',
+                'A_xx' : '0(50)',
+                'A_xk' : '0(50)',
+                'A_xp' : '0(50)',
+                'A_kk' : '0(50)',
+                'A_kp' : '0(50)',
+                'A_pp' : '0(50)',
             }
             prior = gv.gvar(prior)
 
@@ -225,8 +225,7 @@ class bootstrapper(object):
         output = {}
         for key in self.get_fit_parameters().keys():
             mean = gv.mean(self.get_fit_parameters(key))
-            sdev = gv.sdev(self.get_fit_parameters(key))
-            unc = np.min((0.5, 5*sdev)) #0.25*gv.mean(self.get_fit_parameters()[key])
+            sdev = 3 *gv.sdev(self.get_fit_parameters(key))
 
             output[key] = gv.gvar(mean, unc)
 

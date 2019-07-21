@@ -34,21 +34,21 @@ class fitter(object):
         #    for fit_type in ['xpt', 'xpt-taylor']:
         #        models = np.append(models, fk_fpi_model(datatag=fit_type,
         #                    order=self.order, fit_type=fit_type))
-        if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
+        if self.order['fit'] in ['nlo']: #['nlo', 'nnlo', 'nnnlo']:
             order = self.order.copy()
             order['fit'] = 'nlo'
             models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
-                        order=self.order, fit_type=self.fit_type))
-        if self.order['fit'] in ['nnlo', 'nnnlo']:
+                        order=order, fit_type=self.fit_type))
+        if self.order['fit'] in ['nnlo']: #['nnlo', 'nnnlo']:
             order = self.order.copy()
             order['fit'] = 'nnlo'
             models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
-                        order=self.order, fit_type=self.fit_type))
+                        order=order, fit_type=self.fit_type))
         if self.order['fit'] in ['nnnlo']:
             order = self.order.copy()
             order['fit'] = 'nnnlo'
             models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
-                        order=self.order, fit_type=self.fit_type))
+                        order=order, fit_type=self.fit_type))
         return models
 
     def _make_prior(self, fit_data=None):
@@ -86,9 +86,6 @@ class fitter(object):
             newprior['L_5'] = prior['L_5']
         elif self.fit_type == 'xpt-taylor':
             newprior['L_5'] = prior['L_5']
-
-            #newprior['A_a'] = prior['A_a']
-
         elif self.fit_type == 'ma':
             newprior['L_4'] = prior['L_4']
             newprior['L_5'] = prior['L_5']
@@ -103,18 +100,18 @@ class fitter(object):
 
         if order['fit'] in ['nnlo', 'nnnlo']:
             newprior['A_a'] = prior['A_a']
-            newprior['A_x'] = prior['A_x']
+            #newprior['A_x'] = prior['A_x']
             newprior['A_k'] = prior['A_k']
             newprior['A_p'] = prior['A_p']
 
         if order['fit'] in ['nnnlo']:
             newprior['A_aa'] = prior['A_aa']
-            newprior['A_ax'] = prior['A_ax']
+            #newprior['A_ax'] = prior['A_ax']
             newprior['A_ak'] = prior['A_ak']
             newprior['A_ap'] = prior['A_ap']
-            newprior['A_xx'] = prior['A_xx']
-            newprior['A_xk'] = prior['A_xk']
-            newprior['A_xp'] = prior['A_xp']
+            #newprior['A_xx'] = prior['A_xx']
+            #newprior['A_xk'] = prior['A_xk']
+            #newprior['A_xp'] = prior['A_xp']
             newprior['A_kk'] = prior['A_kk']
             newprior['A_kp'] = prior['A_kp']
             newprior['A_pp'] = prior['A_pp']
@@ -179,8 +176,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if self.order['fit'] in ['nnlo', 'nnnlo']:
             output = output + self.fitfcn_nnlo_cts(p)
 
-        #print "+ nnlo", output
-
         if self.order['fit'] in ['nnnlo']:
             output = output + self.fitfcn_nnnlo_cts(p)
 
@@ -196,10 +191,18 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         output = (
             + (eps2_a) *p['A_a']
-            + (eps2_k - eps2_pi) *p['A_x']
+            #+ (eps2_k - eps2_pi) *p['A_x']
             + (eps2_k) *p['A_k']
             + (eps2_pi) *p['A_p']
         )
+        #print "+ nnlo", output
+
+        #print "A_a: ", (eps2_k - eps2_pi) *eps2_a *p['A_a']
+        #print "A_x: ", (eps2_k - eps2_pi)**2 *p['A_x']
+        #print "A_k: ", (eps2_k - eps2_pi) *eps2_k *p['A_k']
+        #print "A_p: ", (eps2_k - eps2_pi) *eps2_pi *p['A_p']
+        #print "\n\n"
+
         return output *(eps2_k - eps2_pi)
 
     def fitfcn_nnnlo_cts(self, p):
@@ -214,15 +217,15 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         output = (
               + (eps2_a) *(
                 + eps2_a *p['A_aa']
-                + (eps2_k - eps2_pi) *p['A_ax']
+                #+ (eps2_k - eps2_pi) *p['A_ax']
                 + eps2_k *p['A_ak']
                 + eps2_pi *p['A_ap']
               )
-              + (eps2_k - eps2_pi) *(
-                + (eps2_k - eps2_pi) *p['A_xx']
-                + eps2_k *p['A_xk']
-                + eps2_pi *p['A_xp']
-              )
+              #+ (eps2_k - eps2_pi) *(
+                #+ (eps2_k - eps2_pi) *p['A_xx']
+                #+ eps2_k *p['A_xk']
+                #+ eps2_pi *p['A_xp']
+              #)
               + (eps2_k) *(
                 + eps2_k *p['A_kk']
                 + eps2_pi *p['A_kp']
@@ -422,20 +425,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             + (5.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
             - (1.0/4.0) *fcn_I_m(mk, L, mu, order_vol) / F2
             - (3.0/8.0) *fcn_I_m(meta, L, mu, order_vol) / F2)
-            #+ 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
+            + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
         )
-
-        #print "w/o LECs: ", output
-
-        output = output + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
-        #print "w/ L5: " , output
-
-        #eps2_a = (p['a/w0'] / (4 *np.pi))**2
-        #output = output + (eps2_a) *p['A_a'] *(eps2_k - eps2_pi)
-        #print  "w/ a: ", output
-        #print "(eps2_a: ", eps2_a, ")"
-
-        #print ""
 
         return output
 
@@ -558,6 +549,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return output
 
     def buildprior(self, prior, mopt=None, extend=False):
+        #print prior
+        return prior
         order = self.order
 
         mprior = gv.BufferDict()
@@ -576,7 +569,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         elif self.fit_type == 'xpt-taylor':
             mprior['L_5'] = prior['L_5']
 
-            #mprior['A_a'] = prior['A_a']
+            mprior['A_a'] = prior['A_a']
 
         elif self.fit_type == 'ma':
             mprior['L_4'] = prior['L_4']
@@ -602,6 +595,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         # Fit parameters, depending on order
         if order['fit'] in ['nnlo', 'nnnlo']:
             mprior['A_a'] = prior['A_a']
+            print 'mprior: ', prior['A_a']
             mprior['A_x'] = prior['A_x']
             mprior['A_k'] = prior['A_k']
             mprior['A_p'] = prior['A_p']
