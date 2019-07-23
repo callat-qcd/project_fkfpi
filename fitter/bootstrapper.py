@@ -39,26 +39,21 @@ class bootstrapper(object):
             print "Using default prior."
             prior = {
                 # nlo terms
-                'L_5' : '0(1)', #'0.00025(0.00025)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
+                'L_5' : '0(0.001)', #'0.00025(0.00025)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
                 'L_4' : '0(0.001)', #'-0.000710 (24)', #'0.00(1)',
 
                 # nnlo terms
-                'A_a' : '0(50)',
-                'A_x' : '0(5)',
-                'A_k' : '0(5)',
-                'A_p' : '0(5)',
+                'A_a' : '0(100)',
+                'A_k' : '0(1)',
+                'A_p' : '0(10)',
 
                 # nnnlo terms
-                'A_aa' : '0(500)',
-                'A_ax' : '0(50)',
-                'A_ak' : '0(50)',
-                'A_ap' : '0(50)',
-                'A_xx' : '0(50)',
-                'A_xk' : '0(50)',
-                'A_xp' : '0(50)',
-                'A_kk' : '0(50)',
-                'A_kp' : '0(50)',
-                'A_pp' : '0(50)',
+                'A_aa' : '0(100000)',
+                'A_ak' : '0(1000)',
+                'A_ap' : '0(10000)',
+                'A_kk' : '0(10)',
+                'A_kp' : '0(100)',
+                'A_pp' : '0(1000)',
             }
             prior = gv.gvar(prior)
 
@@ -75,7 +70,6 @@ class bootstrapper(object):
                 if data_parameter in ['Fpi', 'FK', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs']:
                     means = fit_data[abbr][data_parameter][:bs_N]
                     unc = np.std(fit_data[abbr][data_parameter])
-                    #print gv.gvar(means, np.repeat(unc, len(means)))
                     data[abbr][data_parameter] = gv.gvar(means, np.repeat(unc, len(means)))
                     plot_data[abbr][data_parameter] = fit_data[abbr][data_parameter][:plot_bs_N]
                 elif data_parameter in ['a2DI']:
@@ -98,7 +92,6 @@ class bootstrapper(object):
             a = data[abbr]['a/w0'] *w0
             data[abbr]['lam2_chi'] = self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2
             plot_data[abbr]['lam2_chi'] = self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2
-            #print abbr, self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2
 
         self.bs_N = bs_N
         self.plot_bs_N = plot_bs_N
@@ -475,7 +468,7 @@ class bootstrapper(object):
         return fig
 
     def plot_fit_bar_graph(self):
-        print "----Plotting fit bar graph-----"
+        #print "----Plotting fit bar graph-----"
 
         y = 1
         labels = np.array([])
@@ -550,14 +543,14 @@ class bootstrapper(object):
         fig = plt.gcf()
         plt.close()
 
-        print "----Done plotting fit bar graph-----"
+        #print "----Done plotting fit bar graph-----"
 
         return fig
 
 
     def plot_fit_vs_eps2pi(self):
 
-        print "-----Plotting fit----"
+        #print "-----Plotting fit----"
         # used to convert to phys units
         hbar_c = 197.327
 
@@ -658,7 +651,7 @@ class bootstrapper(object):
         fig = plt.gcf()
         plt.close()
 
-        print "----Done plotting fit----"
+        #print "----Done plotting fit----"
         return fig
 
     def plot_parameter_histogram(self, parameter):

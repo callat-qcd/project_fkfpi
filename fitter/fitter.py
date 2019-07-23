@@ -100,18 +100,13 @@ class fitter(object):
 
         if order['fit'] in ['nnlo', 'nnnlo']:
             newprior['A_a'] = prior['A_a']
-            #newprior['A_x'] = prior['A_x']
             newprior['A_k'] = prior['A_k']
             newprior['A_p'] = prior['A_p']
 
         if order['fit'] in ['nnnlo']:
             newprior['A_aa'] = prior['A_aa']
-            #newprior['A_ax'] = prior['A_ax']
             newprior['A_ak'] = prior['A_ak']
             newprior['A_ap'] = prior['A_ap']
-            #newprior['A_xx'] = prior['A_xx']
-            #newprior['A_xk'] = prior['A_xk']
-            #newprior['A_xp'] = prior['A_xp']
             newprior['A_kk'] = prior['A_kk']
             newprior['A_kp'] = prior['A_kp']
             newprior['A_pp'] = prior['A_pp']
@@ -191,16 +186,14 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         output = (
             + (eps2_a) *p['A_a']
-            #+ (eps2_k - eps2_pi) *p['A_x']
             + (eps2_k) *p['A_k']
             + (eps2_pi) *p['A_p']
         )
-        #print "+ nnlo", output
+        #print "+ nnlo", output *(eps2_k - eps2_pi)
 
-        #print "A_a: ", (eps2_k - eps2_pi) *eps2_a *p['A_a']
-        #print "A_x: ", (eps2_k - eps2_pi)**2 *p['A_x']
-        #print "A_k: ", (eps2_k - eps2_pi) *eps2_k *p['A_k']
-        #print "A_p: ", (eps2_k - eps2_pi) *eps2_pi *p['A_p']
+        #print "A_a: ", eps2_a
+        #print "A_k: ", eps2_k
+        #print "A_p: ", eps2_pi
         #print "\n\n"
 
         return output *(eps2_k - eps2_pi)
