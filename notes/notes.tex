@@ -220,6 +220,9 @@ For these fits,
 + \delta_{c.t.}^{\rm NNLO}
 \end{align}
 
+\subsubsection{NLO MA Taylor (old)}
+This fit was taken from (17) of \cite{Berkowitz:2017opd}. {\color{red} (To do: add to notes.)}
+
 
 
 
@@ -296,6 +299,9 @@ W(t) \Big|_{t=\omega_0^2} = 0.3 \, .
 \section{The Weeds}
 The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
 
+\subsection{Selection of Prior}
+Barring some good physical argument for the expected value of the priors.
+
 \subsection{Shifting lattice data to physical point}
 Notice that the fit of $F_K/F_\pi$ depends on multiple input parameters: $\epsilon^2_\pi$, $w_0$, $a$, etc; that is, we are fitting a many-dimensional surface, so in order to plot $F_k/F_\pi$ vs some parameter, we must carefully take a slice of that surface. In our case, we fit $F_K / F_\pi$ at the physical point with the exception of some input parameters, which we allow to vary.  
 
@@ -307,6 +313,16 @@ Of course, our set of data is not at the physical point, so we must account for 
 - \left( \frac{F_K}{F_\pi} \right) \bigg|_{\text{fit at } \{p_j, q_k\}} \, .
 \end{equation}
 
+Alternatively, one often uses the ratio instead.
+
+\begin{equation}
+\left( \frac{F_K}{F_\pi} \right)_\text{shifted data} =
+\left( \frac{F_K}{F_\pi} \right)_\text{data}
+\Bigg[ \left( \frac{F_K}{F_\pi} \right) \bigg|_{\text{fit at } \{p^*_j, q_k\}}
+\bigg/ \left( \frac{F_K}{F_\pi} \right) \bigg|_{\text{fit at } \{p_j, q_k\}} \, \Bigg] .
+\end{equation}
+
+I haven't noticed a visible difference in using one versus the other.
 
 \bibliography{notes}
 
