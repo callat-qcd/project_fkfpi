@@ -39,21 +39,21 @@ class bootstrapper(object):
             print "Using default prior."
             prior = {
                 # nlo terms
-                'L_5' : '0(0.001)', #'0.00025(0.00025)' , #'0.000234 (100) ', #'0.00153 (12)', #'0.00(1)', #0.0002(1)
-                'L_4' : '0(0.001)', #'-0.000710 (24)', #'0.00(1)',
+                'L_5' : '0(0.001)',
+                'L_4' : '0(0.001)',
 
                 # nnlo terms
-                'A_a' : '0(100)',
-                'A_k' : '0(1)',
-                'A_p' : '0(10)',
+                'A_a' : '0(10)', #'0(100)',
+                'A_k' : '0(10)',#'0(1)',
+                'A_p' : '0(10)', #'0(10)',
 
                 # nnnlo terms
-                'A_aa' : '0(100000)',
-                'A_ak' : '0(1000)',
-                'A_ap' : '0(10000)',
-                'A_kk' : '0(10)',
-                'A_kp' : '0(100)',
-                'A_pp' : '0(1000)',
+                'A_aa' : '0(10)',# '0(100000)',
+                'A_ak' : '0(10)',# '0(1000)',
+                'A_ap' : '0(10)',# '0(10000)',
+                'A_kk' : '0(10)',# '0(10)',
+                'A_kp' : '0(10)',# '0(100)',
+                'A_pp' : '0(10)',# '0(1000)',
             }
             prior = gv.gvar(prior)
 
@@ -67,7 +67,7 @@ class bootstrapper(object):
             data[abbr] = {}
             plot_data[abbr] = {}
             for data_parameter in fit_data[abbr].keys():
-                if data_parameter in ['Fpi', 'FK', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs']:
+                if data_parameter in ['FK', 'Fpi', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs']:
                     means = fit_data[abbr][data_parameter][:bs_N]
                     unc = np.std(fit_data[abbr][data_parameter])
                     data[abbr][data_parameter] = gv.gvar(means, np.repeat(unc, len(means)))
@@ -87,11 +87,27 @@ class bootstrapper(object):
                     data[abbr]['L'] = gv.gvar(L, L/100000.0) # Pretty certain about this value....
                     plot_data[abbr]['L'] = gv.gvar(L, L/100000.0)
 
+        # #'FKfpi', 'FpiFpi', 'FKFK'
         for abbr in abbrs:
-            hbar_c = 197.327
-            a = data[abbr]['a/w0'] *w0
-            data[abbr]['lam2_chi'] = self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2
-            plot_data[abbr]['lam2_chi'] = self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2
+            if F2 == 'FKFpi':
+                means_data = (4 *np.pi)**2 *fit_data[abbr]['FK'][:bs_N] *fit_data[abbr]['Fpi'][:bs_N]
+                means_plot = (4 *np.pi)**2 *fit_data[abbr]['FK'][:bs_N] *fit_data[abbr]['Fpi'][:plot_bs_N]
+                unc = np.std((4 *np.pi)**2 *fit_data[abbr]['FK'] *fit_data[abbr]['Fpi'])
+            elif F2 == 'FpiFpi':
+                means_data = (4 *np.pi *fit_data[abbr]['Fpi'][:bs_N])**2
+                means_plot = (4 *np.pi *fit_data[abbr]['Fpi'][:plot_bs_N])**2
+                unc = np.std((4 *np.pi *fit_data[abbr]['Fpi'])**2)
+            elif F2 == 'FKFK':
+                means_data = (4 *np.pi *fit_data[abbr]['FK'][:bs_N])**2
+                means_plot = (4 *np.pi *fit_data[abbr]['FK'][:plot_bs_N])**2
+                unc = np.std((4 *np.pi *fit_data[abbr]['FK'])**2)
+            data[abbr]['lam2_chi'] = gv.gvar(means_data, np.repeat(unc, len(means_data)))
+            plot_data[abbr]['lam2_chi'] = means_plot
+
+            #hbar_c = 197.327
+            #a = data[abbr]['a/w0'] *w0
+            #data[abbr]['lam2_chi'] = self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2
+            #plot_data[abbr]['lam2_chi'] = self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2\
 
         self.bs_N = bs_N
         self.plot_bs_N = plot_bs_N
@@ -165,11 +181,11 @@ class bootstrapper(object):
 
     def _make_fit_data(self, j):
         prepped_data = {}
-        for parameter in ['FK', 'Fpi', 'mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss']:
+        for parameter in ['mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'lam2_chi']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter][j] for abbr in self.abbrs])
         #for parameter in ['w0']:
         #    prepped_data[parameter] = self.fit_data[abbr][parameter]
-        for parameter in ['a/w0', 'a2DI', 'L', 'lam2_chi',]:
+        for parameter in ['a/w0', 'a2DI', 'L']:
             prepped_data[parameter] =  np.array([self.fit_data[abbr][parameter] for abbr in self.abbrs])
 
 
@@ -483,7 +499,7 @@ class bootstrapper(object):
             xerr = gv.sdev(data)
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
                          color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
-                         ecolor='C1', elinewidth=10.0, label='FLAG/Lat')
+                         ecolor='C1', elinewidth=10.0, label='Latt/FLAG')
             labels = np.append(labels, str(""))
             y = y - 1
 
