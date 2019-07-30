@@ -8,6 +8,7 @@
 \usepackage{float}
 \usepackage[utf8]{inputenc} % supports umlaut natively, eg
 \usepackage{hyperref} % adds hyperlinks
+\usepackage{csvsimple} % Easily add csv file as table
 
 \newcount\hour \newcount\hourminute \newcount\minute 
 \hour=\time \divide \hour by 60
@@ -233,28 +234,30 @@ The NNLO and NNNLO counter terms are formed by taking powers of $\epsilon^2_\xi$
 \begin{equation}
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} = \bigg[ 
 \epsilon_a^2  A_{a}
-+(\epsilon_K^2 - \epsilon_\pi^2) A_{\chi}
 +\epsilon_K^2  A_{K}
 +\epsilon_\pi^2  A_{\pi}
 \bigg] (\epsilon_K^2 - \epsilon_\pi^2)
 \end{equation}
+One might expect a term like $(\epsilon_K^2 - \epsilon_\pi^2)^2 A_{\chi}$ to show up in the NNLO expansion; however, this term is already covered by $[\epsilon_K^2  A_{K}+\epsilon_\pi^2  A_{\pi}] (\epsilon_K^2 - \epsilon_\pi^2)$.
+
 For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$ (and vice-versa).
 \begin{align}
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO} &= \bigg[
-\epsilon_a^4  A_{a, a} + \epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2)  A_{a, \chi} + \epsilon_a^2 \epsilon_K^2  A_{a, K} + \epsilon_a^2 \epsilon_\pi^2  A_{a, \pi} \\ \nonumber
-&\phantom{[ =} + (\epsilon_K^2 - \epsilon_\pi^2)^2  A_{\chi, \chi} + (\epsilon_K^2 - \epsilon_\pi^2) \epsilon_K^2  A_{\chi, K} + (\epsilon_K^2 - \epsilon_\pi^2) \epsilon_\pi^2  A_{\chi, \pi} \\ \nonumber
+\epsilon_a^4  A_{a, a} + \epsilon_a^2 \epsilon_K^2  A_{a, K} + \epsilon_a^2 \epsilon_\pi^2  A_{a, \pi} \\ \nonumber
 &\phantom{[ =} + \epsilon_K^4  A_{K, K} + \epsilon_K^2 \epsilon_\pi^2  A_{K, \pi} \\ \nonumber
 &\phantom{[ =} + \epsilon_\pi^4  A_{\pi, \pi} \bigg] (\epsilon_K^2 - \epsilon_\pi^2)
 \end{align}
 
 Notice that the lattice spacing and $am_\xi$ ($\xi \in \{\pi, K, \eta\}$) corrections are included in these counterterms. For example, the term $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$ accounts for the lowest order lattice spacing correction. Further note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of terms at that order.
 
+
+
 %%%%%%%%%%%%%%%%%%
 %%%%% FIT STRATEGY
 %%%%%%%%%%%%%%%%%%
 \section{Fit Strategy}
 
-From inspections, one sees that the fit depends on the pion, kaon, and mixed meson masses; the taste-identity splitting $\Delta_{rs}^2 = \Delta_{ju}^2 = a^2 \Delta_\text{I}$; the lattice spacing $a$; the Wilson flow scale $\omega_0$; and the pion and kaon decay constants. First we briefly explain how these quantities were determined, then how we can use them to determine $F_K / F_\pi$ at the physical point.
+From inspections, one sees that the fit depends on the pion, kaon, and mixed meson masses; the taste-identity splitting $\Delta_{rs}^2 = \Delta_{ju}^2 = a^2 \Delta_\text{I}$; the lattice spacing $a$; the Wilson flow scale $w_0$; and the pion and kaon decay constants. First we briefly explain how these quantities were determined, then how we can use them to determine $F_K / F_\pi$ at the physical point.
 
 
 \subsection{Meson masses}
@@ -277,16 +280,25 @@ a = \frac{(a m_\Omega)^\text{latt}}{m_\Omega^\text{exp}}
 \end{equation}
 which can be converted to physical units by multiplying by $\hbar c$ (ie, $a_\text{phys} = a \hbar c$). Similarly, one can determine $\omega_0$ by measuring
 \begin{equation}
-\omega_0 = \frac{(\omega_0 m_\Omega)^\text{latt}}{m_\Omega^\text{exp}} \, , 
+w_0 = \frac{(w_0 m_\Omega)^\text{latt}}{m_\Omega^\text{exp}} \, , 
 \end{equation}
 a task currently underway in another project.  {\color{red} (Is this right?)} In particular, given the following observable
 \begin{equation}
 W(t) \equiv t \frac{d}{dt} \Big[ t^2 \langle E(t) \rangle \Big] \, ,
 \end{equation}
-the scale $\omega_0$ is the value such that 
+the scale $w_0$ is the value such that 
 \begin{equation}
-W(t) \Big|_{t=\omega_0^2} = 0.3 \, .
+W(t) \Big|_{t=w_0^2} = 0.3 \, .
 \end{equation}
+
+For the purpose of this project, we take $w_0 = 0.175(10)$, which is a conservative estimate taken from current progress on scale setting. 
+
+\begin{figure}
+	\includegraphics[width=0.75\textwidth]{./../figs/w0_comparison.pdf}
+	\caption{Current results on scale setting. Notice that our conservative choice for $w_0$ contains all the models in the figure and then some.}
+\end{figure}
+
+
 
 \subsection{The pion and kaon decay constants, $F_K$ and $F_\pi$}
 {\color{red} (How are these determined?)}
@@ -300,7 +312,12 @@ W(t) \Big|_{t=\omega_0^2} = 0.3 \, .
 The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
 
 \subsection{Selection of Prior}
-Barring some good physical argument for the expected value of the priors.
+Barring some good physical argument for the expected value of the priors, we use the following heuristic.
+\begin{enumerate}
+	\item At NLO, the most naive guess is that the LECs $L_4$ and $L_5$ should be order 1. Running the fit a few times, we quickly discover that these LECs are a few orders of magnitude smaller. Therefore, refining our priors for $L_4$ and $L_5$, we set \texttt{p[`L\_4'] = 0(0.001)} and \texttt{p[`L\_5'] = 0(0.001)}. In practice this width extends about an order of magnitude outside our results for $L_4$ and $L_5$, regardless of NLO model chosen.
+	\item To set the NNLO priors, we first determine the order of magnitude of the $\epsilon^2_\xi (\epsilon^2_K - \epsilon^2_\pi)$ terms. For example, $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi) \sim 10^{-3}$. We center our prior at 0, but set it wide enough such that the upper/lower ends of the uncertainty interval could produce an LEC $A_\xi$ st $\epsilon^2_\xi A_\xi  (\epsilon^2_K - \epsilon^2_\pi) \sim 10^{-2}$, which ensures that the prior doesn't exclude the LEC from contributing at the percent level. In the case of $ \epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$, we would set \texttt{p[`A\_a'] = 0(10)}. The procedure is similar for the NNNLO LECs, with us again setting the priors st the LECs can potentially contribute at the percentile level.
+\end{enumerate}
+While this procedure potentially allows all the NNLO and NNNLO LECs to contribute to the fits, it does lead to some pretty absurd results when taken at face value; eg, setting \texttt{p[`A\_aa'] = 0(100000)}, as one would do as described above, results in a fit of $A_{a, a} = -4926 (11908)$. Fortunately, the \texttt{logGBF} of these fits are correspondingly penalized.
 
 \subsection{Shifting lattice data to physical point}
 Notice that the fit of $F_K/F_\pi$ depends on multiple input parameters: $\epsilon^2_\pi$, $w_0$, $a$, etc; that is, we are fitting a many-dimensional surface, so in order to plot $F_k/F_\pi$ vs some parameter, we must carefully take a slice of that surface. In our case, we fit $F_K / F_\pi$ at the physical point with the exception of some input parameters, which we allow to vary.  
@@ -323,6 +340,30 @@ Alternatively, one often uses the ratio instead.
 \end{equation}
 
 I haven't noticed a visible difference in using one versus the other.
+
+
+\section{Fit Results}
+Here we present the results for each of the fits.
+
+\begin{figure}
+	\includegraphics[width=0.9\textwidth]{./../figs/fit_comparison.pdf}
+	\caption{Extrapolations of $F_K/F_\pi$ to the physical point for the various models, with the FLAG result shown as a red band. Without a better selection of priors for the NNLO and NNNLO LECs, the NNLO and NNNLO fits cannot be tightly determined.}
+\end{figure}
+
+\csvautotabular[respect all]{"./../results/fit"_"results".csv}
+
+
+\foreach \model in {ma, ma-taylor, ma-old, xpt, xpt-taylor}
+{
+	\subsection{\tt \model}
+	\foreach \order in {nlo, nnlo, nnnlo}
+	{
+		\begin{figure}[H]
+			\caption{\model (\order)}
+			\includegraphics[width=\textwidth, page=3]{"./../figs/fits/\model"_"\order".pdf}
+		\end{figure}
+	}
+}
 
 \bibliography{notes}
 
