@@ -43,17 +43,17 @@ class bootstrapper(object):
                 'L_4' : '0(0.001)',
 
                 # nnlo terms
-                'A_a' : '0(10)', #'0(100)',
-                'A_k' : '0(10)',#'0(1)',
-                'A_p' : '0(10)', #'0(10)',
+                'A_a' : '0(100)',
+                'A_k' : '0(1)',
+                'A_p' : '0(10)',
 
                 # nnnlo terms
-                'A_aa' : '0(10)',# '0(100000)',
-                'A_ak' : '0(10)',# '0(1000)',
-                'A_ap' : '0(10)',# '0(10000)',
-                'A_kk' : '0(10)',# '0(10)',
-                'A_kp' : '0(10)',# '0(100)',
-                'A_pp' : '0(10)',# '0(1000)',
+                'A_aa' : '0(100000)',
+                'A_ak' : '0(1000)',
+                'A_ap' : '0(10000)',
+                'A_kk' : '0(10)',
+                'A_kp' : '0(100)',
+                'A_pp' : '0(1000)',
             }
             prior = gv.gvar(prior)
 
@@ -233,10 +233,17 @@ class bootstrapper(object):
     def create_prior_from_fit(self):
         output = {}
         for key in self.get_fit_parameters().keys():
-            mean = gv.mean(self.get_fit_parameters(key))
-            sdev = 3 *gv.sdev(self.get_fit_parameters(key))
+            if key in ['L_4', 'L_5']:
+                mean = gv.mean(self.get_fit_parameters(key))
+                sdev = 5 *gv.sdev(self.get_fit_parameters(key))
+            elif key in ['A_a','A_k','A_p']:
+                mean = gv.mean(self.get_fit_parameters(key))
+                sdev = gv.sdev(self.get_fit_parameters(key))
+            elif key in ['A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp']:
+                mean = gv.mean(self.get_fit_parameters(key))
+                sdev = gv.sdev(self.get_fit_parameters(key))
 
-            output[key] = gv.gvar(mean, unc)
+            output[key] = gv.gvar(mean, sdev)
 
         return output
 
