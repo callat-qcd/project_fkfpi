@@ -191,9 +191,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         )
         #print "+ nnlo", output *(eps2_k - eps2_pi)
 
-        #print "A_a: ", eps2_a
-        #print "A_k: ", eps2_k
-        #print "A_p: ", eps2_pi
+        #print "A_a: ", np.median(eps2_a *(eps2_k - eps2_pi))
+        #print "A_k: ", np.median(eps2_k *(eps2_k - eps2_pi))
+        #print "A_p: ", np.median(eps2_pi *(eps2_k - eps2_pi))
+
         #print "\n\n"
 
         return output *(eps2_k - eps2_pi)
