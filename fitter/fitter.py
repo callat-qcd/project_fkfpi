@@ -19,10 +19,24 @@ class fitter(object):
         y_data = self._make_y_data()
         prior = self._make_prior()
 
-        fitter = lsqfit.MultiFitter(models=models)
-        fit = fitter.chained_lsqfit(data=y_data, prior=prior, fast=False)
+        for model in models:
+            fitter = lsqfit.MultiFitter(models=model)
+            fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
+            for key in fit.p:
+                if key in ['L_4', 'L_5', 'A_a', 'A_p', 'A_k',
+                            'A_aa', 'A_ak', 'A_ap', 'A_kk',
+                            'A_kp', 'A_pp']:
+                    prior[key] = fit.p[key]
+
+
+
+            #if 'L_4' in fit.p:
+                #print "yes"
+                #prior['L_4'] = fit.p['L_4']
+            #prior['L_5'] = fit.p['L_5']
         #fit = fitter.chained_lsqfit(data=y_data, prior=prior)
 
+        #print fit
 
         self.fit = fit
         return fit
@@ -34,12 +48,12 @@ class fitter(object):
         #    for fit_type in ['xpt', 'xpt-taylor']:
         #        models = np.append(models, fk_fpi_model(datatag=fit_type,
         #                    order=self.order, fit_type=fit_type))
-        if self.order['fit'] in ['nlo']: #['nlo', 'nnlo', 'nnnlo']:
+        if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             order = self.order.copy()
             order['fit'] = 'nlo'
             models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
                         order=order, fit_type=self.fit_type))
-        if self.order['fit'] in ['nnlo']: #['nnlo', 'nnnlo']:
+        if self.order['fit'] in ['nnlo', 'nnnlo']:
             order = self.order.copy()
             order['fit'] = 'nnlo'
             models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],

@@ -39,8 +39,8 @@ class bootstrapper(object):
             print "Using default prior."
             prior = {
                 # nlo terms
-                'L_5' : '0(0.01)', #'0(0.001)',
-                'L_4' : '0(0.01)',
+                'L_5' : '0(0.001)', #'0(0.001)',
+                'L_4' : '0(0.001)',
 
                 # nnlo terms
                 'A_a' : '0(10)', #'0(100)',
@@ -249,17 +249,17 @@ class bootstrapper(object):
 
     def extrapolate_to_ensemble(self, abbr):
         abbr_n = self.abbrs.index(abbr)
-        model_name = self.fits[0].fcn_p.keys()[-1]
+        model_name = self.fits[0].data.keys()[-1] # pretty hacky way to get this
 
         if self.bs_N == 1:
             temp_fit = self.fits[0]
-            return temp_fit.fcn_p[model_name][abbr_n]
+            return temp_fit.fcn(temp_fit.p)[model_name][abbr_n]
 
         else:
             results = []
             for j in self.bs_N:
                 temp_fit = self.fits[j]
-                results.append(gv.mean(temp_fit.fcn_p[model_name][abbr_n]))
+                results.append(gv.mean(temp_fit.fcn(temp_fit.p)[model_name][abbr_n]))
             return gv.gvar(np.mean(results), np.std(results))
 
     def extrapolate_to_phys_point(self):
@@ -282,7 +282,7 @@ class bootstrapper(object):
         for key in fit_data.keys():
             fit_parameters[key] = fit_data[key]
             temp_fit = self.fits[0]
-            model_name = temp_fit.fcn_p.keys()[-1]
+            model_name = temp_fit.fcn(temp_fit.p).keys()[-1]
 
         return temp_fit.fcn(p=fit_parameters)[model_name]
 
