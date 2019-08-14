@@ -1,6 +1,6 @@
 from __future__ import print_function
+import sys
 import numpy as np
-import pandas as pd
 import lsqfit
 import gvar as gv
 import matplotlib.pyplot as plt
@@ -42,14 +42,15 @@ r_a = {
     'a09m310' :gv.gvar(3.499,0.024),
     'a09m220' :gv.gvar(3.566,0.014)
     }
-L_ens = {'a15m400':16,'a15m350':16,'a15m310':16,'a15m220':24,'a15m130':32,
+L_ens = {
+    'a15m400':16,'a15m350':16,'a15m310':16,'a15m220':24,'a15m130':32,
     'a12m400':24,'a12m350':24,'a12m310':24,'a12m220':32,'a12m220S':24,'a12m220L':40,'a12m130':48,
     'a09m400':32,'a09m350':32,'a09m310':32,'a09m220':48,}
 
-def decay_constant(s,mval,gvdata):
-    Fpi = gvdata['z0p_pion']*2*(mval['mq1']+gvdata['mresl'])/gvdata['e0_pion']**(3./2.)
-    Fka = gvdata['z0p_kaon']*(mval['mq1']+mval['mq2']+gvdata['mresl']+gvdata['mress'])/gvdata['e0_kaon']**(3./2.)
-    Fss = gvdata['z0p_etas']*2*(mval['mq2']+gvdata['mress'])/gvdata['e0_etas']**(3./2.)
+def decay_constant(s,gvdata):
+    Fpi = gvdata['Fpi']
+    Fka = gvdata['FK']
+    Fss = gvdata['Fss']
     if s['scale'] == 'PP':
         Lchi = 4 * np.pi * Fpi
     elif s['scale'] == 'PK':
@@ -61,9 +62,9 @@ def decay_constant(s,mval,gvdata):
     y = dict()
     y['Fka/Fpi'] = Fka/Fpi
     p = dict()
-    p['mpi'] = gvdata['e0_pion']
-    p['mka'] = gvdata['e0_kaon']
-    p['mss'] = gvdata['e0_etas']
+    p['mpi'] = gvdata['mpi']
+    p['mka'] = gvdata['mk']
+    p['mss'] = gvdata['mss']
     return {'x': x, 'y': y, 'p': p}
 
 def format_h5_data(switches,data,priors):
@@ -98,8 +99,11 @@ def format_h5_data(switches,data,priors):
         gvdata = gv.dataset.avg_data(data_dict,bstrap=True)
         if switches['debug']:
             print(gvdata)
+        data_dict = decay_constant(switches,gvdata)
+        if switches['debug']:
+            print('data_dict')
+            print(data_dict)
     '''
-        data_dict = decay_constant(switches,mval,gvdata)
         Lchi.append(data_dict['x']['Lchi'])
         x.append(data_dict['x']['Lchi'])
         y.append(data_dict['y']['Fka/Fpi'])
@@ -296,3 +300,17 @@ def dsu2(FKpi,mpi,mk,F0):
         + 2./(6*(4*np.pi)**2*F0**2)*(mk**2-mpi**2-mpi**2*np.log(mk**2/mpi**2))\
         )
     return d
+
+
+if __name__ == "__main__":
+    import input_params as ip
+    print("python version:", sys.version)
+    #print("pandas version:", pd.__version__)
+    print("numpy  version:", np.__version__)
+    print("gvar   version:", gv.__version__)
+
+    # Load input params
+    switches = ip.switches
+    priors = ip.priors
+    phys_p = ip.phys_p
+    flag_FKFpi = ip.flag_FKFpi
