@@ -26,19 +26,9 @@ class fitter(object):
                 if key in ['L_4', 'L_5']:
                     #pass
                     prior[key] = gv.gvar(fit.pmean[key], 3*fit.psdev[key])
-                elif key in ['A_a', 'A_p', 'A_k',
-                            'A_aa', 'A_ak', 'A_ap', 'A_kk',
-                            'A_kp', 'A_pp']:
+                elif key in ['A_a', 'A_p', 'A_k']:
                     prior[key] = fit.p[key]
                     #pass
-
-
-
-            #if 'L_4' in fit.p:
-                #print "yes"
-                #prior['L_4'] = fit.p['L_4']
-            #prior['L_5'] = fit.p['L_5']
-        #fit = fitter.chained_lsqfit(data=y_data, prior=prior)
 
         #print fit
 
@@ -217,7 +207,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output *(eps2_k - eps2_pi)
 
-    def fitfcn_nnnlo_cts(self, p):
+    def fitfcn_nnnlo_cts(self, p, fkfpi):
 
         #w0 = p['w0']
 
@@ -247,9 +237,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
               )
         )
         return output *(eps2_k - eps2_pi)
-
-
-
 
     def fitfcn_ma(self, p):
         # Constants

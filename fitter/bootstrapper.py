@@ -128,11 +128,12 @@ class bootstrapper(object):
         output = output + "\n\nFitting to %s \n" %(self.order['fit'])
         #output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
-        output = output + "Fitted/[FLAG] values at physical point:\n"
-        output = output + '\nF_K / F_pi = %s [%s]\n'%(
-                            self.extrapolate_to_phys_point(),
-                            self.get_phys_point_data('FK/Fpi'))
-        output = output + "\n"
+        output = output + "Fitted/[FLAG] values at physical point (including SU(2) isospin corrections):\n"
+        output = output + '\nF_K / F_pi = %s [%s]'%(
+                            self.extrapolate_to_phys_point(include_su2_isospin_corrrection=True),
+                            self.get_phys_point_data('FK/Fpi_pm'))
+        output = output + '   (delta_su2 = %s)' %(self.get_delta_su2_correction())
+        output = output + "\n\n"
 
         fit_parameters = self.get_fit_parameters()
         new_table = { key : [fit_parameters[key], prior[key]] for key in sorted(fit_parameters.keys())}
@@ -262,8 +263,10 @@ class bootstrapper(object):
                 results.append(gv.mean(temp_fit.fcn(temp_fit.p)[model_name][abbr_n]))
             return gv.gvar(np.mean(results), np.std(results))
 
-    def extrapolate_to_phys_point(self):
+    def extrapolate_to_phys_point(self, include_su2_isospin_corrrection=False):
         output = self.fk_fpi_fit_fcn(self.get_phys_point_data())
+        if include_su2_isospin_corrrection:
+            output *= np.sqrt(1 + self.get_delta_su2_correction()) # include SU(2) isospin breaking correction
 
         # Logic for frequentist vs bayesian fits
         try:
@@ -310,11 +313,27 @@ class bootstrapper(object):
 
         return bs_fit_parameters
 
+    def get_delta_su2_correction(self):
+        lam2_chi = self.get_phys_point_data('lam2_chi')
+        eps2_pi = (self.get_phys_point_data('mpi'))**2 / lam2_chi
+        eps2_k = (self.get_phys_point_data('mk'))**2 / lam2_chi
+        fkfpi = self.extrapolate_to_phys_point()
+
+        R = gv.gvar('35.7(2.6)') # From FLAG
+        eps_su2 = np.sqrt(3)/(4.0 *R)
+
+        delta = np.sqrt(3) *eps_su2 *(
+            - (4.0/3.0) *(fkfpi - 1)
+            + (4.0/3.0) *(eps2_k - eps2_pi - eps2_pi *np.log(eps2_k/eps2_pi))
+        )
+        return delta
+
+
     def get_fit_info(self):
         fit_type = self.fit_type+'_'+self.order['fit']
         fit_info = {
             'name' : self.fit_type+'_'+self.order['fit'],
-            'fit' : self.extrapolate_to_phys_point(),
+            'fit' : self.extrapolate_to_phys_point(include_su2_isospin_corrrection=True),
             'logGBF' : self.fits[0].logGBF,
             'chi2/df' : self.fits[0].chi2 / self.fits[0].dof,
             'Q' : self.fits[0].Q,
@@ -364,28 +383,33 @@ class bootstrapper(object):
             'a' : 0,
             'L' : np.infty,
 
-            'mpi' : gv.gvar('138.05638(37)'),
-            'mju' : gv.gvar('138.05638(37)'),
+            'mpi' : gv.gvar('134.8(3)'), # '138.05638(37)'
+            'mk' : gv.gvar('494.2(3)'), # '495.6479(92)'
+            'mss' : gv.gvar('688.5(2.2)'), # Taken from arxiv/1303.1670
 
-            'mk' : gv.gvar('495.6479(92)'),
-            'mru' : gv.gvar('495.6479(92)'),
-            'mjs' : gv.gvar('495.6479(92)'),
-
-            'mss' : gv.gvar('688.5(2.2)'), # arxiv/1303.1670
-            'mrs' : gv.gvar('688.5(2.2)'),
-
-            'a2DI' : 0, # Need to check this
+            'a2DI' : 0,
             'Fpi' : gv.gvar('91.9(3.5)'),
             'FK' : gv.gvar('110.38(64)'),
             'w0' : self.w0,
 
-            'FK/Fpi' : gv.gvar('1.1932(19)') # FLAG
+            'FK/Fpi_pm' : gv.gvar('1.1932(19)'), # FLAG (arxiv/1902.08191, eqn 80), SU(2) isospin corrected value
         }
         # Or get mss, mrs with Gell-Mann-Oakes-Renner relations: arxiv/0505265 (3.45)
         #mpi = phys_point_data['mpi']
         #mk = phys_point_data['mk']
         #phys_point_data['mss'] = np.sqrt(2 *(mk)**2 - (mpi)**2) *1.0000001 # prevents division by 0
         #phys_point_data['mrs'] = phys_point_data['mss']
+
+        # ma pion
+        phys_point_data['mju'] = phys_point_data['mpi']
+
+        # ma kaon
+        phys_point_data['mru'] = phys_point_data['mk']
+        phys_point_data['mjs'] = phys_point_data['mk']
+
+        # ma eta_s
+        phys_point_data['mrs'] = phys_point_data['mss']
+
         FK = phys_point_data['FK']
         Fpi = phys_point_data['Fpi']
         if self.F2 == 'FKFpi':
@@ -501,7 +525,7 @@ class bootstrapper(object):
             plt.axhline(y-2, ls ='-', color='C4')
 
             # FLAG
-            data = self.get_phys_point_data('FK/Fpi')
+            data = self.get_phys_point_data('FK/Fpi_pm') / np.sqrt(1 + self.get_delta_su2_correction())
             x = gv.mean(data)
             xerr = gv.sdev(data)
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
@@ -639,7 +663,7 @@ class bootstrapper(object):
         # Plot FLAG result
         x_phys = self.get_phys_point_data('mpi')**2 / self.get_phys_point_data('lam2_chi')
         plt.axvline(gv.mean(x_phys), label='Phys point')
-        y_phys = self.get_phys_point_data('FK/Fpi')
+        y_phys = self.get_phys_point_data('FK/Fpi_pm') / np.sqrt(1 + self.get_delta_su2_correction())
 
         plt.errorbar(x=gv.mean(x_phys), xerr=0,
                      y=gv.mean(y_phys), yerr=gv.sdev(y_phys), label='FLAG',
@@ -832,47 +856,5 @@ class bootstrapper(object):
         fkfpi_fit_phys_vary_mpi = self.fk_fpi_fit_fcn(fit_data=temp_data)
 
         shifted_fkfpi = fkfpi_ens + fkfpi_fit_phys_vary_mpi - fkfpi_fit_ens
-
-        return shifted_fkfpi
-
-    def shift_fk_fpi_for_phys_mk_old(self, abbr, data):
-        pi = np.pi
-        hbar_c = 197.327
-        lam2_chi = self.get_phys_point_data('lam2_chi')
-
-        fkfpi_ens = data[abbr]['FK'] / data[abbr]['Fpi']
-
-        to_phys = lambda m : m *hbar_c / (data[abbr]['a/w0'] *self.w0)
-        eps2_k = (to_phys(data[abbr]['mk']))**2 / lam2_chi
-        eps2_k_phys = (self.get_phys_point_data('mk'))**2 / lam2_chi
-        eps2_pi = (to_phys(data[abbr]['mpi']))**2 / lam2_chi
-        eps2_pi_phys = (self.get_phys_point_data('mpi'))**2 / lam2_chi
-
-        to_eta = lambda xk, xpi : (4.0/3.0) *xk - (1.0/3.0) *xpi
-        eps2_x = to_eta(eps2_k, eps2_pi)
-        eps2_x_phys = to_eta(eps2_k_phys, eps2_pi_phys)
-
-        L_5 = self.get_fit_parameters('L_5')
-
-        delta = lambda xphys, xens : (xphys *np.log(xphys) - xens *np.log(xens))
-        shifted_fkfpi = (
-            fkfpi_ens
-            - (1.0/4.0) *delta(eps2_k_phys, eps2_k)
-            - (3.0/8.0) *delta(eps2_x_phys, eps2_x)
-            #+ 4 *(4*pi)**2 *(eps2_k_phys - eps2_k) *L_5
-        )
-        #print 'nlo: ', shifted_fkfpi
-        return shifted_fkfpi
-
-        if self.order['fit'] in ['nnlo', 'nnnlo']:
-            eps2_a = (data[abbr]['a/w0'] / (4 *np.pi))**2
-            A_a = self.get_fit_parameters('A_a')
-            shifted_fkfpi = shifted_fkfpi - 4 *(4*pi)**2 *(eps2_k_phys - eps2_k) *A_a *eps2_a
-            print 'nnlo: ', shifted_fkfpi
-
-        if self.order['fit'] in ['nnnlo']:
-            A_aa = self.get_fit_parameters('A_aa')
-            shifted_fkfpi = shifted_fkfpi - 4 *(4*pi)**2 *(eps2_k_phys - eps2_k) *A_aa *eps2_a
-            print 'nnnlo: ', shifted_fkfpi
 
         return shifted_fkfpi
