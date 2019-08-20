@@ -23,7 +23,10 @@ class fitter(object):
             fitter = lsqfit.MultiFitter(models=model)
             fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
             for key in fit.p:
-                if key in ['L_4', 'L_5', 'A_a', 'A_p', 'A_k',
+                if key in ['L_4', 'L_5']:
+                    #pass
+                    prior[key] = gv.gvar(fit.pmean[key], 3*fit.psdev[key])
+                elif key in ['A_a', 'A_p', 'A_k',
                             'A_aa', 'A_ak', 'A_ap', 'A_kk',
                             'A_kp', 'A_pp']:
                     prior[key] = fit.p[key]
