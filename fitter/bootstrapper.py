@@ -392,13 +392,12 @@ class bootstrapper(object):
             'FK' : gv.gvar('110.38(64)'),
             'w0' : self.w0,
 
-            'FK/Fpi_pm' : gv.gvar('1.1932(19)'), # FLAG (arxiv/1902.08191, eqn 80), SU(2) isospin corrected value
+            'FK/Fpi_pm' : gv.gvar('1.1932(19)'), # FLAG, SU(2) isospin corrected value (arxiv/1902.08191, eqn 80)
         }
         # Or get mss, mrs with Gell-Mann-Oakes-Renner relations: arxiv/0505265 (3.45)
         #mpi = phys_point_data['mpi']
         #mk = phys_point_data['mk']
         #phys_point_data['mss'] = np.sqrt(2 *(mk)**2 - (mpi)**2) *1.0000001 # prevents division by 0
-        #phys_point_data['mrs'] = phys_point_data['mss']
 
         # ma pion
         phys_point_data['mju'] = phys_point_data['mpi']
