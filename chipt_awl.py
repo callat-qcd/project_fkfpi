@@ -39,78 +39,88 @@ class Fit(object):
     def __init__(self,switches):
         self.switches = switches
         #self.n = switches['ansatz']['truncation']
-    def counterterms(self,x,p):
-        # counter term
-        a2 = p['aw0']**2
-        p2  = p['mpi']**2 / x['Lchi']**2
-        k2  = p['mka']**2  / x['Lchi']**2
-        ct = 4 * (k2 - p2) * (4*np.pi)**2 * p['L5'] # m^2
-        ct += a2 * (k2-p2) * p['s4'] # a^2 m^2
-        ct += (k2-p2)**2 * p['c4'] # m^4
-        ct += k2*(k2-p2) * p['d4'] # m^4
-        ct += p2*(k2-p2) * p['e4'] # m^4
-        ct += a2**2*(k2-p2) * p['s6'] # a^4*m^2
-        ct += a2 * (k2-p2)**2 * p['sc6'] # a^2*m^4
-        ct += a2 * k2*(k2-p2) * p['sd6']
-        ct += a2 * p2*(k2-p2) * p['se6']
+    def counterterms(self,x,p,e):
+        Lchi = x[e]['Lchi_'+self.switches['scale']]
+        p2   = p[(e,'mpi')]**2 / Lchi**2
+        k2   = p[(e,'mk')]**2 / Lchi**2
+        e2   = 4./3 * k2 - 1./3 * p2
+        a2   = p[(e,'aw0')]**2
+        if self.switches['ansatz']['model'].split('_')[-1] in ['nlo','nnlo','nnnlo']:
+            ct = 4 * (k2 - p2) * (4*np.pi)**2 * p['L5'] # m^2
+        if self.switches['ansatz']['model'].split('_')[-1] in ['nnlo','nnnlo']:
+            ct += a2 * (k2 -p2) * p['s4'] # a^2 m^2
+            ct += (k2 -p2)**2   * p['c4'] # m^4
+            ct += k2*(k2 -p2)   * p['d4'] # m^4
+            ct += p2* (k2 -p2)  * p['e4'] # m^4
+        if self.switches['ansatz']['model'].split('_')[-1] in ['nnnlo']:
+            ct += a2**2 *(k2 -p2)   * p['s6']  # a^4*m^2
+            ct += a2 * (k2 -p2)**2  * p['sc6'] # a^2*m^4
+            ct += a2 * k2 *(k2 -p2) * p['sd6']
+            ct += a2 * p2 *(k2 -p2) * p['se6']
         return ct
+
     def fit_function(self,x,p):
-        if self.switches['ansatz']['type'] == 'xpt':
-            metaSq = 4./3 * p['mka']**2 - 1./3 * p['mpi']**2
-            p2  = p['mpi']**2 / x['Lchi']**2
-            k2  = p['mka']**2  / x['Lchi']**2
-            r =  1.
-            r += 5./8 * p2 * np.log(p2)
-            r -= 1./4 * k2 * np.log(k2)
-            r -= 3./8 * metaSq / x['Lchi']**2 * np.log(metaSq / x['Lchi']**2)
-            r += self.counterterms(x,p)
-            return r
-        elif self.switches['ansatz']['type'] == 'MA':
-            p2  = p['mpi']**2 / x['Lchi']**2
-            k2  = p['mka']**2  / x['Lchi']**2
-            s2  = p['mss']**2 / x['Lchi']**2
-            if self.switches['ansatz']['a2dm'] == 'avg':
-                ju = p2 + p['a2dm'] / x['Lchi']**2
-                sj = k2 + p['a2dm'] / x['Lchi']**2
-                ru = k2 + p['a2dm'] / x['Lchi']**2
-                rs = s2 + p['a2dm'] / x['Lchi']**2
-            elif self.switches['ansatz']['a2dm'] == 'individual':
-                ju = (p['mju'] / x['Lchi'])**2
-                sj = (p['mjs'] / x['Lchi'])**2
-                ru = (p['mru'] / x['Lchi'])**2
-                rs = (p['mrs'] / x['Lchi'])**2
-            #print('ju:',ju)
-            x2  = 4./3 * k2 - p2/3 + p['a2di'] / x['Lchi']**2
-            dju = p['a2di'] / x['Lchi']**2
-            drs = p['a2di'] / x['Lchi']**2
-            r  = 1.
-            # (-) pion log terms
-            r += ju * np.log(ju)
-            r += 0.5 * ru * np.log(ru)
-            # (+) kaon log terms
-            r += -0.5 * ju * np.log(ju)
-            r += -1./4 * ru * np.log(ru)
-            r += -0.5*sj * np.log(sj)
-            r += -1./4 * rs * np.log(rs)
-            r += -dju / 8
-            r +=  dju**2 / 24 / (x2 - p2)
-            r +=  drs * (k2-p2) / 6 / (x2-s2)
-            r += -dju * drs / 12 / (x2 - s2)
-            r += np.log(p2)/24 * (3*p2 \
-                - 3*dju*(x2+p2)/(x2-p2) \
-                + dju**2 * x2/(x2-p2)**2\
-                -4*dju*drs*p2/(x2-p2)/(s2-p2)\
-                )
-            r += -x2/24 * np.log(x2)*(9 \
-                -6*dju/(x2-p2) \
-                + dju**2/(x2-p2)**2\
-                +drs*(4*(k2-p2)+6*(s2-x2))/(x2-s2)**2 \
-                -2*dju*drs*(2*s2-p2-x2)/(x2-s2)**2/(x2-p2)\
-                )
-            r += np.log(s2)/12 * (3*s2 \
-                +drs*(3*s2**2 + 2*(k2-p2)*x2 -3*s2*x2)/(x2-s2)**2\
-                -dju*drs*(2*s2**2 - x2*(s2+p2))/(x2-s2)**2 / (s2-p2)\
-                )
-            # counter terms
-            r += self.counterterms(x,p)
-            return r
+        r = dict()
+        for e in x:
+            Lchi = x[e]['Lchi_'+self.switches['scale']]
+            p2   = p[(e,'mpi')]**2 / Lchi**2
+            k2   = p[(e,'mk')]**2 / Lchi**2
+            e2   = 4./3 * k2 - 1./3 * p2
+            a2   = p[(e,'aw0')]**2 / 4 / np.pi
+            if self.switches['debug']:
+                print('DEBUG: fit_function x,y values')
+                print(e,p2,k2,e2,a2)
+
+            r[e]  = 1.
+            r[e] += self.counterterms(x,p,e)
+
+            if self.switches['ansatz']['model'].split('_')[0] == 'xpt':
+                r[e] += 5./8 * p2 * np.log(p2)
+                r[e] -= 1./4 * k2 * np.log(k2)
+                r[e] -= 3./8 * e2 * np.log(e2)
+
+            elif self.switches['ansatz']['model'].split('_')[0] == 'ma':
+                s2 = p[(e,'mss')]**2 / Lchi**2
+                if self.switches['ansatz']['a2dm'] == 'avg':
+                    ju = p2 + p['a2dm'] / Lchi**2
+                    sj = k2 + p['a2dm'] / Lchi**2
+                    ru = k2 + p['a2dm'] / Lchi**2
+                    rs = s2 + p['a2dm'] / Lchi**2
+                elif self.switches['ansatz']['a2dm'] == 'individual':
+                    ju = p[(e,'mju')]**2 / Lchi**2
+                    sj = p[(e,'mjs')]**2 / Lchi**2
+                    ru = p[(e,'mru')]**2 / Lchi**2
+                    rs = p[(e,'mrs')]**2 / Lchi**2
+
+                x2  = e2 + p[(e,'a2DI')] / Lchi**2
+                dju = p[(e,'a2DI')] / Lchi**2
+                drs = p[(e,'a2DI')] / Lchi**2
+                # (-) pion log terms
+                r[e] += ju * np.log(ju)
+                r[e] += 0.5 * ru * np.log(ru)
+                # (+) kaon log terms
+                r[e] += -0.5 * ju * np.log(ju)
+                r[e] += -1./4 * ru * np.log(ru)
+                r[e] += -0.5*sj * np.log(sj)
+                r[e] += -1./4 * rs * np.log(rs)
+                r[e] += -dju / 8
+                r[e] +=  dju**2 / 24 / (x2 - p2)
+                r[e] +=  drs * (k2-p2) / 6 / (x2-s2)
+                r[e] += -dju * drs / 12 / (x2 - s2)
+                r[e] += np.log(p2)/24 * (3*p2 \
+                        - 3*dju*(x2+p2)/(x2-p2) \
+                        + dju**2 * x2/(x2-p2)**2\
+                        -4*dju*drs*p2/(x2-p2)/(s2-p2)\
+                        )
+                r[e] += -x2/24 * np.log(x2)*(9 \
+                        -6*dju/(x2-p2) \
+                        + dju**2/(x2-p2)**2\
+                        +drs*(4*(k2-p2)+6*(s2-x2))/(x2-s2)**2 \
+                        -2*dju*drs*(2*s2-p2-x2)/(x2-s2)**2/(x2-p2)\
+                        )
+                r[e] += np.log(s2)/12 * (3*s2 \
+                        +drs*(3*s2**2 + 2*(k2-p2)*x2 -3*s2*x2)/(x2-s2)**2\
+                        -dju*drs*(2*s2**2 - x2*(s2+p2))/(x2-s2)**2 / (s2-p2)\
+                        )
+            #r[e] = np.array(r[e])
+        return r

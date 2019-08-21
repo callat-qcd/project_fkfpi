@@ -1,6 +1,7 @@
 from __future__ import print_function
 import sys
 import numpy as np
+import tables as h5
 import lsqfit
 import gvar as gv
 import matplotlib.pyplot as plt
@@ -47,111 +48,62 @@ L_ens = {
     'a12m400':24,'a12m350':24,'a12m310':24,'a12m220':32,'a12m220S':24,'a12m220L':40,'a12m130':48,
     'a09m400':32,'a09m350':32,'a09m310':32,'a09m220':48,}
 
-def decay_constant(s,gvdata):
-    Fpi = gvdata['Fpi']
-    Fka = gvdata['FK']
-    Fss = gvdata['Fss']
-    if s['scale'] == 'PP':
-        Lchi = 4 * np.pi * Fpi
-    elif s['scale'] == 'PK':
-        Lchi = 4 * np.pi * np.sqrt(Fpi*Fka)
-    elif s['scale'] == 'KK':
-        Lchi = Lchi = 4 * np.pi * Fka
+def format_h5_data(switches,data):
     x = dict()
-    x['Lchi'] = Lchi.mean
     y = dict()
-    y['Fka/Fpi'] = Fka/Fpi
-    p = dict()
-    p['mpi'] = gvdata['mpi']
-    p['mka'] = gvdata['mk']
-    p['mss'] = gvdata['mss']
-    return {'x': x, 'y': y, 'p': p}
+    priors = dict()
 
-def format_h5_data(switches,data,priors):
-    x    = list()
-    y    = list()
-    mpi  = list()
-    mpiL = list()
-    mka  = list()
-    mss  = list()
-    aw0  = list()
-    a2di = list()
-    mju  = list()
-    mjuL = list()
-    mjs  = list()
-    mru  = list()
-    mrs  = list()
-    Lchi = list()
-    wMix_ju = list()
-    wMix_js = list()
-    wMix_ru = list()
-    wMix_rs = list()
-    for e in switches['ensemble']:
+    for ens in switches['ensembles']:
+        #print(ens)
+        x[ens] = dict()
         data_dict = dict()
-        print(e)
         for m in ['mpi','mk','mss','mju','mjs','mrs','mru']:
-            data_dict[m] = data.get_node('/'+e+'/'+m).read()
+            data_dict[m] = data.get_node('/'+ens+'/'+m).read()
             #print('  %s = %.5f +- %.5f' %(m,data_dict[m].mean(),data_dict[m].std()))
         for f in ['FK','Fpi','Fss']:
-            data_dict[f] = data.get_node('/'+e+'/'+f).read()
-        #fkfpi = data_dict['FK']/data_dict['Fpi']
-        #print('  FK/Fpi = %.5f +- %.5f' %(fkfpi.mean(),fkfpi.std()))
+            data_dict[f] = data.get_node('/'+ens+'/'+f).read()
+        if switches['debug']:
+            fkfpi = data_dict['FK']/data_dict['Fpi']
+            print('  FK/Fpi = %.5f +- %.5f' %(fkfpi.mean(),fkfpi.std()))
         gvdata = gv.dataset.avg_data(data_dict,bstrap=True)
         if switches['debug']:
             print(gvdata)
-        data_dict = decay_constant(switches,gvdata)
         if switches['debug']:
             print('data_dict')
             print(data_dict)
-    '''
-        Lchi.append(data_dict['x']['Lchi'])
-        x.append(data_dict['x']['Lchi'])
-        y.append(data_dict['y']['Fka/Fpi'])
-        mpi.append(data_dict['p']['mpi'])
-        mpiL.append(data_dict['p']['mpi'].mean * L_ens[ens])
-        mjuL.append(gvdata['phi_ju'].mean * L_ens[ens])
-        mka.append(data_dict['p']['mka'])
-        mss.append(data_dict['p']['mss'])
-        mju.append(gvdata['phi_ju'])
-        mjs.append(gvdata['phi_js'])
-        mru.append(gvdata['phi_ru'])
-        mrs.append(gvdata['phi_rs'])
-        # milc file
-        hp = hisq_params.query("ensemble=='%s'" %e)
-        aw0_ens = gv.gvar(hp['aw0_mean'].iloc[0],hp['aw0_sdev'].iloc[0])
-        aw0.append(aw0_ens)
-        a2di.append(gv.gvar(hp['a2DI_mean'].iloc[0],hp['a2DI_sdev'].iloc[0])/r_a[ens]**2)
-        # w_0**2 Delta_Mix
-        wMix_ju.append((gvdata['phi_ju']**2-data_dict['p']['mpi']**2) / aw0_ens**2)
-        wMix_js.append((gvdata['phi_js']**2-data_dict['p']['mka']**2) / aw0_ens**2)
-        wMix_ru.append((gvdata['phi_ru']**2-data_dict['p']['mka']**2) / aw0_ens**2)
-        wMix_rs.append((gvdata['phi_rs']**2-data_dict['p']['mss']**2) / aw0_ens**2)
-    priors['mpi'] = np.array(mpi)
-    priors['mka'] = np.array(mka)
-    priors['mss'] = np.array(mss)
-    priors['aw0'] = np.array(aw0)
-    priors['mju'] = np.array(mju)
-    priors['mjs'] = np.array(mjs)
-    priors['mru'] = np.array(mru)
-    priors['mrs'] = np.array(mrs)
-    priors['wMix_ju'] = np.array(wMix_ju)
-    priors['wMix_js'] = np.array(wMix_js)
-    priors['wMix_ru'] = np.array(wMix_ru)
-    priors['wMix_rs'] = np.array(wMix_rs)
-    if switches['ansatz']['a2dm'] == 'avg':
-        a2dm_ju = priors['mju']**2 - priors['mpi']**2
-        a2dm_sj = priors['mjs']**2 - priors['mka']**2
-        a2dm_ru = priors['mru']**2 - priors['mka']**2
-        a2dm_rs = priors['mrs']**2 - priors['mss']**2
-        priors['a2dm'] = 1./4*(a2dm_ju +a2dm_sj +a2dm_ru +a2dm_rs)
-    elif switches['ansatz']['a2dm'] == 'individual':
-        priors['a2dm'] = priors['mju']**2-priors['mpi']**2
-    y = np.array(y)
-    mpiL = np.array(mpiL)
-    Lchi = np.array(Lchi)
-    priors['a2di'] = np.array(a2di)
-    #priors['a2dm'] = np.array(a2dm)
-    mjuL = np.array(mjuL)
+
+        #y[ens] = np.array(gvdata['FK']/gvdata['Fpi'])
+        y[ens] = gvdata['FK']/gvdata['Fpi']
+
+        x[ens]['mpiL'] = gvdata['mpi'].mean * L_ens[ens]
+        x[ens]['mkL']  = gvdata['mk'].mean  * L_ens[ens]
+        x[ens]['mssL'] = gvdata['mss'].mean * L_ens[ens]
+        x[ens]['mjuL'] = gvdata['mju'].mean * L_ens[ens]
+        x[ens]['mjsL'] = gvdata['mjs'].mean * L_ens[ens]
+        x[ens]['mruL'] = gvdata['mru'].mean * L_ens[ens]
+        x[ens]['mrsL'] = gvdata['mrs'].mean * L_ens[ens]
+        x[ens]['Lchi_PK'] = 4*np.pi*np.sqrt(gvdata['FK'].mean * gvdata['Fpi'].mean)
+        x[ens]['Lchi_PP'] = 4 *np.pi *gvdata['Fpi'].mean
+        x[ens]['Lchi_KK'] = 4 *np.pi *gvdata['FK'].mean
+
+        # MASSES
+        priors[(ens,'mpi')] = gvdata['mpi']
+        priors[(ens,'mk')]  = gvdata['mk']
+        priors[(ens,'mss')] = gvdata['mss']
+        priors[(ens,'mju')] = gvdata['mju']
+        priors[(ens,'mjs')] = gvdata['mjs']
+        priors[(ens,'mru')] = gvdata['mru']
+        priors[(ens,'mrs')] = gvdata['mrs']
+        # HISQ params
+        aw0 = data.get_node('/'+ens+'/aw0').read()
+        priors[(ens,'aw0')] = gv.gvar(aw0[0],aw0[1])
+        a2di = data.get_node('/'+ens+'/a2DI').read()
+        priors[(ens,'a2DI')] = gv.gvar(a2di[0],a2di[1])
+        x[ens]['alpha_S'] = data.get_node('/'+ens+'/alpha_s').read()
+    return {'x':x, 'y':y, 'p':priors}
+
+    """
+    ''' MOVE FV CORRECTION TO FIT CLASS in XPT LIB '''
     if switches['ansatz']['FV']:
         fv_params = dict()
         fv_params['mjuL'] = mjuL
@@ -160,108 +112,9 @@ def format_h5_data(switches,data,priors):
         fv_mns_inv = xpt.fv_correction(switches,fv_params,priors)
         #print('DEBUG FV:',fv_mns_inv)
         y = y - fv_mns_inv
+    """
 
-    return {'x':{'Lchi':np.array(x),'mpiL':np.array(mpiL)}, 'y': y, 'p': priors}
-    '''
-
-
-def format_data(switches,data,mixed_data,hisq_params,priors):
-    x    = list()
-    y    = list()
-    mpi  = list()
-    mpiL = list()
-    mka  = list()
-    mss  = list()
-    aw0  = list()
-    a2di = list()
-    mju  = list()
-    mjuL = list()
-    mjs  = list()
-    mru  = list()
-    mrs  = list()
-    Lchi = list()
-    wMix_ju = list()
-    wMix_js = list()
-    wMix_ru = list()
-    wMix_rs = list()
-    for ens in switches['ensemble']:
-        e = ens_long[ens]
-        # get from postgre csv dump
-        # get mres, E0 and Z0p
-        data2pt = data.sort_values(by='nbs').query("ensemble=='%s'" %e)[['e0_pion','z0p_pion','e0_kaon','z0p_kaon','e0_etas','z0p_etas','mresl','mress']].to_dict(orient='list')
-        if ens in ['a12m220S','a12m220L']:
-            datamix = {t:np.squeeze(mixed_data.sort_values(by='nbs').query("ensemble=='l3264f211b600m00507m0507m628' and tag=='%s'" %(t))[['E0']].as_matrix()) for t in ['phi_ju','phi_js','phi_ru','phi_rs']}
-        elif ens in ['a15m400','a15m350']:
-            datamix = {t:np.squeeze(mixed_data.sort_values(by='nbs').query("ensemble=='l1648f211b580m013m065m838' and tag=='%s'" %(t))[['E0']].as_matrix()) for t in ['phi_ju','phi_js','phi_ru','phi_rs']}
-        elif ens in ['a12m400','a12m350']:
-            datamix = {t:np.squeeze(mixed_data.sort_values(by='nbs').query("ensemble=='l2464f211b600m0102m0509m635' and tag=='%s'" %(t))[['E0']].as_matrix()) for t in ['phi_ju','phi_js','phi_ru','phi_rs']}
-        elif ens in ['a09m400','a09m350']:
-            datamix = {t:np.squeeze(mixed_data.sort_values(by='nbs').query("ensemble=='l3296f211b630m0074m037m440' and tag=='%s'" %(t))[['E0']].as_matrix()) for t in ['phi_ju','phi_js','phi_ru','phi_rs']}
-        else:
-            datamix = {t:np.squeeze(mixed_data.sort_values(by='nbs').query("ensemble=='%s' and tag=='%s'" %(e,t))[['E0']].as_matrix()) for t in ['phi_ju','phi_js','phi_ru','phi_rs']}
-        datamerge = dict(data2pt,**datamix)
-        gvdata = gv.dataset.avg_data(datamerge,bstrap=True)
-        mval = data.query("ensemble=='%s'" %e)[['mq1','mq2']].iloc[0].to_dict()
-        data_dict = decay_constant(switches,mval,gvdata)
-        Lchi.append(data_dict['x']['Lchi'])
-        x.append(data_dict['x']['Lchi'])
-        y.append(data_dict['y']['Fka/Fpi'])
-        mpi.append(data_dict['p']['mpi'])
-        mpiL.append(data_dict['p']['mpi'].mean * L_ens[ens])
-        mjuL.append(gvdata['phi_ju'].mean * L_ens[ens])
-        mka.append(data_dict['p']['mka'])
-        mss.append(data_dict['p']['mss'])
-        mju.append(gvdata['phi_ju'])
-        mjs.append(gvdata['phi_js'])
-        mru.append(gvdata['phi_ru'])
-        mrs.append(gvdata['phi_rs'])
-        # milc file
-        hp = hisq_params.query("ensemble=='%s'" %e)
-        aw0_ens = gv.gvar(hp['aw0_mean'].iloc[0],hp['aw0_sdev'].iloc[0])
-        aw0.append(aw0_ens)
-        a2di.append(gv.gvar(hp['a2DI_mean'].iloc[0],hp['a2DI_sdev'].iloc[0])/r_a[ens]**2)
-        # w_0**2 Delta_Mix
-        wMix_ju.append((gvdata['phi_ju']**2-data_dict['p']['mpi']**2) / aw0_ens**2)
-        wMix_js.append((gvdata['phi_js']**2-data_dict['p']['mka']**2) / aw0_ens**2)
-        wMix_ru.append((gvdata['phi_ru']**2-data_dict['p']['mka']**2) / aw0_ens**2)
-        wMix_rs.append((gvdata['phi_rs']**2-data_dict['p']['mss']**2) / aw0_ens**2)
-    priors['mpi'] = np.array(mpi)
-    priors['mka'] = np.array(mka)
-    priors['mss'] = np.array(mss)
-    priors['aw0'] = np.array(aw0)
-    priors['mju'] = np.array(mju)
-    priors['mjs'] = np.array(mjs)
-    priors['mru'] = np.array(mru)
-    priors['mrs'] = np.array(mrs)
-    priors['wMix_ju'] = np.array(wMix_ju)
-    priors['wMix_js'] = np.array(wMix_js)
-    priors['wMix_ru'] = np.array(wMix_ru)
-    priors['wMix_rs'] = np.array(wMix_rs)
-    if switches['ansatz']['a2dm'] == 'avg':
-        a2dm_ju = priors['mju']**2 - priors['mpi']**2
-        a2dm_sj = priors['mjs']**2 - priors['mka']**2
-        a2dm_ru = priors['mru']**2 - priors['mka']**2
-        a2dm_rs = priors['mrs']**2 - priors['mss']**2
-        priors['a2dm'] = 1./4*(a2dm_ju +a2dm_sj +a2dm_ru +a2dm_rs)
-    elif switches['ansatz']['a2dm'] == 'individual':
-        priors['a2dm'] = priors['mju']**2-priors['mpi']**2
-    y = np.array(y)
-    mpiL = np.array(mpiL)
-    Lchi = np.array(Lchi)
-    priors['a2di'] = np.array(a2di)
-    #priors['a2dm'] = np.array(a2dm)
-    mjuL = np.array(mjuL)
-    if switches['ansatz']['FV']:
-        fv_params = dict()
-        fv_params['mjuL'] = mjuL
-        fv_params['mpiL'] = mpiL
-        fv_params['Lchi'] = Lchi
-        fv_mns_inv = xpt.fv_correction(switches,fv_params,priors)
-        #print('DEBUG FV:',fv_mns_inv)
-        y = y - fv_mns_inv
-    return {'x':{'Lchi':np.array(x),'mpiL':np.array(mpiL)}, 'y': y, 'p': priors}
-
-def fit_data(switches,data,phys_params):
+def fit_data(switches,data):
     x = data['x']
     y = data['y']
     Fitc = xpt.Fit(switches)
@@ -295,7 +148,8 @@ def fkfpi_phys(x_phys,fit):
 
 def dsu2(FKpi,mpi,mk,F0):
     R = gv.gvar(35.7,np.sqrt(1.9**2 + 1.8**2))
-    d = np.sqrt(3) * np.sqrt(3) / 4 / R * (\
+    eps_su2 = np.sqrt(3) / 4 / R
+    d = np.sqrt(3) * eps_su2 * (\
         -4./3 * (FKpi-1) \
         + 2./(6*(4*np.pi)**2*F0**2)*(mk**2-mpi**2-mpi**2*np.log(mk**2/mpi**2))\
         )
@@ -308,9 +162,58 @@ if __name__ == "__main__":
     #print("pandas version:", pd.__version__)
     print("numpy  version:", np.__version__)
     print("gvar   version:", gv.__version__)
+    print("lsqfit version:", lsqfit.__version__)
 
     # Load input params
-    switches = ip.switches
-    priors = ip.priors
-    phys_p = ip.phys_p
+    switches   = ip.switches
+    priors     = ip.priors
+    phys_p     = ip.phys_p
     flag_FKFpi = ip.flag_FKFpi
+
+    # Load data
+    data  = h5.open_file('FK_Fpi_data.h5','r')
+    gv_data = format_h5_data(switches,data)
+    data.close()
+    #for e in gv_data['x']:
+    #    print("%8s" %e)
+    #    print(gv_data['x'][e])
+    #print(gv_data['x'])
+    #print(gv_data['p'][('a12m220','a2DI')])
+
+    '''
+    1 - build prior filter function
+    2 - add FV correction to Fit class
+    3 - fix counter term for ratio
+    4 - make FK and Fpi fit functions
+        - xpt
+        - MA
+    '''
+
+    fit_results = dict()
+    for model in ['xpt_nlo','ma_nlo']:
+        switches['ansatz']['model'] = model
+        print(switches['ansatz']['model'])
+        model_result = dict()
+        for e in switches['ensembles']:
+            e_lst = [e]
+            x_e = {k:gv_data['x'][k] for k in e_lst}
+            y_e = {k:gv_data['y'][k] for k in e_lst}
+            p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in e_lst}
+            p_e['L5'] = priors['L5']
+            d_e = dict()
+            d_e['x'] = x_e
+            d_e['y'] = y_e
+            d_e['p'] = p_e
+            print('fit_e')
+            fit_e = fit_data(switches,d_e)
+            print(fit_e.format(maxline=True))
+            model_result[e] = fit_e
+        fit_results[model] = model_result
+    print("%8s & %12s & %12s\\\\" %('ensemble','xpt nlo','ma nlo'))
+    print("\\hline")
+    for e in fit_results['xpt_nlo']:
+        s = "%8s" %e
+        for model in ['xpt_nlo','ma_nlo']:
+            s += " & %12s" %str(fit_results[model][e].p['L5'])
+        s += "\\\\"
+        print(s)
