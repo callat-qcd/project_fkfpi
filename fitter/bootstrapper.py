@@ -70,6 +70,7 @@ class bootstrapper(object):
                 if data_parameter in ['FK', 'Fpi', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs']:
                     means = fit_data[abbr][data_parameter][:bs_N]
                     unc = np.std(fit_data[abbr][data_parameter])
+                    #print abbr, data_parameter, means, unc
                     data[abbr][data_parameter] = gv.gvar(means, np.repeat(unc, len(means)))
                     plot_data[abbr][data_parameter] = fit_data[abbr][data_parameter][:plot_bs_N]
                 elif data_parameter in ['a2DI']:
