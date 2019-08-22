@@ -117,8 +117,8 @@ def format_h5_data(switches,data):
 def fit_data(switches,data):
     x = data['x']
     y = data['y']
+    p = data['p']
     Fitc = xpt.Fit(switches)
-    prior = data['p']
     #tmp = dict()
     #for p in prior:
     #    tmp[p] = prior[p].mean
@@ -131,7 +131,7 @@ def fit_data(switches,data):
     #print(x[e_tmp]['Lchi_PK'])
     #print('FK_Fpi_fit_function')
     #print(Fitc.fit_function(x,tmp))
-    fit = lsqfit.nonlinear_fit(data=(x,y),prior=prior,fcn=Fitc.fit_function)
+    fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=Fitc.fit_function)
     return fit
 
 def fkfpi_phys(x_phys,fit):

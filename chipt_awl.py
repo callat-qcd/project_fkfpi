@@ -64,9 +64,11 @@ class Fit(object):
         return ct
 
     def I(self,esq):
-        return esq * np.log(esq)
+        r = esq * np.log(esq)
+        return r
     def dI(self,esq):
-        return 1 + np.log(esq)
+        r = 1 + np.log(esq)
+        return r
     def K(self,esq1,esq2):
         r  = esq2 * np.log(esq2)
         r += -esq1 * np.log(esq1)
@@ -104,6 +106,50 @@ class Fit(object):
         r += -3./8 * self.I(e2)
         r += p['L5'] * (4*np.pi)**2 * 4 * k2
         r += p['L4'] * (4*np.pi)**2 * (4 * p2 + 8 * k2)
+        return r
+
+    def Fpi_ma_nlo(self,x,p,e):
+        Lchi = x[e]['Lchi_'+self.switches['scale']]
+        p2   = p[(e,'mpi')]**2 / Lchi**2
+        k2   = p[(e,'mk')]**2 / Lchi**2
+        ju   = p[(e,'mju')]**2 / Lchi**2
+        ru   = p[(e,'mru')]**2 / Lchi**2
+
+        r  = -self.I(ju)
+        r += -0.5 * self.I(ru)
+        r += p['L5'] * (4*np.pi)**2 * 4 * p2
+        r += p['L4'] * (4*np.pi)**2 * (4 * p2 + 8 * k2)
+        return r
+
+    def FK_ma_nlo(self,x,p,e):
+        Lchi = x[e]['Lchi_'+self.switches['scale']]
+        p2   = p[(e,'mpi')]**2 / Lchi**2
+        k2   = p[(e,'mk')]**2 / Lchi**2
+        e2   = 4./3 * k2 - 1./3 * p2
+        s2   = p[(e,'mss')]**2 / Lchi**2
+        ju   = p[(e,'mju')]**2 / Lchi**2
+        sj   = p[(e,'mjs')]**2 / Lchi**2
+        ru   = p[(e,'mru')]**2 / Lchi**2
+        rs   = p[(e,'mrs')]**2 / Lchi**2
+        x2   = e2 + p[(e,'a2DI')] / Lchi**2
+        dju2 = p[(e,'a2DI')] / Lchi**2
+        drs2 = p[(e,'a2DI')] / Lchi**2
+
+        r  = -1./2 * self.I(ju)
+        r +=  1./8 * self.I(p2)
+        r += -1./4 * self.I(ru)
+        r += -1./2 * self.I(sj)
+        r += -1./4 * self.I(rs)
+        r +=  1./4 * self.I(s2)
+        r += -3./8 * self.I(x2)
+        r += p['L5'] * (4*np.pi)**2 * 4 * k2
+        r += p['L4'] * (4*np.pi)**2 * (4 * p2 + 8 * k2)
+
+        r +=  dju2 * (-1./8 * self.dI(p2) +1./4 * self.K(p2,x2))
+        r += -dju2**2 * 1./24 * self.K21(p2,x2)
+        r += dju2 * drs2 * (self.K21(s2,x2) / 12 - self.K123(p2,s2,x2)/6)
+        r += drs2 * (self.K(s2,x2)/4 - self.K21(s2,x2) *k2/6 +self.K21(s2,x2) *p2/6)
+
         return r
 
     def fit_function(self,x,p):
