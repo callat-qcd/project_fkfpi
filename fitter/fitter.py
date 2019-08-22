@@ -295,7 +295,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 + fcn_K21_mM((mpi, mx), L, mu, order_vol) / (24 *F2)
             )
             + del2_ju *del2_rs *(
-                + fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2)
+                - fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2) # May need to change sign
                 + fcn_K21_mM((mss, mx), L, mu, order_vol) / (12 *F2)
             )
             + del2_rs *(
@@ -349,7 +349,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 + fcn_K21_mM((mpi, mx), L, mu, order_vol) / (24 *F2)
             )
             + del2_ju *del2_rs *(
-                + fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2)
+                - fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2)
                 + fcn_K21_mM((mss, mx), L, mu, order_vol) / (12 *F2)
             )
             + del2_rs *(
@@ -541,9 +541,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 )
                 + (2.0/3.0) *eps2_D_ju *eps2_D_rs *eps2_pi / ((eps2_pi - eps2_x) *(eps2_pi - eps2_ss)) *fcn_Kn(1, xpi) / xpi
             )
-
-        return output
-
 
         return output
 
