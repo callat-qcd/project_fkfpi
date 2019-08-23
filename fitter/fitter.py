@@ -444,7 +444,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_ss = p['mss']**2 / lam2_chi
         eps2_ju = p['mju']**2 / lam2_chi
         eps2_ru = p['mru']**2 / lam2_chi
-        eps2_sj = eps2_ru
+        eps2_sj = p['mjs']**2 / lam2_chi
         eps2_rs = p['mrs']**2 / lam2_chi
         del2_pq = p['a2DI'] / lam2_chi
         #del2_pq = p['a2DI'] / lam2_chi
