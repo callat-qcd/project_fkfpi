@@ -456,20 +456,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                                                      in [eps2_ju, eps2_pi, eps2_sj,
                                                          eps2_ru, eps2_rs, eps2_ss, eps2_x]]
 
-        # Order = 0
-        output = (1
-                 + (del2_pq *(eps2_k - eps2_pi)) / (6.0 *(eps2_x - eps2_ss))
-                 + (del2_pq)**2 / (24.0 *(eps2_x - eps2_pi))
-                 - (del2_pq)**2 / (12.0 *(eps2_x - eps2_ss))
-                 - del2_pq / 8.0
-                 + 4 *(eps2_k - eps2_pi) *(4*pi)**2 *p['L_5']
-                 )
-
-        # Order = 1
-        output = (output +
+        output = (1 +
                  + 1/2.0 *eps2_ju *l_ju
                  + 1/8.0 *l_pi *(
-                      eps2_pi
+                    + eps2_pi
                     - del2_pq *(eps2_x + eps2_pi) / (eps2_x - eps2_pi)
                     + (del2_pq)**2 *eps2_x / (3.0 *(eps2_x - eps2_pi)**2)
                     - 4 *(del2_pq)**2 *eps2_pi / (3.0 *(eps2_x - eps2_pi) *(eps2_ss - eps2_pi))
@@ -478,17 +468,22 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                  + 1/4.0 *eps2_ru *l_ru
                  - 1/4.0 *eps2_rs *l_rs
                  + 1/4.0 *l_ss *(
-                      eps2_ss
-                    + del2_pq *(3 *(eps2_ss)**2 +2 *(eps2_k -eps2_pi) *eps2_x - 3 *eps2_ss *eps2_x) / (3.0 *(eps2_x - eps2_ss)**2)
+                    + eps2_ss
+                    + del2_pq *(3 *(eps2_ss)**2 + 2 *(eps2_k - eps2_pi) *eps2_x - 3 *eps2_ss *eps2_x) / (3.0 *(eps2_x - eps2_ss)**2)
                     - (del2_pq)**2 *(2 *(eps2_ss)**2 - eps2_x *(eps2_ss + eps2_pi)) / (3.0 *(eps2_x - eps2_ss)**2 *(eps2_ss - eps2_pi))
                  )
                  - 3/8.0 *eps2_x *l_x *(
-                      1
+                    + 1
                     - 2 *del2_pq / (3.0 *(eps2_x -eps2_pi))
                     + del2_pq *(4 *(eps2_k - eps2_pi) + 6 *(eps2_ss - eps2_x)) / (9.0 *(eps2_x - eps2_ss)**2)
                     + (del2_pq)**2 / (9.0 *(eps2_x - eps2_pi)**2)
                     - 2 *(del2_pq)**2 *(2 *eps2_ss - eps2_pi - eps2_x) / (9.0 *(eps2_x - eps2_ss)**2 *(eps2_x - eps2_pi))
                  )
+                  + (del2_pq *(eps2_k - eps2_pi)) / (6.0 *(eps2_x - eps2_ss))
+                  + (del2_pq)**2 / (24.0 *(eps2_x - eps2_pi))
+                  - (del2_pq)**2 / (12.0 *(eps2_x - eps2_ss))
+                  - del2_pq / 8.0
+                  + 4 *(eps2_k - eps2_pi) *(4*pi)**2 *p['L_5']
         )
 
         # Next add finite volume corrections
