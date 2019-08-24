@@ -43,9 +43,9 @@ class bootstrapper(object):
                 'L_4' : '0(0.001)',
 
                 # nnlo terms
-                'A_a' : '0(10)', #'0(100)',
-                'A_k' : '0(10)', #'0(1)',
-                'A_p' : '0(10)', #'0(10)',
+                'A_a' : '0(1)', #'0(100)',
+                'A_k' : '0(1)', #'0(1)',
+                'A_p' : '0(1)', #'0(10)',
 
                 # nnnlo terms
                 'A_aa' : '0(10000)', #'0(100000)',
@@ -181,6 +181,13 @@ class bootstrapper(object):
                         order=self.order, fit_type=self.fit_type)
         return temp_fitter.get_fit()
 
+    def _make_empbayes_fit(self):
+        prepped_data = self._make_fit_data(0)
+        temp_prior = self._randomize_prior(self.prior, 0)
+        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior,
+                        order=self.order, fit_type=self.fit_type)
+        return temp_fitter.get_empbayes_fit()
+
     def _make_fit_data(self, j):
         prepped_data = {}
         for parameter in ['mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'lam2_chi']:
@@ -234,18 +241,21 @@ class bootstrapper(object):
 
     def create_prior_from_fit(self):
         output = {}
-        for key in self.get_fit_parameters().keys():
+        temp_parameters = self._make_empbayes_fit().prior
+        for key in self.get_fit_keys():
+            mean = 0
             if key in ['L_4', 'L_5']:
-                mean = gv.mean(self.get_fit_parameters(key))
-                sdev = 5 *gv.sdev(self.get_fit_parameters(key))
+                #mean = gv.mean(self.get_fit_parameters(key))
+                sdev = 0.001 #5 *gv.sdev(self.get_fit_parameters(key))
+                output[key] = gv.gvar(mean, sdev)
             elif key in ['A_a','A_k','A_p']:
-                mean = gv.mean(self.get_fit_parameters(key))
-                sdev = gv.sdev(self.get_fit_parameters(key))
+                #mean = gv.mean(self.get_fit_parameters(key))
+                sdev = gv.sdev(temp_parameters[key])
+                output[key] = gv.gvar(mean, sdev)
             elif key in ['A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp']:
-                mean = gv.mean(self.get_fit_parameters(key))
-                sdev = gv.sdev(self.get_fit_parameters(key))
-
-            output[key] = gv.gvar(mean, sdev)
+                #mean = gv.mean(self.get_fit_parameters(key))
+                sdev = gv.sdev(temp_parameters[key])
+                output[key] = gv.gvar(mean, sdev)
 
         return output
 

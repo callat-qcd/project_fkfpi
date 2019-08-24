@@ -11,8 +11,43 @@ class fitter(object):
         self.prior = prior
         self.fit_data = fit_data
         self.fit = None
+        self.empbayes_fit = None
         self.order = order
         self.fit_type = fit_type
+
+    def _make_fitargs(self, z):
+        y_data = self._make_y_data()
+        prior = self._make_prior()
+        for key in prior.keys():
+            if key in ['A_a', 'A_p', 'A_k']:
+                prior[key] = prior[key] *z
+
+        fitfcn = self._make_models()[-1].fitfcn
+
+        return dict(data=y_data, fcn=fitfcn, prior=prior)
+
+    def _make_empbayes_fit(self):
+        models = self._make_models()
+        y_data = self._make_y_data()
+        prior = self._make_prior()
+        for j, model in enumerate(models):
+            # Make model up till nlo/nnlo
+            if j < len(models) - 1:
+                fitter = lsqfit.MultiFitter(models=model)
+                fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
+                for key in fit.p:
+                    if key in ['L_4', 'L_5']:
+                        #pass
+                        prior[key] = gv.gvar(fit.pmean[key], 3*fit.psdev[key])
+                    elif key in ['A_a', 'A_p', 'A_k']:
+                        prior[key] = fit.p[key]
+
+            # For nnlo/nnnlo, determine best parameter using empircal Bayes criterion
+            else:
+                fit, z = lsqfit.empbayes_fit(0.01, self._make_fitargs)
+                #print z
+
+        return fit
 
     def _make_fit(self):
         models = self._make_models()
@@ -29,8 +64,6 @@ class fitter(object):
                 elif key in ['A_a', 'A_p', 'A_k']:
                     prior[key] = fit.p[key]
                     #pass
-
-        #print fit
 
         self.fit = fit
         return fit
@@ -135,6 +168,12 @@ class fitter(object):
             return self._make_fit()
         else:
             return self.fit
+
+    def get_empbayes_fit(self):
+        if self.empbayes_fit is None:
+            return self._make_empbayes_fit()
+        else:
+            return self.empbayes_fit
 
 
 class fk_fpi_model(lsqfit.MultiFitterModel):
