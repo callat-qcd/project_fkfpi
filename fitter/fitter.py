@@ -44,7 +44,7 @@ class fitter(object):
 
             # For nnlo/nnnlo, determine best parameter using empircal Bayes criterion
             else:
-                fit, z = lsqfit.empbayes_fit(0.01, self._make_fitargs)
+                fit, z = lsqfit.empbayes_fit(1.0, self._make_fitargs)
                 #print z
 
         return fit
@@ -246,7 +246,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output *(eps2_k - eps2_pi)
 
-    def fitfcn_nnnlo_cts(self, p, fkfpi):
+    def fitfcn_nnnlo_cts(self, p):
 
         #w0 = p['w0']
 
