@@ -6,10 +6,14 @@
 \usepackage{subcaption}
 \usepackage{tikz}
 \usepackage{float}
-\usepackage[utf8]{inputenc} % supports umlaut natively, eg
+%\usepackage[utf8]{inputenc} % supports umlaut natively, eg
+\usepackage[T1]{fontenc} 
 \usepackage{hyperref} % adds hyperlinks
 \usepackage{csvsimple} % Easily add csv file as table
+\usepackage{booktabs} % For pretty tables
 \usepackage{siunitx} % For rounding in tables
+\usepackage{datatool}
+\usepackage{url}
 
 \newcount\hour \newcount\hourminute \newcount\minute 
 \hour=\time \divide \hour by 60
@@ -353,13 +357,63 @@ Here we present the results for each of the fits.
 \end{figure}
 
 %\csvautotabular[respect all]{"./../results/fit"_"results".csv}
-\begin{tabular}{|l|c|}\hline%
-	\bfseries fit & \bfseries logGBF \\ \hline\hline
-	\csvreader[head to column names, before reading=\sisetup{table-format=1.3,round-mode=places,round-precision=3}]{"./../results/fit"_"results".csv}{}%
-	{\\ \fit & \logGBF}%
-	\\\hline
-\end{tabular}
+%\begin{tabular}{|l|c|}%\hline%
+%	\sisetup{round-mode=places, round-precision=3}
+%	fit & logGBF \\ \hline\hline
+%	\csvreader[head to column names]%
+%	{"./../results/fit_results".csv}{}%
+%	{\\ \fit & \num{\logGBF}}%
+%	\\\hline
+%\end{tabular}
 
+
+\DTLloaddb{myDB}{"./../results/fit_results".csv}
+
+% Convoluted function used to escape underscore
+\DeclareUrlCommand\UScore{\urlstyle{rm}}
+\newcommand{\expUScore}{%
+	\expandafter\expandafter\expandafter
+	\UScore
+	\expandafter\expandafter\expandafter
+}
+
+\begin{table}
+\begin{center}
+	\sisetup{round-mode=places,
+		table-number-alignment = center-decimal-marker
+	}
+	\begin{tabular}{l|llll}\toprule
+		\textbf{Name} & $F^\pm_K/F^\pm_\pi$ & logGBF & $Q$ & $\chi^2_\nu$%
+		\DTLforeach*{myDB}{\Name=name, \Fit=fit, \logGBF=logGBF, \Q=Q, \chi=chi2/df}{%
+			\DTLiffirstrow{\\\midrule}{\\}%
+			\expUScore{\Name} & \Fit & \num{\logGBF} & \num{\Q} & \num{\chi}
+		}%
+		\\\bottomrule
+	\end{tabular}
+
+\end{center}
+\caption{Results of models and statistics}
+\end{table}
+
+\begin{table}
+	\begin{center}
+		\sisetup{round-mode=places,
+			table-number-alignment = center-decimal-marker
+		}
+		\begin{tabular}{l|lllll}\toprule
+			\textbf{Name} & $L_5$ & $L_4$ & $A_a$ & $A_\pi$ & $A_K$ %
+			\DTLforeach*{myDB}{\Name=name, \Lfive=L_5, \Lfour=L_4, \Aa=A_a, \Ap=A_p, \Ak=A_k}{%
+				\DTLiffirstrow{\\\midrule}{\\}%
+				\expUScore{\Name} & \Lfive & \Lfour & \Aa & \Ap & \Ak
+			}%
+			\\\bottomrule
+		\end{tabular}
+		
+	\end{center}
+	\caption{Determined LECs}
+\end{table}
+
+% Figures
 \foreach \model in {ma, ma-taylor, ma-old, xpt, xpt-taylor}
 {
 	\subsection{\tt \model}
