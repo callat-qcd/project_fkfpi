@@ -82,11 +82,10 @@ class data_loader(object):
         filepath = os.path.normpath(self.project_path + '/results/fit_results.csv')
 
         # get fit info
-        cols = np.array(['name', 'fit', 'logGBF', 'chi2/df', 'Q', 'vol corr', 'latt corr'])
+        cols = np.array(['name', 'fit', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol corr', 'latt corr'])
         lecs_cols = ['L_4', 'L_5', # nlo terms
-                     'A_a', 'A_x', 'A_k', 'A_p', # nnlo terms
-                     'A_aa', 'A_ax', 'A_ak', 'A_ap', # nnnlo terms
-                     'A_xx', 'A_xk', 'A_xp', # more nnnlo terms
+                     'A_a', 'A_k', 'A_p', # nnlo terms
+                     'A_aa', 'A_ak', 'A_ap', # nnnlo terms
                      'A_kk', 'A_kp', 'A_pp'] # more nnnlo terms
 
         # append LEC results

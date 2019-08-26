@@ -345,6 +345,7 @@ class bootstrapper(object):
         fit_info = {
             'name' : self.fit_type+'_'+self.order['fit'],
             'fit' : self.extrapolate_to_phys_point(include_su2_isospin_corrrection=True),
+            'delta_su2' : self.get_delta_su2_correction(),
             'logGBF' : self.fits[0].logGBF,
             'chi2/df' : self.fits[0].chi2 / self.fits[0].dof,
             'Q' : self.fits[0].Q,
