@@ -226,10 +226,13 @@ if __name__ == "__main__":
     fit_data(switches,{'x':gv_data['x'],'y':gv_data['y'],'p':gv_data['p']})
 
     if switches['nlo_report']:
+        models = ['ma_nlo','ma-ratio_nlo','xpt_nlo','xpt-ratio_nlo']
+        latex = {'ma_nlo':'ma nlo', 'ma-ratio_nlo':'ma-r nlo',
+            'xpt_nlo':'xpt nlo', 'xpt-ratio_nlo':'xpt-r nlo'}
         fit_results = dict()
         #for model in ['ma_nlo','ma-Kfunc_nlo']:
         #for model in ['xpt_nlo','ma_nlo']:
-        for model in ['ma_nlo','ma-ratio_nlo','xpt_nlo','xpt-ratio_nlo']:
+        for model in models:
             switches['ansatz']['model'] = model
             print(switches['ansatz']['model'])
             model_result = dict()
@@ -250,11 +253,12 @@ if __name__ == "__main__":
                 print(fit_e.format(maxline=True))
                 model_result[e] = fit_e
             fit_results[model] = model_result
-        print("%8s & %13s & %13s & %13s & %13s\\\\" %('ensemble','ma nlo', 'ma-r nlo','xpt nlo', 'xpt-r nlo'))
+        print("%8s & %13s & %13s & %13s & %13s\\\\" \
+            %('ensemble',latex[models[0]], latex[models[1]],latex[models[2]], latex[models[3]]))
         print("\\hline")
         for e in fit_results['xpt_nlo']:
             s = "%8s" %e
-            for model in ['ma_nlo','ma-ratio_nlo','xpt_nlo','xpt-ratio_nlo']:
+            for model in models:
                 s += " & %13s" %str(fit_results[model][e].p['L5'])
             s += "\\\\"
             print(s)
