@@ -14,6 +14,7 @@
 \usepackage{siunitx} % For rounding in tables
 \usepackage{datatool}
 \usepackage{url}
+\usepackage{multirow}
 
 \newcount\hour \newcount\hourminute \newcount\minute 
 \hour=\time \divide \hour by 60
@@ -34,6 +35,7 @@ In these notes, we explain our general fitting strategy for determining $F_K / F
 \end{abstract}
 \maketitle
 
+\subsection{Background}
 
 \section{Fit Functions}
 
@@ -331,11 +333,30 @@ For the purpose of this project, we take $w_0 = 0.175(10)$, which is a conservat
 The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
 
 \subsection{Selection of Prior}
+
+\begin{table}[]
+	\begin{tabular}{l|llc}
+		& LEC          & Term                                          & \begin{tabular}[c]{@{}l@{}}Order at \\ Phys Point\end{tabular} \\ \hline\hline
+		\multirow{3}{*}{NNLO}  & $A_a$        & $\epsilon^2_a \epsilon^2_\chi$                & 0                                                              \\
+		& $A_K$        & $\epsilon^2_K \epsilon^2_\chi$                & $\sim10^{-2}$                                                  \\
+		& $A_\pi$      & $\epsilon^2_\pi \epsilon^2_\chi$              & $\sim10^{-3}$                                                  \\ \hline
+		\multirow{6}{*}{NNNLO} & $A_{aa}$     & $\epsilon^4_a \epsilon^2_\chi$                & 0                                                              \\
+		& $A_{a\pi}$   & $\epsilon^2_a \epsilon^2_\pi \epsilon^2_\chi$ & 0                                                              \\
+		& $A_{aK}$     & $\epsilon^2_a \epsilon^2_K \epsilon^2_\chi$   & 0                                                              \\
+		& $A_{KK}$     & $\epsilon^4_K \epsilon^2_\chi$                & $\sim 10^{-3}$                                                 \\
+		& $A_{K\pi}$   & $\epsilon^2_K \epsilon^2_\pi \epsilon^2_\chi$ & $\sim 10^{-4}$                                                 \\
+		& $A_{\pi\pi}$ & $\epsilon^2_K \epsilon^2_\pi \epsilon^2_\chi$ & $\sim 10^{-5}$                                                
+	\end{tabular}
+	\caption{Contributions from each LEC at the physical point. Here we define $\epsilon^2_\chi = (\epsilon^2_K -\epsilon^2_\pi)$, which ensures $F_K/F_\pi \rightarrow 1$ in the SU(3) isospin limit.}
+\end{table}
+
 \subsubsection{Current method}
 \begin{enumerate}
 	\item At NLO, the most naive guess is that the LECs $L_4$ and $L_5$ should be order 1. Running the fit a few times, we quickly discover that these LECs are a few orders of magnitude smaller. Therefore, refining our priors for $L_4$ and $L_5$, we set \texttt{p[`L\_4'] = 0(0.001)} and \texttt{p[`L\_5'] = 0(0.001)}. In practice this width extends about an order of magnitude outside our results for $L_4$ and $L_5$, regardless of NLO model chosen.
 	
-	\item For the next higher order (NNLO) fit, we chain the result of the previous (NLO) fit into the fitter. If $L\pm\sigma_L$ is the result for an NLO LEC as determined by the NLO fit (ie, $L_5$ or $L_4$), then for the NNLO fit we take the prior for the NLO LECs to be \texttt{p[`L']=L(3*$\sigma_L$)}
+	\item For the next higher order (NNLO) fit, we chain the result of the previous (NLO) fit into the fitter. If $L\pm\sigma_L$ is the result for an NLO LEC as determined by the NLO fit (ie, $L_5$ or $L_4$), then for the NNLO fit we take the prior for the NLO LECs to be \texttt{p[`L']=L(3*$\sigma_L$)}.
+	
+	\item To determine the priors for the NNLO LECs, we use the empirical Bayes criterion, which is implemented in \texttt{lsqfit} through \texttt{lsqfit.empbayes\_fit}. In this process, we set all the NNLO LECs $A_\xi$ to have prior \texttt{p[`A$_\xi$'] = 0($\lambda$)}, and we allow $\lambda$ to vary until a fit is produced such that the logGBF is maximized.
 \end{enumerate}
 
 \subsubsection{Old Method}
@@ -346,6 +367,21 @@ Barring some good physical argument for the expected value of the priors, we use
 	\item To set the NNLO priors, we first determine the order of magnitude of the $\epsilon^2_\xi (\epsilon^2_K - \epsilon^2_\pi)$ terms. For example, $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi) \sim 10^{-3}$. We center our prior at 0, but set it wide enough such that the upper/lower ends of the uncertainty interval could produce an LEC $A_\xi$ st $\epsilon^2_\xi A_\xi  (\epsilon^2_K - \epsilon^2_\pi) \sim 10^{-2}$, which ensures that the prior doesn't exclude the LEC from contributing at the percent level. In the case of $ \epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$, we would set \texttt{p[`A\_a'] = 0(10)}. The procedure is similar for the NNNLO LECs, with us again setting the priors st the LECs can potentially contribute at the percentile level.
 \end{enumerate}
 While this procedure potentially allows all the NNLO and NNNLO LECs to contribute to the fits, it does lead to some pretty absurd results when taken at face value; eg, setting \texttt{p[`A\_aa'] = 0(100000)}, as one would do as described above, results in a fit of $A_{a, a} = -4926 (11908)$. Fortunately, the \texttt{logGBF} of these fits are correspondingly penalized.
+
+\subsection{Comparison of results for taylor expanded NLO models}
+As a first test of our fits, André and I have performed the \texttt{ma-taylor} \texttt{xpt-taylor} fits at NLO on each ensemble, where there is only one parameter that needs to be determined ($L_5$). See fig \ref{fig:L5-comparison}.
+
+\begin{figure}
+	\begin{subfigure}[t]{0.45\textwidth}
+		\includegraphics[width=\textwidth]{./../tmp/L5_comparison_ma-taylor.pdf}
+	\end{subfigure}
+	~
+	\begin{subfigure}[t]{0.45\textwidth}
+		\includegraphics[width=\textwidth]{./../tmp/L5_comparison_xpt-taylor.pdf}
+	\end{subfigure}
+	\caption{Value of $L_5$ as independently determined by me (NM) and André. The difference between the central values is likely caused by my choice to use \texttt{boot0} vs André's choice to use the mean of the bootstrap list. }
+	\label{fig:L5-comparison}
+\end{figure}
 
 
 \subsection{Shifting lattice data to physical point}
@@ -376,12 +412,12 @@ Here we present the results for each of the fits.
 
 \begin{figure}
 	\includegraphics[width=0.9\textwidth]{./../tmp/fit_comparison.pdf}
-	\caption{Extrapolations of $F^\pm_K/F^\pm_\pi$ to the physical point for the various models, with the FLAG result shown as a red band. Without a better selection of priors for the NNLO and NNNLO LECs, the NNLO and NNNLO fits cannot be tightly determined.}
+	\caption{Extrapolations of $F^\pm_K/F^\pm_\pi$ to the physical point for the various models, with the FLAG result shown as a red band.}
 \end{figure}
 
 \begin{figure}
 	\includegraphics[width=0.9\textwidth]{./../tmp/delta_su2_comparison.pdf}
-	\caption{Extrapolations of $F_K/F_\pi$ to the physical point for the various models, with the FLAG result shown as a red band. Without a better selection of priors for the NNLO and NNNLO LECs, the NNLO and NNNLO fits cannot be tightly determined.}
+	\caption{Extrapolations of $\delta_{\text{SU(2)}}$ to the physical point for the various models.}
 \end{figure}
 
 %\csvautotabular[respect all]{"./../results/fit"_"results".csv}
@@ -453,6 +489,28 @@ Here we present the results for each of the fits.
 		\end{figure}
 	}
 }
+
+\appendix
+\section{Physical Point Values}
+The physical point values are given in Table \ref{table:phys_point_values}. The pion and kaon masses are taken from \cite{Berkowitz:2017opd} while the mass for the $\eta^\prime = (ss)$ meson is taken from \cite{Dowdall:2013rya}; however, we could have just as readily taken $m_{ss}^2 = 2 m_K^2 - m_\pi^2$ evaluated at the physical point (see Fig \ref{fig:mss}).
+
+\begin{figure}
+	\includegraphics[width=0.9\textwidth]{./../tmp/mss_vs_mk_mpi.pdf}
+	\caption{Comparison of $m_{ss}^2$ and $2m_K^2 - m_\pi^2$.}
+	\label{fig:mss}
+\end{figure}
+
+\begin{table}[]
+	\begin{ruledtabular}
+		\begin{tabular}{lll||lll||lll}
+		$a/w_0$ & $L$      & $a^2 \Delta_I$ & $m_\pi$ (MeV)   & $m_K$ (MeV)     & $m_{ss}$ (MeV)   & $F_\pi$ (MeV)   & $F_K$ (MeV)      & $F_K^\pm/F_\pi^\pm$ \\
+		\hline\
+		0       & $\infty$ & 0              & $134.8(3)$ & $494.2(3)$& $688.5(2.2)$ & $91.9(3.5)$ & $110.38(64)$ & $1.1932(19)$       \\
+		\end{tabular}	
+	\end{ruledtabular}
+\caption{Values used when extrapolating to the physical point; $F_K^\pm/F_\pi^\pm$ is taken from FLAG (and is not used for the extrapolation).}
+\label{table:phys_point_values}
+\end{table}
 
 \bibliography{notes}
 

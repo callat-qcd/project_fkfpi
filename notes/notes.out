@@ -1,30 +1,33 @@
 \BOOKMARK [0][-]{section*.2}{FK / F Notes}{}% 2
 \BOOKMARK [1][-]{section*.1}{Abstract}{section*.2}% 1
-\BOOKMARK [1][-]{section*.3}{Fit Functions}{section*.2}% 3
-\BOOKMARK [2][-]{section*.4}{Special Functions}{section*.3}% 4
-\BOOKMARK [2][-]{section*.6}{NLO chiral extrapolation formulae}{section*.3}% 5
-\BOOKMARK [2][-]{section*.7}{Models}{section*.3}% 6
-\BOOKMARK [3][-]{section*.8}{NLO MA}{section*.7}% 7
-\BOOKMARK [3][-]{section*.9}{NLO MA Taylor expanded ratio}{section*.7}% 8
-\BOOKMARK [3][-]{section*.10}{NLO PT}{section*.7}% 9
-\BOOKMARK [3][-]{section*.11}{NLO PT Taylor expansion}{section*.7}% 10
-\BOOKMARK [3][-]{section*.12}{NLO MA Taylor \(old\)}{section*.7}% 11
-\BOOKMARK [2][-]{section*.13}{Corrections}{section*.3}% 12
-\BOOKMARK [3][-]{section*.14}{NNLO \046 NNNLO counter terms}{section*.13}% 13
-\BOOKMARK [3][-]{section*.15}{ SU\(2\) isospin breaking}{section*.13}% 14
-\BOOKMARK [1][-]{section*.16}{Fit Strategy}{section*.2}% 15
-\BOOKMARK [2][-]{section*.17}{Meson masses}{section*.16}% 16
-\BOOKMARK [2][-]{section*.18}{Taste-identity splitting}{section*.16}% 17
-\BOOKMARK [2][-]{section*.19}{Wilson flow scale 0}{section*.16}% 18
-\BOOKMARK [2][-]{section*.21}{The pion and kaon decay constants, FK and F}{section*.16}% 19
-\BOOKMARK [1][-]{section*.22}{The Weeds}{section*.2}% 20
-\BOOKMARK [2][-]{section*.23}{Selection of Prior}{section*.22}% 21
-\BOOKMARK [3][-]{section*.24}{Current method}{section*.23}% 22
-\BOOKMARK [3][-]{section*.25}{Old Method}{section*.23}% 23
-\BOOKMARK [2][-]{section*.26}{Shifting lattice data to physical point}{section*.22}% 24
-\BOOKMARK [1][-]{section*.27}{Fit Results}{section*.2}% 25
-\BOOKMARK [2][-]{section*.32}{ma}{section*.27}% 26
-\BOOKMARK [2][-]{section*.36}{ma-taylor}{section*.27}% 27
-\BOOKMARK [2][-]{section*.40}{xpt}{section*.27}% 28
-\BOOKMARK [2][-]{section*.44}{xpt-taylor}{section*.27}% 29
-\BOOKMARK [1][-]{section*.48}{References}{section*.2}% 30
+\BOOKMARK [1][-]{section*.3}{Background}{section*.2}% 3
+\BOOKMARK [1][-]{section*.4}{Fit Functions}{section*.2}% 4
+\BOOKMARK [2][-]{section*.5}{Special Functions}{section*.4}% 5
+\BOOKMARK [2][-]{section*.7}{NLO chiral extrapolation formulae}{section*.4}% 6
+\BOOKMARK [2][-]{section*.8}{Models}{section*.4}% 7
+\BOOKMARK [3][-]{section*.9}{NLO MA}{section*.8}% 8
+\BOOKMARK [3][-]{section*.10}{NLO MA Taylor expanded ratio}{section*.8}% 9
+\BOOKMARK [3][-]{section*.11}{NLO PT}{section*.8}% 10
+\BOOKMARK [3][-]{section*.12}{NLO PT Taylor expansion}{section*.8}% 11
+\BOOKMARK [3][-]{section*.13}{NLO MA Taylor \(old\)}{section*.8}% 12
+\BOOKMARK [2][-]{section*.14}{Corrections}{section*.4}% 13
+\BOOKMARK [3][-]{section*.15}{NNLO \046 NNNLO counter terms}{section*.14}% 14
+\BOOKMARK [3][-]{section*.16}{ SU\(2\) isospin breaking}{section*.14}% 15
+\BOOKMARK [1][-]{section*.17}{Fit Strategy}{section*.2}% 16
+\BOOKMARK [2][-]{section*.18}{Meson masses}{section*.17}% 17
+\BOOKMARK [2][-]{section*.19}{Taste-identity splitting}{section*.17}% 18
+\BOOKMARK [2][-]{section*.20}{Wilson flow scale 0}{section*.17}% 19
+\BOOKMARK [2][-]{section*.22}{The pion and kaon decay constants, FK and F}{section*.17}% 20
+\BOOKMARK [1][-]{section*.23}{The Weeds}{section*.2}% 21
+\BOOKMARK [2][-]{section*.24}{Selection of Prior}{section*.23}% 22
+\BOOKMARK [3][-]{section*.26}{Current method}{section*.24}% 23
+\BOOKMARK [3][-]{section*.27}{Old Method}{section*.24}% 24
+\BOOKMARK [2][-]{section*.28}{Comparison of results for taylor expanded NLO models}{section*.23}% 25
+\BOOKMARK [2][-]{section*.30}{Shifting lattice data to physical point}{section*.23}% 26
+\BOOKMARK [1][-]{section*.31}{Fit Results}{section*.2}% 27
+\BOOKMARK [2][-]{section*.36}{ma}{section*.31}% 28
+\BOOKMARK [2][-]{section*.40}{ma-taylor}{section*.31}% 29
+\BOOKMARK [2][-]{section*.44}{xpt}{section*.31}% 30
+\BOOKMARK [2][-]{section*.48}{xpt-taylor}{section*.31}% 31
+\BOOKMARK [1][-]{section*.52}{Physical Point Values}{section*.2}% 32
+\BOOKMARK [1][-]{section*.55}{References}{section*.2}% 33
