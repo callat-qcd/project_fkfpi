@@ -51,7 +51,7 @@ L_ens = {
 def format_h5_data(switches,data):
     x = dict()
     y = dict()
-    priors = dict()
+    p = dict()
 
     for ens in switches['ensembles']:
         #print(ens)
@@ -87,20 +87,23 @@ def format_h5_data(switches,data):
         x[ens]['Lchi_KK'] = 4 *np.pi *gvdata['FK'].mean
 
         # MASSES
-        priors[(ens,'mpi')] = gvdata['mpi']
-        priors[(ens,'mk')]  = gvdata['mk']
-        priors[(ens,'mss')] = gvdata['mss']
-        priors[(ens,'mju')] = gvdata['mju']
-        priors[(ens,'mjs')] = gvdata['mjs']
-        priors[(ens,'mru')] = gvdata['mru']
-        priors[(ens,'mrs')] = gvdata['mrs']
+        p[(ens,'mpi')] = gvdata['mpi']
+        p[(ens,'mk')]  = gvdata['mk']
+        p[(ens,'mss')] = gvdata['mss']
+        p[(ens,'mju')] = gvdata['mju']
+        p[(ens,'mjs')] = gvdata['mjs']
+        p[(ens,'mru')] = gvdata['mru']
+        p[(ens,'mrs')] = gvdata['mrs']
+        p[(ens,'Lchi_PP')] = 4 * np.pi * gvdata['Fpi']
+        p[(ens,'Lchi_PK')] = 4 * np.pi * np.sqrt(gvdata['FK'] * gvdata['Fpi'])
+        p[(ens,'Lchi_KK')] = 4 * np.pi * gvdata['FK']
         # HISQ params
         aw0 = data.get_node('/'+ens+'/aw0').read()
-        priors[(ens,'aw0')] = gv.gvar(aw0[0],aw0[1])
+        p[(ens,'aw0')] = gv.gvar(aw0[0],aw0[1])
         a2di = data.get_node('/'+ens+'/a2DI').read()
-        priors[(ens,'a2DI')] = gv.gvar(a2di[0],a2di[1])
+        p[(ens,'a2DI')] = gv.gvar(a2di[0],a2di[1])
         x[ens]['alpha_S'] = data.get_node('/'+ens+'/alpha_s').read()
-    return {'x':x, 'y':y, 'p':priors}
+    return {'x':x, 'y':y, 'p':p}
 
     """
     ''' MOVE FV CORRECTION TO FIT CLASS in XPT LIB '''
@@ -114,11 +117,25 @@ def format_h5_data(switches,data):
         y = y - fv_mns_inv
     """
 
-def fit_data(switches,data):
-    x = data['x']
-    y = data['y']
-    p = data['p']
-    Fitc = xpt.Fit(switches)
+def fit_data(switches,xyp):
+    Fitc = xpt.Fit(switches,xyp_init=xyp)
+    x = Fitc.prune_x()
+    #print(x)
+    y = Fitc.prune_data()
+    #print(y)
+    p = Fitc.prune_priors()
+    #x_par,lec = Fitc.make_x_lec(x,p,'a15m310')
+    #print('x_par')
+    #print(x_par)
+    #print('lec')
+    #print(lec)
+    #print('FK_xpt  -1 = ',Fitc.FK_xpt_nlo(x_par,lec))
+    #print('FK_ma   -1 = ',Fitc.FK_ma_nlo(x_par,lec))
+    #print('Fpi_xpt -1 = ',Fitc.Fpi_xpt_nlo(x_par,lec))
+    #print('Fpi_ma  -1 = ',Fitc.Fpi_ma_nlo(x_par,lec))
+    #print('ct         = ',Fitc.counterterms(x_par,lec))
+    #print()
+    #print('f('+switches['ansatz']['model']+')     = ',Fitc.fit_function(x,p))
     #tmp = dict()
     #for p in prior:
     #    tmp[p] = prior[p].mean
@@ -201,34 +218,43 @@ if __name__ == "__main__":
         - MA
     '''
 
+    switches['ansatz']['model'] = 'xpt-ratio_nlo'
+    switches['ensembles_fit'] = ['a15m310','a15m350']
+    print('test fit:',switches['ansatz']['model'])
+    gv_data['p']['L5'] = priors['L5']
+    gv_data['p']['L4'] = priors['L4']
+    fit_data(switches,{'x':gv_data['x'],'y':gv_data['y'],'p':gv_data['p']})
+
     if switches['nlo_report']:
         fit_results = dict()
         #for model in ['ma_nlo','ma-Kfunc_nlo']:
-        for model in ['xpt-taylor_nlo','xpt_nlo']:
+        #for model in ['xpt_nlo','ma_nlo']:
+        for model in ['ma_nlo','ma-ratio_nlo','xpt_nlo','xpt-ratio_nlo']:
             switches['ansatz']['model'] = model
             print(switches['ansatz']['model'])
             model_result = dict()
             for e in switches['ensembles']:
-                e_lst = [e]
-                x_e = {k:gv_data['x'][k] for k in e_lst}
-                y_e = {k:gv_data['y'][k] for k in e_lst}
-                p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in e_lst}
-                p_e['L4'] = gv.gvar(0,1e-10)#priors['L4']
+                switches['ensembles_fit'] = [e]
+                x_e = {k:gv_data['x'][k] for k in switches['ensembles_fit']}
+                y_e = {k:gv_data['y'][k] for k in switches['ensembles_fit']}
+                p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles_fit']}
+                p_e['L4'] = gv.gvar(0,5.e-3)#priors['L4']
                 p_e['L5'] = priors['L5']
                 d_e = dict()
                 d_e['x'] = x_e
                 d_e['y'] = y_e
                 d_e['p'] = p_e
-                print('fit_e')
+                #print('fit_e')
+                #print(d_e['x'])
                 fit_e = fit_data(switches,d_e)
                 print(fit_e.format(maxline=True))
                 model_result[e] = fit_e
             fit_results[model] = model_result
-        print("%8s & %13s & %13s\\\\" %('ensemble','xpt nlo','ma nlo'))
+        print("%8s & %13s & %13s & %13s & %13s\\\\" %('ensemble','ma nlo', 'ma-r nlo','xpt nlo', 'xpt-r nlo'))
         print("\\hline")
         for e in fit_results['xpt_nlo']:
             s = "%8s" %e
-            for model in ['xpt_nlo','ma_nlo']:
+            for model in ['ma_nlo','ma-ratio_nlo','xpt_nlo','xpt-ratio_nlo']:
                 s += " & %13s" %str(fit_results[model][e].p['L5'])
             s += "\\\\"
             print(s)

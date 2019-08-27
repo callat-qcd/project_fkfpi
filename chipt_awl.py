@@ -1,6 +1,7 @@
 ## chipt functions
 import scipy.special as spsp
 import numpy as np
+import gvar as gv
 
 def fv_correction(switches,fv_params,priors):
     mpiL = fv_params['mpiL']
@@ -36,31 +37,100 @@ def fv_correction(switches,fv_params,priors):
     return fv_mns_inv
 
 class Fit(object):
-    def __init__(self,switches):
+    def __init__(self,switches,xyp_init):
         self.switches = switches
-        #self.n = switches['ansatz']['truncation']
-    def counterterms(self,x,p,e):
-        Lchi = x[e]['Lchi_'+self.switches['scale']]
-        p2   = p[(e,'mpi')]**2 / Lchi**2
-        k2   = p[(e,'mk')]**2 / Lchi**2
-        e2   = 4./3 * k2 - 1./3 * p2
-        a2   = p[(e,'aw0')]**2 / 4 / np.pi
+        self.x        = xyp_init['x']
+        self.y        = xyp_init['y']
+        self.p_init   = xyp_init['p']
 
+    def prune_x(self):
+        x = gv.BufferDict()
+        for e in self.switches['ensembles_fit']:
+            x[e] = self.x[e]
+        return x
+
+    def prune_data(self):
+        y = gv.BufferDict()
+        for e in self.switches['ensembles_fit']:
+            y[e] = self.y[e]
+        return y
+
+    def prune_priors(self):
+        p = gv.BufferDict()
+        for e in self.switches['ensembles_fit']:
+            #Lchi = self.p_init[(e,'Lchi_'+self.switches['scale'])]
+            Lchi = self.x[e]['Lchi_'+self.switches['scale']]
+            p[(e,'p2')] = self.p_init[(e,'mpi')]**2 / Lchi**2
+            p[(e,'k2')] = self.p_init[(e,'mk')]**2 /  Lchi**2
+            p[(e,'e2')] = 4./3 * p[(e,'k2')] - 1./3 * p[(e,'p2')]
+            ''' Add if xpt vs ma '''
+            p[(e,'s2')] = self.p_init[(e,'mss')]**2 / Lchi**2
+            ''' Add ability to use average mixed meson splitting? '''
+            p[(e,'ju')] = self.p_init[(e,'mju')]**2 / Lchi**2
+            p[(e,'js')] = self.p_init[(e,'mjs')]**2 / Lchi**2
+            p[(e,'ru')] = self.p_init[(e,'mru')]**2 / Lchi**2
+            p[(e,'rs')] = self.p_init[(e,'mrs')]**2 / Lchi**2
+            p[(e,'x2')] = p[(e,'e2')] + self.p_init[(e,'a2DI')] / Lchi**2
+            p[(e,'dju2')] = self.p_init[(e,'a2DI')] / Lchi**2
+            p[(e,'drs2')] = self.p_init[(e,'a2DI')] / Lchi**2
+            p[(e,'a2')]   = self.p_init[(e,'aw0')] / (4 * np.pi)
+        ''' Add LECs '''
+        if self.switches['ansatz']['model'].split('_')[-1] in ['nlo','nnlo','nnnlo']:
+            p['L5'] = self.p_init['L5']
+            if 'ratio' in self.switches['ansatz']['model'].split('_')[0]:
+                p['L4'] = self.p_init['L4']
+        if self.switches['ansatz']['model'].split('_')[-1] in ['nnlo','nnnlo']:
+            p['s4'] = self.p_init['s4']
+            if self.switches['ansatz']['alpha_S']:
+                p['s4aS'] = self.p_init['s4aS']
+            p['c4'] = self.p_init['c4']
+            p['d4'] = self.p_init['d4']
+            p['e4'] = self.p_init['e4']
+        if self.switches['ansatz']['model'].split('_')[-1] in ['nnnlo']:
+            p['s6']  = self.p_init['s6']
+            p['sc6'] = self.p_init['sc6']
+
+        return p
+
+    def make_x_lec(self,x,p,e):
+        x_par = gv.BufferDict()
+        x_par['p2']   = p[(e,'p2')]
+        x_par['k2']   = p[(e,'k2')]
+        x_par['e2']   = p[(e,'e2')]
+        x_par['s2']   = p[(e,'s2')]
+        x_par['ju']   = p[(e,'ju')]
+        x_par['js']   = p[(e,'js')]
+        x_par['ru']   = p[(e,'ru')]
+        x_par['rs']   = p[(e,'rs')]
+        x_par['x2']   = p[(e,'x2')]
+        x_par['dju2'] = p[(e,'dju2')]
+        x_par['drs2'] = p[(e,'drs2')]
+        x_par['a2']   = p[(e,'a2')]
+        if self.switches['ansatz']['alpha_S']:
+            x_par['alpha_S'] = x[e]['alpha_S']
+
+        lec = {key:val for key,val in p.items() if isinstance(key,str)}
+
+        return x_par,lec
+
+    def counterterms(self,x,lec):
         ct = 0.
         # NLO terms in FK and Fpi functions
         '''
         ct = 4 * (k2 - p2) * (4*np.pi)**2 * p['L5']
         '''
         if self.switches['ansatz']['model'].split('_')[-1] in ['nnlo','nnnlo']:
-            ct += a2 * (k2 -p2) * p['s4'] # a^2 m^2
-            ct += (k2 -p2)**2   * p['c4'] # m^4
-            ct += k2*(k2 -p2)   * p['d4'] # m^4
-            ct += p2* (k2 -p2)  * p['e4'] # m^4
+            ct += x['a2'] * (x['k2'] -x['p2']) * lec['s4'] # a^2 m^2
+            if self.switches['ansatz']['alpha_S']:
+                ct += x['a2'] * x['alpha_S'] * (x['k2'] -x['p2']) * p['s4aS']
+            ct += (x['k2'] -x['p2'])**2        * lec['c4'] # m^4
+            ct += x['k2']*(x['k2'] -x['p2'])   * lec['d4'] # m^4
+            ct += x['p2']*(x['k2'] -x['p2'])   * lec['e4'] # m^4
         if self.switches['ansatz']['model'].split('_')[-1] in ['nnnlo']:
-            ct += a2**2 *(k2 -p2)   * p['s6']  # a^4*m^2
-            ct += a2 * (k2 -p2)**2  * p['sc6'] # a^2*m^4
-            ct += a2 * k2 *(k2 -p2) * p['sd6']
-            ct += a2 * p2 *(k2 -p2) * p['se6']
+            ct += x['a2']**2 *(x['k2'] -x['p2'])        * lec['s6']  # a^4*m^2
+            ct += x['a2'] * (x['k2'] -x['p2'])**2       * lec['sc6'] # a^2*m^4
+            ct += x['a2'] * x['k2'] *(x['k2'] -x['p2']) * lec['sd6']
+            ct += x['a2'] * x['p2'] *(x['k2'] -x['p2']) * lec['se6']
         return ct
 
     def I(self,esq):
@@ -84,166 +154,108 @@ class Fit(object):
         r += self.I(esq3) / (esq3 - esq1) / (esq3 - esq2)
         return r
 
-    def Fpi_xpt_nlo(self,x,p,e):
-        Lchi = x[e]['Lchi_'+self.switches['scale']]
-        p2   = p[(e,'mpi')]**2 / Lchi**2
-        k2   = p[(e,'mk')]**2 / Lchi**2
-
-        r  = -self.I(p2)
-        r += -0.5 * self.I(k2)
-        r += p['L5'] * (4*np.pi)**2 * 4 * p2
-        r += p['L4'] * (4*np.pi)**2 * (4 * p2 + 8 * k2)
+    def Fpi_xpt_nlo(self,x,lec):
+        r  = -self.I(x['p2'])
+        r += -0.5 * self.I(x['k2'])
+        r += lec['L5'] * (4*np.pi)**2 * 4 * x['p2']
+        if 'ratio' in self.switches['ansatz']['model'].split('_')[0]:
+            r += lec['L4'] * (4*np.pi)**2 * (4 * x['p2'] + 8 * x['k2'])
         return r
 
-    def FK_xpt_nlo(self,x,p,e):
-        Lchi = x[e]['Lchi_'+self.switches['scale']]
-        p2   = p[(e,'mpi')]**2 / Lchi**2
-        k2   = p[(e,'mk')]**2 / Lchi**2
-        e2   = 4./3 * k2 - 1./3 * p2
-
-        r  = -3./8 * self.I(p2)
-        r += -3./4 * self.I(k2)
-        r += -3./8 * self.I(e2)
-        r += p['L5'] * (4*np.pi)**2 * 4 * k2
-        r += p['L4'] * (4*np.pi)**2 * (4 * p2 + 8 * k2)
+    def FK_xpt_nlo(self,x,lec):
+        r  = -3./8 * self.I(x['p2'])
+        r += -3./4 * self.I(x['k2'])
+        r += -3./8 * self.I(x['e2'])
+        r += lec['L5'] * (4*np.pi)**2 * 4 * x['k2']
+        if 'ratio' in self.switches['ansatz']['model'].split('_')[0]:
+            r += lec['L4'] * (4*np.pi)**2 * (4 * x['p2'] + 8 * x['k2'])
         return r
 
-    def Fpi_ma_nlo(self,x,p,e):
-        Lchi = x[e]['Lchi_'+self.switches['scale']]
-        p2   = p[(e,'mpi')]**2 / Lchi**2
-        k2   = p[(e,'mk')]**2 / Lchi**2
-        ju   = p[(e,'mju')]**2 / Lchi**2
-        ru   = p[(e,'mru')]**2 / Lchi**2
-
-        r  = -self.I(ju)
-        r += -0.5 * self.I(ru)
-        r += p['L5'] * (4*np.pi)**2 * 4 * p2
-        r += p['L4'] * (4*np.pi)**2 * (4 * p2 + 8 * k2)
+    def Fpi_ma_nlo(self,x,lec):
+        r  = -self.I(x['ju'])
+        r += -0.5 * self.I(x['ru'])
+        r += lec['L5'] * (4*np.pi)**2 * 4 * x['p2']
+        if 'ratio' in self.switches['ansatz']['model'].split('_')[0]:
+            r += lec['L4'] * (4*np.pi)**2 * (4 * x['p2'] + 8 * x['k2'])
         return r
 
-    def FK_ma_nlo(self,x,p,e):
-        Lchi = x[e]['Lchi_'+self.switches['scale']]
-        p2   = p[(e,'mpi')]**2 / Lchi**2
-        k2   = p[(e,'mk')]**2 / Lchi**2
-        e2   = 4./3 * k2 - 1./3 * p2
-        s2   = p[(e,'mss')]**2 / Lchi**2
-        ju   = p[(e,'mju')]**2 / Lchi**2
-        sj   = p[(e,'mjs')]**2 / Lchi**2
-        ru   = p[(e,'mru')]**2 / Lchi**2
-        rs   = p[(e,'mrs')]**2 / Lchi**2
-        x2   = e2 + p[(e,'a2DI')] / Lchi**2
-        dju2 = p[(e,'a2DI')] / Lchi**2
-        drs2 = p[(e,'a2DI')] / Lchi**2
+    def FK_ma_nlo(self,x,lec):
+        r  = -1./2 * self.I(x['ju'])
+        r +=  1./8 * self.I(x['p2'])
+        r += -1./4 * self.I(x['ru'])
+        r += -1./2 * self.I(x['js'])
+        r += -1./4 * self.I(x['rs'])
+        r +=  1./4 * self.I(x['s2'])
+        r += -3./8 * self.I(x['x2'])
+        r += lec['L5'] * (4*np.pi)**2 * 4 * x['k2']
+        if 'ratio' in self.switches['ansatz']['model'].split('_')[0]:
+            r += lec['L4'] * (4*np.pi)**2 * (4 * x['p2'] + 8 * x['k2'])
 
-        r  = -1./2 * self.I(ju)
-        r +=  1./8 * self.I(p2)
-        r += -1./4 * self.I(ru)
-        r += -1./2 * self.I(sj)
-        r += -1./4 * self.I(rs)
-        r +=  1./4 * self.I(s2)
-        r += -3./8 * self.I(x2)
-        r += p['L5'] * (4*np.pi)**2 * 4 * k2
-        r += p['L4'] * (4*np.pi)**2 * (4 * p2 + 8 * k2)
-
-        r +=  dju2 * (-1./8 * self.dI(p2) +1./4 * self.K(p2,x2))
-        r += -dju2**2 * 1./24 * self.K21(p2,x2)
-        r += dju2 * drs2 * (self.K21(s2,x2) / 12 - self.K123(p2,s2,x2)/6)
-        r += drs2 * (self.K(s2,x2)/4 - self.K21(s2,x2) *k2/6 +self.K21(s2,x2) *p2/6)
+        r += x['dju2']             * -1./8  * self.dI(x['p2'])
+        r += x['dju2']             *  1./4  * self.K(x['p2'],x['x2'])
+        r += x['dju2']**2          * -1./24 * self.K21(x['p2'],x['x2'])
+        r += x['dju2'] * x['drs2'] *  1./12 * self.K21(x['s2'],x['x2'])
+        r += x['dju2'] * x['drs2'] * -1./6  * self.K123(x['p2'],x['s2'],x['x2'])
+        r += x['drs2']             *  1./4  * self.K(x['s2'],x['x2'])
+        r += x['drs2'] * x['k2']   * -1./6  * self.K21(x['s2'],x['x2'])
+        r += x['drs2'] * x['p2']   *  1./6  * self.K21(x['s2'],x['x2'])
 
         return r
 
     def fit_function(self,x,p):
         r = dict()
         for e in x:
-            Lchi = x[e]['Lchi_'+self.switches['scale']]
-            p2   = p[(e,'mpi')]**2 / Lchi**2
-            k2   = p[(e,'mk')]**2 / Lchi**2
-            e2   = 4./3 * k2 - 1./3 * p2
-            a2   = p[(e,'aw0')]**2 / 4 / np.pi
-            if self.switches['debug']:
-                print('DEBUG: fit_function x,y values')
-                print(e,p2,k2,e2,a2)
 
-            r[e] = self.counterterms(x,p,e)
+            x_par,lec = self.make_x_lec(x,p,e)
+            r[e] = self.counterterms(x_par,lec)
 
-            if self.switches['ansatz']['model'].split('_')[0] == 'xpt-taylor':
+            if self.switches['ansatz']['model'].split('_')[0] == 'xpt':
                 r[e] += 1.
-                r[e] += self.FK_xpt_nlo(x,p,e)
-                r[e] += -self.Fpi_xpt_nlo(x,p,e)
-                #r[e] += 5./8 * p2 * np.log(p2)
-                #r[e] -= 1./4 * k2 * np.log(k2)
-                #r[e] -= 3./8 * e2 * np.log(e2)
-            elif self.switches['ansatz']['model'].split('_')[0] == 'xpt':
-                num = 1. + self.FK_xpt_nlo(x,p,e)
-                den = 1. + self.Fpi_xpt_nlo(x,p,e)
-                r[e] = num / den
+                r[e] +=  self.FK_xpt_nlo(x_par,lec)
+                r[e] += -self.Fpi_xpt_nlo(x_par,lec)
+
+            elif self.switches['ansatz']['model'].split('_')[0] == 'xpt-ratio':
+                num   = 1. + self.FK_xpt_nlo(x_par,lec)
+                den   = 1. + self.Fpi_xpt_nlo(x_par,lec)
+                r[e] += num / den
 
             elif self.switches['ansatz']['model'].split('_')[0] == 'ma':
-                s2 = p[(e,'mss')]**2 / Lchi**2
-                if self.switches['ansatz']['a2dm'] == 'avg':
-                    ju = p2 + p['a2dm'] / Lchi**2
-                    sj = k2 + p['a2dm'] / Lchi**2
-                    ru = k2 + p['a2dm'] / Lchi**2
-                    rs = s2 + p['a2dm'] / Lchi**2
-                elif self.switches['ansatz']['a2dm'] == 'individual':
-                    ju = p[(e,'mju')]**2 / Lchi**2
-                    sj = p[(e,'mjs')]**2 / Lchi**2
-                    ru = p[(e,'mru')]**2 / Lchi**2
-                    rs = p[(e,'mrs')]**2 / Lchi**2
+                r[e] += 1.
+                r[e] += self.FK_ma_nlo(x_par,lec)
+                r[e] += -self.Fpi_ma_nlo(x_par,lec)
 
-                x2  = e2 + p[(e,'a2DI')] / Lchi**2
-                dju2 = p[(e,'a2DI')] / Lchi**2
-                drs2 = p[(e,'a2DI')] / Lchi**2
-                # (-) pion log terms
-                r[e] += ju * np.log(ju)
-                r[e] += 0.5 * ru * np.log(ru)
+            elif self.switches['ansatz']['model'].split('_')[0] == 'ma-ratio':
+                num   = 1. + self.FK_ma_nlo(x_par,lec)
+                den   = 1. + self.Fpi_ma_nlo(x_par,lec)
+                r[e] += num / den
+
+            elif self.switches['ansatz']['model'].split('_')[0] == 'ma-longform':
+                ''' for debugging - a cross check expression '''
+                r[e] += 1.
+                r[e] += x_par['ju'] * np.log(x_par['ju'])
+                r[e] += 0.5 * x_par['ru'] * np.log(x_par['ru'])
                 # (+) kaon log terms
-                r[e] += -0.5 * ju * np.log(ju)
-                r[e] += -1./4 * ru * np.log(ru)
-                r[e] += -0.5*sj * np.log(sj)
-                r[e] += -1./4 * rs * np.log(rs)
-                r[e] += -dju2 / 8
-                r[e] +=  dju2**2 / 24 / (x2 - p2)
-                r[e] +=  drs2 * (k2-p2) / 6 / (x2-s2)
-                r[e] += -dju2 * drs2 / 12 / (x2 - s2)
-                r[e] += np.log(p2)/24 * (3*p2 \
-                        - 3*dju2*(x2+p2)/(x2-p2) \
-                        + dju2**2 * x2/(x2-p2)**2\
-                        -4*dju2*drs2*p2/(x2-p2)/(s2-p2)\
+                r[e] += -0.5 * x_par['ju'] * np.log(x_par['ju'])
+                r[e] += -1./4 * x_par['ru'] * np.log(x_par['ru'])
+                r[e] += -0.5*x_par['js'] * np.log(x_par['js'])
+                r[e] += -1./4 * x_par['rs'] * np.log(x_par['rs'])
+                r[e] += -x_par['dju2'] / 8
+                r[e] +=  x_par['dju2']**2 / 24 / (x_par['x2'] - x_par['p2'])
+                r[e] +=  x_par['drs2'] * (x_par['k2']-x_par['p2']) / 6 / (x_par['x2']-x_par['s2'])
+                r[e] += -x_par['dju2'] * x_par['drs2'] / 12 / (x_par['x2'] - x_par['s2'])
+                r[e] += np.log(x_par['p2'])/24 * (3*x_par['p2'] \
+                        - 3*x_par['dju2']*(x_par['x2']+x_par['p2'])/(x_par['x2']-x_par['p2']) \
+                        + x_par['dju2']**2 * x_par['x2']/(x_par['x2']-x_par['p2'])**2\
+                        -4*x_par['dju2']*x_par['drs2']*x_par['p2']/(x_par['x2']-x_par['p2'])/(x_par['s2']-x_par['p2'])\
                         )
-                r[e] += -x2/24 * np.log(x2)*(9 \
-                        -6*dju2/(x2-p2) \
-                        + dju2**2/(x2-p2)**2\
-                        +drs2*(4*(k2-p2)+6*(s2-x2))/(x2-s2)**2 \
-                        -2*dju2*drs2*(2*s2-p2-x2)/(x2-s2)**2/(x2-p2)\
+                r[e] += -x_par['x2']/24 * np.log(x_par['x2'])*(9 \
+                        -6*x_par['dju2']/(x_par['x2']-x_par['p2']) \
+                        + x_par['dju2']**2/(x_par['x2']-x_par['p2'])**2\
+                        +x_par['drs2']*(4*(x_par['k2']-x_par['p2'])+6*(x_par['s2']-x_par['x2']))/(x_par['x2']- x_par['s2'])**2 \
+                        -2*x_par['dju2']*x_par['drs2']*(2*x_par['s2']-x_par['p2']-x_par['x2'])/(x_par['x2']-x_par['s2'])**2/(x_par['x2']-x_par['p2'])\
                         )
-                r[e] += np.log(s2)/12 * (3*s2 \
-                        +drs2*(3*s2**2 + 2*(k2-p2)*x2 -3*s2*x2)/(x2-s2)**2\
-                        -dju2*drs2*(2*s2**2 - x2*(s2+p2))/(x2-s2)**2 / (s2-p2)\
+                r[e] += np.log(x_par['s2'])/12 * (3*x_par['s2'] \
+                        +x_par['drs2']*(3*x_par['s2']**2 + 2*(x_par['k2']-x_par['p2'])*x_par['x2'] -3*x_par['s2']*x_par['x2'])/(x_par['x2']-x_par['s2'])**2\
+                        -x_par['dju2']*x_par['drs2']*(2*x_par['s2']**2 - x_par['x2']*(x_par['s2']+x_par['p2']))/(x_par['x2']-x_par['s2'])**2 / (x_par['s2']-x_par['p2'])\
                         )
-            elif self.switches['ansatz']['model'].split('_')[0] == 'ma-Kfunc':
-                s2 = p[(e,'mss')]**2 / Lchi**2
-                ju = p[(e,'mju')]**2 / Lchi**2
-                sj = p[(e,'mjs')]**2 / Lchi**2
-                ru = p[(e,'mru')]**2 / Lchi**2
-                rs = p[(e,'mrs')]**2 / Lchi**2
-                x2  = e2 + p[(e,'a2DI')] / Lchi**2
-                dju2 = p[(e,'a2DI')] / Lchi**2
-                drs2 = p[(e,'a2DI')] / Lchi**2
-                # (-) pion log terms
-                r[e] += ju * np.log(ju)
-                r[e] += 0.5 * ru * np.log(ru)
-                # (+) kaon log terms
-                r[e] += -0.5 * ju * np.log(ju)
-                r[e] += 1./8 * p2 * np.log(p2)
-                r[e] += -1./4 * ru * np.log(ru)
-                r[e] += -0.5*sj * np.log(sj)
-                r[e] += -1./4 * rs * np.log(rs)
-                r[e] += 1./4  * s2 * np.log(s2)
-                r[e] += -3./8 * x2 * np.log(x2)
-                # PQ terms
-                r[e] += dju2 * ( -1./8 * self.dI(p2) + 1./4 * self.K(p2,x2))
-                r[e] += -dju2**2 / 24 * self.K21(p2,x2)
-                r[e] += dju2 * drs2 * (-self.K123(p2,s2,x2) / 6 + self.K21(s2,x2) / 12)
-                r[e] += drs2 * (self.K(s2,x2) / 4 - k2 * self.K21(s2,x2)/6 + p2 * self.K21(s2,x2) / 6)
         return r
