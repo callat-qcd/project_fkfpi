@@ -6,8 +6,8 @@
 \usepackage{subcaption}
 \usepackage{tikz}
 \usepackage{float}
-%\usepackage[utf8]{inputenc} % supports umlaut natively, eg
-\usepackage[T1]{fontenc} 
+\usepackage[utf8]{inputenc} % supports umlaut natively, eg
+%\usepackage[T1]{fontenc} 
 \usepackage{hyperref} % adds hyperlinks
 \usepackage{csvsimple} % Easily add csv file as table
 \usepackage{booktabs} % For pretty tables
@@ -256,7 +256,19 @@ For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^
 
 Notice that the lattice spacing and $am_\xi$ ($\xi \in \{\pi, K, \eta\}$) corrections are included in these counterterms. For example, the term $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$ accounts for the lowest order lattice spacing correction. Further note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of terms at that order.
 
-
+\subsubsection{ SU(2) isospin breaking}
+The breaking of SU(2) isospin symmetry is characterized by
+\begin{equation}
+\delta_{\text{SU(2)}} = \sqrt{3} \epsilon_\text{SU(2)} \left[
+-\frac43 (F_K / F_\pi-1)
++\frac{4}{3(4 \pi F)^2} \left( m_K^2 - m_\pi^2 -m_\pi^2 \log \frac{m_k^2}{m_\pi^2} \right)
+\right]
+\end{equation}
+where $\epsilon_\text{SU(2)} = \sqrt{3}/(4R)$, $R=35.7(2.6)$ per FLAG, the masses are the physical values, and $F_K/F_\pi$ is the fitted value extrapolated to the physical point. With $\delta_{\text{SU(2)}}$ in hand, we can compare our value of $F_K/F_\pi$ determined on the lattice to the corrected charged ratio $F^\pm_K/F^\pm_\pi$ through
+\begin{equation}
+\frac{F^\pm_K}{F^\pm_\pi} = \frac{F_K}{F_\pi} \sqrt{1+ \delta_{\text{SU(2)}}} \, .
+\end{equation}
+The corrected charge ratio $F^\pm_K/F^\pm_\pi$ is the value reported by FLAG. 
 
 %%%%%%%%%%%%%%%%%%
 %%%%% FIT STRATEGY
@@ -306,6 +318,7 @@ For the purpose of this project, we take $w_0 = 0.175(10)$, which is a conservat
 
 
 
+
 \subsection{The pion and kaon decay constants, $F_K$ and $F_\pi$}
 {\color{red} (How are these determined?)}
 
@@ -318,12 +331,22 @@ For the purpose of this project, we take $w_0 = 0.175(10)$, which is a conservat
 The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
 
 \subsection{Selection of Prior}
+\subsubsection{Current method}
+\begin{enumerate}
+	\item At NLO, the most naive guess is that the LECs $L_4$ and $L_5$ should be order 1. Running the fit a few times, we quickly discover that these LECs are a few orders of magnitude smaller. Therefore, refining our priors for $L_4$ and $L_5$, we set \texttt{p[`L\_4'] = 0(0.001)} and \texttt{p[`L\_5'] = 0(0.001)}. In practice this width extends about an order of magnitude outside our results for $L_4$ and $L_5$, regardless of NLO model chosen.
+	
+	\item For the next higher order (NNLO) fit, we chain the result of the previous (NLO) fit into the fitter. If $L\pm\sigma_L$ is the result for an NLO LEC as determined by the NLO fit (ie, $L_5$ or $L_4$), then for the NNLO fit we take the prior for the NLO LECs to be \texttt{p[`L']=L(3*$\sigma_L$)}
+\end{enumerate}
+
+\subsubsection{Old Method}
 Barring some good physical argument for the expected value of the priors, we use the following heuristic.
 \begin{enumerate}
 	\item At NLO, the most naive guess is that the LECs $L_4$ and $L_5$ should be order 1. Running the fit a few times, we quickly discover that these LECs are a few orders of magnitude smaller. Therefore, refining our priors for $L_4$ and $L_5$, we set \texttt{p[`L\_4'] = 0(0.001)} and \texttt{p[`L\_5'] = 0(0.001)}. In practice this width extends about an order of magnitude outside our results for $L_4$ and $L_5$, regardless of NLO model chosen.
+	
 	\item To set the NNLO priors, we first determine the order of magnitude of the $\epsilon^2_\xi (\epsilon^2_K - \epsilon^2_\pi)$ terms. For example, $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi) \sim 10^{-3}$. We center our prior at 0, but set it wide enough such that the upper/lower ends of the uncertainty interval could produce an LEC $A_\xi$ st $\epsilon^2_\xi A_\xi  (\epsilon^2_K - \epsilon^2_\pi) \sim 10^{-2}$, which ensures that the prior doesn't exclude the LEC from contributing at the percent level. In the case of $ \epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$, we would set \texttt{p[`A\_a'] = 0(10)}. The procedure is similar for the NNNLO LECs, with us again setting the priors st the LECs can potentially contribute at the percentile level.
 \end{enumerate}
 While this procedure potentially allows all the NNLO and NNNLO LECs to contribute to the fits, it does lead to some pretty absurd results when taken at face value; eg, setting \texttt{p[`A\_aa'] = 0(100000)}, as one would do as described above, results in a fit of $A_{a, a} = -4926 (11908)$. Fortunately, the \texttt{logGBF} of these fits are correspondingly penalized.
+
 
 \subsection{Shifting lattice data to physical point}
 Notice that the fit of $F_K/F_\pi$ depends on multiple input parameters: $\epsilon^2_\pi$, $w_0$, $a$, etc; that is, we are fitting a many-dimensional surface, so in order to plot $F_k/F_\pi$ vs some parameter, we must carefully take a slice of that surface. In our case, we fit $F_K / F_\pi$ at the physical point with the exception of some input parameters, which we allow to vary.  
@@ -352,7 +375,12 @@ I haven't noticed a visible difference in using one versus the other.
 Here we present the results for each of the fits.
 
 \begin{figure}
-	\includegraphics[width=0.9\textwidth]{./../figs/fit_comparison.pdf}
+	\includegraphics[width=0.9\textwidth]{./../tmp/fit_comparison.pdf}
+	\caption{Extrapolations of $F^\pm_K/F^\pm_\pi$ to the physical point for the various models, with the FLAG result shown as a red band. Without a better selection of priors for the NNLO and NNNLO LECs, the NNLO and NNNLO fits cannot be tightly determined.}
+\end{figure}
+
+\begin{figure}
+	\includegraphics[width=0.9\textwidth]{./../tmp/delta_su2_comparison.pdf}
 	\caption{Extrapolations of $F_K/F_\pi$ to the physical point for the various models, with the FLAG result shown as a red band. Without a better selection of priors for the NNLO and NNNLO LECs, the NNLO and NNNLO fits cannot be tightly determined.}
 \end{figure}
 
@@ -382,11 +410,11 @@ Here we present the results for each of the fits.
 	\sisetup{round-mode=places,
 		table-number-alignment = center-decimal-marker
 	}
-	\begin{tabular}{l|llll}\toprule
-		\textbf{Name} & $F^\pm_K/F^\pm_\pi$ & logGBF & $Q$ & $\chi^2_\nu$%
-		\DTLforeach*{myDB}{\Name=name, \Fit=fit, \logGBF=logGBF, \Q=Q, \chi=chi2/df}{%
-			\DTLiffirstrow{\\\midrule}{\\}%
-			\expUScore{\Name} & \Fit & \num{\logGBF} & \num{\Q} & \num{\chi}
+	\begin{tabular}{l|lllll}\toprule
+		\textbf{Name} & $F^\pm_K/F^\pm_\pi$ & $\delta_{\text{SU(2)}}$ & logGBF & $Q$ & $\chi^2_\nu$%
+		\DTLforeach*{myDB}{\Name=name, \Fit=fit, \delta=delta_su2, \logGBF=logGBF, \Q=Q, \chi=chi2/df}{%
+			\DTLiffirstrow{\\\hline\\}{\\}%
+			\expUScore{\Name} & \Fit & \delta &\num{\logGBF} & \num{\Q} & \num{\chi}
 		}%
 		\\\bottomrule
 	\end{tabular}
@@ -400,11 +428,11 @@ Here we present the results for each of the fits.
 		\sisetup{round-mode=places,
 			table-number-alignment = center-decimal-marker
 		}
-		\begin{tabular}{l|lllll}\toprule
-			\textbf{Name} & $L_5$ & $L_4$ & $A_a$ & $A_\pi$ & $A_K$ %
-			\DTLforeach*{myDB}{\Name=name, \Lfive=L_5, \Lfour=L_4, \Aa=A_a, \Ap=A_p, \Ak=A_k}{%
-				\DTLiffirstrow{\\\midrule}{\\}%
-				\expUScore{\Name} & \Lfive & \Lfour & \Aa & \Ap & \Ak
+		\begin{tabular}{l|ll|lll|llllll}\toprule
+			\textbf{Name} & $L_5$ & $L_4$ & $A_a$ & $A_\pi$ & $A_K$ & $A_{aa}$ & $A_{a\pi}$ & $A_{aK}$ & $A_{KK}$ & $A_{K\pi}$ & $A_{\pi\pi}$ %
+			\DTLforeach*{myDB}{\Name=name, \Lfive=L_5, \Lfour=L_4, \Aa=A_a, \Ap=A_p, \Ak=A_k, \Aaa=A_aa, \Aap=A_ap, \Aak=A_ak, \Akk=A_kk, \Akp=A_kp, \App=A_pp}{%
+				\DTLiffirstrow{\\\hline\\}{\\}%
+				\expUScore{\Name} & \Lfive & \Lfour & \Aa & \Ap & \Ak & \Aaa & \Aap & \Aak & \Akk & \Akp & \App
 			}%
 			\\\bottomrule
 		\end{tabular}
@@ -414,14 +442,14 @@ Here we present the results for each of the fits.
 \end{table}
 
 % Figures
-\foreach \model in {ma, ma-taylor, ma-old, xpt, xpt-taylor}
+\foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
 {
 	\subsection{\tt \model}
 	\foreach \order in {nlo, nnlo, nnnlo}
 	{
 		\begin{figure}[H]
 			\caption{\model (\order)}
-			\includegraphics[width=\textwidth, page=3]{"./../figs/fits/\model"_"\order".pdf}
+			\includegraphics[width=\textwidth, page=3]{"./../tmp/\model"_"\order".pdf}
 		\end{figure}
 	}
 }
