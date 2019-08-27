@@ -229,6 +229,10 @@ if __name__ == "__main__":
         models = ['ma_nlo','ma-ratio_nlo','xpt_nlo','xpt-ratio_nlo']
         latex = {'ma_nlo':'ma nlo', 'ma-ratio_nlo':'ma-r nlo',
             'xpt_nlo':'xpt nlo', 'xpt-ratio_nlo':'xpt-r nlo'}
+        marker = {'ma_nlo':'s', 'ma-ratio_nlo':'o',
+            'xpt_nlo':'d', 'xpt-ratio_nlo':'*'}
+        color = {'ma_nlo':'r', 'ma-ratio_nlo':'g',
+            'xpt_nlo':'b', 'xpt-ratio_nlo':'magenta'}
         fit_results = dict()
         #for model in ['ma_nlo','ma-Kfunc_nlo']:
         #for model in ['xpt_nlo','ma_nlo']:
@@ -253,12 +257,33 @@ if __name__ == "__main__":
                 print(fit_e.format(maxline=True))
                 model_result[e] = fit_e
             fit_results[model] = model_result
+
+        plt.ion()
+        fig = plt.figure('nlo_report')
+        ax  = plt.axes([.12, .12, .85, .85])
+
         print("%8s & %13s & %13s & %13s & %13s\\\\" \
             %('ensemble',latex[models[0]], latex[models[1]],latex[models[2]], latex[models[3]]))
         print("\\hline")
-        for e in fit_results['xpt_nlo']:
+        for i_e,e in enumerate(fit_results['xpt_nlo']):
             s = "%8s" %e
             for model in models:
                 s += " & %13s" %str(fit_results[model][e].p['L5'])
             s += "\\\\"
             print(s)
+
+            for i_m,model in enumerate(models):
+                if i_e == 0:
+                    label=latex[models[i_m]]
+                else:
+                    label=''
+                ax.errorbar(x=fit_results[model][e].p['L5'].mean,y=i_e+1+0.1*i_m,
+                    xerr=fit_results[model][e].p['L5'].sdev,linestyle='None',
+                    marker=marker[model],color=color[model],label=label)
+        plt.yticks(np.arange(1,len(switches['ensembles'])+1,1),tuple(switches['ensembles']))
+        ax.set_xlabel(r'$L_5$',fontsize=16)
+        ax.legend(fontsize=16)
+        ax.set_xlim(-0.0015,0.004)
+        plt.savefig('nlo_report.pdf',transparent=True)
+        plt.ioff()
+        plt.show()

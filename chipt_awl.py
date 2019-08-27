@@ -58,8 +58,8 @@ class Fit(object):
     def prune_priors(self):
         p = gv.BufferDict()
         for e in self.switches['ensembles_fit']:
-            #Lchi = self.p_init[(e,'Lchi_'+self.switches['scale'])]
-            Lchi = self.x[e]['Lchi_'+self.switches['scale']]
+            Lchi = self.p_init[(e,'Lchi_'+self.switches['scale'])]
+            #Lchi = self.x[e]['Lchi_'+self.switches['scale']]
             p[(e,'p2')] = self.p_init[(e,'mpi')]**2 / Lchi**2
             p[(e,'k2')] = self.p_init[(e,'mk')]**2 /  Lchi**2
             p[(e,'e2')] = 4./3 * p[(e,'k2')] - 1./3 * p[(e,'p2')]
