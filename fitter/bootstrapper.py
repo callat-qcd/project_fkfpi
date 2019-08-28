@@ -13,7 +13,7 @@ from fitter import fitter
 class bootstrapper(object):
 
     def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
-                 order=None, fit_type=None, F2=None):
+                 order=None, fit_type=None, F2=None, chain_fits=None):
 
         w0 = gv.gvar('0.175(10)') # Still needs to be determined, but something like this
         self.w0 = w0
@@ -24,6 +24,9 @@ class bootstrapper(object):
         if F2 is None:
             F2 = 'FKFpi'
         self.F2 = F2
+
+        if chain_fits is None:
+            chain_fits = True
 
         if bs_N is None or bs_N==0:
             bs_N = len(fit_data[fit_data.keys()[0]]['mpi'])
@@ -119,6 +122,7 @@ class bootstrapper(object):
         self.prior = prior
         self.order = order
         self.fits = None
+        self.chain_fits = chain_fits
         #self.bs_fit_parameters = None
         self.fit_type = fit_type
 
@@ -129,6 +133,7 @@ class bootstrapper(object):
         output = output + "\n\nFitting to %s \n" %(self.order['fit'])
         #output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
+        output = output + " chained: %s \n" %(self.chain_fits)
         output = output + "Fitted/[FLAG] values at physical point (including SU(2) isospin corrections):\n"
         output = output + '\nF_K / F_pi = %s [%s]'%(
                             self.extrapolate_to_phys_point(include_su2_isospin_corrrection=True),
@@ -178,14 +183,14 @@ class bootstrapper(object):
         # Need to randomize prior in bayesian-bootstrap hybrid
         temp_prior = self._randomize_prior(self.prior, j)
         temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior,
-                        order=self.order, fit_type=self.fit_type)
+                        order=self.order, fit_type=self.fit_type, chain_fits=self.chain_fits)
         return temp_fitter.get_fit()
 
     def _make_empbayes_fit(self):
         prepped_data = self._make_fit_data(0)
         temp_prior = self._randomize_prior(self.prior, 0)
         temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior,
-                        order=self.order, fit_type=self.fit_type)
+                        order=self.order, fit_type=self.fit_type, chain_fits=self.chain_fits)
         return temp_fitter.get_empbayes_fit()
 
     def _make_fit_data(self, j):

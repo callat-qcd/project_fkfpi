@@ -7,13 +7,14 @@ from special_functions import *
 
 class fitter(object):
 
-    def __init__(self, order, fit_type, fit_data=None, prior=None):
+    def __init__(self, order, fit_type, fit_data=None, prior=None, chain_fits=True):
         self.prior = prior
         self.fit_data = fit_data
         self.fit = None
         self.empbayes_fit = None
         self.order = order
         self.fit_type = fit_type
+        self.chain_fits = chain_fits
 
     def _make_fitargs(self, z):
         y_data = self._make_y_data()
@@ -75,6 +76,12 @@ class fitter(object):
         #    for fit_type in ['xpt', 'xpt-taylor']:
         #        models = np.append(models, fk_fpi_model(datatag=fit_type,
         #                    order=self.order, fit_type=fit_type))
+        if not self.chain_fits:
+            order = self.order.copy()
+            models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
+                        order=order, fit_type=self.fit_type))
+            return models
+
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             order = self.order.copy()
             order['fit'] = 'nlo'
