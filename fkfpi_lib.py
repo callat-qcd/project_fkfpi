@@ -209,24 +209,16 @@ if __name__ == "__main__":
     #print(gv_data['x'])
     #print(gv_data['p'][('a12m220','a2DI')])
 
-    '''
-    1 - build prior filter function
-    2 - add FV correction to Fit class
-    3 - fix counter term for ratio
-    4 - make FK and Fpi fit functions
-        - xpt
-        - MA
-    '''
-
-    switches['ansatz']['model'] = 'xpt-ratio_nlo'
-    switches['ensembles_fit'] = ['a15m310','a15m350']
-    print('test fit:',switches['ansatz']['model'])
-    gv_data['p']['L5'] = priors['L5']
-    gv_data['p']['L4'] = priors['L4']
-    fit_data(switches,{'x':gv_data['x'],'y':gv_data['y'],'p':gv_data['p']})
+    #switches['ansatz']['model'] = 'xpt-ratio_nlo'
+    #switches['ensembles_fit'] = ['a15m310','a15m350']
+    #print('test fit:',switches['ansatz']['model'])
+    #gv_data['p']['L5'] = priors['L5']
+    #gv_data['p']['L4'] = priors['L4']
+    #fit_data(switches,{'x':gv_data['x'],'y':gv_data['y'],'p':gv_data['p']})
 
     if switches['nlo_report']:
         models = ['ma_nlo','ma-ratio_nlo','xpt_nlo','xpt-ratio_nlo']
+        models = ['ma_nlo','xpt_nlo']
         latex = {'ma_nlo':'ma nlo', 'ma-ratio_nlo':'ma-r nlo',
             'xpt_nlo':'xpt nlo', 'xpt-ratio_nlo':'xpt-r nlo'}
         marker = {'ma_nlo':'s', 'ma-ratio_nlo':'o',
@@ -238,13 +230,13 @@ if __name__ == "__main__":
         #for model in ['xpt_nlo','ma_nlo']:
         for model in models:
             switches['ansatz']['model'] = model
-            print(switches['ansatz']['model'])
+            print('EFT: ',switches['ansatz']['model'])
             model_result = dict()
             for e in switches['ensembles']:
                 switches['ensembles_fit'] = [e]
-                x_e = {k:gv_data['x'][k] for k in switches['ensembles_fit']}
-                y_e = {k:gv_data['y'][k] for k in switches['ensembles_fit']}
-                p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles_fit']}
+                x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+                y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+                p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
                 p_e['L4'] = gv.gvar(0,5.e-3)#priors['L4']
                 p_e['L5'] = priors['L5']
                 d_e = dict()
@@ -262,8 +254,12 @@ if __name__ == "__main__":
         fig = plt.figure('nlo_report')
         ax  = plt.axes([.12, .12, .85, .85])
 
-        print("%8s & %13s & %13s & %13s & %13s\\\\" \
-            %('ensemble',latex[models[0]], latex[models[1]],latex[models[2]], latex[models[3]]))
+        if len(models) == 2:
+            print("%8s & %13s & %13s & \\\\" \
+                %('ensemble',latex[models[0]], latex[models[1]]))
+        else:
+            print("%8s & %13s & %13s & %13s & %13s\\\\" \
+                %('ensemble',latex[models[0]], latex[models[1]],latex[models[2]], latex[models[3]]))
         print("\\hline")
         for i_e,e in enumerate(fit_results['xpt_nlo']):
             s = "%8s" %e
@@ -284,7 +280,10 @@ if __name__ == "__main__":
         plt.yticks(np.arange(len(switches['ensembles']),0,-1),tuple(switches['ensembles']))
         ax.set_xlabel(r'$L_5$',fontsize=16)
         ax.legend(loc=1,fontsize=16)
-        ax.set_xlim(-0.0015,0.004)
+        if len(models) == 2:
+            ax.set_xlim(-0.0001,0.0008)
+        else:
+            ax.set_xlim(-0.0015,0.004)
         plt.savefig('nlo_report.pdf',transparent=True)
         plt.ioff()
         plt.show()
