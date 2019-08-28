@@ -159,6 +159,9 @@ class fitter(object):
             newprior['A_kp'] = prior['A_kp']
             newprior['A_pp'] = prior['A_pp']
 
+        for key in self.order['exclude']:
+            del(newprior[key])
+
         return newprior
 
     def _make_y_data(self, fit_data=None):
@@ -238,11 +241,17 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
+        for key in self.order['exclude']:
+            p[key] = 0
+
         output = (
             + (eps2_a) *p['A_a']
             + (eps2_k) *p['A_k']
             + (eps2_pi) *p['A_p']
         )
+
+        for key in self.order['exclude']:
+            del(p[key])
         #print "+ nnlo", output *(eps2_k - eps2_pi)
 
         #print "A_a: ", np.median(eps2_a)
@@ -261,6 +270,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_a = (p['a/w0'] / (4 *np.pi))**2
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
+
+        for key in self.order['exclude']:
+            p[key] = 0
 
         output = (
               + (eps2_a) *(
@@ -282,6 +294,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 + eps2_pi *p['A_pp']
               )
         )
+        
+        for key in self.order['exclude']:
+            del(p[key])
+
         return output *(eps2_k - eps2_pi)
 
     def fitfcn_ma(self, p):
@@ -588,68 +604,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
     def buildprior(self, prior, mopt=None, extend=False):
         #print prior
         return prior
-        order = self.order
-
-        mprior = gv.BufferDict()
-        mprior['mpi'] = prior['mpi']
-        mprior['mk'] = prior['mk']
-        mprior['lam2_chi'] = prior['lam2_chi']
-        #mprior['a'] = prior['a']
-        mprior['L'] = prior['L']
-        #mprior['w0'] = prior['w0']
-        mprior['a/w0'] = prior['a/w0']
-
-        # Fit parameters, depending on fit type
-        if self.fit_type == 'xpt':
-            mprior['L_4'] = prior['L_4']
-            mprior['L_5'] = prior['L_5']
-        elif self.fit_type == 'xpt-taylor':
-            mprior['L_5'] = prior['L_5']
-
-            mprior['A_a'] = prior['A_a']
-
-        elif self.fit_type == 'ma':
-            mprior['L_4'] = prior['L_4']
-            mprior['L_5'] = prior['L_5']
-            mprior['a2DI'] = prior['a2DI']
-            mprior['mss'] = prior['mss']
-            mprior['mju'] = prior['mju']
-            mprior['mjs'] = prior['mjs']
-            mprior['mru'] = prior['mru']
-            mprior['mrs'] = prior['mrs']
-        elif self.fit_type == 'ma-taylor':
-            mprior['L_5'] = prior['L_5']
-            mprior['a2DI'] = prior['a2DI']
-            mprior['mss'] = prior['mss']
-            mprior['mju'] = prior['mju']
-            mprior['mjs'] = prior['mjs']
-            mprior['mru'] = prior['mru']
-            mprior['mrs'] = prior['mrs']
-        elif self.fit_type == 'ma-old':
-            mprior['L_5'] = prior['L_5']
-
-
-        # Fit parameters, depending on order
-        if order['fit'] in ['nnlo', 'nnnlo']:
-            mprior['A_a'] = prior['A_a']
-            print 'mprior: ', prior['A_a']
-            mprior['A_x'] = prior['A_x']
-            mprior['A_k'] = prior['A_k']
-            mprior['A_p'] = prior['A_p']
-
-        if order['fit'] in ['nnnlo']:
-            mprior['A_aa'] = prior['A_aa']
-            mprior['A_ax'] = prior['A_ax']
-            mprior['A_ak'] = prior['A_ak']
-            mprior['A_ap'] = prior['A_ap']
-            mprior['A_xx'] = prior['A_xx']
-            mprior['A_xk'] = prior['A_xk']
-            mprior['A_xp'] = prior['A_xp']
-            mprior['A_kk'] = prior['A_kk']
-            mprior['A_kp'] = prior['A_kp']
-            mprior['A_pp'] = prior['A_pp']
-
-        return mprior
 
     def builddata(self, data):
         return data
