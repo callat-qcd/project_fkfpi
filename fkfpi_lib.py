@@ -120,34 +120,8 @@ def format_h5_data(switches,data):
 def fit_data(switches,xyp):
     Fitc = xpt.Fit(switches,xyp_init=xyp)
     x = Fitc.prune_x()
-    print(x)
     y = Fitc.prune_data()
-    #print(y)
     p = Fitc.prune_priors()
-    #x_par,lec = Fitc.make_x_lec(x,p,'a15m310')
-    #print('x_par')
-    #print(x_par)
-    #print('lec')
-    #print(lec)
-    #print('FK_xpt  -1 = ',Fitc.FK_xpt_nlo(x_par,lec))
-    #print('FK_ma   -1 = ',Fitc.FK_ma_nlo(x_par,lec))
-    #print('Fpi_xpt -1 = ',Fitc.Fpi_xpt_nlo(x_par,lec))
-    #print('Fpi_ma  -1 = ',Fitc.Fpi_ma_nlo(x_par,lec))
-    #print('ct         = ',Fitc.counterterms(x_par,lec))
-    #print()
-    #print('f('+switches['ansatz']['model']+')     = ',Fitc.fit_function(x,p))
-    #tmp = dict()
-    #for p in prior:
-    #    tmp[p] = prior[p].mean
-        #print(p,prior[p].mean)
-    #e_tmp = 'a15m310'
-    #tmp[(e_tmp,'a2DI')] = 1.
-    #tmp['L5'] = 0.001
-    #for p in tmp:
-    #    print(p,tmp[p])
-    #print(x[e_tmp]['Lchi_PK'])
-    #print('FK_Fpi_fit_function')
-    #print(Fitc.fit_function(x,tmp))
     fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=Fitc.fit_function)
     return fit
 
@@ -203,18 +177,79 @@ if __name__ == "__main__":
     data  = h5.open_file('FK_Fpi_data.h5','r')
     gv_data = format_h5_data(switches,data)
     data.close()
-    #for e in gv_data['x']:
-    #    print("%8s" %e)
-    #    print(gv_data['x'][e])
-    #print(gv_data['x'])
-    #print(gv_data['p'][('a12m220','a2DI')])
 
-    #switches['ansatz']['model'] = 'xpt-ratio_nlo'
-    #switches['ensembles_fit'] = ['a15m310','a15m350']
-    #print('test fit:',switches['ansatz']['model'])
-    #gv_data['p']['L5'] = priors['L5']
-    #gv_data['p']['L4'] = priors['L4']
-    #fit_data(switches,{'x':gv_data['x'],'y':gv_data['y'],'p':gv_data['p']})
+    if switches['nlo_fv_report']:
+        models = ['ma_nlo','ma_nlo_FV','xpt_nlo','xpt_nlo_FV']
+        mod = {
+            'ma_nlo':'ma_nlo',  'ma_nlo_FV':'ma_nlo',
+            'xpt_nlo':'xpt_nlo','xpt_nlo_FV':'xpt_nlo'}
+        latex = {
+            'ma_nlo':'ma nlo',   'ma_nlo_FV':'ma nlo w/FV',
+            'xpt_nlo':'xpt nlo', 'xpt_nlo_FV':'xpt nlo w/FV'}
+        marker = {
+            'ma_nlo':'s',  'ma_nlo_FV':'o',
+            'xpt_nlo':'*', 'xpt_nlo_FV':'d'}
+        color = {
+            'ma_nlo':'r',  'ma_nlo_FV':'b',
+            'xpt_nlo':'m', 'xpt_nlo_FV':'g'}
+        fit_results = dict()
+        for model in models:
+            switches['ansatz']['model'] = mod[model]
+            print('EFT: ',mod[model])
+            model_result = dict()
+            for e in switches['ensembles']:
+                switches['ensembles_fit'] = [e]
+                if 'FV' in model:
+                    switches['ansatz']['FV'] = True
+                else:
+                    switches['ansatz']['FV'] = False
+                x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+                y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+                p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+                p_e['L4'] = gv.gvar(0,5.e-3)#priors['L4']
+                p_e['L5'] = priors['L5']
+                d_e = dict()
+                d_e['x'] = x_e
+                d_e['y'] = y_e
+                d_e['p'] = p_e
+                fit_e = fit_data(switches,d_e)
+                model_result[e] = fit_e
+            fit_results[model] = model_result
+        plt.ion()
+        fig = plt.figure('nlo_report_FV')
+        ax  = plt.axes([.12, .12, .85, .85])
+
+        if len(models) == 2:
+            print("%8s & %13s & %13s & \\\\" \
+                %('ensemble',latex[models[0]], latex[models[1]]))
+        else:
+            print("%8s & %13s & %13s & %13s & %13s\\\\" \
+                %('ensemble',latex[models[0]], latex[models[1]],latex[models[2]], latex[models[3]]))
+        print("\\hline")
+        for i_e,e in enumerate(switches['ensembles']):
+            s = "%8s" %e
+            for model in models:
+                s += " & %13s" %str(fit_results[model][e].p['L5'])
+            s += "\\\\"
+            print(s)
+
+            for i_m,model in enumerate(models):
+                if i_e == 0:
+                    label=latex[models[i_m]]
+                else:
+                    label=''
+                y = len(switches['ensembles']) - i_e + 0.1*i_m
+                ax.errorbar(x=fit_results[model][e].p['L5'].mean,y=y,
+                    xerr=fit_results[model][e].p['L5'].sdev,linestyle='None',
+                    marker=marker[model],mfc='None',color=color[model],label=label)
+        plt.yticks(np.arange(len(switches['ensembles']),0,-1),tuple(switches['ensembles']))
+        ax.set_xlabel(r'$L_5$',fontsize=16)
+        ax.legend(loc=1,fontsize=16)
+        ax.set_xlim(-0.0001,0.001)
+        plt.savefig('nlo_report_FV.pdf',transparent=True)
+        plt.ioff()
+        plt.show()
+
 
     if switches['nlo_report']:
         models = ['ma_nlo','ma-ratio_nlo','xpt_nlo','xpt-ratio_nlo']
@@ -230,7 +265,7 @@ if __name__ == "__main__":
         #for model in ['xpt_nlo','ma_nlo']:
         for model in models:
             switches['ansatz']['model'] = model
-            print('EFT: ',switches['ansatz']['model'])
+            print('EFT: ',model)
             model_result = dict()
             for e in switches['ensembles']:
                 switches['ensembles_fit'] = [e]
@@ -246,7 +281,7 @@ if __name__ == "__main__":
                 #print('fit_e')
                 #print(d_e['x'])
                 fit_e = fit_data(switches,d_e)
-                print(fit_e.format(maxline=True))
+                #print(fit_e.format(maxline=True))
                 model_result[e] = fit_e
             fit_results[model] = model_result
 
@@ -261,7 +296,7 @@ if __name__ == "__main__":
             print("%8s & %13s & %13s & %13s & %13s\\\\" \
                 %('ensemble',latex[models[0]], latex[models[1]],latex[models[2]], latex[models[3]]))
         print("\\hline")
-        for i_e,e in enumerate(fit_results['xpt_nlo']):
+        for i_e,e in enumerate(switches['ensembles']):
             s = "%8s" %e
             for model in models:
                 s += " & %13s" %str(fit_results[model][e].p['L5'])
