@@ -120,7 +120,7 @@ def format_h5_data(switches,data):
 def fit_data(switches,xyp):
     Fitc = xpt.Fit(switches,xyp_init=xyp)
     x = Fitc.prune_x()
-    #print(x)
+    print(x)
     y = Fitc.prune_data()
     #print(y)
     p = Fitc.prune_priors()
@@ -277,12 +277,13 @@ if __name__ == "__main__":
                     label=latex[models[i_m]]
                 else:
                     label=''
-                ax.errorbar(x=fit_results[model][e].p['L5'].mean,y=i_e+1+0.1*i_m,
+                y = len(fit_results['xpt_nlo']) - i_e + 0.1*i_m
+                ax.errorbar(x=fit_results[model][e].p['L5'].mean,y=y,
                     xerr=fit_results[model][e].p['L5'].sdev,linestyle='None',
-                    marker=marker[model],color=color[model],label=label)
-        plt.yticks(np.arange(1,len(switches['ensembles'])+1,1),tuple(switches['ensembles']))
+                    marker=marker[model],mfc='None',color=color[model],label=label)
+        plt.yticks(np.arange(len(switches['ensembles']),0,-1),tuple(switches['ensembles']))
         ax.set_xlabel(r'$L_5$',fontsize=16)
-        ax.legend(fontsize=16)
+        ax.legend(loc=1,fontsize=16)
         ax.set_xlim(-0.0015,0.004)
         plt.savefig('nlo_report.pdf',transparent=True)
         plt.ioff()
