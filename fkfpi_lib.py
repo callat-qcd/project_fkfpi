@@ -172,6 +172,7 @@ if __name__ == "__main__":
         'xpt_nnlo_FV','xpt_nnlo_FV_alphaS',
         'ma_nnlo_FV_alphaS',
         'xpt-ratio_nnlo_FV_alphaS']
+    models = ['xpt_nnnlo_FV','xpt_nnlo_FV_alphaS']
     fit_results = dict()
     for model in models:
         switches['ansatz']['model'] = model
@@ -217,7 +218,7 @@ if __name__ == "__main__":
         fit_e[0].eft   = eft
         fit_e[0].order = order
         print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
-            %(fit_e[1].chi2,fit_e[1].dof,fit_e[1].Q,fit_e[1].logGBF))
+            %(fit_e[1].chi2/fit_e[1].dof,fit_e[1].dof,fit_e[1].Q,fit_e[1].logGBF))
         print(fit_e[0].fit_function(x_phys,p_phys),'\n')
 
 

@@ -181,7 +181,8 @@ class Fit(object):
         '''
         k2 = x['k2']['esq']
         p2 = x['p2']['esq']
-        a2 = x['a2']
+        if self.order in ['nnlo','nnnlo']:
+            a2 = x['a2']
         if self.alphaS:
             alphaS = x['alphaS']
         if self.order in ['nnlo','nnnlo']:
