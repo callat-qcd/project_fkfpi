@@ -101,18 +101,6 @@ def format_h5_data(switches,data):
         x[ens]['alphaS'] = data.get_node('/'+ens+'/alpha_s').read()
     return {'x':x, 'y':y, 'p':p}
 
-'''
-- put this function inside fit class and store fit as self.fit
-- add alphaS and FV to name of fit model instead of switch
-'''
-def fit_data(switches,xyp):
-    Fitc = xpt.Fit(switches,xyp_init=xyp)
-    x = Fitc.prune_x()
-    y = Fitc.prune_data()
-    p = Fitc.prune_priors()
-    fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=Fitc.fit_function)
-    return Fitc,fit
-
 def fkfpi_phys(x_phys,fit):
     # use metaSq = 4/3 mK**2 - 1/3 mpi**2
     print('prediction from LQCD')
@@ -186,9 +174,8 @@ if __name__ == "__main__":
         d_e['x'] = x_e
         d_e['y'] = y_e
         d_e['p'] = p_e
-        fit_e = fit_data(switches,d_e)
-        #print(fit_e[1].format(maxline=True))
-        fit_results[model] = fit_e
+        fit_e = xpt.Fit(switches,xyp_init=d_e)
+        fit_e.fit_data()
 
         x_phys = dict()
         x_phys['phys'] = {k:np.inf for k in ['mpiL','mkL']}
@@ -203,23 +190,23 @@ if __name__ == "__main__":
         p_phys[('phys','k2')] = phys_p['mk']**2  / Lchi_phys**2
         p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
         p_phys[('phys','a2')] = 0.
-        for k in fit_e[1].p:
+        for k in fit_e.fit.p:
             if isinstance(k,str):
-                print(k,fit_e[1].p[k])
+                print(k,fit_e.fit.p[k])
         for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6']:
-            if k in fit_e[1].p:
-                p_phys[k] = fit_e[1].p[k]
-        fit_e[0].fv = False
+            if k in fit_e.fit.p:
+                p_phys[k] = fit_e.fit.p[k]
+        fit_e.fv = False
         if 'ratio' in model:
             eft = 'xpt-ratio'
         else:
             eft = 'xpt'
         order = model.split('_')[1]
-        fit_e[0].eft   = eft
-        fit_e[0].order = order
+        fit_e.eft   = eft
+        fit_e.order = order
         print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
-            %(fit_e[1].chi2/fit_e[1].dof,fit_e[1].dof,fit_e[1].Q,fit_e[1].logGBF))
-        print(fit_e[0].fit_function(x_phys,p_phys),'\n')
+            %(fit_e.fit.chi2/fit_e.fit.dof,fit_e.fit.dof,fit_e.fit.Q,fit_e.fit.logGBF))
+        print(fit_e.fit_function(x_phys,p_phys),'\n')
 
 
     if switches['nlo_fv_report']:

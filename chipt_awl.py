@@ -2,6 +2,7 @@ import sys
 import scipy.special as spsp
 import numpy as np
 import gvar as gv
+import lsqfit
 
 class Fit(object):
     def __init__(self,switches,xyp_init):
@@ -331,3 +332,9 @@ class Fit(object):
                         -x_par['dju2']*x_par['drs2']*(2*x_par['s2']**2 - x_par['x2']*(x_par['s2']+x_par['p2']))/(x_par['x2']-x_par['s2'])**2 / (x_par['s2']-x_par['p2'])\
                         )
         return r
+
+    def fit_data(self):
+        x = self.prune_x()
+        y = self.prune_data()
+        p = self.prune_priors()
+        self.fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=self.fit_function)
