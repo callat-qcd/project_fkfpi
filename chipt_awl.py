@@ -9,9 +9,10 @@ class Fit(object):
         self.x        = xyp_init['x']
         self.y        = xyp_init['y']
         self.p_init   = xyp_init['p']
-        self.order    = self.switches['ansatz']['model'].split('_')[-1]
         self.eft      = self.switches['ansatz']['model'].split('_')[0]
-        self.fv       = self.switches['ansatz']['FV']
+        self.order    = self.switches['ansatz']['model'].split('_')[1]
+        self.fv       = 'FV' in self.switches['ansatz']['model']
+        self.alphaS   = 'alphaS' in self.switches['ansatz']['model']
         if self.fv:
             self.fv_I  = dict()
             self.fv_dI = dict()
@@ -122,17 +123,18 @@ class Fit(object):
             if 'ratio' in self.eft:
                 p['L4'] = self.p_init['L4']
         if self.order in ['nnlo','nnnlo']:
-            p['s4'] = self.p_init['s4']
-            if self.switches['ansatz']['alpha_S']:
-                p['s4aS'] = self.p_init['s4aS']
-            p['c4'] = self.p_init['c4']
-            p['d4'] = self.p_init['d4']
-            p['e4'] = self.p_init['e4']
+            p['s_4'] = self.p_init['s_4']
+            p['k_4'] = self.p_init['k_4']
+            p['p_4'] = self.p_init['p_4']
+            if self.alphaS:
+                p['saS_4'] = self.p_init['saS_4']
         if self.order in ['nnnlo']:
-            p['s6']  = self.p_init['s6']
-            p['sc6'] = self.p_init['sc6']
-            p['sd6'] = self.p_init['sd6']
-            p['se6'] = self.p_init['se6']
+            p['kp_6'] = self.p_init['kp_6']
+            p['k_6']  = self.p_init['k_6']
+            p['p_6']  = self.p_init['p_6']
+            p['s_6']  = self.p_init['s_6']
+            p['sk_6'] = self.p_init['sk_6']
+            p['sp_6'] = self.p_init['sp_6']
 
         return p
 
@@ -164,8 +166,8 @@ class Fit(object):
             x_par['drs2'] = p[(e,'drs2')]
         if self.order in ['nnlo','nnnlo']:
             x_par['a2']   = p[(e,'a2')]
-        if self.switches['ansatz']['alpha_S']:
-            x_par['alpha_S'] = x[e]['alpha_S']
+        if self.alphaS:
+            x_par['alphaS'] = x[e]['alphaS']
 
         lec = {key:val for key,val in p.items() if isinstance(key,str)}
 
@@ -177,18 +179,24 @@ class Fit(object):
         '''
         ct = 4 * (k2 - p2) * (4*np.pi)**2 * p['L5']
         '''
+        k2 = x['k2']['esq']
+        p2 = x['p2']['esq']
+        a2 = x['a2']
+        if self.alphaS:
+            alphaS = x['alphaS']
         if self.order in ['nnlo','nnnlo']:
-            ct += x['a2'] * (x['k2']['esq'] -x['p2']['esq']) * lec['s4'] # a^2 m^2
-            if self.switches['ansatz']['alpha_S']:
-                ct += x['a2'] * x['alpha_S'] * (x['k2']['esq'] -x['p2']['esq']) * lec['s4aS']
-            ct += (x['k2']['esq'] -x['p2']['esq'])**2        * lec['c4'] # m^4
-            ct += x['k2']['esq']*(x['k2']['esq'] -x['p2']['esq'])   * lec['d4'] # m^4
-            ct += x['p2']['esq']*(x['k2']['esq'] -x['p2']['esq'])   * lec['e4'] # m^4
+            ct += (k2 - p2)    * a2 * lec['s_4'] # a^2 m^2
+            ct += (k2 - p2)    * k2 * lec['k_4'] # m^4
+            ct += (k2 - p2)    * p2 * lec['p_4'] # m^4
+            if self.alphaS:
+                ct += (k2 - p2) * a2 * alphaS * lec['saS_4']
         if self.order in ['nnnlo']:
-            ct += x['a2']**2 *(x['k2']['esq'] -x['p2']['esq'])                 * lec['s6']  # a^4*m^2
-            ct += x['a2']    *(x['k2']['esq'] -x['p2']['esq'])**2              * lec['sc6'] # a^2*m^4
-            ct += x['a2']    *x['k2']['esq'] *(x['k2']['esq'] -x['p2']['esq']) * lec['sd6']
-            ct += x['a2']    *x['p2']['esq'] *(x['k2']['esq'] -x['p2']['esq']) * lec['se6']
+            ct += (k2 - p2)**2 * k2 * p2 * lec['kp_6']
+            ct += (k2 - p2)**2 * k2      * lec['k_6']
+            ct += (k2 - p2)**2 * p2      * lec['p_6']
+            ct += (k2 - p2)    * a2**2   * lec['s_6']
+            ct += (k2 - p2)    * k2 * a2 * lec['sk_6']
+            ct += (k2 - p2)    * p2 * a2 * lec['sp_6']
         return ct
 
     def I(self,x):

@@ -98,16 +98,19 @@ def format_h5_data(switches,data):
         p[(ens,'aw0')] = gv.gvar(aw0[0],aw0[1])
         a2di = data.get_node('/'+ens+'/a2DI').read()
         p[(ens,'a2DI')] = gv.gvar(a2di[0],a2di[1])
-        x[ens]['alpha_S'] = data.get_node('/'+ens+'/alpha_s').read()
+        x[ens]['alphaS'] = data.get_node('/'+ens+'/alpha_s').read()
     return {'x':x, 'y':y, 'p':p}
 
-''' put this function inside fit class and store fit as self.fit '''
+'''
+- put this function inside fit class and store fit as self.fit
+- add alphaS and FV to name of fit model instead of switch
+'''
 def fit_data(switches,xyp):
     Fitc = xpt.Fit(switches,xyp_init=xyp)
     x = Fitc.prune_x()
     y = Fitc.prune_data()
     p = Fitc.prune_priors()
-    fit = lsqfit.nonlinear_fit(udata=(x,y),prior=p,fcn=Fitc.fit_function)
+    fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=Fitc.fit_function)
     return Fitc,fit
 
 def fkfpi_phys(x_phys,fit):
@@ -164,8 +167,11 @@ if __name__ == "__main__":
     data.close()
 
     # do analysis
-    models = ['xpt_nlo','xpt-ratio_nlo','ma_nlo','ma-ratio_nlo']
-    models = ['ma-ratio_nnnlo']
+    models = [
+        'xpt_nnnlo_FV','xpt_nnnlo_FV_alphaS',
+        'xpt_nnlo_FV','xpt_nnlo_FV_alphaS',
+        'ma_nnlo_FV_alphaS',
+        'xpt-ratio_nnlo_FV_alphaS']
     fit_results = dict()
     for model in models:
         switches['ansatz']['model'] = model
@@ -185,11 +191,11 @@ if __name__ == "__main__":
 
         x_phys = dict()
         x_phys['phys'] = {k:np.inf for k in ['mpiL','mkL']}
-        x_phys['phys']['alpha_S'] = 0.
+        x_phys['phys']['alphaS'] = 0.
         y_phys = dict()
         y_phys['phys'] = phys_p['FK'] / phys_p['Fpi']
         p_phys = dict()
-        for k in ['s4','s4aS','s6','sc6','sd6','se6']:
+        for k in ['s_4','saS_4','s_6','sk_6','sp_6']:
             p_phys[k] = 0.
         Lchi_phys = phys_p['Lchi']
         p_phys[('phys','p2')] = phys_p['mpi']**2 / Lchi_phys**2
@@ -199,15 +205,20 @@ if __name__ == "__main__":
         for k in fit_e[1].p:
             if isinstance(k,str):
                 print(k,fit_e[1].p[k])
-        for k in ['L5','L4','c4','d4','e4']:
+        for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6']:
             if k in fit_e[1].p:
                 p_phys[k] = fit_e[1].p[k]
         fit_e[0].fv = False
-        fit_e[0].eft = 'xpt-ratio'
-        fit_e[0].order = 'nnnlo'
+        if 'ratio' in model:
+            eft = 'xpt-ratio'
+        else:
+            eft = 'xpt'
+        order = model.split('_')[1]
+        fit_e[0].eft   = eft
+        fit_e[0].order = order
         print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
             %(fit_e[1].chi2,fit_e[1].dof,fit_e[1].Q,fit_e[1].logGBF))
-        print(fit_e[0].fit_function(x_phys,p_phys))
+        print(fit_e[0].fit_function(x_phys,p_phys),'\n')
 
 
     if switches['nlo_fv_report']:
