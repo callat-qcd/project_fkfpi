@@ -155,9 +155,7 @@ class data_loader(object):
         print "Done."
         return None
 
-    def save_plots(self, figs=None, bootstrapper=None, output_filename=None):
-        if figs is None:
-            figs = bootstrapper.make_plots()
+    def save_plots(self, figs=None, output_filename=None):
 
         if not os.path.exists(os.path.normpath(self.project_path+'/tmp/')):
             os.makedirs(os.path.normpath(self.project_path+'/tmp/'))
@@ -166,6 +164,9 @@ class data_loader(object):
             output_file = os.path.normpath(self.project_path+'/tmp/temp.pdf')
         else:
             output_file = os.path.normpath(self.project_path+'/tmp/'+output_filename+'.pdf')
+
+        if not os.path.exists(os.path.dirname(output_file)):
+            os.makedirs(os.path.dirname(output_file))
 
         output_pdf = PdfPages(output_file)
         try:

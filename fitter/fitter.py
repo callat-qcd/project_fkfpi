@@ -160,7 +160,8 @@ class fitter(object):
             newprior['A_pp'] = prior['A_pp']
 
         for key in self.order['exclude']:
-            del(newprior[key])
+            if key in newprior.keys():
+                del(newprior[key])
 
         return newprior
 
@@ -294,7 +295,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 + eps2_pi *p['A_pp']
               )
         )
-        
+
         for key in self.order['exclude']:
             del(p[key])
 
