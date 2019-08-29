@@ -3,39 +3,6 @@ import scipy.special as spsp
 import numpy as np
 import gvar as gv
 
-def fv_correction(switches,fv_params,priors):
-    mpiL = fv_params['mpiL']
-    mjuL = fv_params['mjuL']
-    Lchi = fv_params['Lchi']
-    cn = np.array([6,12,8,6,24,24,0,12,30,24,24,8,24,48,0,6,48,36,24,24])
-    n_mag = np.sqrt(np.arange(1,len(cn)+1,1))
-    k1ju = np.zeros_like(mpiL)
-    k1pi = np.zeros_like(mpiL)
-    k0pi = np.zeros_like(mpiL)
-    k2pi = np.zeros_like(mpiL)
-    for i,mL in enumerate(mpiL):
-        k1ju[i] = np.sum(cn / (n_mag * mjuL[i]) * spsp.kn(1,n_mag * mjuL[i]))
-        k1pi[i] = np.sum(cn / (n_mag * mL) * spsp.kn(1,n_mag * mL))
-        k0pi[i] = np.sum(cn * spsp.kn(0,n_mag * mL))
-        k2pi[i] = np.sum(cn * spsp.kn(2,n_mag * mL))
-    p2 = (priors['mpi']/ Lchi)**2
-    if switches['ansatz']['type'] == 'xpt':
-        fv_mns_inv = 5./2 * p2 * k1pi
-    elif switches['ansatz']['type'] == 'MA':
-        ju  = priors['mju']**2 / Lchi**2
-        k2  = priors['mka']**2 / Lchi**2
-        x2  = 4./3 * k2 - p2/3 + priors['a2di'] / Lchi**2
-        s2  = priors['mss']**2 / Lchi**2
-        dju2 = priors['a2di'] / Lchi**2
-        drs2 = priors['a2di'] / Lchi**2
-        fv_mns_inv  = 2 * ju * k1ju + 0.5 * p2 * k1pi
-        fv_mns_inv -= dju2/8 * (2*k1pi - k0pi - k2pi)
-        fv_mns_inv -= dju2 * p2 / (x2-p2) * k1pi
-        fv_mns_inv += dju2**2 / 24 * (4*p2*k1pi/(x2-p2)**2 \
-            +(2*k1pi - k0pi -k2pi)/(x2-p2))
-        fv_mns_inv += 2./3 * dju2 * drs2 * p2 * k1pi/(x2-p2)/(s2-p2)
-    return fv_mns_inv
-
 class Fit(object):
     def __init__(self,switches,xyp_init):
         self.switches = switches
@@ -116,7 +83,7 @@ class Fit(object):
                     mL  = np.sqrt(esq / e2) * mL
                     self.fv_I[(e,'x2')]  = 4 * k1
                     self.fv_dI[(e,'x2')] = (2*k1 - k0 - k2) / (4*np.pi)**2
-        #sys.exit()
+
     def prune_x(self):
         x = gv.BufferDict()
         for e in self.switches['ensembles_fit']:
@@ -164,6 +131,8 @@ class Fit(object):
         if self.order in ['nnnlo']:
             p['s6']  = self.p_init['s6']
             p['sc6'] = self.p_init['sc6']
+            p['sd6'] = self.p_init['sd6']
+            p['se6'] = self.p_init['se6']
 
         return p
 
@@ -209,17 +178,17 @@ class Fit(object):
         ct = 4 * (k2 - p2) * (4*np.pi)**2 * p['L5']
         '''
         if self.order in ['nnlo','nnnlo']:
-            ct += x['a2'] * (x['k2'] -x['p2']) * lec['s4'] # a^2 m^2
+            ct += x['a2'] * (x['k2']['esq'] -x['p2']['esq']) * lec['s4'] # a^2 m^2
             if self.switches['ansatz']['alpha_S']:
-                ct += x['a2'] * x['alpha_S'] * (x['k2'] -x['p2']) * p['s4aS']
-            ct += (x['k2'] -x['p2'])**2        * lec['c4'] # m^4
-            ct += x['k2']*(x['k2'] -x['p2'])   * lec['d4'] # m^4
-            ct += x['p2']*(x['k2'] -x['p2'])   * lec['e4'] # m^4
+                ct += x['a2'] * x['alpha_S'] * (x['k2']['esq'] -x['p2']['esq']) * lec['s4aS']
+            ct += (x['k2']['esq'] -x['p2']['esq'])**2        * lec['c4'] # m^4
+            ct += x['k2']['esq']*(x['k2']['esq'] -x['p2']['esq'])   * lec['d4'] # m^4
+            ct += x['p2']['esq']*(x['k2']['esq'] -x['p2']['esq'])   * lec['e4'] # m^4
         if self.order in ['nnnlo']:
-            ct += x['a2']**2 *(x['k2'] -x['p2'])        * lec['s6']  # a^4*m^2
-            ct += x['a2'] * (x['k2'] -x['p2'])**2       * lec['sc6'] # a^2*m^4
-            ct += x['a2'] * x['k2'] *(x['k2'] -x['p2']) * lec['sd6']
-            ct += x['a2'] * x['p2'] *(x['k2'] -x['p2']) * lec['se6']
+            ct += x['a2']**2 *(x['k2']['esq'] -x['p2']['esq'])                 * lec['s6']  # a^4*m^2
+            ct += x['a2']    *(x['k2']['esq'] -x['p2']['esq'])**2              * lec['sc6'] # a^2*m^4
+            ct += x['a2']    *x['k2']['esq'] *(x['k2']['esq'] -x['p2']['esq']) * lec['sd6']
+            ct += x['a2']    *x['p2']['esq'] *(x['k2']['esq'] -x['p2']['esq']) * lec['se6']
         return ct
 
     def I(self,x):

@@ -72,7 +72,6 @@ def format_h5_data(switches,data):
             print('data_dict')
             print(data_dict)
 
-        #y[ens] = np.array(gvdata['FK']/gvdata['Fpi'])
         y[ens] = gvdata['FK']/gvdata['Fpi']
 
         x[ens]['mpiL'] = gvdata['mpi'].mean * L_ens[ens]
@@ -82,9 +81,6 @@ def format_h5_data(switches,data):
         x[ens]['mjsL'] = gvdata['mjs'].mean * L_ens[ens]
         x[ens]['mruL'] = gvdata['mru'].mean * L_ens[ens]
         x[ens]['mrsL'] = gvdata['mrs'].mean * L_ens[ens]
-        x[ens]['Lchi_PK'] = 4*np.pi*np.sqrt(gvdata['FK'].mean * gvdata['Fpi'].mean)
-        x[ens]['Lchi_PP'] = 4 *np.pi *gvdata['Fpi'].mean
-        x[ens]['Lchi_KK'] = 4 *np.pi *gvdata['FK'].mean
 
         # MASSES
         p[(ens,'mpi')] = gvdata['mpi']
@@ -105,25 +101,14 @@ def format_h5_data(switches,data):
         x[ens]['alpha_S'] = data.get_node('/'+ens+'/alpha_s').read()
     return {'x':x, 'y':y, 'p':p}
 
-    """
-    ''' MOVE FV CORRECTION TO FIT CLASS in XPT LIB '''
-    if switches['ansatz']['FV']:
-        fv_params = dict()
-        fv_params['mjuL'] = mjuL
-        fv_params['mpiL'] = mpiL
-        fv_params['Lchi'] = Lchi
-        fv_mns_inv = xpt.fv_correction(switches,fv_params,priors)
-        #print('DEBUG FV:',fv_mns_inv)
-        y = y - fv_mns_inv
-    """
-
+''' put this function inside fit class and store fit as self.fit '''
 def fit_data(switches,xyp):
     Fitc = xpt.Fit(switches,xyp_init=xyp)
     x = Fitc.prune_x()
     y = Fitc.prune_data()
     p = Fitc.prune_priors()
-    fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=Fitc.fit_function)
-    return fit
+    fit = lsqfit.nonlinear_fit(udata=(x,y),prior=p,fcn=Fitc.fit_function)
+    return Fitc,fit
 
 def fkfpi_phys(x_phys,fit):
     # use metaSq = 4/3 mK**2 - 1/3 mpi**2
@@ -177,6 +162,53 @@ if __name__ == "__main__":
     data  = h5.open_file('FK_Fpi_data.h5','r')
     gv_data = format_h5_data(switches,data)
     data.close()
+
+    # do analysis
+    models = ['xpt_nlo','xpt-ratio_nlo','ma_nlo','ma-ratio_nlo']
+    models = ['ma-ratio_nnnlo']
+    fit_results = dict()
+    for model in models:
+        switches['ansatz']['model'] = model
+        print('EFT: ',model)
+        x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+        y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+        p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+        for key in priors:
+            p_e[key] = priors[key]
+        d_e = dict()
+        d_e['x'] = x_e
+        d_e['y'] = y_e
+        d_e['p'] = p_e
+        fit_e = fit_data(switches,d_e)
+        #print(fit_e[1].format(maxline=True))
+        fit_results[model] = fit_e
+
+        x_phys = dict()
+        x_phys['phys'] = {k:np.inf for k in ['mpiL','mkL']}
+        x_phys['phys']['alpha_S'] = 0.
+        y_phys = dict()
+        y_phys['phys'] = phys_p['FK'] / phys_p['Fpi']
+        p_phys = dict()
+        for k in ['s4','s4aS','s6','sc6','sd6','se6']:
+            p_phys[k] = 0.
+        Lchi_phys = phys_p['Lchi']
+        p_phys[('phys','p2')] = phys_p['mpi']**2 / Lchi_phys**2
+        p_phys[('phys','k2')] = phys_p['mk']**2  / Lchi_phys**2
+        p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
+        p_phys[('phys','a2')] = 0.
+        for k in fit_e[1].p:
+            if isinstance(k,str):
+                print(k,fit_e[1].p[k])
+        for k in ['L5','L4','c4','d4','e4']:
+            if k in fit_e[1].p:
+                p_phys[k] = fit_e[1].p[k]
+        fit_e[0].fv = False
+        fit_e[0].eft = 'xpt-ratio'
+        fit_e[0].order = 'nnnlo'
+        print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
+            %(fit_e[1].chi2,fit_e[1].dof,fit_e[1].Q,fit_e[1].logGBF))
+        print(fit_e[0].fit_function(x_phys,p_phys))
+
 
     if switches['nlo_fv_report']:
         models = ['ma_nlo','ma_nlo_FV','xpt_nlo','xpt_nlo_FV']
