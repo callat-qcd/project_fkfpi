@@ -1,8 +1,6 @@
 import gvar as gv
 import numpy as np
 
-flag_FKFpi = gv.gvar(1.1933, 0.0029)
-
 switches = dict()
 switches['ensembles'] = [
     'a15m400','a12m400','a09m400',
@@ -41,23 +39,24 @@ priors['s_6']   = gv.gvar(0.0, n3lo_width)
 priors['sk_6']  = gv.gvar(0.0, n3lo_width)
 priors['sp_6']  = gv.gvar(0.0, n3lo_width)
 
-phys_p = dict()
+phys_point = dict()
 # http://pdg.lbl.gov/2016/tables/rpp2016-tab-mesons-light.pdf
-phys_p['mpi'] = gv.gvar(134.8, 0.3) #FLAG 2017 (16)
-phys_p['mk']  = gv.gvar(494.2 , 0.3) #FLAG 2017 (16)
+phys_point['mpi'] = gv.gvar(134.8, 0.3) #FLAG 2017 (16)
+phys_point['mk']  = gv.gvar(494.2 , 0.3) #FLAG 2017 (16)
 
-#phys_p['mpi'] = gv.gvar(139,0.3)
-#phys_p['mk']  = gv.gvar(497,0.3)
+#phys_point['mpi'] = gv.gvar(139,0.3)
+#phys_point['mk']  = gv.gvar(497,0.3)
 
-phys_p['F0']  = gv.gvar(80,20) #FLAG use of F0 in SU(2) correction for FK/Fpi
-phys_p['meta'] = gv.gvar(547.862,0.017) #PDG
+phys_point['F0']  = gv.gvar(80,20) #FLAG use of F0 in SU(2) correction for FK/Fpi
+phys_point['meta'] = gv.gvar(547.862,0.017) #PDG
 # http://pdg.lbl.gov/2015/reviews/rpp2015-rev-pseudoscalar-meson-decay-cons.pdf
-phys_p['Fpi'] = gv.gvar(130.2/np.sqrt(2), 1.7/np.sqrt(2)) #PDG fpi+ eq(16)
-phys_p['FK']  = gv.gvar(155.6/np.sqrt(2), 0.4/np.sqrt(2)) #PDG fK++ eq(16)
+phys_point['Fpi'] = gv.gvar(130.2/np.sqrt(2), 1.7/np.sqrt(2)) #PDG fpi+ eq(16)
+phys_point['FK']  = gv.gvar(155.6/np.sqrt(2), 0.4/np.sqrt(2)) #PDG fK++ eq(16)
 if switches['scale'] == 'PK':
-    phys_p['Lchi'] = 4*np.pi*np.sqrt(phys_p['Fpi']*phys_p['FK'])
+    phys_point['Lchi'] = 4*np.pi*np.sqrt(phys_point['Fpi']*phys_point['FK'])
 elif switches['scale'] == 'PP':
-    phys_p['Lchi'] = 4*np.pi*phys_p['Fpi']
+    phys_point['Lchi'] = 4*np.pi*phys_point['Fpi']
 elif switches['scale'] == 'KK':
-    phys_p['Lchi'] = 4*np.pi*phys_p['FK']
-phys_p['aw0'] = 0
+    phys_point['Lchi'] = 4*np.pi*phys_point['FK']
+phys_point['aw0'] = 0
+phys_point['FKFPi_FLAG'] = gv.gvar(1.1933, 0.0029)

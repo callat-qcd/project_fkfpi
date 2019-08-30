@@ -14,6 +14,17 @@ class Fit(object):
         self.order    = self.switches['ansatz']['model'].split('_')[1]
         self.fv       = 'FV' in self.switches['ansatz']['model']
         self.alphaS   = 'alphaS' in self.switches['ansatz']['model']
+        self.logSq    = 'logSq' in self.switches['ansatz']['model']
+
+        if self.eft   == 'xpt':
+            self.fit_function = self.xpt_nlo
+        elif self.eft == 'xpt-ratio':
+            self.fit_function = self.xpt_ratio_nlo
+        elif self.eft == 'ma':
+            self.fit_function = self.ma_nlo
+        elif self.eft == 'ma-ratio':
+            self.fit_function = self.ma_ratio_nlo
+
         if self.fv:
             self.fv_I  = dict()
             self.fv_dI = dict()
@@ -192,6 +203,8 @@ class Fit(object):
             ct += (k2 - p2)    * p2 * lec['p_4'] # m^4
             if self.alphaS:
                 ct += (k2 - p2) * a2 * alphaS * lec['saS_4']
+            if self.logSq:
+                ct += 1./96 * (k2 - p2)* (17*k2 + 37*p2)*(np.log(np.sqrt(k2*p2)))**2
         if self.order in ['nnnlo']:
             ct += (k2 - p2)**2 * k2 * p2 * lec['kp_6']
             ct += (k2 - p2)**2 * k2      * lec['k_6']
@@ -275,62 +288,73 @@ class Fit(object):
 
         return r
 
-    def fit_function(self,x,p):
+    def xpt_nlo(self,x,p):
         r = dict()
         for e in x:
-
             x_par,lec = self.make_x_lec(x,p,e)
-            r[e] = self.counterterms(x_par,lec)
-
-            if self.eft == 'xpt':
-                r[e] += 1.
-                r[e] +=  self.FK_xpt_nlo(x_par,lec)
-                r[e] += -self.Fpi_xpt_nlo(x_par,lec)
-
-            elif self.eft == 'xpt-ratio':
-                num   = 1. + self.FK_xpt_nlo(x_par,lec)
-                den   = 1. + self.Fpi_xpt_nlo(x_par,lec)
-                r[e] += num / den
-
-            elif self.eft == 'ma':
-                r[e] += 1.
-                r[e] += self.FK_ma_nlo(x_par,lec)
-                r[e] += -self.Fpi_ma_nlo(x_par,lec)
-
-            elif self.eft == 'ma-ratio':
-                num   = 1. + self.FK_ma_nlo(x_par,lec)
-                den   = 1. + self.Fpi_ma_nlo(x_par,lec)
-                r[e] += num / den
-
-            elif self.eft == 'ma-longform':
-                ''' for debugging - a cross check expression '''
-                r[e] += 1.
-                r[e] += x_par['ju'] * np.log(x_par['ju'])
-                r[e] += 0.5 * x_par['ru'] * np.log(x_par['ru'])
-                # (+) kaon log terms
-                r[e] += -0.5 * x_par['ju'] * np.log(x_par['ju'])
-                r[e] += -1./4 * x_par['ru'] * np.log(x_par['ru'])
-                r[e] += -0.5*x_par['js'] * np.log(x_par['js'])
-                r[e] += -1./4 * x_par['rs'] * np.log(x_par['rs'])
-                r[e] += -x_par['dju2'] / 8
-                r[e] +=  x_par['dju2']**2 / 24 / (x_par['x2'] - x_par['p2'])
-                r[e] +=  x_par['drs2'] * (x_par['k2']-x_par['p2']) / 6 / (x_par['x2']-x_par['s2'])
-                r[e] += -x_par['dju2'] * x_par['drs2'] / 12 / (x_par['x2'] - x_par['s2'])
-                r[e] += np.log(x_par['p2'])/24 * (3*x_par['p2'] \
-                        - 3*x_par['dju2']*(x_par['x2']+x_par['p2'])/(x_par['x2']-x_par['p2']) \
-                        + x_par['dju2']**2 * x_par['x2']/(x_par['x2']-x_par['p2'])**2\
-                        -4*x_par['dju2']*x_par['drs2']*x_par['p2']/(x_par['x2']-x_par['p2'])/(x_par['s2']-x_par['p2'])\
-                        )
-                r[e] += -x_par['x2']/24 * np.log(x_par['x2'])*(9 \
-                        -6*x_par['dju2']/(x_par['x2']-x_par['p2']) \
-                        + x_par['dju2']**2/(x_par['x2']-x_par['p2'])**2\
-                        +x_par['drs2']*(4*(x_par['k2']-x_par['p2'])+6*(x_par['s2']-x_par['x2']))/(x_par['x2']- x_par['s2'])**2 \
-                        -2*x_par['dju2']*x_par['drs2']*(2*x_par['s2']-x_par['p2']-x_par['x2'])/(x_par['x2']-x_par['s2'])**2/(x_par['x2']-x_par['p2'])\
-                        )
-                r[e] += np.log(x_par['s2'])/12 * (3*x_par['s2'] \
-                        +x_par['drs2']*(3*x_par['s2']**2 + 2*(x_par['k2']-x_par['p2'])*x_par['x2'] -3*x_par['s2']*x_par['x2'])/(x_par['x2']-x_par['s2'])**2\
-                        -x_par['dju2']*x_par['drs2']*(2*x_par['s2']**2 - x_par['x2']*(x_par['s2']+x_par['p2']))/(x_par['x2']-x_par['s2'])**2 / (x_par['s2']-x_par['p2'])\
-                        )
+            r[e]  = self.counterterms(x_par,lec)
+            r[e] += 1.
+            r[e] +=  self.FK_xpt_nlo(x_par,lec)
+            r[e] += -self.Fpi_xpt_nlo(x_par,lec)
+        return r
+    def xpt_ratio_nlo(self,x,p):
+        r = dict()
+        for e in x:
+            x_par,lec = self.make_x_lec(x,p,e)
+            r[e]  = self.counterterms(x_par,lec)
+            num   = 1. + self.FK_xpt_nlo(x_par,lec)
+            den   = 1. + self.Fpi_xpt_nlo(x_par,lec)
+            r[e] += num / den
+        return r
+    def ma_nlo(self,x,p):
+        r = dict()
+        for e in x:
+            x_par,lec = self.make_x_lec(x,p,e)
+            r[e]  = self.counterterms(x_par,lec)
+            r[e] += 1.
+            r[e] += self.FK_ma_nlo(x_par,lec)
+            r[e] += -self.Fpi_ma_nlo(x_par,lec)
+        return r
+    def ma_ratio_nlo(self,x,p):
+        r = dict()
+        for e in x:
+            x_par,lec = self.make_x_lec(x,p,e)
+            r[e]  = self.counterterms(x_par,lec)
+            num   = 1. + self.FK_ma_nlo(x_par,lec)
+            den   = 1. + self.Fpi_ma_nlo(x_par,lec)
+            r[e] += num / den
+        return r
+    def ma_longform_nlo(self,x,p):
+        ''' for debugging - a cross check expression '''
+        r = dict()
+        for e in x:
+            r[e] += 1.
+            r[e] += x_par['ju'] * np.log(x_par['ju'])
+            r[e] += 0.5 * x_par['ru'] * np.log(x_par['ru'])
+            # (+) kaon log terms
+            r[e] += -0.5 * x_par['ju'] * np.log(x_par['ju'])
+            r[e] += -1./4 * x_par['ru'] * np.log(x_par['ru'])
+            r[e] += -0.5*x_par['js'] * np.log(x_par['js'])
+            r[e] += -1./4 * x_par['rs'] * np.log(x_par['rs'])
+            r[e] += -x_par['dju2'] / 8
+            r[e] +=  x_par['dju2']**2 / 24 / (x_par['x2'] - x_par['p2'])
+            r[e] +=  x_par['drs2'] * (x_par['k2']-x_par['p2']) / 6 / (x_par['x2']-x_par['s2'])
+            r[e] += -x_par['dju2'] * x_par['drs2'] / 12 / (x_par['x2'] - x_par['s2'])
+            r[e] += np.log(x_par['p2'])/24 * (3*x_par['p2'] \
+                    - 3*x_par['dju2']*(x_par['x2']+x_par['p2'])/(x_par['x2']-x_par['p2']) \
+                    + x_par['dju2']**2 * x_par['x2']/(x_par['x2']-x_par['p2'])**2\
+                    -4*x_par['dju2']*x_par['drs2']*x_par['p2']/(x_par['x2']-x_par['p2'])/(x_par['s2']-x_par['p2'])\
+                    )
+            r[e] += -x_par['x2']/24 * np.log(x_par['x2'])*(9 \
+                    -6*x_par['dju2']/(x_par['x2']-x_par['p2']) \
+                    + x_par['dju2']**2/(x_par['x2']-x_par['p2'])**2\
+                    +x_par['drs2']*(4*(x_par['k2']-x_par['p2'])+6*(x_par['s2']-x_par['x2']))/(x_par['x2']- x_par['s2'])**2 \
+                    -2*x_par['dju2']*x_par['drs2']*(2*x_par['s2']-x_par['p2']-x_par['x2'])/(x_par['x2']-x_par['s2'])**2/(x_par['x2']-x_par['p2'])\
+                    )
+            r[e] += np.log(x_par['s2'])/12 * (3*x_par['s2'] \
+                    +x_par['drs2']*(3*x_par['s2']**2 + 2*(x_par['k2']-x_par['p2'])*x_par['x2'] -3*x_par['s2']*x_par['x2'])/(x_par['x2']-x_par['s2'])**2\
+                    -x_par['dju2']*x_par['drs2']*(2*x_par['s2']**2 - x_par['x2']*(x_par['s2']+x_par['p2']))/(x_par['x2']-x_par['s2'])**2 / (x_par['s2']-x_par['p2'])\
+                    )
         return r
 
     def fit_data(self):
@@ -338,3 +362,45 @@ class Fit(object):
         y = self.prune_data()
         p = self.prune_priors()
         self.fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=self.fit_function)
+
+    def report_phys_point(self,phys_point):
+        # get copy of all self attributes
+        self_dict = self.__dict__.copy()
+        # set physical point
+        x_phys = dict()
+        x_phys['phys'] = {k:np.inf for k in ['mpiL','mkL']}
+        x_phys['phys']['alphaS'] = 0.
+
+        y_phys = dict()
+        y_phys['phys'] = phys_point['FK'] / phys_point['Fpi']
+        y_phys['FLAG'] = phys_point['FKFPi_FLAG']
+
+        p_phys = dict()
+        for k in ['s_4','saS_4','s_6','sk_6','sp_6']:
+            p_phys[k] = 0.
+        Lchi_phys = phys_point['Lchi']
+        p_phys[('phys','p2')] = phys_point['mpi']**2 / Lchi_phys**2
+        p_phys[('phys','k2')] = phys_point['mk']**2  / Lchi_phys**2
+        p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
+        p_phys[('phys','a2')] = 0.
+        for k in self.fit.p:
+            if isinstance(k,str):
+                print(k,self.fit.p[k])
+        for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6']:
+            if k in self.fit.p:
+                p_phys[k] = self.fit.p[k]
+        if 'ratio' in self.eft:
+            self.eft          = 'xpt-ratio'
+            self.fit_function = self.xpt_ratio_nlo
+        else:
+            self.eft          = 'xpt'
+            self.fit_function = self.xpt_nlo
+        self.fv = False
+
+        print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
+            %(self.fit.chi2/self.fit.dof,self.fit.dof,self.fit.Q,self.fit.logGBF))
+        print(self.fit_function(x_phys,p_phys),'\n')
+
+        # restore original self attributes
+        for key,val in self_dict.items():
+            setattr(self, key, val)

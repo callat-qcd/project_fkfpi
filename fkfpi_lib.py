@@ -146,8 +146,7 @@ if __name__ == "__main__":
     # Load input params
     switches   = ip.switches
     priors     = ip.priors
-    phys_p     = ip.phys_p
-    flag_FKFpi = ip.flag_FKFpi
+    phys_point = ip.phys_point
 
     # Load data
     data  = h5.open_file('FK_Fpi_data.h5','r')
@@ -158,9 +157,11 @@ if __name__ == "__main__":
     models = [
         'xpt_nnnlo_FV','xpt_nnnlo_FV_alphaS',
         'xpt_nnlo_FV','xpt_nnlo_FV_alphaS',
-        'ma_nnlo_FV_alphaS',
-        'xpt-ratio_nnlo_FV_alphaS']
-    models = ['xpt_nnnlo_FV','xpt_nnlo_FV_alphaS']
+        'ma_nnnlo_FV','ma_nnnlo_FV_alphaS',
+        'ma_nnlo_FV','ma_nnlo_FV_alphaS',
+        ]
+    models = ['ma_nnlo_FV_alphaS','xpt_nnlo_FV_alphaS_logSq']
+    #models = ['xpt_nnnlo_FV','xpt_nnlo_FV_alphaS','ma_nnlo_FV_alphaS']
     fit_results = dict()
     for model in models:
         switches['ansatz']['model'] = model
@@ -176,37 +177,13 @@ if __name__ == "__main__":
         d_e['p'] = p_e
         fit_e = xpt.Fit(switches,xyp_init=d_e)
         fit_e.fit_data()
+        fit_results[model] = fit_e
 
-        x_phys = dict()
-        x_phys['phys'] = {k:np.inf for k in ['mpiL','mkL']}
-        x_phys['phys']['alphaS'] = 0.
-        y_phys = dict()
-        y_phys['phys'] = phys_p['FK'] / phys_p['Fpi']
-        p_phys = dict()
-        for k in ['s_4','saS_4','s_6','sk_6','sp_6']:
-            p_phys[k] = 0.
-        Lchi_phys = phys_p['Lchi']
-        p_phys[('phys','p2')] = phys_p['mpi']**2 / Lchi_phys**2
-        p_phys[('phys','k2')] = phys_p['mk']**2  / Lchi_phys**2
-        p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
-        p_phys[('phys','a2')] = 0.
-        for k in fit_e.fit.p:
-            if isinstance(k,str):
-                print(k,fit_e.fit.p[k])
-        for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6']:
-            if k in fit_e.fit.p:
-                p_phys[k] = fit_e.fit.p[k]
-        fit_e.fv = False
-        if 'ratio' in model:
-            eft = 'xpt-ratio'
-        else:
-            eft = 'xpt'
-        order = model.split('_')[1]
-        fit_e.eft   = eft
-        fit_e.order = order
-        print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
-            %(fit_e.fit.chi2/fit_e.fit.dof,fit_e.fit.dof,fit_e.fit.Q,fit_e.fit.logGBF))
-        print(fit_e.fit_function(x_phys,p_phys),'\n')
+        fit_e.report_phys_point(phys_point)
+    for model in models:
+        L5_rho  = fit_results[model].fit.p['L5']
+        L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
+        print('%25s: L5(m_rho) = %s' %(model,L5_rho))
 
 
     if switches['nlo_fv_report']:
