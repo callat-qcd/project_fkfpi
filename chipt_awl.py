@@ -1,8 +1,10 @@
 import sys
 import scipy.special as spsp
 import numpy as np
+import matplotlib.pyplot as plt
 import gvar as gv
 import lsqfit
+
 
 class Fit(object):
     def __init__(self,switches,xyp_init):
@@ -328,6 +330,8 @@ class Fit(object):
         ''' for debugging - a cross check expression '''
         r = dict()
         for e in x:
+            x_par,lec = self.make_x_lec(x,p,e)
+            r[e]  = self.counterterms(x_par,lec)
             r[e] += 1.
             r[e] += x_par['ju'] * np.log(x_par['ju'])
             r[e] += 0.5 * x_par['ru'] * np.log(x_par['ru'])
@@ -400,6 +404,65 @@ class Fit(object):
         print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
             %(self.fit.chi2/self.fit.dof,self.fit.dof,self.fit.Q,self.fit.logGBF))
         print(self.fit_function(x_phys,p_phys),'\n')
+
+        # restore original self attributes
+        for key,val in self_dict.items():
+            setattr(self, key, val)
+
+    def vs_epi(self,epi_range):
+        # get copy of all self attributes
+        self_dict = self.__dict__.copy()
+        # switch to continuum fit func
+        if 'ratio' in self.eft:
+            self.eft          = 'xpt-ratio'
+            self.fit_function = self.xpt_ratio_nlo
+        else:
+            self.eft          = 'xpt'
+            self.fit_function = self.xpt_nlo
+        self.fv = False
+        # set x,y,p
+        x = dict()
+        y_phys = dict()
+        p = dict()
+        for k in ['s_4','saS_4','s_6','sk_6','sp_6']:
+            p[k] = 0.
+        for k in self.fit.p:
+            if isinstance(k,str):
+                print(k,self.fit.p[k])
+        for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6']:
+            if k in self.fit.p:
+                p[k] = self.fit.p[k]
+
+        Lchi = epi_range['Lchi']
+        x_plot = []
+        y_plot = []
+        for mpi in epi_range['mpi']:
+            x[mpi] = {k:np.inf for k in ['mpiL','mkL']}
+            x[mpi]['alphaS'] = 0.
+
+            p[(mpi,'p2')] = mpi**2 / Lchi**2
+            p[(mpi,'k2')] = epi_range['mk']**2  / Lchi**2
+            p[(mpi,'e2')] = 4./3*p[(mpi,'k2')] - 1./3 * p[(mpi,'p2')]
+            p[(mpi,'a2')] = 0.
+            x_plot.append(p[(mpi,'p2')].mean)
+            y_plot.append(self.fit_function(x,p)[mpi])
+        x_plot = np.array(x_plot)
+        y  = np.array([k.mean for k in y_plot])
+        dy = np.array([k.sdev for k in y_plot])
+        plt.ion()
+        fig = plt.figure('FKFpi_vs_epi')
+        ax  = plt.axes([.12, .12, .85, .85])
+        ax.fill_between(x_plot, y-dy, y+dy,color='m',alpha=0.3)
+        ax.set_xlabel(r'$\epsilon_\pi^2$',fontsize=16)
+        ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
+        ax.set_xlim([0,.1])
+        epi_phys =  epi_range['mpi_phys']**2 / Lchi**2
+        ax.axvspan(epi_phys.mean -epi_phys.sdev, epi_phys.mean +epi_phys.sdev,
+            alpha=0.4, color='#a6aaa9')
+        ax.axvline(epi_phys.mean,linestyle='--',color='#a6aaa9')
+        plt.ioff()
+        plt.show()
+
 
         # restore original self attributes
         for key,val in self_dict.items():

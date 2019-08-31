@@ -142,6 +142,7 @@ if __name__ == "__main__":
     print("numpy  version:", np.__version__)
     print("gvar   version:", gv.__version__)
     print("lsqfit version:", lsqfit.__version__)
+    print('')
 
     # Load input params
     switches   = ip.switches
@@ -160,7 +161,7 @@ if __name__ == "__main__":
         'ma_nnnlo_FV','ma_nnnlo_FV_alphaS',
         'ma_nnlo_FV','ma_nnlo_FV_alphaS',
         ]
-    models = ['ma_nnlo_FV_alphaS','xpt_nnlo_FV_alphaS_logSq']
+    models = ['xpt_nnlo_FV_alphaS']
     #models = ['xpt_nnnlo_FV','xpt_nnlo_FV_alphaS','ma_nnlo_FV_alphaS']
     fit_results = dict()
     for model in models:
@@ -180,10 +181,20 @@ if __name__ == "__main__":
         fit_results[model] = fit_e
 
         fit_e.report_phys_point(phys_point)
+
+        if model == 'xpt_nnlo_FV_alphaS':
+            epi_range = dict()
+            epi_range['Lchi'] = phys_point['Lchi']
+            epi_range['mk']   = phys_point['mk']
+            epi_range['mpi']  = np.arange(1,421,1)
+            epi_range['mpi_phys'] = phys_point['mpi']
+            fit_e.vs_epi(epi_range)
+
     for model in models:
         L5_rho  = fit_results[model].fit.p['L5']
         L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
         print('%25s: L5(m_rho) = %s' %(model,L5_rho))
+
 
 
     if switches['nlo_fv_report']:
