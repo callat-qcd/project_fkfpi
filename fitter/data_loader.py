@@ -6,6 +6,7 @@ import time
 import os
 import h5py
 from matplotlib.backends.backend_pdf import PdfPages
+from collections import OrderedDict
 
 class data_loader(object):
 
@@ -50,8 +51,8 @@ class data_loader(object):
         #cols = np.intersect1d(cols, df_fit.columns.values)
 
         fit_types = df_fit['name'].values
-        output_dict = {}
-        for name in fit_types:
+        output_dict = OrderedDict()
+        for name in sorted(fit_types):
             index = np.argwhere(df_fit['name'].values == name)
 
             output_dict[name]= {key: np.asscalar(df_fit[key].values[index]) for key in cols}
