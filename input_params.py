@@ -7,27 +7,28 @@ switches['ensembles'] = [
     'a15m350','a12m350','a09m350',
     'a15m310','a12m310','a09m310',
     'a15m220','a12m220S','a12m220','a12m220L','a09m220',
-    'a12m130','a15m130']
+    'a12m130','a15m130','a15m135XL']
 switches['ensembles_fit'] = [
     'a15m400','a12m400','a09m400',
     'a15m350','a12m350','a09m350',
     'a15m310','a12m310','a09m310',
     'a15m220','a12m220S','a12m220','a12m220L','a09m220',
-    'a12m130']
+    'a12m130','a15m135XL']
 switches['ansatz'] = dict()
 switches['ansatz']['model'] = 'xpt_nlo_FV' # Type of fit: 'xpt' or 'MA'
 switches['ansatz']['a2dm']  = 'individual' # avg or individual
 switches['scale']           = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
+switches['do_analysis']     = False
 switches['debug']           = False
 switches['nlo_report']      = False # Do pure NLO fits for L5 test?
-switches['nlo_fv_report']   = False # Do pure NLO fits for L5 with FV test?
+switches['nlo_fv_report']   = True # Do pure NLO fits for L5 with FV test?
 
 priors = dict()
 priors['L5']   = gv.gvar(1e-3, 5.e-3)
 #priors['L5']   = gv.gvar(0,0.005)
 priors['L4']   = gv.gvar(0,0.005)
 nnlo_wdith = 2.
-n3lo_width = 1
+n3lo_width = 1.
 priors['s_4']   = gv.gvar(0.0, nnlo_wdith)
 priors['k_4']   = gv.gvar(0.0, nnlo_wdith)
 priors['p_4']   = gv.gvar(0.0, nnlo_wdith)

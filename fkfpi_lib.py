@@ -8,43 +8,45 @@ import matplotlib.pyplot as plt
 import chipt_awl as xpt
 
 ens_long = {
-    'a15m400' :'l1648f211b580m0217m065m838',
-    'a15m350' :'l1648f211b580m0166m065m838',
-    'a15m310' :'l1648f211b580m013m065m838',
-    'a15m220' :'l2448f211b580m0064m0640m828',
-    'a15m130' :'l3248f211b580m00235m0647m831',
-    'a12m400' :'l2464f211b600m0170m0509m635',
-    'a12m350' :'l2464f211b600m0130m0509m635',
-    'a12m310' :'l2464f211b600m0102m0509m635',
-    'a12m220' :'l3264f211b600m00507m0507m628',
-    'a12m220S':'l2464f211b600m00507m0507m628',
-    'a12m220L':'l4064f211b600m00507m0507m628',
-    'a12m130' :'l4864f211b600m00184m0507m628',
-    'a09m400' :'l3264f211b630m0124m037m440',
-    'a09m350' :'l3264f211b630m00945m037m440',
-    'a09m310' :'l3296f211b630m0074m037m440',
-    'a09m220' :'l4896f211b630m00363m0363m430',
+    'a15m400'  :'l1648f211b580m0217m065m838',
+    'a15m350'  :'l1648f211b580m0166m065m838',
+    'a15m310'  :'l1648f211b580m013m065m838',
+    'a15m220'  :'l2448f211b580m0064m0640m828',
+    'a15m130'  :'l3248f211b580m00235m0647m831',
+    'a15m135XL':'l4864f211b580m002426m06730m8447',
+    'a12m400'  :'l2464f211b600m0170m0509m635',
+    'a12m350'  :'l2464f211b600m0130m0509m635',
+    'a12m310'  :'l2464f211b600m0102m0509m635',
+    'a12m220'  :'l3264f211b600m00507m0507m628',
+    'a12m220S' :'l2464f211b600m00507m0507m628',
+    'a12m220L' :'l4064f211b600m00507m0507m628',
+    'a12m130'  :'l4864f211b600m00184m0507m628',
+    'a09m400'  :'l3264f211b630m0124m037m440',
+    'a09m350'  :'l3264f211b630m00945m037m440',
+    'a09m310'  :'l3296f211b630m0074m037m440',
+    'a09m220'  :'l4896f211b630m00363m0363m430',
 }
 r_a = {
-    'a15m400' :gv.gvar(2.059,0.023),
-    'a15m350' :gv.gvar(2.059,0.023),
-    'a15m310' :gv.gvar(2.059,0.023),
-    'a15m220' :gv.gvar(2.073,0.013),
-    'a15m130' :gv.gvar(2.089,0.008),
-    'a12m400' :gv.gvar(2.575,0.017),
-    'a12m350' :gv.gvar(2.575,0.017),
-    'a12m310' :gv.gvar(2.575,0.017),
-    'a12m220S':gv.gvar(2.585,0.019),
-    'a12m220' :gv.gvar(2.626,0.013),
-    'a12m220L':gv.gvar(2.614,0.009),
-    'a12m130' :gv.gvar(2.608,0.008),
-    'a09m400' :gv.gvar(3.499,0.024),
-    'a09m350' :gv.gvar(3.499,0.024),
-    'a09m310' :gv.gvar(3.499,0.024),
-    'a09m220' :gv.gvar(3.566,0.014)
+    'a15m400'  :gv.gvar(2.059,0.023),
+    'a15m350'  :gv.gvar(2.059,0.023),
+    'a15m310'  :gv.gvar(2.059,0.023),
+    'a15m220'  :gv.gvar(2.073,0.013),
+    'a15m130'  :gv.gvar(2.089,0.008),
+    'a15m135XL':gv.gvar(2.089,0.008),
+    'a12m400'  :gv.gvar(2.575,0.017),
+    'a12m350'  :gv.gvar(2.575,0.017),
+    'a12m310'  :gv.gvar(2.575,0.017),
+    'a12m220S' :gv.gvar(2.585,0.019),
+    'a12m220'  :gv.gvar(2.626,0.013),
+    'a12m220L' :gv.gvar(2.614,0.009),
+    'a12m130'  :gv.gvar(2.608,0.008),
+    'a09m400'  :gv.gvar(3.499,0.024),
+    'a09m350'  :gv.gvar(3.499,0.024),
+    'a09m310'  :gv.gvar(3.499,0.024),
+    'a09m220'  :gv.gvar(3.566,0.014)
     }
 L_ens = {
-    'a15m400':16,'a15m350':16,'a15m310':16,'a15m220':24,'a15m130':32,
+    'a15m400':16,'a15m350':16,'a15m310':16,'a15m220':24,'a15m130':32,'a15m135XL':48,
     'a12m400':24,'a12m350':24,'a12m310':24,'a12m220':32,'a12m220S':24,'a12m220L':40,'a12m130':48,
     'a09m400':32,'a09m350':32,'a09m310':32,'a09m220':48,}
 
@@ -60,7 +62,7 @@ def format_h5_data(switches,data):
         for m in ['mpi','mk','mss','mju','mjs','mrs','mru']:
             data_dict[m] = data.get_node('/'+ens+'/'+m).read()
             #print('  %s = %.5f +- %.5f' %(m,data_dict[m].mean(),data_dict[m].std()))
-        for f in ['FK','Fpi','Fss']:
+        for f in ['FK','Fpi']:
             data_dict[f] = data.get_node('/'+ens+'/'+f).read()
         if switches['debug']:
             fkfpi = data_dict['FK']/data_dict['Fpi']
@@ -154,54 +156,52 @@ if __name__ == "__main__":
     gv_data = format_h5_data(switches,data)
     data.close()
 
-    # do analysis
-    models = [
-        'xpt_nnnlo_FV','xpt_nnnlo_FV_alphaS',
-        'xpt_nnlo_FV','xpt_nnlo_FV_alphaS',
-        'ma_nnnlo_FV','ma_nnnlo_FV_alphaS',
-        'ma_nnlo_FV','ma_nnlo_FV_alphaS',
-        ]
-    models = ['xpt_nnlo_FV_alphaS']
-    #models = ['xpt_nnnlo_FV','xpt_nnlo_FV_alphaS','ma_nnlo_FV_alphaS']
-    fit_results = dict()
-    for model in models:
-        switches['ansatz']['model'] = model
-        print('EFT: ',model)
-        x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
-        y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
-        p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
-        for key in priors:
-            p_e[key] = priors[key]
-        d_e = dict()
-        d_e['x'] = x_e
-        d_e['y'] = y_e
-        d_e['p'] = p_e
-        fit_e = xpt.Fit(switches,xyp_init=d_e)
-        fit_e.fit_data()
-        fit_results[model] = fit_e
+    if switches['do_analysis']:
+        # do analysis
+        models = [
+            'xpt_nnnlo_FV','xpt_nnnlo_FV_alphaS',
+            'xpt_nnlo_FV','xpt_nnlo_FV_alphaS',
+            'ma_nnnlo_FV','ma_nnnlo_FV_alphaS',
+            'ma_nnlo_FV','ma_nnlo_FV_alphaS',
+            ]
+        models = ['xpt_nnlo_FV_alphaS']
+        #models = ['xpt_nnnlo_FV','xpt_nnlo_FV_alphaS','ma_nnlo_FV_alphaS']
+        fit_results = dict()
+        for model in models:
+            switches['ansatz']['model'] = model
+            print('EFT: ',model)
+            x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+            y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+            p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+            for key in priors:
+                p_e[key] = priors[key]
+            d_e = dict()
+            d_e['x'] = x_e
+            d_e['y'] = y_e
+            d_e['p'] = p_e
+            fit_e = xpt.Fit(switches,xyp_init=d_e)
+            fit_e.fit_data()
+            fit_results[model] = fit_e
 
-        fit_e.report_phys_point(phys_point)
+            fit_e.report_phys_point(phys_point)
 
-        if model == 'xpt_nnlo_FV_alphaS':
-            epi_range = dict()
-            epi_range['Lchi'] = phys_point['Lchi']
-            epi_range['mk']   = phys_point['mk']
-            epi_range['mpi']  = np.arange(1,421,1)
-            epi_range['mpi_phys'] = phys_point['mpi']
-            fit_e.vs_epi(epi_range)
+            if model == 'xpt_nnlo_FV_alphaS':
+                epi_range = dict()
+                epi_range['Lchi'] = phys_point['Lchi']
+                epi_range['mk']   = phys_point['mk']
+                epi_range['mpi']  = np.arange(1,401,1)
+                epi_range['mpi_phys'] = phys_point['mpi']
+                fit_e.vs_epi(epi_range)
 
-    for model in models:
-        L5_rho  = fit_results[model].fit.p['L5']
-        L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
-        print('%25s: L5(m_rho) = %s' %(model,L5_rho))
+        for model in models:
+            L5_rho  = fit_results[model].fit.p['L5']
+            L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
+            print('%25s: L5(m_rho) = %s' %(model,L5_rho))
 
 
 
     if switches['nlo_fv_report']:
         models = ['ma_nlo','ma_nlo_FV','xpt_nlo','xpt_nlo_FV']
-        mod = {
-            'ma_nlo':'ma_nlo',  'ma_nlo_FV':'ma_nlo',
-            'xpt_nlo':'xpt_nlo','xpt_nlo_FV':'xpt_nlo'}
         latex = {
             'ma_nlo':'ma nlo',   'ma_nlo_FV':'ma nlo w/FV',
             'xpt_nlo':'xpt nlo', 'xpt_nlo_FV':'xpt nlo w/FV'}
@@ -213,8 +213,8 @@ if __name__ == "__main__":
             'xpt_nlo':'m', 'xpt_nlo_FV':'g'}
         fit_results = dict()
         for model in models:
-            switches['ansatz']['model'] = mod[model]
-            print('EFT: ',mod[model])
+            switches['ansatz']['model'] = model
+            print('EFT: ',model)
             model_result = dict()
             for e in switches['ensembles']:
                 switches['ensembles_fit'] = [e]
@@ -231,12 +231,13 @@ if __name__ == "__main__":
                 d_e['x'] = x_e
                 d_e['y'] = y_e
                 d_e['p'] = p_e
-                fit_e = fit_data(switches,d_e)
+                fit_e = xpt.Fit(switches,xyp_init=d_e)
+                fit_e.fit_data()
                 model_result[e] = fit_e
             fit_results[model] = model_result
         plt.ion()
         fig = plt.figure('nlo_report_FV')
-        ax  = plt.axes([.12, .12, .85, .85])
+        ax  = plt.axes([.13, .13, .84, .84])
 
         if len(models) == 2:
             print("%8s & %13s & %13s & \\\\" \
@@ -248,7 +249,7 @@ if __name__ == "__main__":
         for i_e,e in enumerate(switches['ensembles']):
             s = "%8s" %e
             for model in models:
-                s += " & %13s" %str(fit_results[model][e].p['L5'])
+                s += " & %13s" %str(fit_results[model][e].fit.p['L5'])
             s += "\\\\"
             print(s)
 
@@ -258,20 +259,19 @@ if __name__ == "__main__":
                 else:
                     label=''
                 y = len(switches['ensembles']) - i_e + 0.1*i_m
-                ax.errorbar(x=fit_results[model][e].p['L5'].mean,y=y,
-                    xerr=fit_results[model][e].p['L5'].sdev,linestyle='None',
+                ax.errorbar(x=fit_results[model][e].fit.p['L5'].mean,y=y,
+                    xerr=fit_results[model][e].fit.p['L5'].sdev,linestyle='None',
                     marker=marker[model],mfc='None',color=color[model],label=label)
         plt.yticks(np.arange(len(switches['ensembles']),0,-1),tuple(switches['ensembles']))
         ax.set_xlabel(r'$L_5$',fontsize=16)
         ax.legend(loc=1,fontsize=16)
-        ax.set_xlim(-0.0001,0.001)
+        ax.set_xlim(-0.0002,0.001)
         plt.savefig('nlo_report_FV.pdf',transparent=True)
         plt.ioff()
         plt.show()
 
 
     if switches['nlo_report']:
-        models = ['ma_nlo','ma-ratio_nlo','xpt_nlo','xpt-ratio_nlo']
         models = ['ma_nlo','xpt_nlo']
         latex = {'ma_nlo':'ma nlo', 'ma-ratio_nlo':'ma-r nlo',
             'xpt_nlo':'xpt nlo', 'xpt-ratio_nlo':'xpt-r nlo'}
@@ -299,14 +299,15 @@ if __name__ == "__main__":
                 d_e['p'] = p_e
                 #print('fit_e')
                 #print(d_e['x'])
-                fit_e = fit_data(switches,d_e)
+                fit_e = xpt.Fit(switches,xyp_init=d_e)
+                fit_e.fit_data()
                 #print(fit_e.format(maxline=True))
                 model_result[e] = fit_e
             fit_results[model] = model_result
 
         plt.ion()
         fig = plt.figure('nlo_report')
-        ax  = plt.axes([.12, .12, .85, .85])
+        ax  = plt.axes([.13, .13, .84, .84])
 
         if len(models) == 2:
             print("%8s & %13s & %13s & \\\\" \
@@ -318,7 +319,7 @@ if __name__ == "__main__":
         for i_e,e in enumerate(switches['ensembles']):
             s = "%8s" %e
             for model in models:
-                s += " & %13s" %str(fit_results[model][e].p['L5'])
+                s += " & %13s" %str(fit_results[model][e].fit.p['L5'])
             s += "\\\\"
             print(s)
 
@@ -328,14 +329,14 @@ if __name__ == "__main__":
                 else:
                     label=''
                 y = len(fit_results['xpt_nlo']) - i_e + 0.1*i_m
-                ax.errorbar(x=fit_results[model][e].p['L5'].mean,y=y,
-                    xerr=fit_results[model][e].p['L5'].sdev,linestyle='None',
+                ax.errorbar(x=fit_results[model][e].fit.p['L5'].mean,y=y,
+                    xerr=fit_results[model][e].fit.p['L5'].sdev,linestyle='None',
                     marker=marker[model],mfc='None',color=color[model],label=label)
         plt.yticks(np.arange(len(switches['ensembles']),0,-1),tuple(switches['ensembles']))
         ax.set_xlabel(r'$L_5$',fontsize=16)
         ax.legend(loc=1,fontsize=16)
         if len(models) == 2:
-            ax.set_xlim(-0.0001,0.0008)
+            ax.set_xlim(-0.0002,0.0008)
         else:
             ax.set_xlim(-0.0015,0.004)
         plt.savefig('nlo_report.pdf',transparent=True)
