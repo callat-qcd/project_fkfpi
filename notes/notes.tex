@@ -369,7 +369,7 @@ Barring some good physical argument for the expected value of the priors, we use
 While this procedure potentially allows all the NNLO and NNNLO LECs to contribute to the fits, it does lead to some pretty absurd results when taken at face value; eg, setting \texttt{p[`A\_aa'] = 0(100000)}, as one would do as described above, results in a fit of $A_{a, a} = -4926 (11908)$. Fortunately, the \texttt{logGBF} of these fits are correspondingly penalized.
 
 \subsection{Comparison of results for taylor expanded NLO models}
-As a first test of our fits, André and I have performed the \texttt{ma-taylor} \texttt{xpt-taylor} fits at NLO on each ensemble, where there is only one parameter that needs to be determined ($L_5$). See fig \ref{fig:L5-comparison}.
+As a first test of our fits, André and I performed the \texttt{ma-taylor} and \texttt{xpt-taylor} fits at NLO on each ensemble, where there is only one parameter that needs to be determined ($L_5$). See fig \ref{fig:L5-comparison}.
 
 \begin{figure}
 	\begin{subfigure}[t]{0.45\textwidth}
@@ -383,6 +383,22 @@ As a first test of our fits, André and I have performed the \texttt{ma-taylor} 
 	\label{fig:L5-comparison}
 \end{figure}
 
+\subsection{Effect of NNLO LECs on fit convergence}
+We compare the effect of adding each NNLO LEC to the fit as well as the effect of chaining the fits. The priors for the NNLO LECs were set in accordance to the method described earlier in these notes, unless the figure corresponds to not chaining the fits, in which case that step is skipped. 
+
+\foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
+{
+	\begin{figure}[H]
+		\begin{subfigure}[t]{0.45\textwidth}
+			\includegraphics[width=\textwidth]{"./../tmp/exclude_lecs/\model__chained-True__exclude-n2lo".pdf}
+		\end{subfigure}
+		~
+		\begin{subfigure}[t]{0.45\textwidth}
+			\includegraphics[width=\textwidth]{"./../tmp/exclude_lecs/\model__chained-False__exclude-n2lo".pdf}
+		\end{subfigure}
+	\caption{Effect of individually including NNLO LECs for model \texttt{\model}. The topmost (non-FLAG) result is equivalent to the NLO fit; the bottommost is equivalent to the NNLO fit. See table \ref{\model-prior} for prior.}
+	\end{figure}
+}
 
 \subsection{Shifting lattice data to physical point}
 Notice that the fit of $F_K/F_\pi$ depends on multiple input parameters: $\epsilon^2_\pi$, $w_0$, $a$, etc; that is, we are fitting a many-dimensional surface, so in order to plot $F_k/F_\pi$ vs some parameter, we must carefully take a slice of that surface. In our case, we fit $F_K / F_\pi$ at the physical point with the exception of some input parameters, which we allow to vary.  
@@ -416,7 +432,7 @@ Here we present the results for each of the fits.
 \end{figure}
 
 \begin{figure}
-	\includegraphics[width=0.9\textwidth]{./../tmp/delta_su2_comparison.pdf}
+	\includegraphics[width=0.9\textwidth]{./../tmp/delta-su2_comparison.pdf}
 	\caption{Extrapolations of $\delta_{\text{SU(2)}}$ to the physical point for the various models.}
 \end{figure}
 
@@ -441,6 +457,7 @@ Here we present the results for each of the fits.
 	\expandafter\expandafter\expandafter
 }
 
+% Table for fit results
 \begin{table}
 \begin{center}
 	\sisetup{round-mode=places,
@@ -459,6 +476,7 @@ Here we present the results for each of the fits.
 \caption{Results of models and statistics}
 \end{table}
 
+% Table for LEC results
 \begin{table}
 	\begin{center}
 		\sisetup{round-mode=places,
@@ -477,7 +495,28 @@ Here we present the results for each of the fits.
 	\caption{Determined LECs}
 \end{table}
 
-% Figures
+% Tables for priors
+\begin{table}
+\foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
+{
+	\begin{minipage}{0.20\textwidth}
+		\begin{tabular}{l|l}
+			\textbf{LEC} & \textbf{Value}
+			\DTLloaddb[noheader,keys={lec,value},headers={lec,value},omitlines=1]{\model-prior-db}{"./../priors/\model".csv}
+			\DTLforeach*{\model-prior-db}{\lec=lec, \value=value}{%
+				\DTLiffirstrow{\\\hline\\}{\\}%
+				\texttt{p[`\expUScore{\lec}']} & \value
+			}%
+		\end{tabular}
+		\caption{\texttt{\model}}
+		\label{\model-prior}
+	\end{minipage}
+	\hspace*{-0.01\textwidth}
+}
+\end{table}
+
+
+% Plot fits vs eps2_pi
 \foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
 {
 	\subsection{\tt \model}
@@ -485,7 +524,7 @@ Here we present the results for each of the fits.
 	{
 		\begin{figure}[H]
 			\caption{\model (\order)}
-			\includegraphics[width=\textwidth, page=3]{"./../tmp/\model"_"\order".pdf}
+			\includegraphics[width=\textwidth, page=3]{"./../tmp/fits/\model"_"\order".pdf}
 		\end{figure}
 	}
 }
