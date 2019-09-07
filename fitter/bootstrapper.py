@@ -13,7 +13,7 @@ from fitter import fitter
 class bootstrapper(object):
 
     def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
-                 order=None, fit_type=None, F2=None, chain_fits=None):
+                 order=None, fit_type=None, F2=None, chain_fits=None, use_boot0=None):
 
         w0 = gv.gvar('0.175(10)') # Still needs to be determined, but something like this
         self.w0 = w0
@@ -27,6 +27,8 @@ class bootstrapper(object):
 
         if chain_fits is None:
             chain_fits = True
+        if use_boot0 is None:
+            use_boot0 = True
 
         if bs_N is None or bs_N==0:
             bs_N = len(fit_data[fit_data.keys()[0]]['mpi'])
@@ -53,7 +55,7 @@ class bootstrapper(object):
                 # nnnlo terms
                 'A_aa' : '0(1)', #'0(100000)',
                 'A_ak' : '0(1)', #'0(1000)',
-                'A_ap' : '0(1))',#'0(10000)',
+                'A_ap' : '0(1)',#'0(10000)',
                 'A_kk' : '0(1)', #'0(10)',
                 'A_kp' : '0(1)', #'0(100)',
                 'A_pp' : '0(1)', #'0(1000)',
@@ -71,9 +73,11 @@ class bootstrapper(object):
             plot_data[abbr] = {}
             for data_parameter in fit_data[abbr].keys():
                 if data_parameter in ['FK', 'Fpi', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs']:
-                    means = fit_data[abbr][data_parameter][:bs_N]
+                    if bs_N == 1 and use_boot0 == False:
+                        means = [np.mean(fit_data[abbr][data_parameter])]
+                    else:
+                        means = fit_data[abbr][data_parameter][:bs_N]
                     unc = np.std(fit_data[abbr][data_parameter])
-                    #print abbr, data_parameter, means, unc
                     data[abbr][data_parameter] = gv.gvar(means, np.repeat(unc, len(means)))
                     plot_data[abbr][data_parameter] = fit_data[abbr][data_parameter][:plot_bs_N]
                 elif data_parameter in ['a2DI']:
@@ -82,8 +86,6 @@ class bootstrapper(object):
                     plot_data[abbr][data_parameter] = to_gvar(fit_data[abbr][data_parameter])
                 elif data_parameter in ['aw0']: # this is a/w0
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
-                    #data[abbr]['w0'] = w0 #np.repeat(w0, bs_N)
-                    #data[abbr]['a'] = to_gvar(fit_data[abbr]['aw0'])/w0 #np.repeat(to_gvar(fit_data[abbr][data_parameter])/w0, bs_N)
                     data[abbr]['a/w0'] = to_gvar(fit_data[abbr]['aw0'])
                     plot_data[abbr]['a/w0'] = to_gvar(fit_data[abbr]['aw0'])
 
@@ -106,24 +108,28 @@ class bootstrapper(object):
         # #'FKfpi', 'FpiFpi', 'FKFK'
         for abbr in abbrs:
             if F2 == 'FKFpi':
-                means_data = (4 *np.pi)**2 *fit_data[abbr]['FK'][:bs_N] *fit_data[abbr]['Fpi'][:bs_N]
+                if bs_N == 1 and use_boot0 == False:
+                    means_data = [(4 *np.pi)**2 *np.mean(fit_data[abbr]['FK']) *np.mean(fit_data[abbr]['Fpi'])]
+                else:
+                    means_data = (4 *np.pi)**2 *fit_data[abbr]['FK'][:bs_N] *fit_data[abbr]['Fpi'][:bs_N]
                 means_plot = (4 *np.pi)**2 *fit_data[abbr]['FK'][:bs_N] *fit_data[abbr]['Fpi'][:plot_bs_N]
                 unc = np.std((4 *np.pi)**2 *fit_data[abbr]['FK'] *fit_data[abbr]['Fpi'])
             elif F2 == 'FpiFpi':
-                means_data = (4 *np.pi *fit_data[abbr]['Fpi'][:bs_N])**2
+                if bs_N == 1 and use_boot0 == False:
+                    means_data = [(4 *np.pi *np.mean(fit_data[abbr]['Fpi']))**2]
+                else:
+                    means_data = (4 *np.pi *fit_data[abbr]['Fpi'][:bs_N])**2
                 means_plot = (4 *np.pi *fit_data[abbr]['Fpi'][:plot_bs_N])**2
                 unc = np.std((4 *np.pi *fit_data[abbr]['Fpi'])**2)
             elif F2 == 'FKFK':
-                means_data = (4 *np.pi *fit_data[abbr]['FK'][:bs_N])**2
+                if bs_N == 1 and use_boot0 == False:
+                    means_data = [(4 *np.pi *np.mean(fit_data[abbr]['FK']))**2]
+                else:
+                    means_data = (4 *np.pi *fit_data[abbr]['FK'][:bs_N])**2
                 means_plot = (4 *np.pi *fit_data[abbr]['FK'][:plot_bs_N])**2
                 unc = np.std((4 *np.pi *fit_data[abbr]['FK'])**2)
             data[abbr]['lam2_chi'] = gv.gvar(means_data, np.repeat(unc, len(means_data)))
             plot_data[abbr]['lam2_chi'] = means_plot
-
-            #hbar_c = 197.327
-            #a = data[abbr]['a/w0'] *w0
-            #data[abbr]['lam2_chi'] = self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2
-            #plot_data[abbr]['lam2_chi'] = self.get_phys_point_data('lam2_chi') *(a /hbar_c)**2\
 
         self.bs_N = bs_N
         self.plot_bs_N = plot_bs_N
