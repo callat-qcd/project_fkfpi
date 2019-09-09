@@ -88,22 +88,26 @@ class bootstrapper(object):
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
                     data[abbr]['a/w0'] = to_gvar(fit_data[abbr]['aw0'])
                     plot_data[abbr]['a/w0'] = to_gvar(fit_data[abbr]['aw0'])
+                elif data_parameter in ['L']:
+                    length = fit_data[abbr][data_parameter]
+                    data[abbr]['L'] = gv.gvar(length, length/1000000.0)
+                    plot_data[abbr]['L'] = gv.gvar(length, length/1000000.0)
 
             # Add Lengths
-            if abbr in ['a15m350', 'a15m310', 'a15m400']:
-                length = 16
-            elif abbr in ['a12m220S', 'a12m400', 'a15m220', 'a12m350', 'a12m310']:
-                length = 24
-            elif abbr in ['a09m310', 'a09m350', 'a09m400', 'a12m220', 'a15m130']:
-                length = 32
-            elif abbr in ['a12m220L']:
-                length = 40
-            elif abbr in ['a09m220', 'a12m130', 'a15m135XL']:
-                length = 48
-            else:
-                length = None
-            data[abbr]['L'] = gv.gvar(length, length/1000000.0)
-            plot_data[abbr]['L'] = gv.gvar(length, length/1000000.0)
+            #if abbr in ['a15m350', 'a15m310', 'a15m400']:
+            #    length = 16
+            #elif abbr in ['a12m220S', 'a12m400', 'a15m220', 'a12m350', 'a12m310']:
+            #    length = 24
+            #elif abbr in ['a09m310', 'a09m350', 'a09m400', 'a12m220', 'a15m130']:
+            #    length = 32
+            #elif abbr in ['a12m220L']:
+            #    length = 40
+            #elif abbr in ['a09m220', 'a12m130', 'a15m135XL']:
+            #    length = 48
+            #else:
+            #    length = None
+            #data[abbr]['L'] = gv.gvar(length, length/1000000.0)
+            #plot_data[abbr]['L'] = gv.gvar(length, length/1000000.0)
 
         # #'FKfpi', 'FpiFpi', 'FKFK'
         for abbr in abbrs:

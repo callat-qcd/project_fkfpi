@@ -55,27 +55,35 @@ class fitter(object):
         y_data = self._make_y_data()
         prior = self._make_prior()
 
-        for model in models:
-            fitter = lsqfit.MultiFitter(models=model)
+        if self.fit_type == 'simultaneous':
+            fitter = lsqfit.MultiFitter(models=models)
             fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
-            for key in fit.p:
-                if key in ['L_4', 'L_5']:
-                    #pass
-                    prior[key] = gv.gvar(fit.pmean[key], 3*fit.psdev[key])
-                elif key in ['A_a', 'A_p', 'A_k']:
-                    prior[key] = fit.p[key]
-                    #pass
+        else:
+            for model in models:
+                fitter = lsqfit.MultiFitter(models=model)
+                fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
+                for key in fit.p:
+                    if key in ['L_4', 'L_5']:
+                        #pass
+                        prior[key] = gv.gvar(fit.pmean[key], 3*fit.psdev[key])
+                    elif key in ['A_a', 'A_p', 'A_k']:
+                        prior[key] = fit.p[key]
+                        #pass
 
         self.fit = fit
         return fit
 
     def _make_models(self):
         models = np.array([])
-        # Need to include nlo, nnlo, nnnlo
-        #if self.fit_type == 'simultaneous':
-        #    for fit_type in ['xpt', 'xpt-taylor']:
-        #        models = np.append(models, fk_fpi_model(datatag=fit_type,
-        #                    order=self.order, fit_type=fit_type))
+
+        # simultaneous fits -- don't chain nlo -> nnlo
+        if self.fit_type == 'simultaneous':
+            order = self.order.copy()
+            for fit_type in ['ma-taylor', 'xpt-taylor']:
+                models = np.append(models, fk_fpi_model(datatag=fit_type+'_'+order['fit'],
+                            order=self.order, fit_type=fit_type))
+            return models
+
         if not self.chain_fits:
             order = self.order.copy()
             models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
