@@ -7,7 +7,7 @@ switches['ensembles'] = [
     'a15m350','a12m350','a09m350',
     'a15m310','a12m310','a09m310',
     'a15m220','a12m220S','a12m220','a12m220L','a09m220',
-    'a12m130','a15m130','a15m135XL']
+    'a12m130','a15m135XL']
 switches['ensembles_fit'] = [
     'a15m400','a12m400','a09m400',
     'a15m350','a12m350','a09m350',
@@ -15,24 +15,70 @@ switches['ensembles_fit'] = [
     'a15m220','a12m220S','a12m220','a12m220L','a09m220',
     'a12m130','a15m135XL']
 switches['ansatz'] = dict()
-switches['ansatz']['model'] = 'xpt_nlo_FV' # Type of fit: 'xpt' or 'MA'
+switches['ansatz']['model'] = 'ma_nnlo_FV_alphaS_logSq' # Type of fit: 'xpt' or 'MA'
 switches['ansatz']['a2dm']  = 'individual' # avg or individual
-switches['scale']           = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
-switches['do_analysis']     = False
+switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
+switches['do_analysis']     = True
 switches['debug']           = False
 switches['nlo_report']      = False # Do pure NLO fits for L5 test?
-switches['nlo_fv_report']   = True # Do pure NLO fits for L5 with FV test?
+switches['nlo_fv_report']   = False # Do pure NLO fits for L5 with FV test?
+switches['make_plots']      = True
+switches['print_fit']       = False
+switches['nnlo_priors']     = False
+switches['prior_group']     = False
+switches['verbose']         = True
 
 priors = dict()
 priors['L5']   = gv.gvar(1e-3, 5.e-3)
 #priors['L5']   = gv.gvar(0,0.005)
 priors['L4']   = gv.gvar(0,0.005)
-nnlo_wdith = 2.
+
+''' default values '''
+priors['s_4']   = gv.gvar(0.0, 5)
+priors['k_4']   = gv.gvar(0.0, 5)
+priors['p_4']   = gv.gvar(0.0, 5)
+priors['saS_4'] = gv.gvar(0.0, 5)
+
+''' optimized values '''
+nnlo_width = dict()
+nnlo_width['xpt_nnlo_FV_alphaS'] = dict()
+nnlo_width['xpt_nnlo_FV_alphaS']['PK'] = dict()
+nnlo_width['xpt_nnlo_FV_alphaS']['PK']['p_4']   = 3.5
+nnlo_width['xpt_nnlo_FV_alphaS']['PK']['k_4']   = 3.5
+nnlo_width['xpt_nnlo_FV_alphaS']['PK']['s_4']   = 2.7
+nnlo_width['xpt_nnlo_FV_alphaS']['PK']['saS_4'] = 2.7
+
+nnlo_width['xpt_nnlo_FV_alphaS_logSq'] = dict()
+nnlo_width['xpt_nnlo_FV_alphaS_logSq']['PK'] = dict()
+nnlo_width['xpt_nnlo_FV_alphaS_logSq']['PK']['p_4']   = 1.9
+nnlo_width['xpt_nnlo_FV_alphaS_logSq']['PK']['k_4']   = 1.9
+nnlo_width['xpt_nnlo_FV_alphaS_logSq']['PK']['s_4']   = 2.9
+nnlo_width['xpt_nnlo_FV_alphaS_logSq']['PK']['saS_4'] = 2.9
+
+nnlo_width['xpt-ratio_nnlo_FV_alphaS_logSq'] = dict()
+nnlo_width['xpt-ratio_nnlo_FV_alphaS_logSq']['PK'] = dict()
+nnlo_width['xpt-ratio_nnlo_FV_alphaS_logSq']['PK']['p_4']   = 9.8
+nnlo_width['xpt-ratio_nnlo_FV_alphaS_logSq']['PK']['k_4']   = 9.8
+nnlo_width['xpt-ratio_nnlo_FV_alphaS_logSq']['PK']['s_4']   = 3.3
+nnlo_width['xpt-ratio_nnlo_FV_alphaS_logSq']['PK']['saS_4'] = 3.3
+
+nnlo_width['ma_nnlo_FV_alphaS_logSq'] = dict()
+nnlo_width['ma_nnlo_FV_alphaS_logSq']['PK'] = dict()
+nnlo_width['ma_nnlo_FV_alphaS_logSq']['PK']['p_4']   = 0.9
+nnlo_width['ma_nnlo_FV_alphaS_logSq']['PK']['k_4']   = 0.9
+nnlo_width['ma_nnlo_FV_alphaS_logSq']['PK']['s_4']   = 0.8
+nnlo_width['ma_nnlo_FV_alphaS_logSq']['PK']['saS_4'] = 0.8
+
+nnlo_width['ma-ratio_nnlo_FV_alphaS_logSq'] = dict()
+nnlo_width['ma-ratio_nnlo_FV_alphaS_logSq']['PK'] = dict()
+nnlo_width['ma-ratio_nnlo_FV_alphaS_logSq']['PK']['p_4']   = 0.9
+nnlo_width['ma-ratio_nnlo_FV_alphaS_logSq']['PK']['k_4']   = 0.9
+nnlo_width['ma-ratio_nnlo_FV_alphaS_logSq']['PK']['s_4']   = 0.1
+nnlo_width['ma-ratio_nnlo_FV_alphaS_logSq']['PK']['saS_4'] = 0.1
+
+
 n3lo_width = 1.
-priors['s_4']   = gv.gvar(0.0, nnlo_wdith)
-priors['k_4']   = gv.gvar(0.0, nnlo_wdith)
-priors['p_4']   = gv.gvar(0.0, nnlo_wdith)
-priors['saS_4'] = gv.gvar(0.0, nnlo_wdith)
+
 priors['kp_6']  = gv.gvar(0.0, n3lo_width)
 priors['k_6']   = gv.gvar(0.0, n3lo_width)
 priors['p_6']   = gv.gvar(0.0, n3lo_width)

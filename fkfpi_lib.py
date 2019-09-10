@@ -1,11 +1,22 @@
 from __future__ import print_function
-import sys
+import os, sys
 import numpy as np
 import tables as h5
 import lsqfit
 import gvar as gv
+import matplotlib
 import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set()
+sns.set_style("ticks")
 import chipt_awl as xpt
+
+def run_from_ipython():
+    try:
+        __IPYTHON__
+        return True
+    except NameError:
+        return False
 
 ens_long = {
     'a15m400'  :'l1648f211b580m0217m065m838',
@@ -45,10 +56,10 @@ r_a = {
     'a09m310'  :gv.gvar(3.499,0.024),
     'a09m220'  :gv.gvar(3.566,0.014)
     }
-L_ens = {
-    'a15m400':16,'a15m350':16,'a15m310':16,'a15m220':24,'a15m130':32,'a15m135XL':48,
-    'a12m400':24,'a12m350':24,'a12m310':24,'a12m220':32,'a12m220S':24,'a12m220L':40,'a12m130':48,
-    'a09m400':32,'a09m350':32,'a09m310':32,'a09m220':48,}
+#L_ens = {
+#    'a15m400':16,'a15m350':16,'a15m310':16,'a15m220':24,'a15m130':32,'a15m135XL':48,
+#    'a12m400':24,'a12m350':24,'a12m310':24,'a12m220':32,'a12m220S':24,'a12m220L':40,'a12m130':48,
+#    'a09m400':32,'a09m350':32,'a09m310':32,'a09m220':48,}
 
 def format_h5_data(switches,data):
     x = dict()
@@ -75,14 +86,15 @@ def format_h5_data(switches,data):
             print(data_dict)
 
         y[ens] = gvdata['FK']/gvdata['Fpi']
+        print(ens,y[ens])
 
-        x[ens]['mpiL'] = gvdata['mpi'].mean * L_ens[ens]
-        x[ens]['mkL']  = gvdata['mk'].mean  * L_ens[ens]
-        x[ens]['mssL'] = gvdata['mss'].mean * L_ens[ens]
-        x[ens]['mjuL'] = gvdata['mju'].mean * L_ens[ens]
-        x[ens]['mjsL'] = gvdata['mjs'].mean * L_ens[ens]
-        x[ens]['mruL'] = gvdata['mru'].mean * L_ens[ens]
-        x[ens]['mrsL'] = gvdata['mrs'].mean * L_ens[ens]
+        x[ens]['mpiL'] = gvdata['mpi'].mean * data.get_node('/'+ens+'/L').read()
+        x[ens]['mkL']  = gvdata['mk'].mean  * data.get_node('/'+ens+'/L').read()
+        x[ens]['mssL'] = gvdata['mss'].mean * data.get_node('/'+ens+'/L').read()
+        x[ens]['mjuL'] = gvdata['mju'].mean * data.get_node('/'+ens+'/L').read()
+        x[ens]['mjsL'] = gvdata['mjs'].mean * data.get_node('/'+ens+'/L').read()
+        x[ens]['mruL'] = gvdata['mru'].mean * data.get_node('/'+ens+'/L').read()
+        x[ens]['mrsL'] = gvdata['mrs'].mean * data.get_node('/'+ens+'/L').read()
 
         # MASSES
         p[(ens,'mpi')] = gvdata['mpi']
@@ -136,15 +148,36 @@ def dsu2(FKpi,mpi,mk,F0):
         )
     return d
 
+def plot_data(ax,e,x,y):
+    colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9'}
+    shapes = {'m400':'h', 'm350':'p', 'm310':'s', 'm220':'^', 'm130':'o', 'm135':'*'}
+    labels = {
+        'a15m400':'', 'a15m350':'', 'a15m310':'', 'a15m220':'','a15m135XL':'a15',
+        'a12m400':'', 'a12m350':'', 'a12m310':'', 'a12m220':'', 'a12m130':'a12',
+        'a12m220L':'', 'a12m220S':'',
+        'a09m400':'', 'a09m350':'', 'a09m310':'', 'a09m220':'a09',
+    }
+    c = colors[e.split('m')[0]]
+    s = shapes['m'+e.split('m')[1][0:3]]
+    ax.errorbar(x=x.mean,y=y.mean,xerr=x.sdev,yerr=y.sdev,
+        marker=s,color=c,linestyle='None',label=labels[e])
+
+    return ax
+
 
 if __name__ == "__main__":
     import input_params as ip
-    print("python version:", sys.version)
+    print("python version    :", sys.version)
     #print("pandas version:", pd.__version__)
-    print("numpy  version:", np.__version__)
-    print("gvar   version:", gv.__version__)
-    print("lsqfit version:", lsqfit.__version__)
+    print("numpy  version    :", np.__version__)
+    print("matplotlib version:", matplotlib.__version__)
+    print("gvar   version    :", gv.__version__)
+    print("lsqfit version    :", lsqfit.__version__)
     print('')
+
+    if not os.path.exists('figures'):
+        os.makedirs('figures')
+    plt.ion()
 
     # Load input params
     switches   = ip.switches
@@ -164,8 +197,10 @@ if __name__ == "__main__":
             'ma_nnnlo_FV','ma_nnnlo_FV_alphaS',
             'ma_nnlo_FV','ma_nnlo_FV_alphaS',
             ]
-        models = ['xpt_nnlo_FV_alphaS']
-        #models = ['xpt_nnnlo_FV','xpt_nnlo_FV_alphaS','ma_nnlo_FV_alphaS']
+        models = [
+            'xpt_nnlo_FV_alphaS','xpt_nnlo_FV_alphaS_logSq',
+            'ma_nnlo_FV_alphaS','ma_nnlo_FV_alphaS_logSq']
+        models = ['xpt_nnlo_FV_alphaS_logSq']
         fit_results = dict()
         for model in models:
             switches['ansatz']['model'] = model
@@ -175,6 +210,12 @@ if __name__ == "__main__":
             p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
             for key in priors:
                 p_e[key] = priors[key]
+            try:
+                for key in ['p_4','k_4','s_4','saS_4']:
+                    p_e[key] = gv.gvar(0,ip.nnlo_width[model][switches['scale']][key])
+            except Exception as e:
+                print('WARNING: non optimized NNLO prior widths')
+                print(str(e))
             d_e = dict()
             d_e['x'] = x_e
             d_e['y'] = y_e
@@ -182,23 +223,124 @@ if __name__ == "__main__":
             fit_e = xpt.Fit(switches,xyp_init=d_e)
             fit_e.fit_data()
             fit_results[model] = fit_e
+            if switches['print_fit']:
+                print(fit_e.fit.format(maxline=True))
 
             fit_e.report_phys_point(phys_point)
 
-            if model == 'xpt_nnlo_FV_alphaS':
+            if switches['make_plots']:
                 epi_range = dict()
                 epi_range['Lchi'] = phys_point['Lchi']
                 epi_range['mk']   = phys_point['mk']
-                epi_range['mpi']  = np.arange(1,401,1)
+                epi_range['mpi']  = np.sqrt(np.arange(1,400**2,400**2 // 100))
                 epi_range['mpi_phys'] = phys_point['mpi']
-                fit_e.vs_epi(epi_range)
+
+                fig_vs_epi = plt.figure('FKFpi_vs_epi_'+model)
+                ax = plt.axes([.12, .12, .85, .85])
+                ax = fit_e.vs_epi(epi_range, ax)
+                y_shift = fit_e.shift_phys_epsK(phys_point)
+                for e in switches['ensembles_fit']:
+                    x = fit_e.fit.p[(e,'p2')]
+                    y = y_e[e] + y_shift[e]
+                    ax = plot_data(ax, e, x, y)
+                ax.legend()
+                ax.set_xlabel(r'$\epsilon_\pi^2$',fontsize=16)
+                ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
+                ax.set_xlim(0,.1)
+                ax.set_ylim(1.05, 1.20)
+                plt.savefig('figures/vs_episq_'+model+'.pdf',transparent=True)
 
         for model in models:
             L5_rho  = fit_results[model].fit.p['L5']
             L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
             print('%25s: L5(m_rho) = %s' %(model,L5_rho))
 
+    if switches['nnlo_priors']:
+        #fit_results = dict()
+        logGBF_array = []
+        print(switches['ansatz']['model'],'Prior width study')
+        #switches['ansatz']['model'] = 'xpt_nnlo_FV_alphaS'
+        x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+        y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+        p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+        for key in priors:
+            p_e[key] = priors[key]
+        d_e = dict()
+        d_e['x'] = x_e
+        d_e['y'] = y_e
+        if switches['prior_group']:
+            dr = .1
+            p_range = np.arange(1.1,3+dr,dr)
+            a_range = np.arange(2.1,4+dr,dr)
+            z = np.zeros([len(a_range),len(p_range)])
+            tot = len(a_range) * len(p_range)
+            i_t = 0
+            for i_s,s4 in enumerate(a_range):
+                p_e['s_4']   = gv.gvar(0,s4)
+                p_e['saS_4'] = gv.gvar(0,s4)
+                for i_p,p4 in enumerate(p_range):
+                    p_e['p_4'] = gv.gvar(0,p4)
+                    p_e['k_4'] = gv.gvar(0,p4)
+                    d_e['p'] = p_e
+                    fit_e = xpt.Fit(switches,xyp_init=d_e)
+                    fit_e.fit_data()
+                    #fit_results[(i_s,i_p)] = fit_e
+                    tmp = [ p_e[k].sdev for k in ['p_4','k_4','s_4','saS_4'] ]
+                    tmp.append(fit_e.fit.logGBF)
+                    logGBF_array.append(tmp)
+                    #print('p_4=',p_e['p_4'],'k_4=',p_e['k_4'],'s_4=',p_e['s_4'],'saS_4=',p_e['saS_4'],'logGBF=',fit_e.fit.logGBF)
+                    sys.stdout.write('%4d out of %d\r' %(i_t,tot))
+                    sys.stdout.flush()
+                    i_t += 1
+                    z[i_s,i_p] = fit_e.fit.logGBF
+        else:
+            for i_s,s4 in enumerate(np.arange(0.2,5.2,.2)):
+                p_e['s_4']   = gv.gvar(0,s4)
+                for i_sas,sas4 in enumerate(np.arange(0.2,5.2,.2)):
+                    p_e['saS_4'] = gv.gvar(0,sas4)
+                    for i_p,p4 in enumerate(np.arange(0.2,5.2,.2)):
+                        p_e['p_4'] = gv.gvar(0,p4)
+                        for i_k,k4 in enumerate(np.arange(0.2,5.2,.2)):
+                            p_e['k_4'] = gv.gvar(0,k4)
+                            d_e['p'] = p_e
+                            fit_e = xpt.Fit(switches,xyp_init=d_e)
+                            fit_e.fit_data()
+                            #fit_results[(i_s,i_p)] = fit_e
+                            tmp = [ p_e[k].sdev for k in ['p_4','k_4','s_4','saS_4'] ]
+                            tmp.append(fit_e.fit.logGBF)
+                            logGBF_array.append(tmp)
+                            print('p_4=',p_e['p_4'],'k_4=',p_e['k_4'],'s_4=',p_e['s_4'],'saS_4=',p_e['saS_4'],'logGBF=',fit_e.fit.logGBF)
 
+        logGBF_array = np.array(logGBF_array)
+        logGBF_max = np.argmax(logGBF_array[:,-1])
+        print('optimal prior widths for %s' %switches['ansatz']['model'])
+        logGBF_optimal = logGBF_array[logGBF_max]
+        tmp = ''
+        for i_k,k in enumerate(['p_4','k_4','s_4','saS_4']):
+            tmp += '%s = %.1f ' %(k,logGBF_optimal[i_k])
+        print(tmp,'logGBF = ',logGBF_optimal[-1])
+
+        lgbf = logGBF_array[:,-1]
+        w = np.exp(lgbf - logGBF_optimal[-1])
+        #w = w / w.sum()
+        logGBF_w = np.copy(logGBF_array)
+        logGBF_w[:,-1] = w
+
+        if switches['prior_group']:
+            z = np.exp(z - logGBF_optimal[-1])
+            cmap_old = sns.cubehelix_palette(8, as_cmap=True)
+            levels = [0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.]
+            from matplotlib.colors import ListedColormap
+            cmap = ListedColormap(sns.color_palette("BrBG_r", len(levels)).as_hex())
+            fig, ax = plt.subplots(constrained_layout=True)
+            CS = ax.contour(p_range,a_range,z,levels=levels, cmap=cmap)
+            #cbar = fig.colorbar(CS)
+            #print(CS.levels)
+            ax.clabel(CS, CS.levels[0::2], fmt='%2.1f', colors='k', fontsize=12)
+            ax.plot(logGBF_optimal[0], logGBF_optimal[2],marker='X',color='r',markersize=20)
+            ax.set_xlabel(r'$\sigma_{nnlo,\chi{\rm PT}}$',fontsize=16)
+            ax.set_ylabel(r'$\sigma_{nnlo,a^2}$',fontsize=16)
+            plt.savefig('figures/prior_width_'+switches['ansatz']['model']+'.pdf',transparent=True)
 
     if switches['nlo_fv_report']:
         models = ['ma_nlo','ma_nlo_FV','xpt_nlo','xpt_nlo_FV']
@@ -235,7 +377,6 @@ if __name__ == "__main__":
                 fit_e.fit_data()
                 model_result[e] = fit_e
             fit_results[model] = model_result
-        plt.ion()
         fig = plt.figure('nlo_report_FV')
         ax  = plt.axes([.13, .13, .84, .84])
 
@@ -266,8 +407,7 @@ if __name__ == "__main__":
         ax.set_xlabel(r'$L_5$',fontsize=16)
         ax.legend(loc=1,fontsize=16)
         ax.set_xlim(-0.0002,0.001)
-        plt.savefig('nlo_report_FV.pdf',transparent=True)
-        plt.ioff()
+        plt.savefig('figures/nlo_report_FV.pdf',transparent=True)
         plt.show()
 
 
@@ -305,9 +445,9 @@ if __name__ == "__main__":
                 model_result[e] = fit_e
             fit_results[model] = model_result
 
-        plt.ion()
         fig = plt.figure('nlo_report')
-        ax  = plt.axes([.13, .13, .84, .84])
+        ax  = plt.axes([.14, .14, .825, .825])
+        ax.set_frame_on(True)
 
         if len(models) == 2:
             print("%8s & %13s & %13s & \\\\" \
@@ -334,11 +474,16 @@ if __name__ == "__main__":
                     marker=marker[model],mfc='None',color=color[model],label=label)
         plt.yticks(np.arange(len(switches['ensembles']),0,-1),tuple(switches['ensembles']))
         ax.set_xlabel(r'$L_5$',fontsize=16)
+        ax.axvline(0,color='k')
         ax.legend(loc=1,fontsize=16)
         if len(models) == 2:
             ax.set_xlim(-0.0002,0.0008)
         else:
             ax.set_xlim(-0.0015,0.004)
-        plt.savefig('nlo_report.pdf',transparent=True)
-        plt.ioff()
+        plt.savefig('figures/nlo_report.pdf',transparent=True)
+
+    plt.ioff()
+    if run_from_ipython():
+        plt.show(block=False)
+    else:
         plt.show()

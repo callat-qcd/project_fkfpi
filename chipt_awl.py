@@ -17,6 +17,8 @@ class Fit(object):
         self.fv       = 'FV' in self.switches['ansatz']['model']
         self.alphaS   = 'alphaS' in self.switches['ansatz']['model']
         self.logSq    = 'logSq' in self.switches['ansatz']['model']
+        self.lec_nnlo = ['L5','L4','k_4','p_4','s_4','saS_4']
+        self.lec_nnnlo= ['s_6','sk_6','sp_6','kp_6','k_6','p_6']
 
         if self.eft   == 'xpt':
             self.fit_function = self.xpt_nlo
@@ -26,6 +28,8 @@ class Fit(object):
             self.fit_function = self.ma_nlo
         elif self.eft == 'ma-ratio':
             self.fit_function = self.ma_ratio_nlo
+        elif self.eft == 'ma-longform':
+            self.fit_function = self.ma_longform_nlo
 
         if self.fv:
             self.fv_I  = dict()
@@ -130,7 +134,7 @@ class Fit(object):
                 p[(e,'dju2')] = self.p_init[(e,'a2DI')] / Lchi**2
                 p[(e,'drs2')] = self.p_init[(e,'a2DI')] / Lchi**2
             if self.order in ['nnlo','nnnlo']:
-                p[(e,'a2')]   = self.p_init[(e,'aw0')] / (4 * np.pi)
+                p[(e,'a2')]   = self.p_init[(e,'aw0')]**2 / (4 * np.pi)
         ''' Add LECs '''
         if self.order in ['nlo','nnlo','nnnlo']:
             p['L5'] = self.p_init['L5']
@@ -201,12 +205,14 @@ class Fit(object):
             alphaS = x['alphaS']
         if self.order in ['nnlo','nnnlo']:
             ct += (k2 - p2)    * a2 * lec['s_4'] # a^2 m^2
-            ct += (k2 - p2)    * k2 * lec['k_4'] # m^4
+            #ct += (k2 - p2)    * k2 * lec['k_4'] # m^4
+            ct += (k2 - p2)**2      * lec['k_4'] # m^4
             ct += (k2 - p2)    * p2 * lec['p_4'] # m^4
             if self.alphaS:
                 ct += (k2 - p2) * a2 * alphaS * lec['saS_4']
             if self.logSq:
                 ct += 1./96 * (k2 - p2)* (17*k2 + 37*p2)*(np.log(np.sqrt(k2*p2)))**2
+                #ct += 1./96 * (k2 - p2)* (17*k2 + 37*p2)*(np.log(p2))**2
         if self.order in ['nnnlo']:
             ct += (k2 - p2)**2 * k2 * p2 * lec['kp_6']
             ct += (k2 - p2)**2 * k2      * lec['k_6']
@@ -409,7 +415,7 @@ class Fit(object):
         for key,val in self_dict.items():
             setattr(self, key, val)
 
-    def vs_epi(self,epi_range):
+    def vs_epi(self,epi_range, ax):
         # get copy of all self attributes
         self_dict = self.__dict__.copy()
         # switch to continuum fit func
@@ -424,18 +430,20 @@ class Fit(object):
         x = dict()
         y_phys = dict()
         p = dict()
-        for k in ['s_4','saS_4','s_6','sk_6','sp_6']:
-            p[k] = 0.
         for k in self.fit.p:
             if isinstance(k,str):
                 print(k,self.fit.p[k])
-        for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6']:
+        for k in self.lec_nnlo + self.lec_nnnlo:
             if k in self.fit.p:
                 p[k] = self.fit.p[k]
 
         Lchi = epi_range['Lchi']
         x_plot = []
-        y_plot = []
+        y_plot = {}
+        y_plot['a0']  = []
+        y_plot['a09'] = []
+        y_plot['a12'] = []
+        y_plot['a15'] = []
         for mpi in epi_range['mpi']:
             x[mpi] = {k:np.inf for k in ['mpiL','mkL']}
             x[mpi]['alphaS'] = 0.
@@ -445,25 +453,104 @@ class Fit(object):
             p[(mpi,'e2')] = 4./3*p[(mpi,'k2')] - 1./3 * p[(mpi,'p2')]
             p[(mpi,'a2')] = 0.
             x_plot.append(p[(mpi,'p2')].mean)
-            y_plot.append(self.fit_function(x,p)[mpi])
+            y_plot['a0'].append(self.fit_function(x,p)[mpi])
+            # finite a
+            p[(mpi,'a2')] = self.p_init[('a09m310','aw0')]**2 / (4 * np.pi)
+            y_plot['a09'].append(self.fit_function(x,p)[mpi])
+            p[(mpi,'a2')] = self.p_init[('a12m310','aw0')]**2 / (4 * np.pi)
+            y_plot['a12'].append(self.fit_function(x,p)[mpi])
+            p[(mpi,'a2')] = self.p_init[('a15m310','aw0')]**2 / (4 * np.pi)
+            y_plot['a15'].append(self.fit_function(x,p)[mpi])
+
         x_plot = np.array(x_plot)
-        y  = np.array([k.mean for k in y_plot])
-        dy = np.array([k.sdev for k in y_plot])
-        plt.ion()
-        fig = plt.figure('FKFpi_vs_epi')
-        ax  = plt.axes([.12, .12, .85, .85])
-        ax.fill_between(x_plot, y-dy, y+dy,color='m',alpha=0.3)
-        ax.set_xlabel(r'$\epsilon_\pi^2$',fontsize=16)
-        ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
-        ax.set_xlim([0,.1])
+        y  = np.array([k.mean for k in y_plot['a0']])
+        dy = np.array([k.sdev for k in y_plot['a0']])
+
+        ax.fill_between(x_plot, y-dy, y+dy,color='#b36ae2',alpha=0.4)
+        colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9'}
+        for a in ['a15','a12','a09']:
+            y = np.array([k.mean for k in y_plot[a]])
+            ax.plot(x_plot, y, color=colors[a])
         epi_phys =  epi_range['mpi_phys']**2 / Lchi**2
+        ax.axvline(epi_phys.mean,linestyle='--',color='#a6aaa9')
         ax.axvspan(epi_phys.mean -epi_phys.sdev, epi_phys.mean +epi_phys.sdev,
             alpha=0.4, color='#a6aaa9')
         ax.axvline(epi_phys.mean,linestyle='--',color='#a6aaa9')
-        plt.ioff()
-        plt.show()
+        # restore original self attributes
+        for key,val in self_dict.items():
+            setattr(self, key, val)
 
+        return ax
+
+    def shift_phys_epsK(self,phys_point):
+        '''
+            Compute the shift in FK/FPi from the fit, to the point where
+            m_K = m_K^phys
+            if MA:
+                m_ju = m_pi
+                m_js = m_K^phys
+                m_ru = m_K^phys
+                m_rs = m_ss
+                dju  = 0
+                drs  = 0
+            and apply this shift to the numerical data, so that it can be
+            plotted with a fit that only depends upon eps_pi = m_pi**2 / L_chi**2
+
+            1: compute FK/FPi from the particular fit
+                y_fit
+
+            2: computee FK/FPi from the corresponding XPT fit function + a**2 terms
+                y_shift
+            3: shift all the data by
+                FK/FPi -> FK/FPi + (y_shift - y_fit).mean
+
+            return a dictionary of shifts
+        '''
+        # get copy of all self attributes
+        self_dict = self.__dict__.copy()
+
+        # determine fitted values of FK/FPi
+        y_shift = dict()
+        print('correcting FK/Fpi data for plot')
+        print('for model %s' %self.switches['ansatz']['model'])
+        x = self.prune_x()
+        for e in x:
+            Lchi = self.p_init[(e,'Lchi_'+self.switches['scale'])]
+            p    = self.prune_priors()
+            for k in self.lec_nnlo + self.lec_nnnlo:
+                if k in self.fit.p:
+                    p[k] = self.fit.p[k]
+            y_shift[e] = -self.fit_function(x,p)[e]
+        # switch to XPT + a**2 terms
+        if 'ratio' in self.eft:
+            self.eft          = 'xpt-ratio'
+            self.fit_function = self.xpt_ratio_nlo
+        else:
+            self.eft          = 'xpt'
+            self.fit_function = self.xpt_nlo
+        self.fv = False
+        if self.switches['verbose']:
+            print("%9s %12s %12s" %('ensemble','data', 'shift'))
+            print('-------- | ----------- | ----------')
+        for e in x:
+            x_tmp = dict()
+            p_tmp = dict()
+            x_tmp[e] = {k:np.inf for k in ['mpiL','mkL']}
+            x_tmp[e]['alphaS'] = self.x[e]['alphaS']
+            for k in self.lec_nnlo + self.lec_nnnlo:
+                if k in self.fit.p:
+                    p_tmp[k] = self.fit.p[k]
+            Lchi = self.p_init[(e,'Lchi_'+self.switches['scale'])]
+            p_tmp[(e,'p2')] = self.p_init[(e,'mpi')]**2 / Lchi**2
+            p_tmp[(e,'k2')] = phys_point['mk']**2 / phys_point['Lchi']**2
+            p_tmp[(e,'e2')] = 4./3 *p_tmp[(e,'k2')] - 1./3 *p_tmp[(e,'p2')]
+            p_tmp[(e,'a2')] = self.p_init[(e,'aw0')]**2 / (4 * np.pi)
+            y_shift[e] += self.fit_function(x_tmp,p_tmp)[e]
+            if self.switches['verbose']:
+                print("%9s %12s %12s" %(e, self.y[e], y_shift[e].mean))
 
         # restore original self attributes
         for key,val in self_dict.items():
             setattr(self, key, val)
+
+        return y_shift
