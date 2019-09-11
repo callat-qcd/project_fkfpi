@@ -39,6 +39,7 @@ class bootstrapper(object):
             'fit' : 'nlo',
             'vol' : 1,
             'exclude' : [],
+            'include_log' : False,
             'include_log2' : True
         }
         if order is None:
@@ -69,6 +70,7 @@ class bootstrapper(object):
                 'A_pp' : '0(1)', #'0(1000)',
             }
             prior = gv.gvar(prior)
+        prior['A_loga'] = gv.gvar('0(3.1)')
 
         if abbrs is None:
             abbrs = fit_data.keys()
@@ -96,10 +98,10 @@ class bootstrapper(object):
                     to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
                     data[abbr]['a/w0'] = to_gvar(fit_data[abbr]['aw0'])
                     plot_data[abbr]['a/w0'] = to_gvar(fit_data[abbr]['aw0'])
-                elif data_parameter in ['L']:
-                    length = fit_data[abbr][data_parameter]
-                    data[abbr]['L'] = gv.gvar(length, length/1000000.0)
-                    plot_data[abbr]['L'] = gv.gvar(length, length/1000000.0)
+                elif data_parameter in ['L', 'alpha_s']:
+                    value = fit_data[abbr][data_parameter]
+                    data[abbr][data_parameter] = gv.gvar(value, value/1000000.0)
+                    plot_data[abbr][data_parameter] = gv.gvar(value, value/1000000.0)
 
             # Add Lengths
             #if abbr in ['a15m350', 'a15m310', 'a15m400']:
@@ -229,8 +231,8 @@ class bootstrapper(object):
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter][j] for abbr in self.abbrs])
         #for parameter in ['w0']:
         #    prepped_data[parameter] = self.fit_data[abbr][parameter]
-        for parameter in ['a/w0', 'a2DI', 'L']:
-            prepped_data[parameter] =  np.array([self.fit_data[abbr][parameter] for abbr in self.abbrs])
+        for parameter in ['a/w0', 'a2DI', 'L', 'alpha_s']:
+            prepped_data[parameter] = np.array([self.fit_data[abbr][parameter] for abbr in self.abbrs])
 
 
         y = ([self.fit_data[abbr]['FK'][j]/self.fit_data[abbr]['Fpi'][j] for abbr in self.abbrs])
@@ -429,6 +431,7 @@ class bootstrapper(object):
             'a/w0' : 0,
             'a' : 0,
             'L' : np.infty,
+            'alpha_s' : 0, # Not sure, but not important since it comes with a^2
 
             'mpi' : gv.gvar('134.8(3)'), # '138.05638(37)'
             'mk' : gv.gvar('494.2(3)'), # '495.6479(92)'

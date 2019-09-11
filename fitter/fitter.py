@@ -23,6 +23,9 @@ class fitter(object):
             if key in ['A_a', 'A_p', 'A_k']:
                 prior[key] = prior[key] *z
 
+        if self.order['include_log']:
+            prior['A_loga'] = prior['A_loga'] *z
+
         fitfcn = self._make_models()[-1].fitfcn
 
         return dict(data=y_data, fcn=fitfcn, prior=prior)
@@ -41,6 +44,8 @@ class fitter(object):
                         #pass
                         prior[key] = gv.gvar(fit.pmean[key], 3*fit.psdev[key])
                     elif key in ['A_a', 'A_p', 'A_k']:
+                        prior[key] = fit.p[key]
+                    elif (key in ['A_loga']) and (self.order['include_log']):
                         prior[key] = fit.p[key]
 
             # For nnlo/nnnlo, determine best parameter using empircal Bayes criterion
@@ -167,6 +172,10 @@ class fitter(object):
             newprior['A_kp'] = prior['A_kp']
             newprior['A_pp'] = prior['A_pp']
 
+        if order['include_log'] == True:
+            newprior['A_loga'] = prior['A_loga']
+            newprior['alpha_s'] = fit_data['alpha_s']
+
         for key in self.order['exclude']:
             if key in newprior.keys():
                 del(newprior[key])
@@ -240,7 +249,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if self.order['fit'] in ['nnnlo']:
             output = output + self.fitfcn_nnnlo_cts(p)
 
-        if self.order['include_log2'] == True:
+        if self.order['include_log']:
+            output = output + self.fitfcn_nnlo_log_ct(p)
+
+        if self.order['include_log2']:
             output = output + self.fitfcn_nnlo_log2_ct(p)
 
         return output
@@ -312,15 +324,26 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output *(eps2_k - eps2_pi)
 
-    def fitfcn_nnlo_log2_ct(self, p):
+    def fitfcn_nnlo_log_ct(self, p):
         lam2_chi = p['lam2_chi']
         eps2_a = (p['a/w0'] / (4 *np.pi))**2
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+        alpha_s = p['alpha_s']
+
+        output = (
+            alpha_s *eps2_a *(eps2_k - eps2_pi) *p['A_loga']
+        )
+        return output
+
+    def fitfcn_nnlo_log2_ct(self, p):
+        lam2_chi = p['lam2_chi']
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
         output = (
             (1.0 / 6144.0) *(eps2_k - eps2_pi) *(17 *eps2_k + 37 *eps2_pi) *(np.log(np.sqrt(eps2_pi *eps2_k)))**2
-        )        
+        )
         return output
 
     def fitfcn_ma(self, p):
