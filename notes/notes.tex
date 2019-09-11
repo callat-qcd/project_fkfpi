@@ -43,6 +43,7 @@ In general, our fits are of the form
 \begin{equation}
 \left(\frac{F_K}{F_\pi}\right)_\text{lattice} = \left(\frac{F_K}{F_\pi}\right)_\text{model}^{(n_V)} + 
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} + 
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{semi-NNLO} + 
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO}
 \end{equation}
 where the $n_V$ denotes to which order we fit the finite volume effects.
@@ -50,7 +51,7 @@ where the $n_V$ denotes to which order we fit the finite volume effects.
 For reference, we use the following special functions in our fits, which encapsulate the finite volume dependence. The values for the $c_n$'s are given in Table \ref{tab:cN_weights}.
 \begin{align}
 \mathcal{I}(m) &= \frac{m^2}{(4\pi)^2} \ln \left( \frac{m^2}{\mu^2} \right)
-+ \frac{m^2}{4\pi^2} \sum_{|\mathbf{n}|\neq0} \frac{c_n}{mL|\mathbf{n}|} K_1(mL|\mathbf{n}|) \\
++ \frac{m^2}{4\pi^2} \sum_{|\mathbf{n}|\neq0} \frac{c_n}{mL|\mathbf{n}|} K_1(mL|\mathbf{n}|) \label{eqn:I(m)} \\
 %%%
 d\mathcal{I}(m) &=
 \frac{1}{(4\pi)^2} + \frac{\mathcal{I}(m)}{m^2}
@@ -228,17 +229,13 @@ For these fits,
 %\nonumber\\&\phantom{=}
 + \delta_{c.t.}^{\rm NNLO}
 \end{align}
-
-\subsubsection{NLO MA Taylor (old)}
-This fit was taken from (17) of \cite{Berkowitz:2017opd}. {\color{red} (To do: add to notes.)}
-
-
+A less refined variant of this equation is given in (17) of \cite{Berkowitz:2017opd}.
 
 
 \subsection{Corrections}
 
-\subsubsection{NNLO \& NNNLO counter terms}
-The NNLO and NNNLO counter terms are formed by taking powers of $\epsilon^2_\xi$ ($\xi = K, \pi, a$), along with $(\epsilon_K^2 - \epsilon_\pi^2)$ (which ensures $F_K / F_\pi$ tends to 1 in the chiral limit), to the desired order. For NNLO, we take one power of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$. 
+\subsubsection{NNLO \& NNNLO counterterms}
+The NNLO and NNNLO counterterms are formed by taking powers of $\epsilon^2_\xi$ ($\xi = K, \pi, a$), along with $(\epsilon_K^2 - \epsilon_\pi^2)$ (which ensures $F_K / F_\pi$ tends to 1 in the chiral limit), to the desired order. For NNLO, we take one power of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$. 
 \begin{equation}
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} = \bigg[ 
 \epsilon_a^2  A_{a}
@@ -257,6 +254,26 @@ For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^
 \end{align}
 
 Notice that the lattice spacing and $am_\xi$ ($\xi \in \{\pi, K, \eta\}$) corrections are included in these counterterms. For example, the term $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$ accounts for the lowest order lattice spacing correction. Further note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of terms at that order.
+
+\subsubsection{Semi-NNLO counterterms}
+Finally, there are counterterms that lies between NNLO and NNNLO. Per eqn (15) of \cite{Beane:2006kx}, we include an NNLO log-squared term
+\begin{equation}
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{log-log-NNLO} =
+\frac{1}{6144} \left( \epsilon_K^2 - \epsilon_\pi^2 \right) \left( 17 \epsilon_K^2 + 37 \epsilon_\pi^2 \right) \left[\log \left(\epsilon_K \epsilon_\pi \right) \right]^2
+\end{equation}
+It's contribution, however, appears to be minuscule: its effect is on the order of between $10^{-4}$ and $10^{-3}$, depending on the ensemble.
+
+As it turns out, the lattice space discretization corrections cannot be exactly accounted for by a purely polynomial expansion: there remains a semi-NNLO counterterm that goes as $\sim \epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2) \log(a)$. Since $\alpha_S \sim \log(a)$, we add another counterterm:
+\begin{equation}
+\delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}} =
+A_{\log a} \alpha_S \, \epsilon_a^2  (\epsilon_K^2 - \epsilon_\pi^2)
+\end{equation}
+Note that we can't subsume $\alpha_S$ into $A_{\log a}$ since the former varies by ensemble. In totality, the semi-NNLO terms are 
+\begin{equation}
+\delta\left(\frac{F_K}{F_\pi}\right)_{\text{semi-NNLO}} = 
+\delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}\, .
+\end{equation}
 
 \subsubsection{ SU(2) isospin breaking}
 The breaking of SU(2) isospin symmetry is characterized by
@@ -390,11 +407,11 @@ We compare the effect of adding each NNLO LEC to the fit as well as the effect o
 {
 	\begin{figure}[H]
 		\begin{subfigure}[t]{0.45\textwidth}
-			\includegraphics[width=\textwidth]{"./../tmp/exclude_lecs/\model__chained-True__exclude-n2lo".pdf}
+			\includegraphics[width=\textwidth]{"./../tmp/exclude_lecs/\model_chained-True_exclude-n2lo".pdf}
 		\end{subfigure}
 		~
 		\begin{subfigure}[t]{0.45\textwidth}
-			\includegraphics[width=\textwidth]{"./../tmp/exclude_lecs/\model__chained-False__exclude-n2lo".pdf}
+			\includegraphics[width=\textwidth]{"./../tmp/exclude_lecs/\model_chained-False_exclude-n2lo".pdf}
 		\end{subfigure}
 	\caption{Effect of individually including NNLO LECs for model \texttt{\model}. The topmost (non-FLAG) result is equivalent to the NLO fit; the bottommost is equivalent to the NNLO fit. See table \ref{\model-prior} for prior.}
 	\end{figure}
@@ -422,6 +439,28 @@ Alternatively, one often uses the ratio instead.
 
 I haven't noticed a visible difference in using one versus the other.
 
+\begin{figure}
+	\centering
+	\begin{subfigure}[b]{.45\linewidth}
+		\includegraphics[width=\linewidth]{"./../tmp/vol-corrections_ma_chained-True".pdf}
+		\caption{\texttt{ma\_nnlo}}
+	\end{subfigure}
+	\begin{subfigure}[b]{.45\linewidth}
+		\includegraphics[width=\linewidth]{"./../tmp/vol-corrections_ma-taylor_chained-True".pdf}
+		\caption{\texttt{ma-taylor\_nnlo}}
+	\end{subfigure}
+
+	\begin{subfigure}[b]{.45\linewidth}
+		\includegraphics[width=\linewidth]{"./../tmp/vol-corrections_xpt_chained-True".pdf}
+		\caption{\texttt{xpt\_nnlo}}
+	\end{subfigure}
+	\begin{subfigure}[b]{.45\linewidth}
+		\includegraphics[width=\linewidth]{"./../tmp/vol-corrections_xpt-taylor_chained-True".pdf}
+		\caption{\texttt{xpt-taylor\_nnlo}}
+	\end{subfigure}
+	\caption{Including volume corrections up to $n$. When computing $\mathcal{I}(m)$ per \eqref{eqn:I(m)} (ie, the finite volume corrections), we only include $K_1(mL|\mathbf{n}|)$ up to some $n$. We see that $F_K^\pm /F_\pi^\pm$ quickly converges after only including a few terms.}
+	\label{fig:volume_corrections}
+\end{figure}
 
 \section{Fit Results}
 Here we present the results for each of the fits.
@@ -482,11 +521,11 @@ Here we present the results for each of the fits.
 		\sisetup{round-mode=places,
 			table-number-alignment = center-decimal-marker
 		}
-		\begin{tabular}{l|ll|lll|llllll}\toprule
-			\textbf{Name} & $L_5$ & $L_4$ & $A_a$ & $A_\pi$ & $A_K$ & $A_{aa}$ & $A_{a\pi}$ & $A_{aK}$ & $A_{KK}$ & $A_{K\pi}$ & $A_{\pi\pi}$ %
-			\DTLforeach*{myDB}{\Name=name, \Lfive=L_5, \Lfour=L_4, \Aa=A_a, \Ap=A_p, \Ak=A_k, \Aaa=A_aa, \Aap=A_ap, \Aak=A_ak, \Akk=A_kk, \Akp=A_kp, \App=A_pp}{%
+		\begin{tabular}{l|ll|lll}\toprule%|llllll}\toprule
+			\textbf{Name} & $L_5$ & $L_4$ & $A_a$ & $A_\pi$ & $A_K$% & $A_{aa}$ & $A_{a\pi}$ & $A_{aK}$ & $A_{KK}$ & $A_{K\pi}$ & $A_{\pi\pi}$ %
+			\DTLforeach*{myDB}{\Name=name, \Lfive=L_5, \Lfour=L_4, \Aa=A_a, \Ap=A_p, \Ak=A_k}{%, \Aaa=A_aa, \Aap=A_ap, \Aak=A_ak, \Akk=A_kk, \Akp=A_kp, \App=A_pp}{%
 				\DTLiffirstrow{\\\hline\\}{\\}%
-				\expUScore{\Name} & \Lfive & \Lfour & \Aa & \Ap & \Ak & \Aaa & \Aap & \Aak & \Akk & \Akp & \App
+				\expUScore{\Name} & \Lfive & \Lfour & \Aa & \Ap & \Ak% & \Aaa & \Aap & \Aak & \Akk & \Akp & \App
 			}%
 			\\\bottomrule
 		\end{tabular}
@@ -515,19 +554,20 @@ Here we present the results for each of the fits.
 }
 \end{table}
 
-
 % Plot fits vs eps2_pi
 \foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
 {
 	\subsection{\tt \model}
-	\foreach \order in {nlo, nnlo, nnnlo}
+	\foreach \order in {nlo, nnlo}
 	{
 		\begin{figure}[H]
-			\caption{\model (\order)}
+			\caption{\texttt{\model\_\order}}
 			\includegraphics[width=\textwidth, page=3]{"./../tmp/fits/\model"_"\order".pdf}
 		\end{figure}
 	}
 }
+
+
 
 \appendix
 \section{Physical Point Values}

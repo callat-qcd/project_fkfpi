@@ -240,6 +240,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if self.order['fit'] in ['nnnlo']:
             output = output + self.fitfcn_nnnlo_cts(p)
 
+        if self.order['include_log2'] == True:
+            output = output + self.fitfcn_nnlo_log2_ct(p)
+
         return output
 
     def fitfcn_nnlo_cts(self, p):
@@ -308,6 +311,17 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             del(p[key])
 
         return output *(eps2_k - eps2_pi)
+
+    def fitfcn_nnlo_log2_ct(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_a = (p['a/w0'] / (4 *np.pi))**2
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+
+        output = (
+            (1.0 / 6144.0) *(eps2_k - eps2_pi) *(17 *eps2_k + 37 *eps2_pi) *(np.log(np.sqrt(eps2_pi *eps2_k)))**2
+        )        
+        return output
 
     def fitfcn_ma(self, p):
         # Constants

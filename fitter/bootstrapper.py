@@ -34,11 +34,19 @@ class bootstrapper(object):
             bs_N = len(fit_data[fit_data.keys()[0]]['mpi'])
         plot_bs_N = 100
 
+        # Add default values to order dict
+        order_temp = {
+            'fit' : 'nlo',
+            'vol' : 1,
+            'exclude' : [],
+            'include_log2' : True
+        }
         if order is None:
-            order = {
-                'fit' : 'nlo',
-                'vol' : 1
-            }
+            order = order_temp
+        else:
+            for key in order_temp.keys():
+                if key not in order.keys():
+                    order[key] = order_temp[key]
 
         if prior is None:
             print "Using default prior."
@@ -792,15 +800,19 @@ class bootstrapper(object):
         myfcn = [xfcn, yfcn]
         for j, parameter in enumerate(xy_parameters):
             if parameter in ['FK/Fpi', 'FK / Fpi']:
-                plot_data[j] = {abbr :  myfcn[j](self.fit_data[abbr]['FK'] /self.fit_data[abbr]['Fpi']) for abbr in self.abbrs}
+                plot_data[j] = {abbr :  myfcn[j](self.plot_data[abbr]['FK'] /self.plot_data[abbr]['Fpi']) for abbr in self.abbrs}
             elif parameter in ['mpi', 'mju', 'mru', 'mk', 'mrs', 'mss', 'FK', 'Fpi']:
                 # Convert to physical units
-
                 plot_data[j] = {}
                 for abbr in self.abbrs:
-                    plot_data[j][abbr] = myfcn[j](self.fit_data[abbr][parameter] *hbar_c / (self.fit_data[abbr]['a/w0'] *self.w0))
+                    plot_data[j][abbr] = myfcn[j](self.plot_data[abbr][parameter] *hbar_c / (self.plot_data[abbr]['a/w0'] *self.w0))
+            elif parameter in ['mpiL', 'mjuL', 'mruL', 'mkL', 'mrsL', 'mssL']:
+                m_name = parameter[:-1]
+                plot_data[j] = {}
+                for abbr in self.abbrs:
+                    plot_data[j][abbr] = myfcn[j](self.plot_data[abbr][m_name] *self.plot_data[abbr]['L'])
             else:
-                plot_data[j] = {abbr :  myfcn[j](self.fit_data[abbr][parameter]) for abbr in self.abbrs}
+                plot_data[j] = {abbr :  myfcn[j](self.plot_data[abbr][parameter]) for abbr in self.abbrs}
 
 
         # Get data for color coding graph
@@ -808,13 +820,13 @@ class bootstrapper(object):
             color_parameter = 'a'
 
         if color_parameter in ['a']:
-            color_data = {abbr : np.repeat(self.fit_data[abbr]['a/w0'] *self.w0, self.bs_N).ravel() for abbr in self.abbrs}
+            color_data = {abbr : np.repeat(self.plot_data[abbr]['a/w0'] *self.w0, self.bs_N).ravel() for abbr in self.abbrs}
         elif color_parameter in ['L']:
-            color_data = {abbr : np.repeat(gv.mean(self.fit_data[abbr][color_parameter]), self.bs_N).ravel() for abbr in self.abbrs}
-        elif color_parameter == 'MpiL':
-            color_data = {abbr : gv.mean(self.fit_data[abbr][color_parameter]).ravel() for abbr in self.abbrs}
+            color_data = {abbr : np.repeat(gv.mean(self.plot_data[abbr][color_parameter]), self.bs_N).ravel() for abbr in self.abbrs}
+        elif color_parameter == 'mpiL':
+            color_data = {abbr : gv.mean(self.plot_data[abbr][color_parameter]).ravel() for abbr in self.abbrs}
         else:
-            color_data = {abbr : gv.mean(self.fit_data[abbr][color_parameter]).ravel() for abbr in self.abbrs}
+            color_data = {abbr : gv.mean(self.plot_data[abbr][color_parameter]).ravel() for abbr in self.abbrs}
 
         # Color by lattice spacing/length
         cmap = matplotlib.cm.get_cmap('rainbow')
@@ -823,13 +835,13 @@ class bootstrapper(object):
         norm = matplotlib.colors.Normalize(vmin=minimum, vmax=maximum)
 
         # Get scatter plot & color data
-        x = np.zeros(self.bs_N * len(self.abbrs))
-        y = np.zeros(self.bs_N * len(self.abbrs))
-        z = np.zeros(self.bs_N * len(self.abbrs))
+        x = np.zeros(self.plot_bs_N * len(self.abbrs))
+        y = np.zeros(self.plot_bs_N * len(self.abbrs))
+        z = np.zeros(self.plot_bs_N * len(self.abbrs))
         for j, abbr in enumerate(self.abbrs):
-            x[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(plot_data[0][abbr])
-            y[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(plot_data[1][abbr])
-            z[j*self.bs_N:(j+1)*self.bs_N] = gv.mean(color_data[abbr])
+            x[j*self.plot_bs_N:(j+1)*self.plot_bs_N] = gv.mean(plot_data[0][abbr])
+            y[j*self.plot_bs_N:(j+1)*self.plot_bs_N] = gv.mean(plot_data[1][abbr])
+            z[j*self.plot_bs_N:(j+1)*self.plot_bs_N] = gv.mean(color_data[abbr])
 
         # Plot data
         sc = plt.scatter(x, y, c=z, vmin=minimum, vmax=maximum,
