@@ -4,9 +4,11 @@ $*
 /notes/*.aux
 /notes/*.bbl
 /notes/*.blg
+/notes/*.fls
 /notes/*.gz
 /notes/*.log
 /notes/*.pdf
+/notes/*.yaml
 /notes/notesNotes.bib
 /tmp/*
 /figs/*

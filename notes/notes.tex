@@ -7,7 +7,7 @@
 \usepackage{tikz}
 \usepackage{float}
 \usepackage[utf8]{inputenc} % supports umlaut natively, eg
-%\usepackage[T1]{fontenc} 
+%\usepackage[T1]{fontenc}
 \usepackage{hyperref} % adds hyperlinks
 \usepackage{csvsimple} % Easily add csv file as table
 \usepackage{booktabs} % For pretty tables
@@ -16,7 +16,7 @@
 \usepackage{url}
 \usepackage{multirow}
 
-\newcount\hour \newcount\hourminute \newcount\minute 
+\newcount\hour \newcount\hourminute \newcount\minute
 \hour=\time \divide \hour by 60
 \hourminute=\hour \multiply \hourminute by 60
 \minute=\time \advance \minute by -\hourminute
@@ -24,7 +24,7 @@
 
 
 \begin{document}
-	
+
 \title{$F_K / F_\pi$ Notes}
 \author{Nolan Miller}
 \date{\mydate}
@@ -35,15 +35,15 @@ In these notes, we explain our general fitting strategy for determining $F_K / F
 \end{abstract}
 \maketitle
 
-\subsection{Background}
+\section{Background}
 
 \section{Fit Functions}
 
 In general, our fits are of the form
 \begin{equation}
-\left(\frac{F_K}{F_\pi}\right)_\text{lattice} = \left(\frac{F_K}{F_\pi}\right)_\text{model}^{(n_V)} + 
-\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} + 
-\delta\left(\frac{F_K}{F_\pi}\right)_\text{semi-NNLO} + 
+\left(\frac{F_K}{F_\pi}\right)_\text{lattice} = \left(\frac{F_K}{F_\pi}\right)_\text{model}^{(n_V)} +
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} +
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{semi-NNLO} +
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO}
 \end{equation}
 where the $n_V$ denotes to which order we fit the finite volume effects.
@@ -161,7 +161,7 @@ where
 - \frac{\mathcal{K}(m_\pi, m_{ss}, m_X)}{6F^2} \right]
 \nonumber\\&\phantom{=}
 +\Delta_{rs}^2 \left[
-\frac{\mathcal{K}(m_{ss},m_X)}{4F^2} 
+\frac{\mathcal{K}(m_{ss},m_X)}{4F^2}
 -\frac{\mathcal{K}_{21}(m_{ss},m_X) m_K^2}{6F^2}
 +\frac{\mathcal{K}_{21}(m_{ss},m_X) m_\pi^2}{6F^2}
 \right]
@@ -169,7 +169,7 @@ where
 
 
 \subsubsection{NLO MA Taylor expanded ratio}
-For these fits, 
+For these fits,
 
 \begin{align}\label{eq:fkfpi_ma}
 \left(\frac{F_K}{F_\pi}\right)_\text{MA Taylor} &= 1
@@ -189,7 +189,7 @@ For these fits,
  \right]
 \nonumber\\&\phantom{=}
 +\Delta_{rs}^2 \left[
-\frac{\mathcal{K}(m_{ss},m_X)}{4F^2} 
+\frac{\mathcal{K}(m_{ss},m_X)}{4F^2}
 -\frac{\mathcal{K}_{21}(m_{ss},m_X) m_K^2}{6F^2}
 +\frac{\mathcal{K}_{21}(m_{ss},m_X) m_\pi^2}{6F^2}
 \right]
@@ -218,7 +218,7 @@ where
 
 
 \subsubsection{NLO $\chi$PT Taylor expansion}
-For these fits, 
+For these fits,
 \begin{align}\label{eq:fkfpi_chpt}
 \left(\frac{F_K}{F_\pi}\right)_\text{$\chi$PT Taylor} &= 1
 +\frac{5}{8} \frac{\mathcal{I}(m_\pi)}{F^2}
@@ -235,9 +235,9 @@ A less refined variant of this equation is given in (17) of \cite{Berkowitz:2017
 \subsection{Corrections}
 
 \subsubsection{NNLO \& NNNLO counterterms}
-The NNLO and NNNLO counterterms are formed by taking powers of $\epsilon^2_\xi$ ($\xi = K, \pi, a$), along with $(\epsilon_K^2 - \epsilon_\pi^2)$ (which ensures $F_K / F_\pi$ tends to 1 in the chiral limit), to the desired order. For NNLO, we take one power of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$. 
+The NNLO and NNNLO counterterms are formed by taking powers of $\epsilon^2_\xi$ ($\xi = K, \pi, a$), along with $(\epsilon_K^2 - \epsilon_\pi^2)$ (which ensures $F_K / F_\pi$ tends to 1 in the chiral limit), to the desired order. For NNLO, we take one power of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$.
 \begin{equation}
-\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} = \bigg[ 
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} = \bigg[
 \epsilon_a^2  A_{a}
 +\epsilon_K^2  A_{K}
 +\epsilon_\pi^2  A_{\pi}
@@ -268,9 +268,9 @@ As it turns out, the lattice space discretization corrections cannot be exactly 
 \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}} =
 A_{\log a} \alpha_S \, \epsilon_a^2  (\epsilon_K^2 - \epsilon_\pi^2)
 \end{equation}
-Note that we can't subsume $\alpha_S$ into $A_{\log a}$ since the former varies by ensemble. In totality, the semi-NNLO terms are 
+Note that we can't subsume $\alpha_S$ into $A_{\log a}$ since the former varies by ensemble. In totality, the semi-NNLO terms are
 \begin{equation}
-\delta\left(\frac{F_K}{F_\pi}\right)_{\text{semi-NNLO}} = 
+\delta\left(\frac{F_K}{F_\pi}\right)_{\text{semi-NNLO}} =
 \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
 + \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}\, .
 \end{equation}
@@ -287,7 +287,7 @@ where $\epsilon_\text{SU(2)} = \sqrt{3}/(4R)$, $R=35.7(2.6)$ per FLAG, the masse
 \begin{equation}
 \frac{F^\pm_K}{F^\pm_\pi} = \frac{F_K}{F_\pi} \sqrt{1+ \delta_{\text{SU(2)}}} \, .
 \end{equation}
-The corrected charge ratio $F^\pm_K/F^\pm_\pi$ is the value reported by FLAG. 
+The corrected charge ratio $F^\pm_K/F^\pm_\pi$ is the value reported by FLAG.
 
 %%%%%%%%%%%%%%%%%%
 %%%%% FIT STRATEGY
@@ -311,24 +311,24 @@ Once the mass has been determined over the full ensemble (boot0), the correlatio
 As previously stated, this quantity has been determined by MILC~\cite{Bazavov:2012xda}.
 
 \subsection{Wilson flow scale $\omega_0$}
-The Wilson flow-derived quantity $\omega_0$ allows for high-precision scale setting~\cite{Borsanyi:2012zs}. In general, one can measure the lattice spacing by comparing the lattice value of some (dimensionful) observable to its experimental value, eg, 
+The Wilson flow-derived quantity $\omega_0$ allows for high-precision scale setting~\cite{Borsanyi:2012zs}. In general, one can measure the lattice spacing by comparing the lattice value of some (dimensionful) observable to its experimental value, eg,
 \begin{equation}
 a = \frac{(a m_\Omega)^\text{latt}}{m_\Omega^\text{exp}}
 \end{equation}
 which can be converted to physical units by multiplying by $\hbar c$ (ie, $a_\text{phys} = a \hbar c$). Similarly, one can determine $\omega_0$ by measuring
 \begin{equation}
-w_0 = \frac{(w_0 m_\Omega)^\text{latt}}{m_\Omega^\text{exp}} \, , 
+w_0 = \frac{(w_0 m_\Omega)^\text{latt}}{m_\Omega^\text{exp}} \, ,
 \end{equation}
 a task currently underway in another project.  {\color{red} (Is this right?)} In particular, given the following observable
 \begin{equation}
 W(t) \equiv t \frac{d}{dt} \Big[ t^2 \langle E(t) \rangle \Big] \, ,
 \end{equation}
-the scale $w_0$ is the value such that 
+the scale $w_0$ is the value such that
 \begin{equation}
 W(t) \Big|_{t=w_0^2} = 0.3 \, .
 \end{equation}
 
-For the purpose of this project, we take $w_0 = 0.175(10)$, which is a conservative estimate taken from current progress on scale setting. 
+For the purpose of this project, we take $w_0 = 0.175(10)$, which is a conservative estimate taken from current progress on scale setting.
 
 \begin{figure}
 	\includegraphics[width=0.75\textwidth]{./../figs/w0_comparison.pdf}
@@ -362,7 +362,7 @@ The actual fit here is performed in lattice units, not physical units, which is 
 		& $A_{aK}$     & $\epsilon^2_a \epsilon^2_K \epsilon^2_\chi$   & 0                                                              \\
 		& $A_{KK}$     & $\epsilon^4_K \epsilon^2_\chi$                & $\sim 10^{-3}$                                                 \\
 		& $A_{K\pi}$   & $\epsilon^2_K \epsilon^2_\pi \epsilon^2_\chi$ & $\sim 10^{-4}$                                                 \\
-		& $A_{\pi\pi}$ & $\epsilon^2_K \epsilon^2_\pi \epsilon^2_\chi$ & $\sim 10^{-5}$                                                
+		& $A_{\pi\pi}$ & $\epsilon^2_K \epsilon^2_\pi \epsilon^2_\chi$ & $\sim 10^{-5}$
 	\end{tabular}
 	\caption{Contributions from each LEC at the physical point. Here we define $\epsilon^2_\chi = (\epsilon^2_K -\epsilon^2_\pi)$, which ensures $F_K/F_\pi \rightarrow 1$ in the SU(3) isospin limit.}
 \end{table}
@@ -370,9 +370,9 @@ The actual fit here is performed in lattice units, not physical units, which is 
 \subsubsection{Current method}
 \begin{enumerate}
 	\item At NLO, the most naive guess is that the LECs $L_4$ and $L_5$ should be order 1. Running the fit a few times, we quickly discover that these LECs are a few orders of magnitude smaller. Therefore, refining our priors for $L_4$ and $L_5$, we set \texttt{p[`L\_4'] = 0(0.001)} and \texttt{p[`L\_5'] = 0(0.001)}. In practice this width extends about an order of magnitude outside our results for $L_4$ and $L_5$, regardless of NLO model chosen.
-	
+
 	\item For the next higher order (NNLO) fit, we chain the result of the previous (NLO) fit into the fitter. If $L\pm\sigma_L$ is the result for an NLO LEC as determined by the NLO fit (ie, $L_5$ or $L_4$), then for the NNLO fit we take the prior for the NLO LECs to be \texttt{p[`L']=L(3*$\sigma_L$)}.
-	
+
 	\item To determine the priors for the NNLO LECs, we use the empirical Bayes criterion, which is implemented in \texttt{lsqfit} through \texttt{lsqfit.empbayes\_fit}. In this process, we set all the NNLO LECs $A_\xi$ to have prior \texttt{p[`A$_\xi$'] = 0($\lambda$)}, and we allow $\lambda$ to vary until a fit is produced such that the logGBF is maximized.
 \end{enumerate}
 
@@ -380,7 +380,7 @@ The actual fit here is performed in lattice units, not physical units, which is 
 Barring some good physical argument for the expected value of the priors, we use the following heuristic.
 \begin{enumerate}
 	\item At NLO, the most naive guess is that the LECs $L_4$ and $L_5$ should be order 1. Running the fit a few times, we quickly discover that these LECs are a few orders of magnitude smaller. Therefore, refining our priors for $L_4$ and $L_5$, we set \texttt{p[`L\_4'] = 0(0.001)} and \texttt{p[`L\_5'] = 0(0.001)}. In practice this width extends about an order of magnitude outside our results for $L_4$ and $L_5$, regardless of NLO model chosen.
-	
+
 	\item To set the NNLO priors, we first determine the order of magnitude of the $\epsilon^2_\xi (\epsilon^2_K - \epsilon^2_\pi)$ terms. For example, $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi) \sim 10^{-3}$. We center our prior at 0, but set it wide enough such that the upper/lower ends of the uncertainty interval could produce an LEC $A_\xi$ st $\epsilon^2_\xi A_\xi  (\epsilon^2_K - \epsilon^2_\pi) \sim 10^{-2}$, which ensures that the prior doesn't exclude the LEC from contributing at the percent level. In the case of $ \epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$, we would set \texttt{p[`A\_a'] = 0(10)}. The procedure is similar for the NNNLO LECs, with us again setting the priors st the LECs can potentially contribute at the percentile level.
 \end{enumerate}
 While this procedure potentially allows all the NNLO and NNNLO LECs to contribute to the fits, it does lead to some pretty absurd results when taken at face value; eg, setting \texttt{p[`A\_aa'] = 0(100000)}, as one would do as described above, results in a fit of $A_{a, a} = -4926 (11908)$. Fortunately, the \texttt{logGBF} of these fits are correspondingly penalized.
@@ -401,7 +401,7 @@ As a first test of our fits, André and I performed the \texttt{ma-taylor} and \
 \end{figure}
 
 \subsection{Effect of NNLO LECs on fit convergence}
-We compare the effect of adding each NNLO LEC to the fit as well as the effect of chaining the fits. The priors for the NNLO LECs were set in accordance to the method described earlier in these notes, unless the figure corresponds to not chaining the fits, in which case that step is skipped. 
+We compare the effect of adding each NNLO LEC to the fit as well as the effect of chaining the fits. The priors for the NNLO LECs were set in accordance to the method described earlier in these notes, unless the figure corresponds to not chaining the fits, in which case that step is skipped.
 
 \foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
 {
@@ -418,7 +418,7 @@ We compare the effect of adding each NNLO LEC to the fit as well as the effect o
 }
 
 \subsection{Shifting lattice data to physical point}
-Notice that the fit of $F_K/F_\pi$ depends on multiple input parameters: $\epsilon^2_\pi$, $w_0$, $a$, etc; that is, we are fitting a many-dimensional surface, so in order to plot $F_k/F_\pi$ vs some parameter, we must carefully take a slice of that surface. In our case, we fit $F_K / F_\pi$ at the physical point with the exception of some input parameters, which we allow to vary.  
+Notice that the fit of $F_K/F_\pi$ depends on multiple input parameters: $\epsilon^2_\pi$, $w_0$, $a$, etc; that is, we are fitting a many-dimensional surface, so in order to plot $F_k/F_\pi$ vs some parameter, we must carefully take a slice of that surface. In our case, we fit $F_K / F_\pi$ at the physical point with the exception of some input parameters, which we allow to vary.
 
 Of course, our set of data is not at the physical point, so we must account for this when making these plots. We therefore ``shift" the lattice data to the physical point (while allowing a single parameter to vary) using the following heuristic. Let $\{p_j\} = \{\epsilon^2_\pi, w_0, a, \cdots\}$ be the set of input parameters in the fit for some ensemble and $\{p^*_j\}$ the physical value of these parameters. Now suppose we are interested in the dependence of $F_K / F_\pi$ on some subset of the parameters $\{q_k\}$. Then to shift the data to the physical point without shifting $\{q_k\}$, we calculate
 \begin{equation}
@@ -529,7 +529,7 @@ Here we present the results for each of the fits.
 			}%
 			\\\bottomrule
 		\end{tabular}
-		
+
 	\end{center}
 	\caption{Determined LECs}
 \end{table}
@@ -585,13 +585,12 @@ The physical point values are given in Table \ref{table:phys_point_values}. The 
 		$a/w_0$ & $L$      & $a^2 \Delta_I$ & $m_\pi$ (MeV)   & $m_K$ (MeV)     & $m_{ss}$ (MeV)   & $F_\pi$ (MeV)   & $F_K$ (MeV)      & $F_K^\pm/F_\pi^\pm$ \\
 		\hline\
 		0       & $\infty$ & 0              & $134.8(3)$ & $494.2(3)$& $688.5(2.2)$ & $91.9(3.5)$ & $110.38(64)$ & $1.1932(19)$       \\
-		\end{tabular}	
+		\end{tabular}
 	\end{ruledtabular}
 \caption{Values used when extrapolating to the physical point; $F_K^\pm/F_\pi^\pm$ is taken from FLAG (and is not used for the extrapolation).}
 \label{table:phys_point_values}
 \end{table}
 
-\bibliography{notes}
+\bibliography{references}
 
 \end{document}
-
