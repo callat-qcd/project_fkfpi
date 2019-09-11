@@ -1,4 +1,4 @@
-\documentclass[prd,tightenlines,preprintnumbers,showpacs,superscriptaddress,notitlepage,nofootinbib,eqsecnum,floatfix,notitlepage]{revtex4-1}
+\documentclass[prd,tightenlines,preprintnumbers,showpacs,superscriptaddress,notitlepage,eqsecnum,floatfix,notitlepage]{revtex4-1}
 
 \usepackage{graphicx}
 \usepackage{amsmath}
@@ -15,7 +15,6 @@
 \usepackage{datatool}
 \usepackage{url}
 \usepackage{multirow}
-
 \newcount\hour \newcount\hourminute \newcount\minute
 \hour=\time \divide \hour by 60
 \hourminute=\hour \multiply \hourminute by 60
@@ -36,6 +35,7 @@ In these notes, we explain our general fitting strategy for determining $F_K / F
 \maketitle
 
 \section{Background}
+
 
 \section{Fit Functions}
 
@@ -300,7 +300,8 @@ From inspections, one sees that the fit depends on the pion, kaon, and mixed mes
 \subsection{Meson masses}
 The meson masses are determined by fitting the spectral decomposition of the meson two-point correlation functions.
 \begin{equation}
-C(t) = \sum_n Z^{(PS)}_{n} Z^{(SS)}_{n} \left( e^{-E_n t} + e^{-E(T-t)} \right)
+C(t) = \sum_n Z^{(PS)}_{n} Z^{(SS)}_{n} \left( e^{-E_n t} + e^{-E_n (T-t)} \right)
+\label{eqn:meson-correlation-fcn}
 \end{equation}
 
 Usually it's sufficient to fit only a single exponential, so we only need to choose the start and end times for our fit. Further, by symmetrically fitting the interval $[t, T - t]$, we reduce these three fit choices to only one -- determining the start time.
@@ -328,21 +329,19 @@ the scale $w_0$ is the value such that
 W(t) \Big|_{t=w_0^2} = 0.3 \, .
 \end{equation}
 
-For the purpose of this project, we take $w_0 = 0.175(10)$, which is a conservative estimate taken from current progress on scale setting.
+For the purpose of this project, we take $w_0 = 0.175(10)$, which is a conservative estimate taken from current progress on scale setting. We only use $w_0$ to make graphs -- it has no bearing on our final result (the extrapolation of $F^\pm_K/F^\pm_\pi$ to the physical point).
 
 \begin{figure}
 	\includegraphics[width=0.75\textwidth]{./../figs/w0_comparison.pdf}
 	\caption{Current results on scale setting. Notice that our conservative choice for $w_0$ contains all the models in the figure and then some.}
 \end{figure}
 
-
-
-
 \subsection{The pion and kaon decay constants, $F_K$ and $F_\pi$}
-{\color{red} (How are these determined?)}
-
-
-
+The fit functions for the pseudoscalar decay constants can be derived using 5D Ward Identities, thereby relating the decay constants to correlation functions \cite{Berkowitz:2017opd}. With some work, we get the following expression
+\begin{equation}
+F_{q_1 q_2} = Z^{(PS)}_{q_1 q_2}\frac{m_{q_1} + m_{q_2} + m^{(res)}_{q_1} + m^{(res)}_{q_2} }{\sqrt[\leftroot{-3}\uproot{3}3]{E_{q_1 q_2}}}
+\end{equation}
+where $m^{(res)}_q$ is the residual mass of quark $q$ (which characterizes the breaking of chiral symmetry) and $E_{q_1 q_2}$ is the ground state energy of the meson $(q_1 q_2)$, as determined in \eqref{eqn:meson-correlation-fcn}.
 
 
 
@@ -591,6 +590,7 @@ The physical point values are given in Table \ref{table:phys_point_values}. The 
 \label{table:phys_point_values}
 \end{table}
 
+\bibliographystyle{plain}
 \bibliography{references}
 
 \end{document}

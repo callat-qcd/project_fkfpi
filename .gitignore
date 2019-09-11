@@ -3,11 +3,13 @@
 $*
 /notes/*.aux
 /notes/*.bbl
+/notes/*.bcf
 /notes/*.blg
 /notes/*.fls
 /notes/*.gz
 /notes/*.log
 /notes/*.pdf
+/notes/*.xml
 /notes/*.yaml
 /notes/notesNotes.bib
 /tmp/*
