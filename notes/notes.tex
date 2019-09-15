@@ -35,6 +35,39 @@ In these notes, we explain our general fitting strategy for determining $F_K / F
 \maketitle
 
 \section{Background}
+\subsection{Connection to the CKM Metrix}
+The Cabibbo–Kobayashi–Maskawa (CKM) matrix characterizes the extent to which the quarks eigenstates of the strong interaction can be thought of as a quark eigenstates of the weak interaction. In a universe where the quark eigenstates of the weak and strong interaction are the same, the CKM matrix is the identity; we are evidently not in that universe (quarks can change flavors through the weak interaction), and indeed the CKM matrix reflects that deviation from the identity. Per the PDG \cite{PhysRevD.98.030001} (and slightly overestimating some uncertainties for notational consistency),
+\begin{equation}
+\begin{bmatrix}
+|V_{ud}| & |V_{us}| & |V_{ub}| \\
+|V_{cd}| & |V_{cs}| & |V_{cb}| \\
+|V_{td}| & |V_{ts}| & |V_{tb}|
+\end{bmatrix} = \begin{bmatrix}
+0.97446(10) & 0.22452(44) & 0.00365(12) \\
+0.22438(44) & 0.97359(11) & 0.04214(76) \\
+0.00896(24) & 0.04133(74) & 0.999105(32)
+\end{bmatrix}.
+\end{equation}
+
+\begin{figure}
+	\includegraphics[width=0.4\textwidth]{./../figs/kaon_box_diagram.png}
+	\caption{A kaon box diagram  (taken from Wikipedia). Because the quark eigenstates are different in the strong and weak interactions, a $K^0$ can spontaneously change into a $\overline{K}^0$. Consequently, kaon decays do not conserve CP.}
+\end{figure}
+
+Since the standard model predicts the CKM matrix is unitary, for quarks of a given generation $i$ we expect $\sum_k |V_{ik}|^2 = 1$. In particular,
+\begin{equation}
+|V_{ud}|^2 + |V_{us}|^2 + |V_{ub}|^2 = 1 \, .
+\end{equation} 
+The matrix element $|V_{us}|$ is well-known from experiment; the matrix element $|V_{ub}|$ is small compared to the others. Therefore, $|V_{us}|$ is important for determining unitarity. Additionally, in the Wolfenstein  $(\lambda, A, \overline{\rho}, \overline{\eta})$ parameterization of the CKM matrix \cite{Wolfenstein:1983yz}, $|V_{us}| = \lambda$ and thus affects all the other entries of the CKM matrix.
+
+Marciano \cite{Marciano:2004uf, Durr:2010hr} showed how one can calculate this matrix element from the ratio of the leptonic decay constants and $|V_{ud}|^2$.
+\begin{equation}
+\frac{\Gamma(K \rightarrow l \, \overline{\nu}_l)}{\Gamma(\pi \rightarrow l \, \overline{\nu}_l)} =
+\left(\frac{F_K}{F_\pi} \right)^2 \frac{|V_{us}|^2}{|V_{ud}|^2} \frac{m_K (1 - m_l^2/ m_K^2)^2}{m_\pi (1 - m_l^2/ m_\pi^2)^2} \left[ 1 + \frac{\alpha}{\pi}(C_K - C_\pi) \right]
+\end{equation}
+The decay rates $\Gamma$ and masses are well-determined from experiment. The last factor (in brackets) accounts for radiative electroweak corrections, but it contributes little to the calculation due to the factor of $\alpha$.
+
+\subsection{As a Benchmark Calculation for the Lattice Action}
 
 
 \section{Fit Functions}
@@ -590,7 +623,10 @@ The physical point values are given in Table \ref{table:phys_point_values}. The 
 \label{table:phys_point_values}
 \end{table}
 
-\bibliographystyle{plain}
+\section{Experimental results}
+The CKM matrix element $|V_{ud}|$ has been determined to an accuracy better than 0.03 \% using super-allowed nuclear beta-decays. 
+
+\bibliographystyle{ieeetr}
 \bibliography{references}
 
 \end{document}
