@@ -205,9 +205,12 @@ class Fit(object):
             alphaS = x['alphaS']
         if self.order in ['nnlo','nnnlo']:
             ct += (k2 - p2)    * a2 * lec['s_4'] # a^2 m^2
-            #ct += (k2 - p2)    * k2 * lec['k_4'] # m^4
-            ct += (k2 - p2)**2      * lec['k_4'] # m^4
+            ct += (k2 - p2)    * k2 * lec['k_4'] # m^4
             ct += (k2 - p2)    * p2 * lec['p_4'] # m^4
+            '''
+            given the SU(3) flavor constraint, the following ct is redundant
+                (k2 - p2)**2 
+            '''
             if self.alphaS:
                 ct += (k2 - p2) * a2 * alphaS * lec['saS_4']
             if self.logSq:

@@ -201,6 +201,7 @@ if __name__ == "__main__":
             'xpt_nnlo_FV_alphaS','xpt_nnlo_FV_alphaS_logSq',
             'ma_nnlo_FV_alphaS','ma_nnlo_FV_alphaS_logSq']
         models = ['xpt_nnlo_FV_alphaS_logSq']
+        models = ['xpt_nnlo_FV_alphaS']
         fit_results = dict()
         for model in models:
             switches['ansatz']['model'] = model
@@ -210,12 +211,15 @@ if __name__ == "__main__":
             p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
             for key in priors:
                 p_e[key] = priors[key]
-            try:
-                for key in ['p_4','k_4','s_4','saS_4']:
-                    p_e[key] = gv.gvar(0,ip.nnlo_width[model][switches['scale']][key])
-            except Exception as e:
-                print('WARNING: non optimized NNLO prior widths')
-                print(str(e))
+            if not switches['default_priors']:
+                try:
+                    for key in ['p_4','k_4','s_4','saS_4']:
+                        p_e[key] = gv.gvar(0,ip.nnlo_width[model][switches['scale']][key])
+                except Exception as e:
+                    print('WARNING: non optimized NNLO prior widths')
+                    print(str(e))
+            else:
+                print('using default prior widths')
             d_e = dict()
             d_e['x'] = x_e
             d_e['y'] = y_e
@@ -269,9 +273,9 @@ if __name__ == "__main__":
         d_e['x'] = x_e
         d_e['y'] = y_e
         if switches['prior_group']:
-            dr = .1
-            p_range = np.arange(1.1,3+dr,dr)
-            a_range = np.arange(2.1,4+dr,dr)
+            dr = .5
+            p_range = np.arange(.1,8+dr,dr)
+            a_range = np.arange(.1,8+dr,dr)
             z = np.zeros([len(a_range),len(p_range)])
             tot = len(a_range) * len(p_range)
             i_t = 0
@@ -340,7 +344,8 @@ if __name__ == "__main__":
             ax.plot(logGBF_optimal[0], logGBF_optimal[2],marker='X',color='r',markersize=20)
             ax.set_xlabel(r'$\sigma_{nnlo,\chi{\rm PT}}$',fontsize=16)
             ax.set_ylabel(r'$\sigma_{nnlo,a^2}$',fontsize=16)
-            plt.savefig('figures/prior_width_'+switches['ansatz']['model']+'.pdf',transparent=True)
+            fig_name = 'prior_width_'+switches['ansatz']['model']+'_'+switches['scale']
+            plt.savefig('figures/'+fig_name+'.pdf',transparent=True)
 
     if switches['nlo_fv_report']:
         models = ['ma_nlo','ma_nlo_FV','xpt_nlo','xpt_nlo_FV']

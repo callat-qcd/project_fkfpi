@@ -15,17 +15,17 @@ switches['ensembles_fit'] = [
     'a15m220','a12m220S','a12m220','a12m220L','a09m220',
     'a12m130','a15m135XL']
 switches['ansatz'] = dict()
-switches['ansatz']['model'] = 'ma_nnlo_FV_alphaS_logSq' # Type of fit: 'xpt' or 'MA'
+switches['ansatz']['model'] = 'ma-ratio_nnlo_FV_alphaS_logSq' # Type of fit: 'xpt' or 'MA'
 switches['ansatz']['a2dm']  = 'individual' # avg or individual
 switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
 switches['do_analysis']     = True
+switches['print_fit']       = True
 switches['debug']           = False
 switches['nlo_report']      = False # Do pure NLO fits for L5 test?
 switches['nlo_fv_report']   = False # Do pure NLO fits for L5 with FV test?
-switches['make_plots']      = True
-switches['print_fit']       = False
+switches['make_plots']      = False
 switches['nnlo_priors']     = False
-switches['prior_group']     = False
+switches['prior_group']     = True
 switches['verbose']         = True
 
 priors = dict()
@@ -34,6 +34,7 @@ priors['L5']   = gv.gvar(1e-3, 5.e-3)
 priors['L4']   = gv.gvar(0,0.005)
 
 ''' default values '''
+switches['default_priors'] = True
 priors['s_4']   = gv.gvar(0.0, 5)
 priors['k_4']   = gv.gvar(0.0, 5)
 priors['p_4']   = gv.gvar(0.0, 5)
