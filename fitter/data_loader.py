@@ -32,7 +32,6 @@ class data_loader(object):
                     else:
                         data[ensemble][key] = dset[()]
         return data
-
     # whose: 'mine', 'others'
     def get_fit_info(self, whose=None):
         filepath = None

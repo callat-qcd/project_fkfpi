@@ -27,8 +27,6 @@ class bootstrapper(object):
 
         if chain_fits is None:
             chain_fits = True
-        if use_boot0 is None:
-            use_boot0 = True
 
         if bs_N is None or bs_N==0:
             bs_N = len(fit_data[fit_data.keys()[0]]['mpi'])
@@ -53,103 +51,73 @@ class bootstrapper(object):
             print "Using default prior."
             prior = {
                 # nlo terms
-                'L_5' : '0(0.001)', #'0(0.001)',
+                'L_5' : '0.0010(50)', #'0(0.001)',
                 'L_4' : '0(0.001)',
 
+                # nlo-log terms
+                'A_loga' : '0.0 (2.7) ',
+
                 # nnlo terms
-                'A_a' : '0(1)', #'0(100)',
-                'A_k' : '0(1)', #'0(1)',
-                'A_p' : '0(1)', #'0(10)',
+                'A_a' : '0(2.7)', #'0(100)',
+                'A_k' : '0.0 (3.5)', #'0(1)',
+                'A_p' : '0.0 (3.5)', #'0(10)',
 
                 # nnnlo terms
-                'A_aa' : '0(1)', #'0(100000)',
-                'A_ak' : '0(1)', #'0(1000)',
-                'A_ap' : '0(1)',#'0(10000)',
-                'A_kk' : '0(1)', #'0(10)',
-                'A_kp' : '0(1)', #'0(100)',
-                'A_pp' : '0(1)', #'0(1000)',
+                'A_aa' : '0(5)', #'0(100000)',
+                'A_ak' : '0(5)', #'0(1000)',
+                'A_ap' : '0(5)',#'0(10000)',
+                'A_kk' : '0(5)', #'0(10)',
+                'A_kp' : '0(5)', #'0(100)',
+                'A_pp' : '0(5)', #'0(1000)',
             }
             prior = gv.gvar(prior)
-        prior['A_loga'] = gv.gvar('0(3.1)')
 
         if abbrs is None:
             abbrs = fit_data.keys()
 
-
-        data = {} # Resize array data to bs_N
-        plot_data = {} # Use full data when making plots
+        gv_data = {}
+        plot_data = {}
         for abbr in abbrs:
-            data[abbr] = {}
+            gv_data[abbr] = {}
             plot_data[abbr] = {}
-            for data_parameter in fit_data[abbr].keys():
-                if data_parameter in ['FK', 'Fpi', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs']:
-                    if bs_N == 1 and use_boot0 == False:
-                        means = [np.mean(fit_data[abbr][data_parameter])]
-                    else:
-                        means = fit_data[abbr][data_parameter][:bs_N]
-                    unc = np.std(fit_data[abbr][data_parameter])
-                    data[abbr][data_parameter] = gv.gvar(means, np.repeat(unc, len(means)))
-                    plot_data[abbr][data_parameter] = fit_data[abbr][data_parameter][:plot_bs_N]
-                elif data_parameter in ['a2DI']:
-                    to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
-                    data[abbr][data_parameter] = to_gvar(fit_data[abbr][data_parameter])
-                    plot_data[abbr][data_parameter] = to_gvar(fit_data[abbr][data_parameter])
-                elif data_parameter in ['aw0']: # this is a/w0
-                    to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
-                    data[abbr]['a/w0'] = to_gvar(fit_data[abbr]['aw0'])
-                    plot_data[abbr]['a/w0'] = to_gvar(fit_data[abbr]['aw0'])
-                elif data_parameter in ['L', 'alpha_s']:
-                    value = fit_data[abbr][data_parameter]
-                    data[abbr][data_parameter] = gv.gvar(value, value/1000000.0)
-                    plot_data[abbr][data_parameter] = gv.gvar(value, value/1000000.0)
+            for key in ['FK', 'Fpi', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs']:
+                gv_data[abbr][key] = fit_data[abbr][key]
+                plot_data[abbr][key] = fit_data[abbr][key][:plot_bs_N]
 
-            # Add Lengths
-            #if abbr in ['a15m350', 'a15m310', 'a15m400']:
-            #    length = 16
-            #elif abbr in ['a12m220S', 'a12m400', 'a15m220', 'a12m350', 'a12m310']:
-            #    length = 24
-            #elif abbr in ['a09m310', 'a09m350', 'a09m400', 'a12m220', 'a15m130']:
-            #    length = 32
-            #elif abbr in ['a12m220L']:
-            #    length = 40
-            #elif abbr in ['a09m220', 'a12m130', 'a15m135XL']:
-            #    length = 48
-            #else:
-            #    length = None
-            #data[abbr]['L'] = gv.gvar(length, length/1000000.0)
-            #plot_data[abbr]['L'] = gv.gvar(length, length/1000000.0)
+            gv_data[abbr] = gv.dataset.avg_data(gv_data[abbr], bstrap=True)
+            gv_data[abbr]['FK/Fpi'] = gv_data[abbr]['FK'] / gv_data[abbr]['Fpi']
+            plot_data[abbr]['FK/Fpi'] = plot_data[abbr]['FK'] / plot_data[abbr]['Fpi']
 
-        # #'FKfpi', 'FpiFpi', 'FKFK'
-        for abbr in abbrs:
+            to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
+            for key in ['a2DI']:
+                gv_data[abbr][key] = to_gvar(fit_data[abbr][key])
+                plot_data[abbr][key] = to_gvar(fit_data[abbr][key])
+
+            for key in ['aw0']:
+                gv_data[abbr]['a/w0'] = to_gvar(fit_data[abbr]['aw0'])
+                plot_data[abbr]['a/w0'] = to_gvar(fit_data[abbr]['aw0'])
+
+            for key in ['L', 'alpha_s']:
+                value = fit_data[abbr][key]
+                gv_data[abbr][key] = gv.gvar(value, value/1000000.0)
+                plot_data[abbr][key] = gv.gvar(value, value/1000000.0)
+
             if F2 == 'FKFpi':
-                if bs_N == 1 and use_boot0 == False:
-                    means_data = [(4 *np.pi)**2 *np.mean(fit_data[abbr]['FK']) *np.mean(fit_data[abbr]['Fpi'])]
-                else:
-                    means_data = (4 *np.pi)**2 *fit_data[abbr]['FK'][:bs_N] *fit_data[abbr]['Fpi'][:bs_N]
-                means_plot = (4 *np.pi)**2 *fit_data[abbr]['FK'][:bs_N] *fit_data[abbr]['Fpi'][:plot_bs_N]
-                unc = np.std((4 *np.pi)**2 *fit_data[abbr]['FK'] *fit_data[abbr]['Fpi'])
-            elif F2 == 'FpiFpi':
-                if bs_N == 1 and use_boot0 == False:
-                    means_data = [(4 *np.pi *np.mean(fit_data[abbr]['Fpi']))**2]
-                else:
-                    means_data = (4 *np.pi *fit_data[abbr]['Fpi'][:bs_N])**2
-                means_plot = (4 *np.pi *fit_data[abbr]['Fpi'][:plot_bs_N])**2
-                unc = np.std((4 *np.pi *fit_data[abbr]['Fpi'])**2)
+                gv_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *gv_data[abbr]['FK'] *gv_data[abbr]['Fpi']
+                plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['FK'] *plot_data[abbr]['Fpi']
             elif F2 == 'FKFK':
-                if bs_N == 1 and use_boot0 == False:
-                    means_data = [(4 *np.pi *np.mean(fit_data[abbr]['FK']))**2]
-                else:
-                    means_data = (4 *np.pi *fit_data[abbr]['FK'][:bs_N])**2
-                means_plot = (4 *np.pi *fit_data[abbr]['FK'][:plot_bs_N])**2
-                unc = np.std((4 *np.pi *fit_data[abbr]['FK'])**2)
-            data[abbr]['lam2_chi'] = gv.gvar(means_data, np.repeat(unc, len(means_data)))
-            plot_data[abbr]['lam2_chi'] = means_plot
+                gv_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *gv_data[abbr]['FK'] *gv_data[abbr]['FK']
+                plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['FK'] *plot_data[abbr]['FK']
+            elif F2 == 'FpiFpi':
+                gv_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *gv_data[abbr]['Fpi'] *gv_data[abbr]['Fpi']
+                plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['Fpi'] *plot_data[abbr]['Fpi']
+
 
         self.bs_N = bs_N
         self.plot_bs_N = plot_bs_N
         self.abbrs = sorted(abbrs)
         #self.variable_names = sorted(fit_data[self.abbrs[0]].keys())
-        self.fit_data = data
+        self.fit_data = gv_data
         self.plot_data = plot_data
         self.prior = prior
         self.order = order
@@ -228,15 +196,13 @@ class bootstrapper(object):
     def _make_fit_data(self, j):
         prepped_data = {}
         for parameter in ['mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'lam2_chi']:
-            prepped_data[parameter] = np.array([self.fit_data[abbr][parameter][j] for abbr in self.abbrs])
+            prepped_data[parameter] = np.array([self.fit_data[abbr][parameter] for abbr in self.abbrs])
         #for parameter in ['w0']:
         #    prepped_data[parameter] = self.fit_data[abbr][parameter]
         for parameter in ['a/w0', 'a2DI', 'L', 'alpha_s']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter] for abbr in self.abbrs])
 
-
-        y = ([self.fit_data[abbr]['FK'][j]/self.fit_data[abbr]['Fpi'][j] for abbr in self.abbrs])
-        prepped_data['y'] = y
+        prepped_data['y'] = [self.fit_data[abbr]['FK/Fpi'] for abbr in self.abbrs]
 
         return prepped_data
 

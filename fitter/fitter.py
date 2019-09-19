@@ -76,6 +76,7 @@ class fitter(object):
                         #pass
 
         self.fit = fit
+        print "Done!"
         return fit
 
     def _make_models(self):
@@ -261,7 +262,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         #w0 = p['w0']
 
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'] / (4 *np.pi))**2
+        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
@@ -284,6 +285,11 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         #print "\n\n"
 
+        #try:
+        #    print gv.corr(p['mpi'][0], p['mk'][0])
+        #except ValueError:
+        #    pass
+
         return output *(eps2_k - eps2_pi)
 
     def fitfcn_nnnlo_cts(self, p):
@@ -291,7 +297,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         #w0 = p['w0']
 
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'] / (4 *np.pi))**2
+        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
@@ -326,7 +332,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_nnlo_log_ct(self, p):
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'] / (4 *np.pi))**2
+        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
         alpha_s = p['alpha_s']
@@ -648,7 +654,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return output
 
     def buildprior(self, prior, mopt=None, extend=False):
-        #print prior
         return prior
 
     def builddata(self, data):
