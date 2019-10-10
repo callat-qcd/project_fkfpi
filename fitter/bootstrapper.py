@@ -51,16 +51,16 @@ class bootstrapper(object):
             print "Using default prior."
             prior = {
                 # nlo terms
-                'L_5' : '0.0010(50)', #'0(0.001)',
-                'L_4' : '0(0.001)',
+                'L_5' : '0.0(0.005)', #'0(0.001)',
+                'L_4' : '0.0(0.005)',
 
                 # nlo-log terms
-                'A_loga' : '0.0 (2.7) ',
+                'A_loga' : '0.0(5.0)',
 
                 # nnlo terms
-                'A_a' : '0(2.7)', #'0(100)',
-                'A_k' : '0.0 (3.5)', #'0(1)',
-                'A_p' : '0.0 (3.5)', #'0(10)',
+                'A_a' : '0.0(5.0)', #'0(100)',
+                'A_k' : '0.0(5.0)', #'0(1)',
+                'A_p' : '0.0(5.0)', #'0(10)',
 
                 # nnnlo terms
                 'A_aa' : '0(5)', #'0(100000)',
@@ -411,9 +411,9 @@ class bootstrapper(object):
             'FK/Fpi_pm' : gv.gvar('1.1932(19)'), # FLAG, SU(2) isospin corrected value (arxiv/1902.08191, eqn 80)
         }
         # Or get mss, mrs with Gell-Mann-Oakes-Renner relations: arxiv/0505265 (3.45)
-        #mpi = phys_point_data['mpi']
-        #mk = phys_point_data['mk']
-        #phys_point_data['mss'] = np.sqrt(2 *(mk)**2 - (mpi)**2) *1.0000001 # prevents division by 0
+        mpi = phys_point_data['mpi']
+        mk = phys_point_data['mk']
+        phys_point_data['mss'] = np.sqrt(2 *(mk)**2 - (mpi)**2) *1.0000001 # prevents division by 0
 
         # ma pion
         phys_point_data['mju'] = phys_point_data['mpi']

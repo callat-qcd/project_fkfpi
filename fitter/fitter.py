@@ -348,7 +348,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_k = p['mk']**2 / lam2_chi
 
         output = (
-            (1.0 / 6144.0) *(eps2_k - eps2_pi) *(17 *eps2_k + 37 *eps2_pi) *(np.log(np.sqrt(eps2_pi *eps2_k)))**2
+            (1.0 / 96.0) *(eps2_k - eps2_pi) *(17 *eps2_k + 37 *eps2_pi) *(np.log(np.sqrt(eps2_pi *eps2_k)))**2
         )
         return output
 
