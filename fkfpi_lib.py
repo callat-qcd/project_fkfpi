@@ -191,19 +191,8 @@ if __name__ == "__main__":
 
     if switches['do_analysis']:
         # do analysis
-        models = [
-            'xpt_nnnlo_FV','xpt_nnnlo_FV_alphaS',
-            'xpt_nnlo_FV','xpt_nnlo_FV_alphaS',
-            'ma_nnnlo_FV','ma_nnnlo_FV_alphaS',
-            'ma_nnlo_FV','ma_nnlo_FV_alphaS',
-            ]
-        models = [
-            'xpt_nnlo_FV_alphaS','xpt_nnlo_FV_alphaS_logSq',
-            'ma_nnlo_FV_alphaS','ma_nnlo_FV_alphaS_logSq']
-        models = ['xpt_nnlo_FV_alphaS_logSq']
-        models = ['xpt_nnlo_FV_alphaS']
         fit_results = dict()
-        for model in models:
+        for model in switches['ansatz']['models']:
             switches['ansatz']['model'] = model
             print('EFT: ',model)
             x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
@@ -251,13 +240,49 @@ if __name__ == "__main__":
                 ax.set_xlabel(r'$\epsilon_\pi^2$',fontsize=16)
                 ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
                 ax.set_xlim(0,.1)
-                ax.set_ylim(1.05, 1.20)
+                ax.set_ylim(1.05, 1.25)
                 plt.savefig('figures/vs_episq_'+model+'.pdf',transparent=True)
 
-        for model in models:
+        for model in switches['ansatz']['models']:
             L5_rho  = fit_results[model].fit.p['L5']
             L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
             print('%25s: L5(m_rho) = %s' %(model,L5_rho))
+
+    if switches['check_fit']:
+        # do analysis
+        fit_results = dict()
+        for model in switches['ansatz']['models']:
+            switches['ansatz']['model'] = model
+            print('EFT: ',model)
+            x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+            y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+            p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+            for key in priors:
+                p_e[key] = priors[key]
+            if not switches['default_priors']:
+                try:
+                    for key in ['p_4','k_4','s_4','saS_4']:
+                        p_e[key] = gv.gvar(0,ip.nnlo_width[model][switches['scale']][key])
+                except Exception as e:
+                    print('WARNING: non optimized NNLO prior widths')
+                    print(str(e))
+            else:
+                print('using default prior widths')
+            d_e = dict()
+            d_e['x'] = x_e
+            d_e['y'] = y_e
+            d_e['p'] = p_e
+            fit_e = xpt.Fit(switches,xyp_init=d_e)
+            fit_e.fit_data()
+            fit_results[model] = fit_e
+            if switches['print_fit']:
+                print(fit_e.fit.format(maxline=True))
+
+        print('model & PK& chisq/dof& logGBF& $L_5$& $k_4$& $p_4$& $s_4$& $F_K/F_\pi$\\\\')
+        for model in switches['ansatz']['models']:
+            chi2dof,dof,logGBF,L5,k4,p4,s4,FKFpi = fit_results[model].check_fit(phys_point)
+            print('%34s& %s& %.3f [%2d]& %.2f& %14s& %8s& %8s& %8s& %10s\\\\'\
+                %(model.replace('_','\_'),switches['scale'],chi2dof,dof,logGBF,L5,k4,p4,s4,FKFpi))
 
     if switches['nnlo_priors']:
         #fit_results = dict()

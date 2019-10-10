@@ -209,7 +209,7 @@ class Fit(object):
             ct += (k2 - p2)    * p2 * lec['p_4'] # m^4
             '''
             given the SU(3) flavor constraint, the following ct is redundant
-                (k2 - p2)**2 
+                (k2 - p2)**2
             '''
             if self.alphaS:
                 ct += (k2 - p2) * a2 * alphaS * lec['saS_4']
@@ -417,6 +417,51 @@ class Fit(object):
         # restore original self attributes
         for key,val in self_dict.items():
             setattr(self, key, val)
+
+    def check_fit(self,phys_point):
+        # get copy of all self attributes
+        self_dict = self.__dict__.copy()
+        # set physical point
+        x_phys = dict()
+        x_phys['phys'] = {k:np.inf for k in ['mpiL','mkL']}
+        x_phys['phys']['alphaS'] = 0.
+
+        y_phys = dict()
+        y_phys['phys'] = phys_point['FK'] / phys_point['Fpi']
+        y_phys['FLAG'] = phys_point['FKFPi_FLAG']
+
+        p_phys = dict()
+        for k in ['s_4','saS_4','s_6','sk_6','sp_6']:
+            p_phys[k] = 0.
+        Lchi_phys = phys_point['Lchi']
+        p_phys[('phys','p2')] = phys_point['mpi']**2 / Lchi_phys**2
+        p_phys[('phys','k2')] = phys_point['mk']**2  / Lchi_phys**2
+        p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
+        p_phys[('phys','a2')] = 0.
+        #for k in self.fit.p:
+            #if isinstance(k,str):
+                #print(k,self.fit.p[k])
+        for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6']:
+            if k in self.fit.p:
+                p_phys[k] = self.fit.p[k]
+        if 'ratio' in self.eft:
+            self.eft          = 'xpt-ratio'
+            self.fit_function = self.xpt_ratio_nlo
+        else:
+            self.eft          = 'xpt'
+            self.fit_function = self.xpt_nlo
+        self.fv = False
+
+        #print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
+        #    %(self.fit.chi2/self.fit.dof,self.fit.dof,self.fit.Q,self.fit.logGBF))
+        fkfpi = self.fit_function(x_phys,p_phys)
+
+        # restore original self attributes
+        for key,val in self_dict.items():
+            setattr(self, key, val)
+
+        return self.fit.chi2/self.fit.dof, self.fit.dof, self.fit.logGBF, self.fit.p['L5'], self.fit.p['k_4'], self.fit.p['p_4'], self.fit.p['s_4'], fkfpi['phys']
+
 
     def vs_epi(self,epi_range, ax):
         # get copy of all self attributes

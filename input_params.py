@@ -15,11 +15,24 @@ switches['ensembles_fit'] = [
     'a15m220','a12m220S','a12m220','a12m220L','a09m220',
     'a12m130','a15m135XL']
 switches['ansatz'] = dict()
-switches['ansatz']['model'] = 'ma-ratio_nnlo_FV_alphaS_logSq' # Type of fit: 'xpt' or 'MA'
+switches['ansatz']['models'] = [
+    'xpt_nnlo'                ,'ma_nnlo',
+    'xpt_nnlo_FV'             ,'ma_nnlo_FV',
+    'xpt_nnlo_FV_alphaS'      ,'ma_nnlo_FV_alphaS',
+    'xpt_nnlo_FV_alphaS_logSq','ma_nnlo_FV_alphaS_logSq',
+    'xpt_nnnlo',
+    'xpt_nnnlo_FV'            ,'ma_nnnlo_FV',
+    'xpt_nnnlo_FV_alphaS'     ,'ma_nnnlo_FV_alphaS',
+    'xpt-ratio_nnlo'                ,'ma-ratio_nnlo',
+    'xpt-ratio_nnlo_FV'             ,'ma-ratio_nnlo_FV',
+    'xpt-ratio_nnlo_FV_alphaS'      ,'ma-ratio_nnlo_FV_alphaS',
+    'xpt-ratio_nnlo_FV_alphaS_logSq','ma-ratio_nnlo_FV_alphaS_logSq'
+]
+#switches['ansatz']['models'] = ['xpt_nnlo_FV_alphaS_logSq','xpt_nnlo_FV_logSq']
 switches['ansatz']['a2dm']  = 'individual' # avg or individual
 switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
-switches['do_analysis']     = True
-switches['print_fit']       = True
+switches['do_analysis']     = False
+switches['print_fit']       = False
 switches['debug']           = False
 switches['nlo_report']      = False # Do pure NLO fits for L5 test?
 switches['nlo_fv_report']   = False # Do pure NLO fits for L5 with FV test?
@@ -27,9 +40,10 @@ switches['make_plots']      = False
 switches['nnlo_priors']     = False
 switches['prior_group']     = True
 switches['verbose']         = True
+switches['check_fit']       = True
 
 priors = dict()
-priors['L5']   = gv.gvar(1e-3, 5.e-3)
+priors['L5']   = gv.gvar(0, 0.005)
 #priors['L5']   = gv.gvar(0,0.005)
 priors['L4']   = gv.gvar(0,0.005)
 
@@ -78,7 +92,7 @@ nnlo_width['ma-ratio_nnlo_FV_alphaS_logSq']['PK']['s_4']   = 0.1
 nnlo_width['ma-ratio_nnlo_FV_alphaS_logSq']['PK']['saS_4'] = 0.1
 
 
-n3lo_width = 1.
+n3lo_width = 5.
 
 priors['kp_6']  = gv.gvar(0.0, n3lo_width)
 priors['k_6']   = gv.gvar(0.0, n3lo_width)
