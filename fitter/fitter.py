@@ -398,8 +398,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             + (1.0/4.0) *fcn_I_m(mss, L, mu, order_vol) / F2
             - (3.0/8.0) *fcn_I_m(mx, L, mu, order_vol) / F2
 
-            + 4 *eps2_pi *p['L_4']
-            + 4 *eps2_k *(2 *p['L_4'] + p['L_5'])
+            + 4 *eps2_pi *(4 *np.pi)**2 *p['L_4']
+            + 4 *eps2_k *(4 *np.pi)**2 *(2 *p['L_4'] + p['L_5'])
 
             + del2_ju *(
                 - fcn_dI_m(mpi, L, mu, order_vol) / (8 *F2)
@@ -507,8 +507,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             - (3.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
             - (3.0/4.0) *fcn_I_m(mk, L, mu, order_vol) / F2
             - (3.0/8.0) *fcn_I_m(meta, L, mu, order_vol) / F2
-            + 4 *eps2_pi *p['L_4']
-            + 4 *eps2_k *(2 *p['L_4'] + p['L_5'])
+            + 4 *eps2_pi *(4 *np.pi)**2 *p['L_4']
+            + 4 *eps2_k *(4 *np.pi)**2 *(2 *p['L_4'] + p['L_5'])
         )
 
         return FK_nlo_per_F0 / Fpi_nlo_per_F0
