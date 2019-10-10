@@ -298,8 +298,9 @@ class bootstrapper(object):
 
         for key in fit_data.keys():
             fit_parameters[key] = fit_data[key]
-            temp_fit = self.fits[0]
-            model_name = temp_fit.fcn(temp_fit.p).keys()[-1]
+
+        temp_fit = self.fits[0]
+        model_name = temp_fit.fcn(temp_fit.p).keys()[-1]
 
         return temp_fit.fcn(p=fit_parameters)[model_name]
 
@@ -404,8 +405,8 @@ class bootstrapper(object):
             'mss' : gv.gvar('688.5(2.2)'), # Taken from arxiv/1303.1670
 
             'a2DI' : 0,
-            'Fpi' : gv.gvar('91.9(3.5)'),
-            'FK' : gv.gvar('110.38(64)'),
+            'Fpi' : gv.gvar(130.2/np.sqrt(2), 1.7/np.sqrt(2)), #gv.gvar('91.9(3.5)'),
+            'FK' : gv.gvar(155.6/np.sqrt(2), 0.4/np.sqrt(2)), #gv.gvar('110.38(64)'),
             'w0' : self.w0,
 
             'FK/Fpi_pm' : gv.gvar('1.1932(19)'), # FLAG, SU(2) isospin corrected value (arxiv/1902.08191, eqn 80)
@@ -413,7 +414,7 @@ class bootstrapper(object):
         # Or get mss, mrs with Gell-Mann-Oakes-Renner relations: arxiv/0505265 (3.45)
         mpi = phys_point_data['mpi']
         mk = phys_point_data['mk']
-        phys_point_data['mss'] = np.sqrt(2 *(mk)**2 - (mpi)**2) *1.0000001 # prevents division by 0
+        phys_point_data['mss'] = np.sqrt(2 *(mk)**2 - (mpi)**2) *1.000000001 # prevents division by 0
 
         # ma pion
         phys_point_data['mju'] = phys_point_data['mpi']

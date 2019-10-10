@@ -515,6 +515,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
 
     def fitfcn_xpt_taylor(self, p):
+
         # Constants
         order_vol = self.order['vol']
 
