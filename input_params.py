@@ -33,27 +33,36 @@ switches['ansatz']['models'] = [
     'xpt_nnlo'                ,'ma_nnlo',
     'xpt_nnlo_FV'             ,'ma_nnlo_FV',
     ]
+switches['ansatz']['models'] =  [
+    'xpt_nnlo_FV_alphaS_logSq'
+]
 switches['ansatz']['a2dm']  = 'individual' # avg or individual
 switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
-switches['do_analysis']     = False
+switches['do_analysis']     = True
+# use default or optimized priors
+switches['default_priors'] = False
+# set mean to boot0 vs add boot0 to bs list
+switches['bs_bias']         = True
+# use scipy instead of GSL?
+switches['scipy']           = False
+# fit options
 switches['print_fit']       = False
-switches['debug']           = False
-switches['nlo_report']      = True # Do pure NLO fits for L5 test?
-switches['nlo_fv_report']   = True # Do pure NLO fits for L5 with FV test?
 switches['make_plots']      = False
+switches['verbose']         = True
+switches['debug']           = False
+# for tuning prior widths
 switches['nnlo_priors']     = False
 switches['prior_group']     = True
-switches['verbose']         = True
+# fit checks
+switches['nlo_report']      = False
+switches['nlo_fv_report']   = False
 switches['check_fit']       = False
-switches['bs_bias']         = True
-switches['scipy']           = False
 
 priors = dict()
 priors['L5']   = gv.gvar(0, 0.005)
 priors['L4']   = gv.gvar(0, 0.005)
 
 ''' default values '''
-switches['default_priors'] = True
 n2lo_width = 5.
 priors['s_4']   = gv.gvar(0.0, n2lo_width)
 priors['k_4']   = gv.gvar(0.0, n2lo_width)

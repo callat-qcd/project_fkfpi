@@ -176,6 +176,70 @@ def plot_data(ax,e,x,y):
 
     return ax
 
+def perform_analysis(switches,priors):
+    fit_results = dict()
+    for base_model in switches['ansatz']['models']:
+        for FPK in ['PP','PK','KK']:
+            model = base_model +'_'+FPK
+            switches['scale'] = FPK
+            switches['ansatz']['model'] = model
+            print('EFT: ',model)
+            x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+            y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+            p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+            for key in priors:
+                p_e[key] = priors[key]
+            if not switches['default_priors']:
+                try:
+                    for key in ['p_4','k_4','s_4','saS_4']:
+                        p_e[key] = gv.gvar(0,ip.nnlo_width[base_model][FPK][key])
+                except Exception as e:
+                    print('WARNING: non optimized NNLO prior widths')
+                    print(str(e))
+            else:
+                print('using default prior widths')
+            d_e = dict()
+            d_e['x'] = x_e
+            d_e['y'] = y_e
+            d_e['p'] = p_e
+            fit_e = xpt.Fit(switches,xyp_init=d_e)
+            fit_e.fit_data()
+            fit_results[model] = fit_e
+            if switches['print_fit']:
+                print(fit_e.fit.format(maxline=True))
+
+            fit_e.report_phys_point(phys_point)
+
+            if switches['make_plots']:
+                epi_range = dict()
+                epi_range['Lchi'] = phys_point['Lchi']
+                epi_range['mk']   = phys_point['mk']
+                epi_range['mpi']  = np.sqrt(np.arange(1,400**2,400**2 // 100))
+                epi_range['mpi_phys'] = phys_point['mpi']
+
+                fig_vs_epi = plt.figure('FKFpi_vs_epi_'+model)
+                ax = plt.axes([.12, .12, .85, .85])
+                ax = fit_e.vs_epi(epi_range, ax)
+                y_shift = fit_e.shift_phys_epsK(phys_point)
+                for e in switches['ensembles_fit']:
+                    x = fit_e.fit.p[(e,'p2')]
+                    y = y_e[e] + y_shift[e]
+                    ax = plot_data(ax, e, x, y)
+                ax.legend()
+                ax.set_xlabel(r'$\epsilon_\pi^2$',fontsize=16)
+                ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
+                ax.set_xlim(0,.1)
+                ax.set_ylim(1.05, 1.25)
+                plt.savefig('figures/vs_episq_'+model+'.pdf',transparent=True)
+
+    for base_model in switches['ansatz']['models']:
+        for FPK in ['PP','PK','KK']:
+            model = base_model +'_'+FPK
+            L5_rho  = fit_results[model].fit.p['L5']
+            L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
+            print('%25s: L5(m_rho) = %s' %(model,L5_rho))
+
+
 def nnlo_prior_scan(switches,priors):
     logGBF_array = []
     model = switches['nnlo_priors_model']
@@ -320,7 +384,6 @@ def nlo_report(switches,priors,FV=True):
         os.makedirs('figures')
     plt.savefig('figures/'+fig_name+'.pdf',transparent=True)
 
-
 def fit_checker(switches,priors):
     fit_results = dict()
     for model in switches['ansatz']['models']:
@@ -382,63 +445,7 @@ if __name__ == "__main__":
     data.close()
 
     if switches['do_analysis']:
-        # do analysis
-        fit_results = dict()
-        for model in switches['ansatz']['models']:
-            switches['ansatz']['model'] = model
-            print('EFT: ',model)
-            x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
-            y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
-            p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
-            for key in priors:
-                p_e[key] = priors[key]
-            if not switches['default_priors']:
-                try:
-                    for key in ['p_4','k_4','s_4','saS_4']:
-                        p_e[key] = gv.gvar(0,ip.nnlo_width[model][switches['scale']][key])
-                except Exception as e:
-                    print('WARNING: non optimized NNLO prior widths')
-                    print(str(e))
-            else:
-                print('using default prior widths')
-            d_e = dict()
-            d_e['x'] = x_e
-            d_e['y'] = y_e
-            d_e['p'] = p_e
-            fit_e = xpt.Fit(switches,xyp_init=d_e)
-            fit_e.fit_data()
-            fit_results[model] = fit_e
-            if switches['print_fit']:
-                print(fit_e.fit.format(maxline=True))
-
-            fit_e.report_phys_point(phys_point)
-
-            if switches['make_plots']:
-                epi_range = dict()
-                epi_range['Lchi'] = phys_point['Lchi']
-                epi_range['mk']   = phys_point['mk']
-                epi_range['mpi']  = np.sqrt(np.arange(1,400**2,400**2 // 100))
-                epi_range['mpi_phys'] = phys_point['mpi']
-
-                fig_vs_epi = plt.figure('FKFpi_vs_epi_'+model)
-                ax = plt.axes([.12, .12, .85, .85])
-                ax = fit_e.vs_epi(epi_range, ax)
-                y_shift = fit_e.shift_phys_epsK(phys_point)
-                for e in switches['ensembles_fit']:
-                    x = fit_e.fit.p[(e,'p2')]
-                    y = y_e[e] + y_shift[e]
-                    ax = plot_data(ax, e, x, y)
-                ax.legend()
-                ax.set_xlabel(r'$\epsilon_\pi^2$',fontsize=16)
-                ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
-                ax.set_xlim(0,.1)
-                ax.set_ylim(1.05, 1.25)
-                plt.savefig('figures/vs_episq_'+model+'.pdf',transparent=True)
-
-        for model in switches['ansatz']['models']:
-            L5_rho  = fit_results[model].fit.p['L5']
-            L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
-            print('%25s: L5(m_rho) = %s' %(model,L5_rho))
+        perform_analysis(switches,priors)
 
     if switches['check_fit']:
         fit_checker(switches,priors)
