@@ -38,10 +38,10 @@ switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
 switches['do_analysis']     = False
 switches['print_fit']       = False
 switches['debug']           = False
-switches['nlo_report']      = False # Do pure NLO fits for L5 test?
-switches['nlo_fv_report']   = False # Do pure NLO fits for L5 with FV test?
+switches['nlo_report']      = True # Do pure NLO fits for L5 test?
+switches['nlo_fv_report']   = True # Do pure NLO fits for L5 with FV test?
 switches['make_plots']      = False
-switches['nnlo_priors']     = True
+switches['nnlo_priors']     = False
 switches['prior_group']     = True
 switches['verbose']         = True
 switches['check_fit']       = False

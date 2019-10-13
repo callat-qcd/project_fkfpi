@@ -248,6 +248,79 @@ def nnlo_prior_scan(switches,priors):
             os.makedirs('figures')
         plt.savefig('figures/'+fig_name+'.pdf',transparent=True)
 
+def nlo_report(switches,priors,FV=True):
+    latex = {
+        'ma_nlo':'ma nlo',   'ma_nlo_FV':'ma nlo w/FV',
+        'xpt_nlo':'xpt nlo', 'xpt_nlo_FV':'xpt nlo w/FV'}
+    marker = {
+        'ma_nlo':'s',  'ma_nlo_FV':'o',
+        'xpt_nlo':'*', 'xpt_nlo_FV':'d'}
+    color = {
+        'ma_nlo':'r',  'ma_nlo_FV':'b',
+        'xpt_nlo':'m', 'xpt_nlo_FV':'g'}
+    if FV:
+        models = ['ma_nlo','ma_nlo_FV','xpt_nlo','xpt_nlo_FV']
+    else:
+        models = ['ma_nlo','xpt_nlo']
+
+    fit_results = dict()
+    for model in models:
+        switches['ansatz']['model'] = model
+        print('EFT: ',model)
+        model_result = dict()
+        for e in switches['ensembles']:
+            switches['ensembles_fit'] = [e]
+            x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+            y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+            p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+            p_e['L5'] = priors['L5']
+            d_e = dict()
+            d_e['x'] = x_e
+            d_e['y'] = y_e
+            d_e['p'] = p_e
+            fit_e = xpt.Fit(switches,xyp_init=d_e)
+            fit_e.fit_data()
+            model_result[e] = fit_e
+        fit_results[model] = model_result
+    fig_name = 'nlo_report'
+    if FV:
+        fig_name += '_FV'
+
+    fig = plt.figure(fig_name)
+    ax  = plt.axes([.13, .13, .84, .84])
+
+    if len(models) == 2:
+        print("%8s & %13s & %13s & \\\\" \
+            %('ensemble',latex[models[0]], latex[models[1]]))
+    else:
+        print("%8s & %13s & %13s & %13s & %13s\\\\" \
+            %('ensemble',latex[models[0]], latex[models[1]],latex[models[2]], latex[models[3]]))
+    print("\\hline")
+    for i_e,e in enumerate(switches['ensembles']):
+        s = "%8s" %e
+        for model in models:
+            s += " & %13s" %str(fit_results[model][e].fit.p['L5'])
+        s += "\\\\"
+        print(s)
+
+        for i_m,model in enumerate(models):
+            if i_e == 0:
+                label=latex[models[i_m]]
+            else:
+                label=''
+            y = len(switches['ensembles']) - i_e + 0.1*i_m
+            ax.errorbar(x=fit_results[model][e].fit.p['L5'].mean,y=y,
+                xerr=fit_results[model][e].fit.p['L5'].sdev,linestyle='None',
+                marker=marker[model],mfc='None',color=color[model],label=label)
+    plt.yticks(np.arange(len(switches['ensembles']),0,-1),tuple(switches['ensembles']))
+    ax.set_xlabel(r'$L_5$',fontsize=16)
+    ax.legend(loc=1,fontsize=16)
+    ax.set_xlim(-0.0002,0.001)
+    if not os.path.exists('figures'):
+        os.makedirs('figures')
+    plt.savefig('figures/'+fig_name+'.pdf',transparent=True)
+
+
 def fit_checker(switches,priors):
     fit_results = dict()
     for model in switches['ansatz']['models']:
@@ -374,144 +447,9 @@ if __name__ == "__main__":
         nnlo_prior_scan(switches,priors)
 
     if switches['nlo_fv_report']:
-        models = ['ma_nlo','ma_nlo_FV','xpt_nlo','xpt_nlo_FV']
-        latex = {
-            'ma_nlo':'ma nlo',   'ma_nlo_FV':'ma nlo w/FV',
-            'xpt_nlo':'xpt nlo', 'xpt_nlo_FV':'xpt nlo w/FV'}
-        marker = {
-            'ma_nlo':'s',  'ma_nlo_FV':'o',
-            'xpt_nlo':'*', 'xpt_nlo_FV':'d'}
-        color = {
-            'ma_nlo':'r',  'ma_nlo_FV':'b',
-            'xpt_nlo':'m', 'xpt_nlo_FV':'g'}
-        fit_results = dict()
-        for model in models:
-            switches['ansatz']['model'] = model
-            print('EFT: ',model)
-            model_result = dict()
-            for e in switches['ensembles']:
-                switches['ensembles_fit'] = [e]
-                if 'FV' in model:
-                    switches['ansatz']['FV'] = True
-                else:
-                    switches['ansatz']['FV'] = False
-                x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
-                y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
-                p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
-                p_e['L4'] = gv.gvar(0,5.e-3)#priors['L4']
-                p_e['L5'] = priors['L5']
-                d_e = dict()
-                d_e['x'] = x_e
-                d_e['y'] = y_e
-                d_e['p'] = p_e
-                fit_e = xpt.Fit(switches,xyp_init=d_e)
-                fit_e.fit_data()
-                model_result[e] = fit_e
-            fit_results[model] = model_result
-        fig = plt.figure('nlo_report_FV')
-        ax  = plt.axes([.13, .13, .84, .84])
-
-        if len(models) == 2:
-            print("%8s & %13s & %13s & \\\\" \
-                %('ensemble',latex[models[0]], latex[models[1]]))
-        else:
-            print("%8s & %13s & %13s & %13s & %13s\\\\" \
-                %('ensemble',latex[models[0]], latex[models[1]],latex[models[2]], latex[models[3]]))
-        print("\\hline")
-        for i_e,e in enumerate(switches['ensembles']):
-            s = "%8s" %e
-            for model in models:
-                s += " & %13s" %str(fit_results[model][e].fit.p['L5'])
-            s += "\\\\"
-            print(s)
-
-            for i_m,model in enumerate(models):
-                if i_e == 0:
-                    label=latex[models[i_m]]
-                else:
-                    label=''
-                y = len(switches['ensembles']) - i_e + 0.1*i_m
-                ax.errorbar(x=fit_results[model][e].fit.p['L5'].mean,y=y,
-                    xerr=fit_results[model][e].fit.p['L5'].sdev,linestyle='None',
-                    marker=marker[model],mfc='None',color=color[model],label=label)
-        plt.yticks(np.arange(len(switches['ensembles']),0,-1),tuple(switches['ensembles']))
-        ax.set_xlabel(r'$L_5$',fontsize=16)
-        ax.legend(loc=1,fontsize=16)
-        ax.set_xlim(-0.0002,0.001)
-        plt.savefig('figures/nlo_report_FV.pdf',transparent=True)
-        plt.show()
-
-
+        nlo_report(switches,priors,FV=True)
     if switches['nlo_report']:
-        models = ['ma_nlo','xpt_nlo']
-        latex = {'ma_nlo':'ma nlo', 'ma-ratio_nlo':'ma-r nlo',
-            'xpt_nlo':'xpt nlo', 'xpt-ratio_nlo':'xpt-r nlo'}
-        marker = {'ma_nlo':'s', 'ma-ratio_nlo':'o',
-            'xpt_nlo':'d', 'xpt-ratio_nlo':'*'}
-        color = {'ma_nlo':'r', 'ma-ratio_nlo':'g',
-            'xpt_nlo':'b', 'xpt-ratio_nlo':'magenta'}
-        fit_results = dict()
-        #for model in ['ma_nlo','ma-Kfunc_nlo']:
-        #for model in ['xpt_nlo','ma_nlo']:
-        for model in models:
-            switches['ansatz']['model'] = model
-            print('EFT: ',model)
-            model_result = dict()
-            for e in switches['ensembles']:
-                switches['ensembles_fit'] = [e]
-                x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
-                y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
-                p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
-                p_e['L4'] = gv.gvar(0,5.e-3)#priors['L4']
-                p_e['L5'] = priors['L5']
-                d_e = dict()
-                d_e['x'] = x_e
-                d_e['y'] = y_e
-                d_e['p'] = p_e
-                #print('fit_e')
-                #print(d_e['x'])
-                fit_e = xpt.Fit(switches,xyp_init=d_e)
-                fit_e.fit_data()
-                #print(fit_e.format(maxline=True))
-                model_result[e] = fit_e
-            fit_results[model] = model_result
-
-        fig = plt.figure('nlo_report')
-        ax  = plt.axes([.14, .14, .825, .825])
-        ax.set_frame_on(True)
-
-        if len(models) == 2:
-            print("%8s & %13s & %13s & \\\\" \
-                %('ensemble',latex[models[0]], latex[models[1]]))
-        else:
-            print("%8s & %13s & %13s & %13s & %13s\\\\" \
-                %('ensemble',latex[models[0]], latex[models[1]],latex[models[2]], latex[models[3]]))
-        print("\\hline")
-        for i_e,e in enumerate(switches['ensembles']):
-            s = "%8s" %e
-            for model in models:
-                s += " & %13s" %str(fit_results[model][e].fit.p['L5'])
-            s += "\\\\"
-            print(s)
-
-            for i_m,model in enumerate(models):
-                if i_e == 0:
-                    label=latex[models[i_m]]
-                else:
-                    label=''
-                y = len(fit_results['xpt_nlo']) - i_e + 0.1*i_m
-                ax.errorbar(x=fit_results[model][e].fit.p['L5'].mean,y=y,
-                    xerr=fit_results[model][e].fit.p['L5'].sdev,linestyle='None',
-                    marker=marker[model],mfc='None',color=color[model],label=label)
-        plt.yticks(np.arange(len(switches['ensembles']),0,-1),tuple(switches['ensembles']))
-        ax.set_xlabel(r'$L_5$',fontsize=16)
-        ax.axvline(0,color='k')
-        ax.legend(loc=1,fontsize=16)
-        if len(models) == 2:
-            ax.set_xlim(-0.0002,0.0008)
-        else:
-            ax.set_xlim(-0.0015,0.004)
-        plt.savefig('figures/nlo_report.pdf',transparent=True)
+        nlo_report(switches,priors,FV=False)
 
     plt.ioff()
     if run_from_ipython():
