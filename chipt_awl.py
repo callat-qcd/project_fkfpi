@@ -374,7 +374,11 @@ class Fit(object):
         x = self.prune_x()
         y = self.prune_data()
         p = self.prune_priors()
-        self.fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=self.fit_function)
+        if self.switches['scipy']:
+            fitter='scipy_least_squares'
+        else:
+            fitter='gsl_multifit'
+        self.fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=self.fit_function,fitter=fitter)
 
     def report_phys_point(self,phys_point):
         # get copy of all self attributes

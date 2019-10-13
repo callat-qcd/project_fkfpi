@@ -56,15 +56,13 @@ r_a = {
     'a09m310'  :gv.gvar(3.499,0.024),
     'a09m220'  :gv.gvar(3.566,0.014)
     }
-#L_ens = {
-#    'a15m400':16,'a15m350':16,'a15m310':16,'a15m220':24,'a15m130':32,'a15m135XL':48,
-#    'a12m400':24,'a12m350':24,'a12m310':24,'a12m220':32,'a12m220S':24,'a12m220L':40,'a12m130':48,
-#    'a09m400':32,'a09m350':32,'a09m310':32,'a09m220':48,}
 
 def format_h5_data(switches,data):
     x = dict()
     y = dict()
     p = dict()
+    if switches['bs_bias']:
+        print('Shifting BS data to boot0')
 
     for ens in switches['ensembles']:
         #print(ens)
@@ -78,7 +76,21 @@ def format_h5_data(switches,data):
         if switches['debug']:
             fkfpi = data_dict['FK']/data_dict['Fpi']
             print('  FK/Fpi = %.5f +- %.5f' %(fkfpi.mean(),fkfpi.std()))
-        gvdata = gv.dataset.avg_data(data_dict,bstrap=True)
+        if switches['bs_bias']:
+            data_bs = dict()
+            for d in data_dict:
+                data_bs[d] = data_dict[d][1:]
+                if switches['debug']:
+                    print(d,data_bs[d].shape)
+            gvdata = gv.dataset.avg_data(data_bs,bstrap=True)
+            if switches['debug']:
+                gvdata_copy = dict(gvdata)
+            for d in data_bs:
+                gvdata[d] = gvdata[d] + (data_dict[d][0] - gvdata[d].mean)
+                if switches['debug']:
+                    print(d,gvdata[d].mean,gvdata_copy[d].mean)
+        else:
+            gvdata = gv.dataset.avg_data(data_dict,bstrap=True)
         if switches['debug']:
             print(gvdata)
         if switches['debug']:
@@ -163,6 +175,113 @@ def plot_data(ax,e,x,y):
         marker=s,color=c,linestyle='None',label=labels[e])
 
     return ax
+
+def nnlo_prior_scan(switches,priors):
+    logGBF_array = []
+    model = switches['nnlo_priors_model']
+    switches['ansatz']['model'] = model
+    print(model,'Prior width study')
+    x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+    y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+    p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+    for key in priors:
+        p_e[key] = priors[key]
+    d_e = dict()
+    d_e['x'] = x_e
+    d_e['y'] = y_e
+
+    if switches['prior_group']:
+        p_range = priors['p_range']
+        a_range = priors['a_range']
+        z = np.zeros([len(a_range),len(p_range)])
+        tot = len(a_range) * len(p_range)
+        i_t = 0
+        for i_s,s4 in enumerate(a_range):
+            p_e['s_4']   = gv.gvar(0,s4)
+            if 'alphaS' in model:
+                p_e['saS_4'] = gv.gvar(0,s4)
+            for i_p,p4 in enumerate(p_range):
+                p_e['p_4'] = gv.gvar(0,p4)
+                p_e['k_4'] = gv.gvar(0,p4)
+                d_e['p'] = p_e
+                fit_e = xpt.Fit(switches,xyp_init=d_e)
+                fit_e.fit_data()
+                tmp = [ p_e[k].sdev for k in ['p_4','s_4'] ]
+                tmp.append(fit_e.fit.logGBF)
+                logGBF_array.append(tmp)
+                sys.stdout.write('%4d out of %d\r' %(i_t,tot))
+                sys.stdout.flush()
+                i_t += 1
+                z[i_s,i_p] = fit_e.fit.logGBF
+    else:
+        print('individual prior width study not supported [yet]')
+
+    logGBF_array = np.array(logGBF_array)
+    logGBF_max = np.argmax(logGBF_array[:,-1])
+    print('optimal prior widths for %s' %model)
+    logGBF_optimal = logGBF_array[logGBF_max]
+    tmp = ''
+    for i_k,k in enumerate(['p_4','s_4']):
+        tmp += '%s = %.2f ' %(k,logGBF_optimal[i_k])
+    print(tmp,'logGBF = ',logGBF_optimal[-1])
+
+    lgbf = logGBF_array[:,-1]
+    w = np.exp(lgbf - logGBF_optimal[-1])
+    #w = w / w.sum()
+    logGBF_w = np.copy(logGBF_array)
+    logGBF_w[:,-1] = w
+
+    if switches['prior_group']:
+        z = np.exp(z - logGBF_optimal[-1])
+        cmap_old = sns.cubehelix_palette(8, as_cmap=True)
+        levels = [0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.]
+        from matplotlib.colors import ListedColormap
+        cmap = ListedColormap(sns.color_palette("BrBG_r", len(levels)).as_hex())
+        fig, ax = plt.subplots(constrained_layout=True)
+        CS = ax.contour(p_range,a_range,z,levels=levels, cmap=cmap)
+        ax.clabel(CS, CS.levels[0::2], fmt='%2.1f', colors='k', fontsize=12)
+        ax.plot(logGBF_optimal[0], logGBF_optimal[1],marker='X',color='r',markersize=20)
+        ax.set_xlabel(r'$\sigma_{nnlo,\chi{\rm PT}}$',fontsize=16)
+        ax.set_ylabel(r'$\sigma_{nnlo,a^2}$',fontsize=16)
+        fig_name = 'prior_width_'+switches['ansatz']['model']+'_'+switches['scale']
+        if not os.path.exists('figures'):
+            os.makedirs('figures')
+        plt.savefig('figures/'+fig_name+'.pdf',transparent=True)
+
+def fit_checker(switches,priors):
+    fit_results = dict()
+    for model in switches['ansatz']['models']:
+        switches['ansatz']['model'] = model
+        print('EFT: ',model)
+        x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+        y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+        p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+        for key in priors:
+            p_e[key] = priors[key]
+        if not switches['default_priors']:
+            try:
+                for key in ['p_4','k_4','s_4','saS_4']:
+                    p_e[key] = gv.gvar(0,ip.nnlo_width[model][switches['scale']][key])
+            except Exception as e:
+                print('WARNING: non optimized NNLO prior widths')
+                print(str(e))
+        else:
+            print('using default prior widths')
+        d_e = dict()
+        d_e['x'] = x_e
+        d_e['y'] = y_e
+        d_e['p'] = p_e
+        fit_e = xpt.Fit(switches,xyp_init=d_e)
+        fit_e.fit_data()
+        fit_results[model] = fit_e
+        if switches['print_fit']:
+            print(fit_e.fit.format(maxline=True))
+
+    print('model & PK& chisq/dof& logGBF& $L_5$& $k_4$& $p_4$& $s_4$& $F_K/F_\pi$\\\\')
+    for model in switches['ansatz']['models']:
+        chi2dof,dof,logGBF,L5,k4,p4,s4,FKFpi = fit_results[model].check_fit(phys_point)
+        print('%34s& %s& %.3f [%2d]& %.2f& %14s& %8s& %8s& %8s& %10s\\\\'\
+            %(model.replace('_','\_'),switches['scale'],chi2dof,dof,logGBF,L5,k4,p4,s4,FKFpi))
 
 
 if __name__ == "__main__":
@@ -249,128 +368,10 @@ if __name__ == "__main__":
             print('%25s: L5(m_rho) = %s' %(model,L5_rho))
 
     if switches['check_fit']:
-        # do analysis
-        fit_results = dict()
-        for model in switches['ansatz']['models']:
-            switches['ansatz']['model'] = model
-            print('EFT: ',model)
-            x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
-            y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
-            p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
-            for key in priors:
-                p_e[key] = priors[key]
-            if not switches['default_priors']:
-                try:
-                    for key in ['p_4','k_4','s_4','saS_4']:
-                        p_e[key] = gv.gvar(0,ip.nnlo_width[model][switches['scale']][key])
-                except Exception as e:
-                    print('WARNING: non optimized NNLO prior widths')
-                    print(str(e))
-            else:
-                print('using default prior widths')
-            d_e = dict()
-            d_e['x'] = x_e
-            d_e['y'] = y_e
-            d_e['p'] = p_e
-            fit_e = xpt.Fit(switches,xyp_init=d_e)
-            fit_e.fit_data()
-            fit_results[model] = fit_e
-            if switches['print_fit']:
-                print(fit_e.fit.format(maxline=True))
-
-        print('model & PK& chisq/dof& logGBF& $L_5$& $k_4$& $p_4$& $s_4$& $F_K/F_\pi$\\\\')
-        for model in switches['ansatz']['models']:
-            chi2dof,dof,logGBF,L5,k4,p4,s4,FKFpi = fit_results[model].check_fit(phys_point)
-            print('%34s& %s& %.3f [%2d]& %.2f& %14s& %8s& %8s& %8s& %10s\\\\'\
-                %(model.replace('_','\_'),switches['scale'],chi2dof,dof,logGBF,L5,k4,p4,s4,FKFpi))
+        fit_checker(switches,priors)
 
     if switches['nnlo_priors']:
-        #fit_results = dict()
-        logGBF_array = []
-        print(switches['ansatz']['model'],'Prior width study')
-        #switches['ansatz']['model'] = 'xpt_nnlo_FV_alphaS'
-        x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
-        y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
-        p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
-        for key in priors:
-            p_e[key] = priors[key]
-        d_e = dict()
-        d_e['x'] = x_e
-        d_e['y'] = y_e
-        if switches['prior_group']:
-            dr = .5
-            p_range = np.arange(.1,8+dr,dr)
-            a_range = np.arange(.1,8+dr,dr)
-            z = np.zeros([len(a_range),len(p_range)])
-            tot = len(a_range) * len(p_range)
-            i_t = 0
-            for i_s,s4 in enumerate(a_range):
-                p_e['s_4']   = gv.gvar(0,s4)
-                p_e['saS_4'] = gv.gvar(0,s4)
-                for i_p,p4 in enumerate(p_range):
-                    p_e['p_4'] = gv.gvar(0,p4)
-                    p_e['k_4'] = gv.gvar(0,p4)
-                    d_e['p'] = p_e
-                    fit_e = xpt.Fit(switches,xyp_init=d_e)
-                    fit_e.fit_data()
-                    #fit_results[(i_s,i_p)] = fit_e
-                    tmp = [ p_e[k].sdev for k in ['p_4','k_4','s_4','saS_4'] ]
-                    tmp.append(fit_e.fit.logGBF)
-                    logGBF_array.append(tmp)
-                    #print('p_4=',p_e['p_4'],'k_4=',p_e['k_4'],'s_4=',p_e['s_4'],'saS_4=',p_e['saS_4'],'logGBF=',fit_e.fit.logGBF)
-                    sys.stdout.write('%4d out of %d\r' %(i_t,tot))
-                    sys.stdout.flush()
-                    i_t += 1
-                    z[i_s,i_p] = fit_e.fit.logGBF
-        else:
-            for i_s,s4 in enumerate(np.arange(0.2,5.2,.2)):
-                p_e['s_4']   = gv.gvar(0,s4)
-                for i_sas,sas4 in enumerate(np.arange(0.2,5.2,.2)):
-                    p_e['saS_4'] = gv.gvar(0,sas4)
-                    for i_p,p4 in enumerate(np.arange(0.2,5.2,.2)):
-                        p_e['p_4'] = gv.gvar(0,p4)
-                        for i_k,k4 in enumerate(np.arange(0.2,5.2,.2)):
-                            p_e['k_4'] = gv.gvar(0,k4)
-                            d_e['p'] = p_e
-                            fit_e = xpt.Fit(switches,xyp_init=d_e)
-                            fit_e.fit_data()
-                            #fit_results[(i_s,i_p)] = fit_e
-                            tmp = [ p_e[k].sdev for k in ['p_4','k_4','s_4','saS_4'] ]
-                            tmp.append(fit_e.fit.logGBF)
-                            logGBF_array.append(tmp)
-                            print('p_4=',p_e['p_4'],'k_4=',p_e['k_4'],'s_4=',p_e['s_4'],'saS_4=',p_e['saS_4'],'logGBF=',fit_e.fit.logGBF)
-
-        logGBF_array = np.array(logGBF_array)
-        logGBF_max = np.argmax(logGBF_array[:,-1])
-        print('optimal prior widths for %s' %switches['ansatz']['model'])
-        logGBF_optimal = logGBF_array[logGBF_max]
-        tmp = ''
-        for i_k,k in enumerate(['p_4','k_4','s_4','saS_4']):
-            tmp += '%s = %.1f ' %(k,logGBF_optimal[i_k])
-        print(tmp,'logGBF = ',logGBF_optimal[-1])
-
-        lgbf = logGBF_array[:,-1]
-        w = np.exp(lgbf - logGBF_optimal[-1])
-        #w = w / w.sum()
-        logGBF_w = np.copy(logGBF_array)
-        logGBF_w[:,-1] = w
-
-        if switches['prior_group']:
-            z = np.exp(z - logGBF_optimal[-1])
-            cmap_old = sns.cubehelix_palette(8, as_cmap=True)
-            levels = [0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.]
-            from matplotlib.colors import ListedColormap
-            cmap = ListedColormap(sns.color_palette("BrBG_r", len(levels)).as_hex())
-            fig, ax = plt.subplots(constrained_layout=True)
-            CS = ax.contour(p_range,a_range,z,levels=levels, cmap=cmap)
-            #cbar = fig.colorbar(CS)
-            #print(CS.levels)
-            ax.clabel(CS, CS.levels[0::2], fmt='%2.1f', colors='k', fontsize=12)
-            ax.plot(logGBF_optimal[0], logGBF_optimal[2],marker='X',color='r',markersize=20)
-            ax.set_xlabel(r'$\sigma_{nnlo,\chi{\rm PT}}$',fontsize=16)
-            ax.set_ylabel(r'$\sigma_{nnlo,a^2}$',fontsize=16)
-            fig_name = 'prior_width_'+switches['ansatz']['model']+'_'+switches['scale']
-            plt.savefig('figures/'+fig_name+'.pdf',transparent=True)
+        nnlo_prior_scan(switches,priors)
 
     if switches['nlo_fv_report']:
         models = ['ma_nlo','ma_nlo_FV','xpt_nlo','xpt_nlo_FV']
