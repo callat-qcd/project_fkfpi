@@ -13,7 +13,7 @@ from fitter import fitter
 class bootstrapper(object):
 
     def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
-                 order=None, fit_type=None, F2=None, chain_fits=None, use_boot0=None):
+                 order=None, fit_type=None, F2=None, chain_fits=None, use_boot0=None, bias_correct=True):
 
         w0 = gv.gvar('0.175(10)') # Still needs to be determined, but something like this
         self.w0 = w0
@@ -75,13 +75,18 @@ class bootstrapper(object):
         if abbrs is None:
             abbrs = fit_data.keys()
 
+        bias_corrector = lambda arr : arr[1:] + (arr[0] - np.mean(arr[1:]))
+
         gv_data = {}
         plot_data = {}
         for abbr in abbrs:
             gv_data[abbr] = {}
             plot_data[abbr] = {}
             for key in ['FK', 'Fpi', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs']:
-                gv_data[abbr][key] = fit_data[abbr][key]
+                if bias_correct:
+                    gv_data[abbr][key] = bias_corrector(fit_data[abbr][key])
+                else:
+                    gv_data[abbr][key] = fit_data[abbr][key]
                 plot_data[abbr][key] = fit_data[abbr][key][:plot_bs_N]
 
             gv_data[abbr] = gv.dataset.avg_data(gv_data[abbr], bstrap=True)
