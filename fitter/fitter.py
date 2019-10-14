@@ -85,7 +85,7 @@ class fitter(object):
         # simultaneous fits -- don't chain nlo -> nnlo
         if self.fit_type == 'simultaneous':
             order = self.order.copy()
-            for fit_type in ['ma-taylor', 'xpt-taylor']:
+            for fit_type in ['ma', 'xpt']:
                 models = np.append(models, fk_fpi_model(datatag=fit_type+'_'+order['fit'],
                             order=self.order, fit_type=fit_type))
             return models
@@ -143,15 +143,15 @@ class fitter(object):
         #    newprior[key] = gv.gvar(gv.mean(newprior[key]), gv.sdev(newprior[key])/100)
 
         # Fit parameters, depending on fit type
-        if self.fit_type == 'xpt':
+        if self.fit_type == 'xpt-ratio':
             newprior['L_4'] = prior['L_4']
             newprior['L_5'] = prior['L_5']
-        elif self.fit_type == 'xpt-taylor':
+        elif self.fit_type == 'xpt':
+            newprior['L_5'] = prior['L_5']
+        elif self.fit_type == 'ma-ratio':
+            newprior['L_4'] = prior['L_4']
             newprior['L_5'] = prior['L_5']
         elif self.fit_type == 'ma':
-            newprior['L_4'] = prior['L_4']
-            newprior['L_5'] = prior['L_5']
-        elif self.fit_type == 'ma-taylor':
             newprior['L_5'] = prior['L_5']
         elif self.fit_type == 'ma-old':
             newprior['L_5'] = prior['L_5']
@@ -210,16 +210,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
     def __init__(self, datatag, fit_type, order):
         super(fk_fpi_model, self).__init__(datatag)
 
-        #if order is None:
-        #    order = {
-        #        'fit' : 'nlo',
-        #        'latt_spacing' : 2, # no order 1 term -- starts at 2
-        #        'vol' : 1
-        #    }
-
-        #if fit_type is None:
-        #    fit_type = 'ma-taylor'
-
         # Fit data
         self.order = order
         self.fit_type = fit_type
@@ -231,14 +221,14 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             # mixed-action/xpt fits
-            if self.fit_type == 'ma':
+            if self.fit_type == 'ma-ratio':
+                output = self.fitfcn_ma_ratio(p)
+            elif self.fit_type == 'ma':
                 output = self.fitfcn_ma(p)
-            elif self.fit_type == 'ma-taylor':
-                output = self.fitfcn_ma_taylor(p)
+            elif self.fit_type == 'xpt-ratio':
+                output = self.fitfcn_xpt_ratio(p)
             elif self.fit_type == 'xpt':
                 output = self.fitfcn_xpt(p)
-            elif self.fit_type == 'xpt-taylor':
-                output = self.fitfcn_xpt_taylor(p)
             elif self.fit_type == 'ma-old':
                 output = self.fitfcn_ma_old(p)
 
@@ -352,7 +342,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         )
         return output
 
-    def fitfcn_ma(self, p):
+    def fitfcn_ma_ratio(self, p):
         # Constants
         order_vol = self.order['vol']
 
@@ -422,7 +412,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return FK_nlo_per_F0 / Fpi_nlo_per_F0
 
 
-    def fitfcn_ma_taylor(self, p):
+    def fitfcn_ma(self, p):
         # Constants
         order_vol = self.order['vol']
 
@@ -478,7 +468,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return output
 
 
-    def fitfcn_xpt(self, p):
+    def fitfcn_xpt_ratio(self, p):
         # Constants
         order_vol = self.order['vol']
 
@@ -514,7 +504,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return FK_nlo_per_F0 / Fpi_nlo_per_F0
 
 
-    def fitfcn_xpt_taylor(self, p):
+    def fitfcn_xpt(self, p):
 
         # Constants
         order_vol = self.order['vol']

@@ -18,8 +18,6 @@ class bootstrapper(object):
         w0 = gv.gvar('0.175(10)') # Still needs to be determined, but something like this
         self.w0 = w0
 
-        if fit_type is None:
-            fit_type = 'ma-taylor'
 
         if F2 is None:
             F2 = 'FKFpi'
@@ -350,9 +348,17 @@ class bootstrapper(object):
 
 
     def get_fit_info(self):
-        fit_type = self.fit_type+'_'+self.order['fit']
+
+        name = self.fit_type +'_'+ self.order['fit']
+        if self.order['vol'] > 6:
+            name = name + '_FV'
+        if self.order['include_log']:
+            name = name + '_alphaS'
+        if self.order['include_log2']:
+            name = name + '_logSq'
+
         fit_info = {
-            'name' : self.fit_type+'_'+self.order['fit'],
+            'name' : name,
             'fit' : self.extrapolate_to_phys_point(include_su2_isospin_corrrection=True),
             'delta_su2' : self.get_delta_su2_correction(),
             'logGBF' : self.fits[0].logGBF,

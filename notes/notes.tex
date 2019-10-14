@@ -161,10 +161,10 @@ In the following descriptions of the models, we make use of the definitions
 \end{equation}
 where we set $\Lambda_\chi^2$ to $F_\pi^2$, $F_K^2$, or $F_\pi F_K$.
 
-\subsubsection{NLO MA}
+\subsubsection{NLO MA-ratio}
 For these fits, we will do
 \begin{equation}
-\left(\frac{F_K}{F_\pi}\right)_\text{MA} = \frac{F_K^\text{nlo}}{F_\pi^\text{nlo}}
+\left(\frac{F_K}{F_\pi}\right)_\text{MA-ratio} = \frac{F_K^\text{nlo}}{F_\pi^\text{nlo}}
 \end{equation}
 where
 \begin{align}
@@ -201,11 +201,11 @@ where
 \end{align}
 
 
-\subsubsection{NLO MA Taylor expanded ratio}
+\subsubsection{NLO MA (taylor-expanded ratio)}
 For these fits,
 
 \begin{align}\label{eq:fkfpi_ma}
-\left(\frac{F_K}{F_\pi}\right)_\text{MA Taylor} &= 1
+\left(\frac{F_K}{F_\pi}\right)_\text{MA} &= 1
 +\frac{\mathcal{I}(m_{ju})}{2F^2}
 +\frac{\mathcal{I}(m_\pi)}{8F^2}
 +\frac{\mathcal{I}(m_{ru})}{4F^2}
@@ -230,10 +230,10 @@ For these fits,
 + 4 (4\pi)^2 L_5 \frac{m_K^2 - m_\pi^2}{(4\pi F)^2}
 \end{align}
 
-\subsubsection{NLO $\chi$PT}
+\subsubsection{NLO $\chi$PT-ratio}
 For these fits, we will do
 \begin{equation}
-\left(\frac{F_K}{F_\pi}\right)_\text{$\chi$PT} = \frac{F_K^{\rm nlo}}{F_\pi^{\rm nlo}}
+\left(\frac{F_K}{F_\pi}\right)_\text{$\chi$PT-ratio} = \frac{F_K^{\rm nlo}}{F_\pi^{\rm nlo}}
 \end{equation}
 where
 \begin{align}
@@ -250,10 +250,10 @@ where
 \end{align}
 
 
-\subsubsection{NLO $\chi$PT Taylor expansion}
+\subsubsection{NLO $\chi$PT (taylor-expanded ratio)}
 For these fits,
 \begin{align}\label{eq:fkfpi_chpt}
-\left(\frac{F_K}{F_\pi}\right)_\text{$\chi$PT Taylor} &= 1
+\left(\frac{F_K}{F_\pi}\right)_\text{$\chi$PT} &= 1
 +\frac{5}{8} \frac{\mathcal{I}(m_\pi)}{F^2}
 -\frac{1}{4} \frac{\mathcal{I}(m_K)}{F^2}
 -\frac{3}{8} \frac{\mathcal{I}(m_\eta)}{F^2}
@@ -517,87 +517,90 @@ Here we present the results for each of the fits.
 %	\\\hline
 %\end{tabular}
 
+\iffalse
 
-\DTLloaddb{myDB}{"./../results/fit_results".csv}
-
-% Convoluted function used to escape underscore
-\DeclareUrlCommand\UScore{\urlstyle{rm}}
-\newcommand{\expUScore}{%
-	\expandafter\expandafter\expandafter
-	\UScore
-	\expandafter\expandafter\expandafter
-}
-
-% Table for fit results
-\begin{table}
-\begin{center}
-	\sisetup{round-mode=places,
-		table-number-alignment = center-decimal-marker
+	\DTLloaddb{myDB}{"./../results/fit_results".csv}
+	
+	% Convoluted function used to escape underscore
+	\DeclareUrlCommand\UScore{\urlstyle{rm}}
+	\newcommand{\expUScore}{%
+		\expandafter\expandafter\expandafter
+		\UScore
+		\expandafter\expandafter\expandafter
 	}
-	\begin{tabular}{l|lllll}\toprule
-		\textbf{Name} & $F^\pm_K/F^\pm_\pi$ & $\delta_{\text{SU(2)}}$ & logGBF & $Q$ & $\chi^2_\nu$%
-		\DTLforeach*{myDB}{\Name=name, \Fit=fit, \delta=delta_su2, \logGBF=logGBF, \Q=Q, \chi=chi2/df}{%
-			\DTLiffirstrow{\\\hline\\}{\\}%
-			\expUScore{\Name} & \Fit & \delta &\num{\logGBF} & \num{\Q} & \num{\chi}
-		}%
-		\\\bottomrule
-	\end{tabular}
-
-\end{center}
-\caption{Results of models and statistics}
-\end{table}
-
-% Table for LEC results
-\begin{table}
+	
+	% Table for fit results
+	\begin{table}
 	\begin{center}
 		\sisetup{round-mode=places,
 			table-number-alignment = center-decimal-marker
 		}
-		\begin{tabular}{l|ll|lll}\toprule%|llllll}\toprule
-			\textbf{Name} & $L_5$ & $L_4$ & $A_a$ & $A_\pi$ & $A_K$% & $A_{aa}$ & $A_{a\pi}$ & $A_{aK}$ & $A_{KK}$ & $A_{K\pi}$ & $A_{\pi\pi}$ %
-			\DTLforeach*{myDB}{\Name=name, \Lfive=L_5, \Lfour=L_4, \Aa=A_a, \Ap=A_p, \Ak=A_k}{%, \Aaa=A_aa, \Aap=A_ap, \Aak=A_ak, \Akk=A_kk, \Akp=A_kp, \App=A_pp}{%
+		\begin{tabular}{l|lllll}\toprule
+			\textbf{Name} & $F^\pm_K/F^\pm_\pi$ & $\delta_{\text{SU(2)}}$ & logGBF & $Q$ & $\chi^2_\nu$%
+			\DTLforeach*{myDB}{\Name=name, \Fit=fit, \delta=delta_su2, \logGBF=logGBF, \Q=Q, \chi=chi2/df}{%
 				\DTLiffirstrow{\\\hline\\}{\\}%
-				\expUScore{\Name} & \Lfive & \Lfour & \Aa & \Ap & \Ak% & \Aaa & \Aap & \Aak & \Akk & \Akp & \App
+				\expUScore{\Name} & \Fit & \delta &\num{\logGBF} & \num{\Q} & \num{\chi}
 			}%
 			\\\bottomrule
 		\end{tabular}
-
+	
 	\end{center}
-	\caption{Determined LECs}
-\end{table}
-
-% Tables for priors
-\begin{table}
-\foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
-{
-	\begin{minipage}{0.20\textwidth}
-		\begin{tabular}{l|l}
-			\textbf{LEC} & \textbf{Value}
-			\DTLloaddb[noheader,keys={lec,value},headers={lec,value},omitlines=1]{\model-prior-db}{"./../priors/\model".csv}
-			\DTLforeach*{\model-prior-db}{\lec=lec, \value=value}{%
-				\DTLiffirstrow{\\\hline\\}{\\}%
-				\texttt{p[`\expUScore{\lec}']} & \value
-			}%
-		\end{tabular}
-		\caption{\texttt{\model}}
-		\label{\model-prior}
-	\end{minipage}
-	\hspace*{-0.01\textwidth}
-}
-\end{table}
-
-% Plot fits vs eps2_pi
-\foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
-{
-	\subsection{\tt \model}
-	\foreach \order in {nlo, nnlo}
+	\caption{Results of models and statistics}
+	\end{table}
+	
+	% Table for LEC results
+	\begin{table}
+		\begin{center}
+			\sisetup{round-mode=places,
+				table-number-alignment = center-decimal-marker
+			}
+			\begin{tabular}{l|ll|lll}\toprule%|llllll}\toprule
+				\textbf{Name} & $L_5$ & $L_4$ & $A_a$ & $A_\pi$ & $A_K$% & $A_{aa}$ & $A_{a\pi}$ & $A_{aK}$ & $A_{KK}$ & $A_{K\pi}$ & $A_{\pi\pi}$ %
+				\DTLforeach*{myDB}{\Name=name, \Lfive=L_5, \Lfour=L_4, \Aa=A_a, \Ap=A_p, \Ak=A_k}{%, \Aaa=A_aa, \Aap=A_ap, \Aak=A_ak, \Akk=A_kk, \Akp=A_kp, \App=A_pp}{%
+					\DTLiffirstrow{\\\hline\\}{\\}%
+					\expUScore{\Name} & \Lfive & \Lfour & \Aa & \Ap & \Ak% & \Aaa & \Aap & \Aak & \Akk & \Akp & \App
+				}%
+				\\\bottomrule
+			\end{tabular}
+	
+		\end{center}
+		\caption{Determined LECs}
+	\end{table}
+	
+	% Tables for priors
+	\begin{table}
+	\foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
 	{
-		\begin{figure}[H]
-			\caption{\texttt{\model\_\order}}
-			\includegraphics[width=\textwidth, page=3]{"./../tmp/fits/\model"_"\order".pdf}
-		\end{figure}
+		\begin{minipage}{0.20\textwidth}
+			\begin{tabular}{l|l}
+				\textbf{LEC} & \textbf{Value}
+				\DTLloaddb[noheader,keys={lec,value},headers={lec,value},omitlines=1]{\model-prior-db}{"./../priors/\model".csv}
+				\DTLforeach*{\model-prior-db}{\lec=lec, \value=value}{%
+					\DTLiffirstrow{\\\hline\\}{\\}%
+					\texttt{p[`\expUScore{\lec}']} & \value
+				}%
+			\end{tabular}
+			\caption{\texttt{\model}}
+			\label{\model-prior}
+		\end{minipage}
+		\hspace*{-0.01\textwidth}
 	}
-}
+	\end{table}
+	
+	% Plot fits vs eps2_pi
+	\foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
+	{
+		\subsection{\tt \model}
+		\foreach \order in {nlo, nnlo}
+		{
+			\begin{figure}[H]
+				\caption{\texttt{\model\_\order}}
+				\includegraphics[width=\textwidth, page=3]{"./../tmp/fits/\model"_"\order".pdf}
+			\end{figure}
+		}
+	}
+
+\fi
 
 
 
