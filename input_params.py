@@ -34,7 +34,8 @@ switches['ansatz']['models'] = [
     'xpt_nnlo_FV'             ,'ma_nnlo_FV',
     ]
 switches['ansatz']['models'] =  [
-    'xpt_nnlo_FV_alphaS_logSq'
+    'xpt_nnlo_FV_alphaS_logSq', 'ma_nnlo_FV_alphaS_logSq',
+    'xpt_nnlo_FV_alphaS',       'ma_nnlo_FV_alphaS'
 ]
 switches['ansatz']['a2dm']  = 'individual' # avg or individual
 switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
@@ -47,8 +48,9 @@ switches['bs_bias']         = True
 switches['scipy']           = False
 # fit options
 switches['print_fit']       = False
+switches['report_fit']      = False
 switches['make_plots']      = False
-switches['verbose']         = True
+switches['verbose']         = False
 switches['debug']           = False
 # for tuning prior widths
 switches['nnlo_priors']     = False

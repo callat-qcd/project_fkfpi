@@ -400,9 +400,10 @@ class Fit(object):
         p_phys[('phys','k2')] = phys_point['mk']**2  / Lchi_phys**2
         p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
         p_phys[('phys','a2')] = 0.
-        for k in self.fit.p:
-            if isinstance(k,str):
-                print(k,self.fit.p[k])
+        if self.switches['report_fit']:
+            for k in self.fit.p:
+                if isinstance(k,str):
+                    print(k,self.fit.p[k])
         for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6']:
             if k in self.fit.p:
                 p_phys[k] = self.fit.p[k]
@@ -414,13 +415,16 @@ class Fit(object):
             self.fit_function = self.xpt_nlo
         self.fv = False
 
-        print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
-            %(self.fit.chi2/self.fit.dof,self.fit.dof,self.fit.Q,self.fit.logGBF))
-        print(self.fit_function(x_phys,p_phys),'\n')
+        FK_Fpi_phys = self.fit_function(x_phys,p_phys)
+        if self.switches['report_fit']:
+            print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
+                %(self.fit.chi2/self.fit.dof,self.fit.dof,self.fit.Q,self.fit.logGBF))
+            print(FK_Fpi_phys['phys'],'\n')
 
         # restore original self attributes
         for key,val in self_dict.items():
             setattr(self, key, val)
+        return FK_Fpi_phys
 
     def check_fit(self,phys_point):
         # get copy of all self attributes

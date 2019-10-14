@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os, sys
 import numpy as np
+import scipy.stats as stats
 import tables as h5
 import lsqfit
 import gvar as gv
@@ -191,8 +192,10 @@ def perform_analysis(switches,priors):
                 p_e[key] = priors[key]
             if not switches['default_priors']:
                 try:
-                    for key in ['p_4','k_4','s_4','saS_4']:
+                    for key in ['p_4','k_4','s_4']:
                         p_e[key] = gv.gvar(0,ip.nnlo_width[base_model][FPK][key])
+                    if 'alphaS' in model:
+                        p_e['saS_4'] = gv.gvar(0,ip.nnlo_width[base_model][FPK]['saS_4'])
                 except Exception as e:
                     print('WARNING: non optimized NNLO prior widths')
                     print(str(e))
@@ -207,8 +210,6 @@ def perform_analysis(switches,priors):
             fit_results[model] = fit_e
             if switches['print_fit']:
                 print(fit_e.fit.format(maxline=True))
-
-            fit_e.report_phys_point(phys_point)
 
             if switches['make_plots']:
                 epi_range = dict()
@@ -232,12 +233,98 @@ def perform_analysis(switches,priors):
                 ax.set_ylim(1.05, 1.25)
                 plt.savefig('figures/vs_episq_'+model+'.pdf',transparent=True)
 
+    bayes_model_avg(fit_results,phys_point)
+    '''
     for base_model in switches['ansatz']['models']:
         for FPK in ['PP','PK','KK']:
             model = base_model +'_'+FPK
             L5_rho  = fit_results[model].fit.p['L5']
             L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
             print('%25s: L5(m_rho) = %s' %(model,L5_rho))
+    '''
+
+def bayes_model_avg(results,phys_point):
+    logGBF_list = []
+    r_list      = []
+    w_list      = []
+    FKFpi       = 0.
+    pdf         = 0
+    cdf         = 0
+    x = np.arange(1.1,1.301,.001)
+    for model in results:
+        logGBF_list.append(results[model].fit.logGBF)
+        r_list.append(results[model].report_phys_point(phys_point)['phys'])
+    for i_m,model in enumerate(results):
+        r = r_list[i_m]
+        w = np.exp(logGBF_list[i_m])
+        w = w / np.sum(np.exp(np.array(logGBF_list)))
+        w_list.append(w)
+        print(model,w,r)
+        FKFpi += gv.gvar(w*r.mean, np.sqrt(w)*r.sdev)
+        p = stats.norm.pdf(x,r.mean,r.sdev)
+        pdf += w * p
+        c = stats.norm.cdf(x,r.mean,r.sdev)
+        cdf += w * c
+    print(FKFpi)
+    fig = plt.figure('hist')
+    ax = plt.axes([0.1,0.1,0.88,0.88])
+    ax.fill_between(x=x,y1=pdf)
+    ax.set_xlim([1.14,1.25])
+    plt.savefig('figures/model_avg_hist.pdf',transpareent=True)
+
+def bma(switches,result,isospin):
+    # read Bayes Factors
+    logGBF_list = []
+    for a in switches['ansatz']['type']:
+        logGBF_list.append(result[a]['fit'].logGBF)
+    # initiate a bunch of parameters
+    # gA
+    gA = 0
+    gA_lst = []
+    gA_dict = dict()
+    # weights
+    w_lst = []
+    wd = dict()
+    # p. dist. fcn
+    pdf = 0
+    pdfdict = dict()
+    # c. dist. fcn.
+    cdf = 0
+    cdfdict = dict()
+    # for plotting
+    x = np.linspace(1.222,1.352,13000)
+    # error breakdown for each model
+    model_error = error_budget(switches,result)
+    model_budget = {k:0 for k in model_error[list(model_error.keys())[0]]['std'].keys()}
+    for a in switches['ansatz']['type']:
+        r = result[a]['phys']['result']
+        gA_dict[a] = r
+        w = 1/sum(np.exp(np.array(logGBF_list)-result[a]['fit'].logGBF))
+        sqrtw = np.sqrt(w) # sqrt scales the std dev correctly
+        wd[a] = w
+        w_lst.append(w)
+        gA += gv.gvar(w*r.mean,sqrtw*r.sdev)
+        gA_lst.append(r.mean)
+        p = stats.norm.pdf(x,r.mean,r.sdev)
+        pdf += w*p
+        pdfdict[a] = w*p
+        c = stats.norm.cdf(x,r.mean,r.sdev)
+        cdf += w*c
+        cdfdict[a] = w*c
+        # error breakdown
+        model_std = model_error[a]['std']
+        model_budget = {k:model_budget[k]+w*model_std[k]**2 for k in model_std} # variance breakdown of model average
+    gA_lst = np.array(gA_lst)
+    w_lst = np.array(w_lst)
+    model_var = np.sum(w_lst*gA_lst**2) - gA.mean**2
+    final_error = np.sqrt(gA.sdev**2 + isospin**2)
+    model_budget['isospin'] = isospin**2
+    model_budget['model'] = model_var
+    model_budget['total'] = model_budget['total']+model_budget['isospin']+model_budget['model'] # add in quadrature isospin and model variance
+    pct_budget = {k:[np.sqrt(model_budget[k])/gA.mean*100] for k in model_budget} # percent breakdown of model average
+    error = {'E(gA)': gA.mean, 's(gA)': final_error, 's(Mk)': np.sqrt(model_var), 'weights': wd, 'error_budget': model_budget, 'pct_budget': pct_budget, 'gA_dict':gA_dict}
+    plot_params = {'x':x, 'pdf':pdf, 'pdfdict':pdfdict, 'cdf':cdf, 'cdfdict':cdfdict}
+    return error, plot_params
 
 
 def nnlo_prior_scan(switches,priors):
