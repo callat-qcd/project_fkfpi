@@ -250,18 +250,30 @@ class bootstrapper(object):
         temp_parameters = self._make_empbayes_fit().prior
         for key in self.get_fit_keys():
             mean = 0
-            if key in ['L_4', 'L_5']:
-                #mean = gv.mean(self.get_fit_parameters(key))
-                sdev = 0.001 #5 *gv.sdev(self.get_fit_parameters(key))
-                output[key] = gv.gvar(mean, sdev)
-            elif key in ['A_a','A_k','A_p']:
-                #mean = gv.mean(self.get_fit_parameters(key))
-                sdev = gv.sdev(temp_parameters[key])
-                output[key] = gv.gvar(mean, sdev)
-            elif key in ['A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp']:
-                #mean = gv.mean(self.get_fit_parameters(key))
-                sdev = gv.sdev(temp_parameters[key])
-                output[key] = gv.gvar(mean, sdev)
+            if self.order['fit'] == 'nlo':
+                if key in ['L_4', 'L_5']:
+                    #mean = gv.mean(self.get_fit_parameters(key))
+                    #sdev = 0.001
+                    sdev = 5 *gv.sdev(self.get_fit_parameters(key))
+                    output[key] = gv.gvar(mean, sdev)
+
+            if self.order['fit'] == 'nnlo' and not self.order['include_log']:
+                if key in ['A_k','A_p']:
+                    #mean = gv.mean(self.get_fit_parameters(key))
+                    sdev = gv.sdev(temp_parameters[key])
+                    output[key] = gv.gvar(mean, sdev)
+
+            if self.order['fit'] == 'nnlo' and self.order['include_log']:
+                if key in ['A_a', 'A_loga']:
+                    #mean = gv.mean(self.get_fit_parameters(key))
+                    sdev = gv.sdev(temp_parameters[key])
+                    output[key] = gv.gvar(mean, sdev)
+
+            if self.order['fit'] == 'nnnlo':
+                if key in ['A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp']:
+                    #mean = gv.mean(self.get_fit_parameters(key))
+                    sdev = gv.sdev(temp_parameters[key])
+                    output[key] = gv.gvar(mean, sdev)
 
         return output
 

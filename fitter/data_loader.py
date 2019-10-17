@@ -58,12 +58,12 @@ class data_loader(object):
 
         return output_dict
 
-    def get_prior(self, fit_type):
-        filepath = self.project_path + '/priors/'+fit_type+'.csv'
+    def get_prior(self, fit_type, F2):
+        filepath = self.project_path + '/priors/'+fit_type+'_'+F2+'.csv'
         if not os.path.isfile(filepath):
             return None
         df_read = pd.read_csv(filepath, index_col=0)
-        return gv.gvar({key : df_read.to_dict("index")[key]["0"]
+        return gv.gvar({key : df_read.to_dict("index")[key]['0']
                 for key in df_read.to_dict("index").keys()})
 
     def get_variable_names(self):
@@ -84,9 +84,9 @@ class data_loader(object):
         # get fit info
         cols = np.array(['name', 'fit', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol corr', 'latt corr'])
         lecs_cols = ['L_4', 'L_5', # nlo terms
-                     'A_a', 'A_k', 'A_p', # nnlo terms
-                     'A_aa', 'A_ak', 'A_ap', # nnnlo terms
-                     'A_kk', 'A_kp', 'A_pp'] # more nnnlo terms
+                     'A_a', 'A_k', 'A_p', 'A_loga'] # nnlo terms
+                     #'A_aa', 'A_ak', 'A_ap', # nnnlo terms
+                     #'A_kk', 'A_kp', 'A_pp'] # more nnnlo terms
 
         # append LEC results
         cols = np.concatenate((cols,lecs_cols), axis=0)
@@ -180,10 +180,10 @@ class data_loader(object):
 
         return None
 
-    def save_prior(self, prior, fit_type):
-        filepath = self.project_path + '/priors/'+fit_type+'.csv'
+    def save_prior(self, prior, fit_type, F2):
+        filepath = self.project_path + '/priors/'+fit_type+'_'+F2+'.csv'
 
-        current_prior = self.get_prior(fit_type)
+        current_prior = self.get_prior(fit_type, F2)
 
         #for key in out_prior.keys():
         #    out_prior[key] = [str(prior[out_prior])]

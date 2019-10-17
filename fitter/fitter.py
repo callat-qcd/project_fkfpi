@@ -19,12 +19,28 @@ class fitter(object):
     def _make_fitargs(self, z):
         y_data = self._make_y_data()
         prior = self._make_prior()
-        for key in prior.keys():
-            if key in ['A_a', 'A_p', 'A_k']:
-                prior[key] = prior[key] *z
 
-        if self.order['include_log']:
-            prior['A_loga'] = prior['A_loga'] *z
+        if self.order['fit'] == 'nlo':
+            for key in prior.keys():
+                if key in ['L_5', 'L_4']:
+                    prior[key] = prior[key] *z
+
+        if self.order['fit'] == 'nnlo' and not self.order['include_log']:
+            for key in prior.keys():
+                if key in ['A_p', 'A_k']:
+                    prior[key] = prior[key] *z
+
+        if self.order['fit'] == 'nnlo' and self.order['include_log']:
+            for key in prior.keys():
+                if key in ['A_loga', 'A_a']:
+                    prior[key] = prior[key] *z
+
+        #for key in prior.keys():
+        #    if key in ['A_a', 'A_p', 'A_k']:
+        #        prior[key] = prior[key] *z
+
+        #if self.order['include_log']:
+        #    prior['A_loga'] = prior['A_loga'] *z
 
         fitfcn = self._make_models()[-1].fitfcn
 
@@ -41,7 +57,6 @@ class fitter(object):
                 fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
                 for key in fit.p:
                     if key in ['L_4', 'L_5']:
-                        #pass
                         prior[key] = gv.gvar(fit.pmean[key], 3*fit.psdev[key])
                     elif key in ['A_a', 'A_p', 'A_k']:
                         prior[key] = fit.p[key]
