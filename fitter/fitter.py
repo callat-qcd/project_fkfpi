@@ -20,27 +20,11 @@ class fitter(object):
         y_data = self._make_y_data()
         prior = self._make_prior()
 
-        if self.order['fit'] == 'nlo':
-            for key in prior.keys():
-                if key in ['L_5', 'L_4']:
-                    prior[key] = prior[key] *z
-
-        if self.order['fit'] == 'nnlo' and not self.order['include_log']:
-            for key in prior.keys():
-                if key in ['A_p', 'A_k']:
-                    prior[key] = prior[key] *z
-
-        if self.order['fit'] == 'nnlo' and self.order['include_log']:
-            for key in prior.keys():
-                if key in ['A_loga', 'A_a']:
-                    prior[key] = prior[key] *z
-
-        #for key in prior.keys():
-        #    if key in ['A_a', 'A_p', 'A_k']:
-        #        prior[key] = prior[key] *z
-
-        #if self.order['include_log']:
-        #    prior['A_loga'] = prior['A_loga'] *z
+        for key in prior.keys():
+            if key in ['A_p', 'A_k']:
+                prior[key] = prior[key] *z['chiral']
+            if key in ['A_loga', 'A_a']:
+                prior[key] = prior[key] *z['spacing']
 
         fitfcn = self._make_models()[-1].fitfcn
 
@@ -50,23 +34,12 @@ class fitter(object):
         models = self._make_models()
         y_data = self._make_y_data()
         prior = self._make_prior()
-        for j, model in enumerate(models):
-            # Make model up till nlo/nnlo
-            if j < len(models) - 1:
-                fitter = lsqfit.MultiFitter(models=model)
-                fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
-                for key in fit.p:
-                    if key in ['L_4', 'L_5']:
-                        prior[key] = gv.gvar(fit.pmean[key], 3*fit.psdev[key])
-                    elif key in ['A_a', 'A_p', 'A_k']:
-                        prior[key] = fit.p[key]
-                    elif (key in ['A_loga']) and (self.order['include_log']):
-                        prior[key] = fit.p[key]
 
-            # For nnlo/nnnlo, determine best parameter using empircal Bayes criterion
-            else:
-                fit, z = lsqfit.empbayes_fit(1.0, self._make_fitargs)
-                #print z
+        z0 = gv.BufferDict()
+        z0['chiral'] = 1.0
+        z0['spacing'] = 1.0
+
+        fit, z = lsqfit.empbayes_fit(z0, self._make_fitargs)
 
         return fit
 

@@ -32,6 +32,7 @@ class data_loader(object):
                     else:
                         data[ensemble][key] = dset[()]
         return data
+
     # whose: 'mine', 'others'
     def get_fit_info(self, whose=None):
         filepath = None
@@ -58,13 +59,30 @@ class data_loader(object):
 
         return output_dict
 
-    def get_prior(self, fit_type, F2):
-        filepath = self.project_path + '/priors/'+fit_type+'_'+F2+'.csv'
+    def get_prior(self, fit_type, F2, include_FV, include_alphaS, include_logSq):
+        filepath = os.path.normpath(self.project_path + '/priors/'+fit_type+'.csv')
+
         if not os.path.isfile(filepath):
             return None
-        df_read = pd.read_csv(filepath, index_col=0)
-        return gv.gvar({key : df_read.to_dict("index")[key]['0']
-                for key in df_read.to_dict("index").keys()})
+
+        name = F2
+        if include_FV:
+            name = name + '_FV'
+        if include_alphaS:
+            name = name + '_alphaS'
+        if include_logSq:
+            name = name + '_logSq'
+
+        df_prior = pd.read_csv(filepath, header=0)
+        cols = df_prior.columns.values
+
+        model_names = df_prior['name'].values
+        prior = gv.BufferDict()
+        for name in sorted(model_names):
+            index = np.argwhere(df_prior['name'].values == name)
+
+            for key in ['L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga']:
+                prior[key] = gv.gvar(np.asscalar(df_prior[key].values[index]))
 
     def get_variable_names(self):
         names = []
@@ -82,7 +100,7 @@ class data_loader(object):
         filepath = os.path.normpath(self.project_path + '/results/fit_results.csv')
 
         # get fit info
-        cols = np.array(['name', 'fit', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol corr', 'latt corr'])
+        cols = np.array(['name', 'fit', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol corr'])
         lecs_cols = ['L_4', 'L_5', # nlo terms
                      'A_a', 'A_k', 'A_p', 'A_loga'] # nnlo terms
                      #'A_aa', 'A_ak', 'A_ap', # nnnlo terms
@@ -180,23 +198,75 @@ class data_loader(object):
 
         return None
 
-    def save_prior(self, prior, fit_type, F2):
-        filepath = self.project_path + '/priors/'+fit_type+'_'+F2+'.csv'
+    def save_prior(self, prior, fit_type, F2, include_FV, include_alphaS, include_logSq):
+        print "Saving..."
 
-        current_prior = self.get_prior(fit_type, F2)
+        if not os.path.exists(self.project_path + '/priors/'):
+            os.makedirs(self.project_path + '/priors/')
+        filepath = os.path.normpath(self.project_path + '/priors/'+fit_type+'.csv')
 
-        #for key in out_prior.keys():
-        #    out_prior[key] = [str(prior[out_prior])]
+        # get fit info
+        cols = np.array(['name', 'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga'])
 
-        out_prior = {}
-        if current_prior is not None:
-            for key in current_prior.keys():
-                out_prior[key] = [str(current_prior[key])]
+        name = F2
+        if include_FV:
+            name = name + '_FV'
+        if include_alphaS:
+            name = name + '_alphaS'
+        if include_logSq:
+            name = name + '_logSq'
 
-        for key in prior.keys():
-            out_prior[key] = [str(prior[key])]
 
-        df = pd.DataFrame.from_dict(out_prior).T
-        df.to_csv(filepath)
+        # fit_info keys not in cols -> create key in fit_info
+        for key in cols:
+            if key not in prior.keys():
+                #print "fit info key not in col: ", key
+                prior[key] = np.nan
 
+        # Add result to file if file exists
+        if os.path.isfile(filepath):
+            df_prior = pd.read_csv(filepath, index_col=0).to_dict()
+
+            output_dict = {}
+            for key in df_prior.keys():
+                output_dict[key] = np.array(df_prior[key].values(), dtype="object")
+
+
+            # df keys not in cols -> create keys in df
+            for key in cols:
+                if key not in output_dict.keys():
+                    print "df key not in col: ", key
+                    output_dict[key] = np.repeat(np.nan, len(output_dict['name']))
+
+
+
+            if name in output_dict['name']:
+                index = np.asscalar(np.argwhere(output_dict['name'] == name))
+                for key in prior.keys():
+                    output_dict[key][index] = prior[key]
+                output_dict['name'][index] = name
+            else:
+                for key in output_dict.keys():
+                    if key == 'name':
+                        output_dict['name'] = np.append(output_dict['name'], name)
+                    else:
+                        output_dict[key] = np.append(output_dict[key], prior[key])
+
+            df = pd.DataFrame.from_dict(output_dict)
+            df = df[cols]
+            df.sort_values('name')
+            df.to_csv(filepath)
+
+            #print
+            #print df
+
+        # Create new file if it doesn't exist
+        else:
+            output_dict = {key : [prior[key]] for key in prior.keys()}
+            output_dict['name'] = name
+            df = pd.DataFrame.from_dict(output_dict)
+            df = df[cols] # rearrange in logical order
+            df.to_csv(filepath)
+
+        print "Done."
         return None

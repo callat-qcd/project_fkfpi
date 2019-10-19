@@ -13,7 +13,7 @@ from fitter import fitter
 class bootstrapper(object):
 
     def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
-                 order=None, fit_type=None, F2=None, chain_fits=None, use_boot0=None, bias_correct=True):
+                 order=None, fit_type=None, F2=None, chain_fits=None, bias_correct=True):
 
         w0 = gv.gvar('0.175(10)') # Still needs to be determined, but something like this
         self.w0 = w0
@@ -24,10 +24,14 @@ class bootstrapper(object):
         self.F2 = F2
 
         if chain_fits is None:
-            chain_fits = True
+            chain_fits = False
 
-        if bs_N is None or bs_N==0:
+        if bs_N is None:
+            bs_N = 1
+
+        if bs_N==0:
             bs_N = len(fit_data[fit_data.keys()[0]]['mpi'])
+
         plot_bs_N = 100
 
         # Add default values to order dict
@@ -249,31 +253,12 @@ class bootstrapper(object):
         output = {}
         temp_parameters = self._make_empbayes_fit().prior
         for key in self.get_fit_keys():
-            mean = 0
-            if self.order['fit'] == 'nlo':
-                if key in ['L_4', 'L_5']:
-                    #mean = gv.mean(self.get_fit_parameters(key))
-                    #sdev = 0.001
-                    sdev = 5 *gv.sdev(self.get_fit_parameters(key))
-                    output[key] = gv.gvar(mean, sdev)
-
-            if self.order['fit'] == 'nnlo' and not self.order['include_log']:
-                if key in ['A_k','A_p']:
-                    #mean = gv.mean(self.get_fit_parameters(key))
-                    sdev = gv.sdev(temp_parameters[key])
-                    output[key] = gv.gvar(mean, sdev)
-
-            if self.order['fit'] == 'nnlo' and self.order['include_log']:
-                if key in ['A_a', 'A_loga']:
-                    #mean = gv.mean(self.get_fit_parameters(key))
-                    sdev = gv.sdev(temp_parameters[key])
-                    output[key] = gv.gvar(mean, sdev)
-
-            if self.order['fit'] == 'nnnlo':
-                if key in ['A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp']:
-                    #mean = gv.mean(self.get_fit_parameters(key))
-                    sdev = gv.sdev(temp_parameters[key])
-                    output[key] = gv.gvar(mean, sdev)
+            if key in ['L_4', 'L_5']:
+                output[key] = gv.gvar(0, 0.005)
+            if key in ['A_a', 'A_k', 'A_p', 'A_loga']:
+                mean = 0
+                sdev = gv.sdev(temp_parameters[key])
+                output[key] = gv.gvar(mean, sdev)
 
         return output
 
