@@ -231,15 +231,6 @@ class data_loader(object):
             for key in df_prior.keys():
                 output_dict[key] = np.array(df_prior[key].values(), dtype="object")
 
-
-            # df keys not in cols -> create keys in df
-            for key in cols:
-                if key not in output_dict.keys():
-                    print "df key not in col: ", key
-                    output_dict[key] = np.repeat(np.nan, len(output_dict['name']))
-
-
-
             if name in output_dict['name']:
                 index = np.asscalar(np.argwhere(output_dict['name'] == name))
                 for key in prior.keys():

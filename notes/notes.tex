@@ -70,7 +70,7 @@ The decay rates $\Gamma$ and masses are well-determined from experiment. The las
 \subsection{As a Benchmark Calculation for the Lattice Action}
 
 
-\section{Fit Functions}
+\section{Fit Functions} \label{Fit Functions}
 
 In general, our fits are of the form
 \begin{equation}
@@ -381,7 +381,40 @@ where $m^{(res)}_q$ is the residual mass of quark $q$ (which characterizes the b
 \section{The Weeds}
 The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
 
-\subsection{Selection of Prior}
+\subsection{Model Average}
+Per section \ref{Fit Functions}, we see that our analysis includes numerous possible models: we have four different base models, three choices for $\Lambda_\chi$, counterterms to three orders, log-squared and semi-log terms, and up to ten volume corrections. Our model average is determined by weighing included models by their Bayes factor, as will be explained shortly. However, even without explaining this weighing process, it should be clear that fits having a comparatively small Bayes factor will contribute negligibly to the fit. In particular, the NLO fits have Bayes factors many orders of magnitude smaller than the NNLO fits. We therefore exclude the NLO fits from our analysis.
+
+In the other direction, we exclude the NNNLO fits. These fits can have much better Bayes factors (comparable to the NNLO fits), but the fits are also highly sensitive to choice of prior, which we can only weakly determine (see subsection \ref{Selection of Prior} below). We therefore exclude the NNNLO fits due to the lack of a robust measure by which we can judge whether the priors have been set appropriately.
+
+What remains are the models we include in our average: fits with the four base models, with the three choices for $\Lambda_\chi$, with the NNLO counterms, with or without the semi-log term, with or without the log-squared term, and with or without finite volume corrections (which, for the lattermost option, means either including the ten volume corrections or none at all). In totality, this gives us 96 different models to average over.
+
+Our model average is performed under a Bayesian framework, following the procedure described in \cite{Chang_2018}. Suppose we are interested in estimating the posterior distribution of $Y = F_K / F_\pi$, ie, $P(Y|D)$. To that end, we must marginalize over the different models $M_k$. 
+\begin{equation}
+P(Y|D) = \sum_k P(Y | M_k, D) P(M_k | D)
+\end{equation}
+Here $P(Y | M_k, D)$ is the distribution of $Y$ for a given model $M_k$ and dataset $D$, while $P(M_k | D)$ is the posterior distribution of $M_k$ given $D$. The latter can be written, in accordance to Bayes theorem, as 
+\begin{equation}
+P(M_k | D) = \frac{P(D | M_k) P(M_k)}{\sum_l P(D | M_l) P(M_l)} \, .
+\end{equation}
+We can be more explicit with what the latter is in the context of our fits. First, mind that we are \emph{a priori} agnostic in our choice of $M_k$. We thus take the distribution $P(M_k)$ to be uniform over the different models. We calculate $P(D | M_l)$ by marginalizing over the parameters (LECs) in our fits:
+\begin{equation}
+P(D | M_k) = \int \prod_j \text{d} \theta_j \,  P(D | \theta_j, M_k) P(\theta_j | M_k) \, .
+\end{equation}
+After marginalization, $P(D | M_k)$ is just a number. Specifically, it is the Bayes factor of $M_k$: $P(D | M_k) = \exp(\texttt{logGBF})_{M_k}$. Thus
+\begin{equation}
+P(M_k | D) = \frac{\exp(\texttt{logGBF})_{M_k}}{K \sum_l \exp(\texttt{logGBF})_{M_l}}
+\end{equation}
+with $K = 96$ the number of models included in our average.
+
+Now we can estimate the mean and variance of $Y$.
+\begin{align}
+\text{E}[Y] &= \sum_k \text{E}[Y | M_k] \, P(M_k | D) \, , \\
+\text{Var}[Y] &= \sum_k \sqrt{P(M_k | D)}^T \text{Cov}[Y | M_k] \sqrt{P(M_k | D)} 
++ \left( \sum_k \text{E}^2[Y | M_k] \, P(M_k | D)\right) 
+- \text{E}^2[Y | D] \nonumber
+\end{align}
+
+\subsection{Selection of Prior} \label{Selection of Prior}
 
 \begin{table}[]
 	\begin{tabular}{l|llc}
@@ -399,23 +432,11 @@ The actual fit here is performed in lattice units, not physical units, which is 
 	\caption{Contributions from each LEC at the physical point. Here we define $\epsilon^2_\chi = (\epsilon^2_K -\epsilon^2_\pi)$, which ensures $F_K/F_\pi \rightarrow 1$ in the SU(3) isospin limit.}
 \end{table}
 
-\subsubsection{Current method}
 \begin{enumerate}
-	\item At NLO, the most naive guess is that the LECs $L_4$ and $L_5$ should be order 1. Running the fit a few times, we quickly discover that these LECs are a few orders of magnitude smaller. Therefore, refining our priors for $L_4$ and $L_5$, we set \texttt{p[`L\_4'] = 0(0.001)} and \texttt{p[`L\_5'] = 0(0.001)}. In practice this width extends about an order of magnitude outside our results for $L_4$ and $L_5$, regardless of NLO model chosen.
+	\item At NLO, the most naive guess is that the LECs $L_4$ and $L_5$ should be order 1. Running the NLO fit a few times, we quickly discover that these LECs are a few orders of magnitude smaller. Therefore, refining our priors for $L_4$ and $L_5$, we set \texttt{p[`L\_4'] = 0(0.001)} and \texttt{p[`L\_5'] = 0(0.001)}. In practice this width extends about an order of magnitude outside our results for $L_4$ and $L_5$, regardless of NLO model chosen.
 
-	\item For the next higher order (NNLO) fit, we chain the result of the previous (NLO) fit into the fitter. If $L\pm\sigma_L$ is the result for an NLO LEC as determined by the NLO fit (ie, $L_5$ or $L_4$), then for the NNLO fit we take the prior for the NLO LECs to be \texttt{p[`L']=L(3*$\sigma_L$)}.
-
-	\item To determine the priors for the NNLO LECs, we use the empirical Bayes criterion, which is implemented in \texttt{lsqfit} through \texttt{lsqfit.empbayes\_fit}. In this process, we set all the NNLO LECs $A_\xi$ to have prior \texttt{p[`A$_\xi$'] = 0($\lambda$)}, and we allow $\lambda$ to vary until a fit is produced such that the logGBF is maximized.
+	\item For the next higher order (NNLO) fits, we used \texttt{lsqfit.empbayes\_fit} to determine the priors for the NNLO LECs, which searches the parameter space for priors such that the Bayes Factor is maximized. While performing this search, we constrain the NNLO LECs such that \texttt{p[`A\_k'] = p[`A\_p']} (per chiral symmetry, these LECs should be roughly the same size) and such that \texttt{p[`A\_a'] = p[`A\_loga']} (we assume the lattice spacing corrections come at the same order).
 \end{enumerate}
-
-\subsubsection{Old Method}
-Barring some good physical argument for the expected value of the priors, we use the following heuristic.
-\begin{enumerate}
-	\item At NLO, the most naive guess is that the LECs $L_4$ and $L_5$ should be order 1. Running the fit a few times, we quickly discover that these LECs are a few orders of magnitude smaller. Therefore, refining our priors for $L_4$ and $L_5$, we set \texttt{p[`L\_4'] = 0(0.001)} and \texttt{p[`L\_5'] = 0(0.001)}. In practice this width extends about an order of magnitude outside our results for $L_4$ and $L_5$, regardless of NLO model chosen.
-
-	\item To set the NNLO priors, we first determine the order of magnitude of the $\epsilon^2_\xi (\epsilon^2_K - \epsilon^2_\pi)$ terms. For example, $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi) \sim 10^{-3}$. We center our prior at 0, but set it wide enough such that the upper/lower ends of the uncertainty interval could produce an LEC $A_\xi$ st $\epsilon^2_\xi A_\xi  (\epsilon^2_K - \epsilon^2_\pi) \sim 10^{-2}$, which ensures that the prior doesn't exclude the LEC from contributing at the percent level. In the case of $ \epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$, we would set \texttt{p[`A\_a'] = 0(10)}. The procedure is similar for the NNNLO LECs, with us again setting the priors st the LECs can potentially contribute at the percentile level.
-\end{enumerate}
-While this procedure potentially allows all the NNLO and NNNLO LECs to contribute to the fits, it does lead to some pretty absurd results when taken at face value; eg, setting \texttt{p[`A\_aa'] = 0(100000)}, as one would do as described above, results in a fit of $A_{a, a} = -4926 (11908)$. Fortunately, the \texttt{logGBF} of these fits are correspondingly penalized.
 
 \subsection{Comparison of results for taylor expanded NLO models}
 As a first test of our fits, André and I performed the \texttt{ma-taylor} and \texttt{xpt-taylor} fits at NLO on each ensemble, where there is only one parameter that needs to be determined ($L_5$). See fig \ref{fig:L5-comparison}.

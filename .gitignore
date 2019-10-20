@@ -8,6 +8,7 @@ $*
 /notes/*.fls
 /notes/*.gz
 /notes/*.log
+/notes/*.out
 /notes/*.pdf
 /notes/*.xml
 /notes/*.yaml
