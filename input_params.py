@@ -19,29 +19,26 @@ switches['ansatz'] = dict()
 switches['ansatz']['models'] = [
     'xpt_nnlo'                ,'ma_nnlo',
     'xpt_nnlo_FV'             ,'ma_nnlo_FV',
-    'xpt_nnlo_FV_alphaS'      ,'ma_nnlo_FV_alphaS','ma_nnlo_alphaS',
+    'xpt_nnlo_FV_alphaS'      ,'ma_nnlo_FV_alphaS',
     'xpt_nnlo_FV_alphaS_logSq','ma_nnlo_FV_alphaS_logSq',
-    'xpt_nnnlo',
-    'xpt_nnnlo_FV'            ,'ma_nnnlo_FV',
-    'xpt_nnnlo_FV_alphaS'     ,'ma_nnnlo_FV_alphaS',
     'xpt-ratio_nnlo'                ,'ma-ratio_nnlo',
     'xpt-ratio_nnlo_FV'             ,'ma-ratio_nnlo_FV',
     'xpt-ratio_nnlo_FV_alphaS'      ,'ma-ratio_nnlo_FV_alphaS',
     'xpt-ratio_nnlo_FV_alphaS_logSq','ma-ratio_nnlo_FV_alphaS_logSq'
 ]
-switches['ansatz']['models'] = [
-    'xpt_nnlo'                ,'ma_nnlo',
-    'xpt_nnlo_FV'             ,'ma_nnlo_FV',
-    ]
-switches['ansatz']['models'] =  [
-    'xpt_nnlo_FV_alphaS_logSq', 'ma_nnlo_FV_alphaS_logSq',
-    'xpt_nnlo_FV_alphaS',       'ma_nnlo_FV_alphaS'
-]
+#switches['ansatz']['models'] = [
+#    'xpt_nnlo'                ,'ma_nnlo',
+#    'xpt_nnlo_FV'             ,'ma_nnlo_FV',
+#    ]
+#switches['ansatz']['models'] =  [
+#    'xpt_nnlo_FV_alphaS_logSq',
+#    'xpt_nnlo_FV_alphaS'
+#]
 switches['ansatz']['a2dm']  = 'individual' # avg or individual
 switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
-switches['do_analysis']     = True
+switches['do_analysis']     = False
 # use default or optimized priors
-switches['default_priors'] = False
+switches['default_priors'] = True
 # set mean to boot0 vs add boot0 to bs list
 switches['bs_bias']         = True
 # use scipy instead of GSL?
@@ -53,7 +50,7 @@ switches['make_plots']      = False
 switches['verbose']         = False
 switches['debug']           = False
 # for tuning prior widths
-switches['nnlo_priors']     = False
+switches['nnlo_priors']     = True
 switches['prior_group']     = True
 # fit checks
 switches['nlo_report']      = False

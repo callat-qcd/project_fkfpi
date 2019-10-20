@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os, sys
+import os, sys, shutil
 import numpy as np
 import scipy.stats as stats
 import tables as h5
@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set()
 sns.set_style("ticks")
+import yaml
 import chipt_awl as xpt
 
 def run_from_ipython():
@@ -200,7 +201,7 @@ def perform_analysis(switches,priors):
                     print('WARNING: non optimized NNLO prior widths')
                     print(str(e))
             else:
-                print('using default prior widths')
+                print('    using default prior widths')
             d_e = dict()
             d_e['x'] = x_e
             d_e['y'] = y_e
@@ -265,7 +266,10 @@ def bayes_model_avg(results,phys_point):
         pdf += w * p
         c = stats.norm.cdf(x,r.mean,r.sdev)
         cdf += w * c
-    print(FKFpi)
+    w_list = np.array(w_list)
+    r_list = np.array(r_list)
+    model_var = np.sum(w_list * np.array([ r.mean**2 for r in r_list])) - FKFpi.mean**2
+    print(FKFpi,np.sqrt(model_var))
     fig = plt.figure('hist')
     ax = plt.axes([0.1,0.1,0.88,0.88])
     ax.fill_between(x=x,y1=pdf)
@@ -328,59 +332,91 @@ def bma(switches,result,isospin):
 
 
 def nnlo_prior_scan(switches,priors):
-    logGBF_array = []
-    model = switches['nnlo_priors_model']
-    switches['ansatz']['model'] = model
-    print(model,'Prior width study')
-    x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
-    y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
-    p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
-    for key in priors:
-        p_e[key] = priors[key]
-    d_e = dict()
-    d_e['x'] = x_e
-    d_e['y'] = y_e
+    for base_model in switches['ansatz']['models']:
+        for FPK in ['PP','PK','KK']:
+            if os.path.exists('data/saved_prior_search.yaml'):
+                with open('data/saved_prior_search.yaml','r') as fin:
+                    prior_grid = yaml.safe_load(fin.read())
+                shutil.copyfile('data/saved_prior_search.yaml','data/saved_prior_search.yaml.bak')
+            else:
+                prior_grid = dict()
+            model = base_model +'_'+FPK
+            switches['scale'] = FPK
+            switches['ansatz']['model'] = model
+            print('Prior width study: ',model)
 
-    if switches['prior_group']:
-        p_range = priors['p_range']
-        a_range = priors['a_range']
-        z = np.zeros([len(a_range),len(p_range)])
-        tot = len(a_range) * len(p_range)
-        i_t = 0
-        for i_s,s4 in enumerate(a_range):
-            p_e['s_4']   = gv.gvar(0,s4)
-            if 'alphaS' in model:
-                p_e['saS_4'] = gv.gvar(0,s4)
-            for i_p,p4 in enumerate(p_range):
-                p_e['p_4'] = gv.gvar(0,p4)
-                p_e['k_4'] = gv.gvar(0,p4)
-                d_e['p'] = p_e
-                fit_e = xpt.Fit(switches,xyp_init=d_e)
-                fit_e.fit_data()
-                tmp = [ p_e[k].sdev for k in ['p_4','s_4'] ]
-                tmp.append(fit_e.fit.logGBF)
-                logGBF_array.append(tmp)
-                sys.stdout.write('%4d out of %d\r' %(i_t,tot))
-                sys.stdout.flush()
-                i_t += 1
-                z[i_s,i_p] = fit_e.fit.logGBF
-    else:
-        print('individual prior width study not supported [yet]')
+            logGBF_array = []
 
-    logGBF_array = np.array(logGBF_array)
-    logGBF_max = np.argmax(logGBF_array[:,-1])
-    print('optimal prior widths for %s' %model)
-    logGBF_optimal = logGBF_array[logGBF_max]
-    tmp = ''
-    for i_k,k in enumerate(['p_4','s_4']):
-        tmp += '%s = %.2f ' %(k,logGBF_optimal[i_k])
-    print(tmp,'logGBF = ',logGBF_optimal[-1])
+            if model not in prior_grid:
+                prior_grid[model] = dict()
+            x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+            y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+            p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+            for key in priors:
+                p_e[key] = priors[key]
+            d_e = dict()
+            d_e['x'] = x_e
+            d_e['y'] = y_e
 
-    lgbf = logGBF_array[:,-1]
-    w = np.exp(lgbf - logGBF_optimal[-1])
-    #w = w / w.sum()
-    logGBF_w = np.copy(logGBF_array)
-    logGBF_w[:,-1] = w
+            if switches['prior_group']:
+                p_range = priors['p_range']
+                a_range = priors['a_range']
+                z = np.zeros([len(a_range),len(p_range)])
+                tot = len(a_range) * len(p_range)
+                i_t = 0
+                for i_s,s4 in enumerate(a_range):
+                    s4_s = str(s4)
+                    if s4_s not in prior_grid[model]:
+                        prior_grid[model][s4_s] = dict()
+                    p_e['s_4']   = gv.gvar(0,s4)
+                    if 'alphaS' in model:
+                        p_e['saS_4'] = gv.gvar(0,s4)
+                    for i_p,p4 in enumerate(p_range):
+                        p4_s = str(p4)
+                        sys.stdout.write('%4d out of %d, s_4 = %s p_4 = %s\r' %(i_t,tot,s4_s,p4_s))
+                        sys.stdout.flush()
+                        if p4_s not in prior_grid[model][s4_s]:
+                            p_e['p_4'] = gv.gvar(0,p4)
+                            p_e['k_4'] = gv.gvar(0,p4)
+                            d_e['p'] = p_e
+                            fit_e = xpt.Fit(switches,xyp_init=d_e)
+                            fit_e.fit_data()
+                            tmp = [ p_e[k].sdev for k in ['p_4','s_4'] ]
+                            tmp.append(fit_e.fit.logGBF)
+                            logGBF_array.append(tmp)
+                            prior_grid[model][s4_s][p4_s] = float(fit_e.fit.logGBF)
+                            i_t += 1
+                            z[i_s,i_p] = fit_e.fit.logGBF
+                        else:
+                            tmp = [ p4, s4 ]
+                            tmp.append(prior_grid[model][s4_s][p4_s])
+                            logGBF_array.append(tmp)
+                            i_t += 1
+                            z[i_s,i_p] = prior_grid[model][s4_s][p4_s]
+            else:
+                print('individual prior width study not supported [yet]')
+
+            logGBF_array = np.array(logGBF_array)
+            logGBF_max = np.argmax(logGBF_array[:,-1])
+            print('optimal prior widths for %s' %model)
+            logGBF_optimal = logGBF_array[logGBF_max]
+            tmp = ''
+            for i_k,k in enumerate(['p_4','s_4']):
+                tmp += '%s = %.2f ' %(k,logGBF_optimal[i_k])
+            print(tmp,'logGBF = ',logGBF_optimal[-1],'\n')
+
+            lgbf = logGBF_array[:,-1]
+            w = np.exp(lgbf - logGBF_optimal[-1])
+            #w = w / w.sum()
+            logGBF_w = np.copy(logGBF_array)
+            logGBF_w[:,-1] = w
+
+            prior_file = open('data/saved_prior_search.yaml', 'w')
+            yaml.dump(prior_grid, prior_file)
+            prior_file.close()
+
+
+    sys.exit()
 
     if switches['prior_group']:
         z = np.exp(z - logGBF_optimal[-1])
@@ -509,12 +545,13 @@ def fit_checker(switches,priors):
 
 if __name__ == "__main__":
     import input_params as ip
-    print("python version    :", sys.version)
+    print("python     version:", sys.version)
     #print("pandas version:", pd.__version__)
-    print("numpy  version    :", np.__version__)
+    print("numpy      version:", np.__version__)
     print("matplotlib version:", matplotlib.__version__)
-    print("gvar   version    :", gv.__version__)
-    print("lsqfit version    :", lsqfit.__version__)
+    print("gvar       version:", gv.__version__)
+    print("lsqfit     version:", lsqfit.__version__)
+    print("yaml       version:", yaml.__version__)
     print('')
 
     if not os.path.exists('figures'):

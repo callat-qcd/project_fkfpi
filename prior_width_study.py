@@ -3,8 +3,8 @@ import numpy as np
 model='xpt_nnlo_FV'
 
 dr = 0.5
-p_range = np.arange(.1,8+dr,dr)
-a_range = np.arange(.1,8+dr,dr)
+p_range = np.arange(.1,10+dr,dr)
+a_range = np.arange(.1,10+dr,dr)
 
 nnlo_width = dict()
 
