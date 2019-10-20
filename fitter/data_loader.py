@@ -62,6 +62,8 @@ class data_loader(object):
     def get_prior(self, fit_type, F2, include_FV, include_alphaS, include_logSq):
         filepath = os.path.normpath(self.project_path + '/priors/'+fit_type+'.csv')
 
+        print filepath
+
         if not os.path.isfile(filepath):
             return None
 
@@ -74,15 +76,17 @@ class data_loader(object):
             name = name + '_logSq'
 
         df_prior = pd.read_csv(filepath, header=0)
-        cols = df_prior.columns.values
+        if name not in df_prior['name'].values:
+            return None
 
-        model_names = df_prior['name'].values
+        index = np.argwhere(df_prior['name'].values == name)
         prior = gv.BufferDict()
-        for name in sorted(model_names):
-            index = np.argwhere(df_prior['name'].values == name)
+        for key in ['L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga']:
+            value = np.asscalar(df_prior[key].values[index])
+            if value is not np.nan:
+                prior[key] = gv.gvar(value)
 
-            for key in ['L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga']:
-                prior[key] = gv.gvar(np.asscalar(df_prior[key].values[index]))
+        return prior
 
     def get_variable_names(self):
         names = []

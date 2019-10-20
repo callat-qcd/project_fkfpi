@@ -4,10 +4,16 @@ import scipy.special as ss
 
 # gvar version of modified Bessel function of the second kind
 def fcn_Kn(n, g):
+
     ymean = ss.kn(n, gv.mean(g))
 
-    if isinstance(g, gv._gvarcore.GVar):
+    if isinstance(g, gv._gvarcore.GVar) or (np.ndim(g) == 1 and isinstance(g[0], gv._gvarcore.GVar)):
+        if (np.ndim(g) == 1 and gv.sdev(g[0]) == 0): # prevents assertion error
+            return ymean
+
         ysdev = np.abs(ss.kvp(n, gv.mean(g), 1)) * gv.sdev(g)
+
+        #print gv.gvar(ymean, ysdev)
         return gv.gvar(ymean, ysdev)
     else:
         return ymean

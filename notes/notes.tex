@@ -398,7 +398,7 @@ P(M_k | D) = \frac{P(D | M_k) P(M_k)}{\sum_l P(D | M_l) P(M_l)} \, .
 \end{equation}
 We can be more explicit with what the latter is in the context of our fits. First, mind that we are \emph{a priori} agnostic in our choice of $M_k$. We thus take the distribution $P(M_k)$ to be uniform over the different models. We calculate $P(D | M_l)$ by marginalizing over the parameters (LECs) in our fits:
 \begin{equation}
-P(D | M_k) = \int \prod_j \text{d} \theta_j \,  P(D | \theta_j, M_k) P(\theta_j | M_k) \, .
+P(D | M_k) = \int \prod_j \text{d} \theta_j^{(k)} \,  P(D | \theta_j^{(k)}, M_k) P(\theta_j^{(k)} | M_k) \, .
 \end{equation}
 After marginalization, $P(D | M_k)$ is just a number. Specifically, it is the Bayes factor of $M_k$: $P(D | M_k) = \exp(\texttt{logGBF})_{M_k}$. Thus
 \begin{equation}

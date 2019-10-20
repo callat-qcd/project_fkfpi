@@ -27,7 +27,7 @@ p_dict = {
            u'a12m400',  u'a15m135XL', u'a15m220', u'a15m310', u'a15m350', 'a15m400'], # u'a15m130'
 }
 
-for fit_type in ['ma', 'xpt']:
+for fit_type in ['ma-ratio']:
     for F2 in ['FKFK', 'FKFpi', 'FpiFpi']:
         for vol in [0, 10]:
             for include_alphaS in [False, True]:

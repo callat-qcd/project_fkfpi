@@ -20,13 +20,23 @@ class fitter(object):
         y_data = self._make_y_data()
         prior = self._make_prior()
 
+        #z['chiral'] = np.around(z['chiral'], 2)
+        #z['spacing'] = np.around(z['spacing'], 2)
+        z['chiral'] = np.abs(z['chiral'])
+        z['spacing'] = np.abs(z['spacing'])
+
         for key in prior.keys():
             if key in ['A_p', 'A_k']:
-                prior[key] = prior[key] *z['chiral']
+                #prior[key] = prior[key] *z['chiral']
+                prior[key] = gv.gvar(0, z['chiral'])
             if key in ['A_loga', 'A_a']:
-                prior[key] = prior[key] *z['spacing']
+                #prior[key] = prior[key] *z['spacing']
+                prior[key] = gv.gvar(0, z['spacing'])
 
         fitfcn = self._make_models()[-1].fitfcn
+
+        print z
+        print prior['A_k'], prior['A_a']
 
         return dict(data=y_data, fcn=fitfcn, prior=prior)
 
