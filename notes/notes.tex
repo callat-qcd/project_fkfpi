@@ -20,6 +20,7 @@
 \hourminute=\hour \multiply \hourminute by 60
 \minute=\time \advance \minute by -\hourminute
 \newcommand{\mydate}{\ \today \ - \number\hour :\number\minute}
+\newcommand{\includegraphicsifexists}[2][]{\IfFileExists{#2}{\includegraphics[draft=false, #1]{#2}}{\includegraphics[draft=true, #1]{#2}}}
 
 
 \begin{document}
@@ -50,7 +51,7 @@ The Cabibbo–Kobayashi–Maskawa (CKM) matrix characterizes the extent to which
 \end{equation}
 
 \begin{figure}
-	\includegraphics[width=0.4\textwidth]{./../figs/kaon_box_diagram.png}
+	\includegraphicsifexists[width=0.4\textwidth]{./../figs/kaon_box_diagram.png}
 	\caption{A kaon box diagram  (taken from Wikipedia). Because the quark eigenstates are different in the strong and weak interactions, a $K^0$ can spontaneously change into a $\overline{K}^0$. Consequently, kaon decays do not conserve CP.}
 \end{figure}
 
@@ -365,7 +366,7 @@ W(t) \Big|_{t=w_0^2} = 0.3 \, .
 For the purpose of this project, we take $w_0 = 0.175(10)$, which is a conservative estimate taken from current progress on scale setting. We only use $w_0$ to make graphs -- it has no bearing on our final result (the extrapolation of $F^\pm_K/F^\pm_\pi$ to the physical point).
 
 \begin{figure}
-	\includegraphics[width=0.75\textwidth]{./../figs/w0_comparison.pdf}
+	\includegraphicsifexists[width=0.75\textwidth]{./../figs/w0_comparison.pdf}
 	\caption{Current results on scale setting. Notice that our conservative choice for $w_0$ contains all the models in the figure and then some.}
 \end{figure}
 
@@ -408,8 +409,8 @@ with $K = 96$ the number of models included in our average.
 
 Now we can estimate the mean and variance of $Y$.
 \begin{align}
-\text{E}[Y] &= \sum_k \text{E}[Y | M_k] \, P(M_k | D) \, , \\
-\text{Var}[Y] &= \sum_k \sqrt{P(M_k | D)}^T \text{Cov}[Y | M_k] \sqrt{P(M_k | D)} 
+\text{E}[Y] &= \sum_k \text{E}[Y | M_k] \, P(M_k | D)  \\
+\text{Var}[Y] &= \sum_k \text{Var}[Y | M_k] P(M_k | D)
 + \left( \sum_k \text{E}^2[Y | M_k] \, P(M_k | D)\right) 
 - \text{E}^2[Y | D] \nonumber
 \end{align}
@@ -443,11 +444,11 @@ As a first test of our fits, André and I performed the \texttt{ma-taylor} and \
 
 \begin{figure}
 	\begin{subfigure}[t]{0.45\textwidth}
-		\includegraphics[width=\textwidth]{./../tmp/L5_comparison_ma-taylor.pdf}
+		\includegraphicsifexists[width=\textwidth]{./../tmp/L5_comparison_ma-taylor.pdf}
 	\end{subfigure}
 	~
 	\begin{subfigure}[t]{0.45\textwidth}
-		\includegraphics[width=\textwidth]{./../tmp/L5_comparison_xpt-taylor.pdf}
+		\includegraphicsifexists[width=\textwidth]{./../tmp/L5_comparison_xpt-taylor.pdf}
 	\end{subfigure}
 	\caption{Value of $L_5$ as independently determined by me (NM) and André. The difference between the central values is likely caused by my choice to use \texttt{boot0} vs André's choice to use the mean of the bootstrap list. }
 	\label{fig:L5-comparison}
@@ -460,11 +461,11 @@ We compare the effect of adding each NNLO LEC to the fit as well as the effect o
 {
 	\begin{figure}[H]
 		\begin{subfigure}[t]{0.45\textwidth}
-			\includegraphics[width=\textwidth]{"./../tmp/exclude_lecs/\model_chained-True_exclude-n2lo".pdf}
+			\includegraphicsifexists[width=\textwidth]{"./../tmp/exclude_lecs/\model_chained-True_exclude-n2lo".pdf}
 		\end{subfigure}
 		~
 		\begin{subfigure}[t]{0.45\textwidth}
-			\includegraphics[width=\textwidth]{"./../tmp/exclude_lecs/\model_chained-False_exclude-n2lo".pdf}
+			\includegraphicsifexists[width=\textwidth]{"./../tmp/exclude_lecs/\model_chained-False_exclude-n2lo".pdf}
 		\end{subfigure}
 	\caption{Effect of individually including NNLO LECs for model \texttt{\model}. The topmost (non-FLAG) result is equivalent to the NLO fit; the bottommost is equivalent to the NNLO fit. See table \ref{\model-prior} for prior.}
 	\end{figure}
@@ -495,20 +496,20 @@ I haven't noticed a visible difference in using one versus the other.
 \begin{figure}
 	\centering
 	\begin{subfigure}[b]{.45\linewidth}
-		\includegraphics[width=\linewidth]{"./../tmp/vol-corrections_ma_chained-True".pdf}
+		\includegraphicsifexists[width=\linewidth]{"./../tmp/vol-corrections_ma_chained-True".pdf}
 		\caption{\texttt{ma\_nnlo}}
 	\end{subfigure}
 	\begin{subfigure}[b]{.45\linewidth}
-		\includegraphics[width=\linewidth]{"./../tmp/vol-corrections_ma-taylor_chained-True".pdf}
+		\includegraphicsifexists[width=\linewidth]{"./../tmp/vol-corrections_ma-taylor_chained-True".pdf}
 		\caption{\texttt{ma-taylor\_nnlo}}
 	\end{subfigure}
 
 	\begin{subfigure}[b]{.45\linewidth}
-		\includegraphics[width=\linewidth]{"./../tmp/vol-corrections_xpt_chained-True".pdf}
+		\includegraphicsifexists[width=\linewidth]{"./../tmp/vol-corrections_xpt_chained-True".pdf}
 		\caption{\texttt{xpt\_nnlo}}
 	\end{subfigure}
 	\begin{subfigure}[b]{.45\linewidth}
-		\includegraphics[width=\linewidth]{"./../tmp/vol-corrections_xpt-taylor_chained-True".pdf}
+		\includegraphicsifexists[width=\linewidth]{"./../tmp/vol-corrections_xpt-taylor_chained-True".pdf}
 		\caption{\texttt{xpt-taylor\_nnlo}}
 	\end{subfigure}
 	\caption{Including volume corrections up to $n$. When computing $\mathcal{I}(m)$ per \eqref{eqn:I(m)} (ie, the finite volume corrections), we only include $K_1(mL|\mathbf{n}|)$ up to some $n$. We see that $F_K^\pm /F_\pi^\pm$ quickly converges after only including a few terms.}
@@ -519,12 +520,12 @@ I haven't noticed a visible difference in using one versus the other.
 Here we present the results for each of the fits.
 
 \begin{figure}
-	\includegraphics[width=0.9\textwidth]{./../tmp/fit_comparison.pdf}
+	\includegraphicsifexists[width=0.9\textwidth]{./../tmp/fit_comparison.pdf}
 	\caption{Extrapolations of $F^\pm_K/F^\pm_\pi$ to the physical point for the various models, with the FLAG result shown as a red band.}
 \end{figure}
 
 \begin{figure}
-	\includegraphics[width=0.9\textwidth]{./../tmp/delta-su2_comparison.pdf}
+	\includegraphicsifexists[width=0.9\textwidth]{./../tmp/delta-su2_comparison.pdf}
 	\caption{Extrapolations of $\delta_{\text{SU(2)}}$ to the physical point for the various models.}
 \end{figure}
 
@@ -616,7 +617,7 @@ Here we present the results for each of the fits.
 		{
 			\begin{figure}[H]
 				\caption{\texttt{\model\_\order}}
-				\includegraphics[width=\textwidth, page=3]{"./../tmp/fits/\model"_"\order".pdf}
+				\includegraphicsifexists[width=\textwidth, page=3]{"./../tmp/fits/\model"_"\order".pdf}
 			\end{figure}
 		}
 	}
@@ -630,7 +631,7 @@ Here we present the results for each of the fits.
 The physical point values are given in Table \ref{table:phys_point_values}. The pion and kaon masses are taken from \cite{Berkowitz:2017opd} while the mass for the $\eta^\prime = (ss)$ meson is taken from \cite{Dowdall:2013rya}; however, we could have just as readily taken $m_{ss}^2 = 2 m_K^2 - m_\pi^2$ evaluated at the physical point (see Fig \ref{fig:mss}).
 
 \begin{figure}
-	\includegraphics[width=0.9\textwidth]{./../tmp/mss_vs_mk_mpi.pdf}
+	\includegraphicsifexists[width=0.9\textwidth]{./../tmp/mss_vs_mk_mpi.pdf}
 	\caption{Comparison of $m_{ss}^2$ and $2m_K^2 - m_\pi^2$.}
 	\label{fig:mss}
 \end{figure}
