@@ -56,17 +56,37 @@ def plot_comparison(param, fit_results, other_results=None, title=None, xlabel=N
     for results in results_array:
         plt.axhline(y-0.5, ls='--')
         for name in results.keys():
-            x = gv.mean(gv.gvar(results[name][param]))
-            xerr = gv.sdev(gv.gvar(results[name][param]))
-            plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
-                         fmt = 'ro', capsize=0.0, mec='white', ms=25.0, alpha=0.6,
-                         ecolor='b', elinewidth=25.0)
-            y = y + 1
-            labels = np.append(labels, str(name))
 
             # Add band for FLAG
-            if name == 'FLAG':
+            if name in ['FLAG']:
+                x = gv.mean(gv.gvar(results[name][param]))
+                xerr = gv.sdev(gv.gvar(results[name][param]))
                 plt.axvspan(x-xerr, x+xerr, alpha=0.3, color='g', label='FLAG')
+
+                y = y + 1
+
+            else:
+                if 'ma_' in name:
+                    fmt = 'ro'
+                elif 'xpt_' in name:
+                    fmt = 'co'
+                elif 'xpt-ratio_' in name:
+                    fmt = 'go'
+                elif 'ma-ratio_' in name:
+                    fmt = 'mo'
+                else:
+                    fmt = 'bo'
+
+                x = gv.mean(gv.gvar(results[name][param]))
+                xerr = gv.sdev(gv.gvar(results[name][param]))
+                plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
+                             fmt = fmt, capsize=0.0, mec='white', ms=10.0, alpha=0.6,
+                             ecolor='b', elinewidth=5.0, label=name.split('_')[0])
+                y = y + 1
+                labels = np.append(labels, str(name))
+
+
+
 
     ymax = y
 
@@ -77,9 +97,13 @@ def plot_comparison(param, fit_results, other_results=None, title=None, xlabel=N
         plt.axvspan(pm(avg, -1), pm(avg, +1), alpha=0.3, color='m', label='model avg')
         plt.axvline(pm(avg, 0), ls='-.', color='m')
 
-    plt.legend()
+    # Get unique labels
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = OrderedDict(zip(labels, handles))
+    plt.legend(by_label.values(), by_label.keys())
 
-    plt.yticks(range(len(labels)), labels, fontsize=15, rotation=65)
+    #plt.yticks(range(len(labels)), labels, fontsize=, rotation=65)
+    plt.yticks([])
     plt.ylim(-1, y)
 
     #plt.title(particle+", "+abbr, fontsize=30)
@@ -99,16 +123,29 @@ def plot_comparison(param, fit_results, other_results=None, title=None, xlabel=N
     labels = np.array([])
     for results in [fit_results]:
         for name in results.keys():
+            if 'ma_' in name:
+                color = 'r'
+            elif 'xpt_' in name:
+                color = 'c'
+            elif 'xpt-ratio_' in name:
+                color = 'g'
+            elif 'ma-ratio_' in name:
+                color = 'm'
+            else:
+                color = 'b'
+
             logGBF = gv.mean(gv.gvar(results[name]['logGBF']))
             x = np.exp(logGBF - logGBF_max)
 
-            plt.axvline(x, ls='--', alpha=0.4)
-            plt.scatter(x=x, y=y, color='r')
+            #plt.axvline(x, ls='--', alpha=0.4)
+            plt.scatter(x=x, y=y, color=color)
             y = y + 1
             labels = np.append(labels, str(name))
 
+    for ti in np.arange(5)/4.0:
+        plt.axvline(ti, ls='--', alpha=0.2)
+
     plt.yticks([])
-    #plt.xlim(-0.05, 1.05)
     plt.ylim(-1, ymax)
     plt.xlabel("Norm\nGBF", fontsize=24)
 
@@ -119,14 +156,25 @@ def plot_comparison(param, fit_results, other_results=None, title=None, xlabel=N
     labels = np.array([])
     for results in [fit_results]:
         for name in results.keys():
+            if 'ma_' in name:
+                color = 'r'
+            elif 'xpt_' in name:
+                color = 'c'
+            elif 'xpt-ratio_' in name:
+                color = 'g'
+            elif 'ma-ratio_' in name:
+                color = 'm'
+            else:
+                color = 'b'
+
             x = gv.mean(gv.gvar(results[name]['Q']))
-            plt.axvline(x, ls='--', alpha=0.4)
-            plt.scatter(x=x, y=y, color='r')
+            #plt.axvline(x, ls='--', alpha=0.4)
+            plt.scatter(x=x, y=y, color=color)
             y = y + 1
             labels = np.append(labels, str(name))
 
-    #for ti in np.arange(5)/4.0:
-    #    plt.axvline(ti, ls='--', alpha=0.2)
+    for ti in np.arange(5)/4.0:
+        plt.axvline(ti, ls='--', alpha=0.2)
 
     plt.yticks([])
     plt.xlim(-0.05, 1.05)
@@ -141,14 +189,25 @@ def plot_comparison(param, fit_results, other_results=None, title=None, xlabel=N
     labels = np.array([])
     for results in [fit_results]:
         for name in results.keys():
+            if 'ma_' in name:
+                color = 'r'
+            elif 'xpt_' in name:
+                color = 'c'
+            elif 'xpt-ratio_' in name:
+                color = 'g'
+            elif 'ma-ratio_' in name:
+                color = 'm'
+            else:
+                color = 'b'
+
             x = gv.mean(gv.gvar(results[name]['chi2/df']))
-            plt.axvline(x, ls='--', alpha=0.4)
-            plt.scatter(x=x, y=y, color='r')
+            #plt.axvline(x, ls='--', alpha=0.4)
+            plt.scatter(x=x, y=y, color=color)
             y = y + 1
             labels = np.append(labels, str(name))
 
-    #for ti in np.arange(9)/4.0:
-    #    plt.axvline(ti, ls='--', alpha=0.2)
+    for ti in np.arange(9)/4.0:
+        plt.axvline(ti, ls='--', alpha=0.2)
 
     plt.yticks([])
     plt.xlim(0, 2)

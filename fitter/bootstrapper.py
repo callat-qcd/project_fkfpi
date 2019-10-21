@@ -346,7 +346,7 @@ class bootstrapper(object):
 
     def get_fit_info(self):
 
-        name = self.fit_type +'_'+ self.order['fit']
+        name = self.fit_type +'_'+ self.F2+'_'+self.order['fit'] 
         if self.order['vol'] > 6:
             name = name + '_FV'
         if self.order['include_log']:

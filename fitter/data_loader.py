@@ -185,7 +185,7 @@ class data_loader(object):
         if output_filename is None:
             output_file = os.path.normpath(self.project_path+'/tmp/temp.pdf')
         else:
-            output_file = os.path.normpath(self.project_path+'/tmp/'+output_filename+'.pdf')
+            output_file = os.path.normpath(self.project_path+'/figs/generated/'+output_filename+'.pdf')
 
         if not os.path.exists(os.path.dirname(output_file)):
             os.makedirs(os.path.dirname(output_file))

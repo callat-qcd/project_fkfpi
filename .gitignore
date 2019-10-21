@@ -14,4 +14,4 @@ $*
 /notes/*.yaml
 /notes/notesNotes.bib
 /tmp/*
-/figs/*
+/figs/generated/*
