@@ -136,7 +136,16 @@ class bootstrapper(object):
     def __str__(self):
         bs_fit_parameters = self.get_bootstrapped_fit_parameters()
         prior = self.prior
-        output = "\n\nFit type: %s (F^2 = %s, bsN = %s)" %(self.fit_type, self.F2, self.bs_N)
+
+        name = self.fit_type +'_'+ self.F2+'_'+self.order['fit']
+        if self.order['vol'] > 6:
+            name = name + '_FV'
+        if self.order['include_log']:
+            name = name + '_alphaS'
+        if self.order['include_log2']:
+            name = name + '_logSq'
+
+        output = "\nModel: %s" %(name)
         output = output + "\n\nFitting to %s \n" %(self.order['fit'])
         #output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
@@ -346,7 +355,7 @@ class bootstrapper(object):
 
     def get_fit_info(self):
 
-        name = self.fit_type +'_'+ self.F2+'_'+self.order['fit'] 
+        name = self.fit_type +'_'+ self.F2+'_'+self.order['fit']
         if self.order['vol'] > 6:
             name = name + '_FV'
         if self.order['include_log']:
@@ -588,9 +597,9 @@ class bootstrapper(object):
             y = y + 1
 
             # data
-            data = self.fit_data[abbr]['FK'] / self.fit_data[abbr]['Fpi']
-            x = gv.mean(np.mean(data))
-            xerr = gv.sdev(data[0])
+            data = self.fit_data[abbr]['FK/Fpi']
+            x = gv.mean(data)
+            xerr = gv.sdev(data)
 
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
                          color='C0', marker='o', capsize=0.0, mec='white', ms=10.0, alpha=0.6,
