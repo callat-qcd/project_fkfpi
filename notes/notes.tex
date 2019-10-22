@@ -37,7 +37,7 @@ In these notes, we explain our general fitting strategy for determining $F_K / F
 
 \section{Background}
 \subsection{Connection to the CKM Metrix}
-The Cabibbo–Kobayashi–Maskawa (CKM) matrix characterizes the extent to which the quarks eigenstates of the strong interaction can be thought of as a quark eigenstates of the weak interaction. In a universe where the quark eigenstates of the weak and strong interaction are the same, the CKM matrix is the identity; we are evidently not in that universe (quarks can change flavors through the weak interaction), and indeed the CKM matrix reflects that deviation from the identity. Per the PDG \cite{PhysRevD.98.030001} (and slightly overestimating some uncertainties for notational consistency),
+The Cabibbo–Kobayashi–Maskawa (CKM) matrix characterizes the extent to which the quarks eigenstates of the strong interaction can be thought of as a quark eigenstates of the weak interaction. In a universe where the quark eigenstates of the weak and strong interaction are the same, the CKM matrix is the identity; we are evidently not in that universe (quarks can change flavors through the weak interaction), and indeed the CKM matrix reflects that deviation from the identity. Per the PDG \cite{PhysRevD.98.030001} (and slightly overestimating some uncertainties for notational simplicity),
 \begin{equation}
 \begin{bmatrix}
 |V_{ud}| & |V_{us}| & |V_{ub}| \\
@@ -67,6 +67,14 @@ Marciano \cite{Marciano:2004uf, Durr:2010hr} showed how one can calculate this m
 \left(\frac{F_K}{F_\pi} \right)^2 \frac{|V_{us}|^2}{|V_{ud}|^2} \frac{m_K (1 - m_l^2/ m_K^2)^2}{m_\pi (1 - m_l^2/ m_\pi^2)^2} \left[ 1 + \frac{\alpha}{\pi}(C_K - C_\pi) \right]
 \end{equation}
 The decay rates $\Gamma$ and masses are well-determined from experiment. The last factor (in brackets) accounts for radiative electroweak corrections, but it contributes little to the calculation due to the factor of $\alpha$.
+
+The pseudoscalar decay constants themselves are defined as follows,
+\begin{equation}
+\langle 0 | \overline{d} \gamma_\mu \gamma_5 u | \pi^+(p) \rangle = i p_\mu f_{\pi^+}
+\qquad 
+\langle 0 | \overline{s} \gamma_\mu \gamma_5 u | K^+(p) \rangle = i p_\mu f_{K^+}
+\end{equation}
+That is, they are related to the expectation value for the pseudoscalar to return to the (QCD) vacuum, which occurs by the action of its antiparticle on the state. This particular combination of gamma matrices ensures the antiparticle is a pseudoscalar also.
 
 \subsection{As a Benchmark Calculation for the Lattice Action}
 
