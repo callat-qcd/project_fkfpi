@@ -12,6 +12,7 @@ class Fit(object):
         self.x        = xyp_init['x']
         self.y        = xyp_init['y']
         self.p_init   = xyp_init['p']
+        self.model    = self.switches['ansatz']['model']
         self.eft      = self.switches['ansatz']['model'].split('_')[0]
         self.order    = self.switches['ansatz']['model'].split('_')[1]
         self.fv       = 'FV' in self.switches['ansatz']['model']
@@ -117,12 +118,16 @@ class Fit(object):
 
     def prune_priors(self):
         p = gv.BufferDict()
+        if self.switches['debug']:
+            print('DEBUG:',"%9s" %'ens','  ',"%11s" %'Lchi','eps_pi**2')
         for e in self.switches['ensembles_fit']:
             Lchi = self.p_init[(e,'Lchi_'+self.switches['scale'])]
             #Lchi = self.x[e]['Lchi_'+self.switches['scale']]
             p[(e,'p2')] = self.p_init[(e,'mpi')]**2 / Lchi**2
             p[(e,'k2')] = self.p_init[(e,'mk')]**2 /  Lchi**2
             p[(e,'e2')] = 4./3 * p[(e,'k2')] - 1./3 * p[(e,'p2')]
+            if self.switches['debug']:
+                print('DEBUG:',"%9s" %e,self.switches['scale'],"%11s" %Lchi,p[(e,'p2')])
             if 'ma' in self.eft:
                 p[(e,'s2')] = self.p_init[(e,'mss')]**2 / Lchi**2
                 ''' Add ability to use average mixed meson splitting? '''
@@ -395,15 +400,11 @@ class Fit(object):
         p_phys = dict()
         for k in ['s_4','saS_4','s_6','sk_6','sp_6']:
             p_phys[k] = 0.
-        Lchi_phys = phys_point['Lchi']
+        Lchi_phys = phys_point['Lchi_'+self.switches['scale']]
         p_phys[('phys','p2')] = phys_point['mpi']**2 / Lchi_phys**2
         p_phys[('phys','k2')] = phys_point['mk']**2  / Lchi_phys**2
         p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
         p_phys[('phys','a2')] = 0.
-        if self.switches['report_fit']:
-            for k in self.fit.p:
-                if isinstance(k,str):
-                    print(k,self.fit.p[k])
         for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6']:
             if k in self.fit.p:
                 p_phys[k] = self.fit.p[k]
@@ -416,9 +417,20 @@ class Fit(object):
         self.fv = False
 
         FK_Fpi_phys = self.fit_function(x_phys,p_phys)
+        if self.switches['debug_phys']:
+            print('DEBUG: SCALE', self.switches['scale'])
+            print('DEBUG: Lchi =',Lchi_phys)
+            print('DEBUG: mpi =',phys_point['mpi'])
+            print('DEBUG: mK  =',phys_point['mk'])
+            for k in p_phys:
+                print('DEBUG:',k,p_phys[k])
         if self.switches['report_fit']:
+            print(self.model)
             print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
                 %(self.fit.chi2/self.fit.dof,self.fit.dof,self.fit.Q,self.fit.logGBF))
+            for k in self.fit.p:
+                if isinstance(k,str):
+                    print(k,self.fit.p[k])
             print(FK_Fpi_phys['phys'],'\n')
 
         # restore original self attributes

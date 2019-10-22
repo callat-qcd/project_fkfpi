@@ -17,28 +17,35 @@ switches['ensembles_fit'] = [
     'a12m130','a15m135XL']
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = [
-    'xpt_nnlo'                ,'ma_nnlo',
-    'xpt_nnlo_FV'             ,'ma_nnlo_FV',
-    'xpt_nnlo_FV_alphaS'      ,'ma_nnlo_FV_alphaS',
-    'xpt_nnlo_FV_alphaS_logSq','ma_nnlo_FV_alphaS_logSq',
+    'xpt_nnlo'                      ,'ma_nnlo',
+    'xpt_nnlo_FV'                   ,'ma_nnlo_FV',
+    'xpt_nnlo_FV_alphaS'            ,'ma_nnlo_FV_alphaS',
+    'xpt_nnlo_FV_alphaS_logSq'      ,'ma_nnlo_FV_alphaS_logSq',
     'xpt-ratio_nnlo'                ,'ma-ratio_nnlo',
     'xpt-ratio_nnlo_FV'             ,'ma-ratio_nnlo_FV',
     'xpt-ratio_nnlo_FV_alphaS'      ,'ma-ratio_nnlo_FV_alphaS',
     'xpt-ratio_nnlo_FV_alphaS_logSq','ma-ratio_nnlo_FV_alphaS_logSq'
 ]
-#switches['ansatz']['models'] = [
-#    'xpt_nnlo'                ,'ma_nnlo',
-#    'xpt_nnlo_FV'             ,'ma_nnlo_FV',
-#    ]
-#switches['ansatz']['models'] =  [
+#switches['ansatz']['models'] = ['xpt_nnlo_FV_alphaS']
+switches['ansatz']['models'] = [
+    'xpt_nnlo'                   ,'ma_nnlo',
+    'xpt_nnlo_alphaS'            ,'ma_nnlo_alphaS',
+    'xpt_nnlo_alphaS_logSq'      ,'ma_nnlo_alphaS_logSq',
+    'xpt-ratio_nnlo'             ,'ma-ratio_nnlo',
+    'xpt-ratio_nnlo_alphaS'      ,'ma-ratio_nnlo_alphaS',
+    'xpt-ratio_nnlo_alphaS_logSq','ma-ratio_nnlo_alphaS_logSq'
+    ]
+#switches['ansatz']['models'] =  ['xpt_nnlo_FV']
 #    'xpt_nnlo_FV_alphaS_logSq',
 #    'xpt_nnlo_FV_alphaS'
 #]
 switches['ansatz']['a2dm']  = 'individual' # avg or individual
+switches['scales']          = ['PP','PK','KK']
+#switches['scales']          = ['PK']
 switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
-switches['do_analysis']     = False
+switches['do_analysis']     = True
 # use default or optimized priors
-switches['default_priors'] = True
+switches['default_priors']  = True
 # set mean to boot0 vs add boot0 to bs list
 switches['bs_bias']         = True
 # use scipy instead of GSL?
@@ -48,14 +55,17 @@ switches['print_fit']       = False
 switches['report_fit']      = False
 switches['make_plots']      = False
 switches['verbose']         = False
-switches['debug']           = False
 # for tuning prior widths
-switches['nnlo_priors']     = True
+switches['nnlo_priors']     = False
 switches['prior_group']     = True
+switches['refine_prior']    = True
 # fit checks
 switches['nlo_report']      = False
 switches['nlo_fv_report']   = False
 switches['check_fit']       = False
+# DEBUGGING
+switches['debug']           = False
+switches['debug_phys']      = False
 
 priors = dict()
 priors['L5']   = gv.gvar(0, 0.005)
@@ -96,11 +106,11 @@ phys_point['mpi'] = gv.gvar(134.8, 0.3) #FLAG 2017 (16)
 phys_point['mk']  = gv.gvar(494.2 , 0.3) #FLAG 2017 (16)
 
 phys_point['F0']  = gv.gvar(80,20) #FLAG use of F0 in SU(2) correction for FK/Fpi
-if switches['scale'] == 'PK':
-    phys_point['Lchi'] = 4*np.pi*np.sqrt(phys_point['Fpi']*phys_point['FK'])
-elif switches['scale'] == 'PP':
-    phys_point['Lchi'] = 4*np.pi*phys_point['Fpi']
-elif switches['scale'] == 'KK':
-    phys_point['Lchi'] = 4*np.pi*phys_point['FK']
+#if switches['scale'] == 'PK':
+phys_point['Lchi_PK'] = 4*np.pi*np.sqrt(phys_point['Fpi']*phys_point['FK'])
+#elif switches['scale'] == 'PP':
+phys_point['Lchi_PP'] = 4*np.pi*phys_point['Fpi']
+#elif switches['scale'] == 'KK':
+phys_point['Lchi_KK'] = 4*np.pi*phys_point['FK']
 phys_point['aw0'] = 0
 phys_point['FKFPi_FLAG'] = gv.gvar(1.1933, 0.0029)

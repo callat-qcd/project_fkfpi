@@ -3,6 +3,7 @@ import os, sys, shutil
 import numpy as np
 import scipy.stats as stats
 import tables as h5
+import pandas as pd
 import lsqfit
 import gvar as gv
 import matplotlib
@@ -100,7 +101,7 @@ def format_h5_data(switches,data):
             print(data_dict)
 
         y[ens] = gvdata['FK']/gvdata['Fpi']
-        print(ens,y[ens])
+        print("%9s %s" %(ens,y[ens]))
 
         x[ens]['mpiL'] = gvdata['mpi'].mean * data.get_node('/'+ens+'/L').read()
         x[ens]['mkL']  = gvdata['mk'].mean  * data.get_node('/'+ens+'/L').read()
@@ -181,7 +182,15 @@ def plot_data(ax,e,x,y):
 def perform_analysis(switches,priors):
     fit_results = dict()
     for base_model in switches['ansatz']['models']:
-        for FPK in ['PP','PK','KK']:
+        if not switches['default_priors']:
+            if not os.path.exists('data/saved_prior_search.yaml'):
+                print('ERROR: you asked for optimized priors but')
+                print('data/saved_prior_search.yaml')
+                print('does not exist - exiting')
+                sys.exit()
+            with open('data/saved_prior_search.yaml','r') as fin:
+                prior_grid = yaml.safe_load(fin.read())
+        for FPK in switches['scales']:
             model = base_model +'_'+FPK
             switches['scale'] = FPK
             switches['ansatz']['model'] = model
@@ -192,14 +201,16 @@ def perform_analysis(switches,priors):
             for key in priors:
                 p_e[key] = priors[key]
             if not switches['default_priors']:
-                try:
-                    for key in ['p_4','k_4','s_4']:
-                        p_e[key] = gv.gvar(0,ip.nnlo_width[base_model][FPK][key])
-                    if 'alphaS' in model:
-                        p_e['saS_4'] = gv.gvar(0,ip.nnlo_width[base_model][FPK]['saS_4'])
-                except Exception as e:
-                    print('WARNING: non optimized NNLO prior widths')
-                    print(str(e))
+                df = pd.DataFrame(prior_grid[model])
+                sp_max = df.stack().idxmax()
+                print('    setting prior widths:')
+                print('    (s_4, saS_4) = %s; (p_4, k_4) = %s' %(sp_max[0],sp_max[1]))
+                for key in ['s_4','saS_4']:
+                    if key in p_e:
+                        p_e[key] = gv.gvar(0,float(sp_max[0]))
+                for key in ['p_4','k_4']:
+                    if key in p_e:
+                        p_e[key] = gv.gvar(0,float(sp_max[1]))
             else:
                 print('    using default prior widths')
             d_e = dict()
@@ -211,6 +222,8 @@ def perform_analysis(switches,priors):
             fit_results[model] = fit_e
             if switches['print_fit']:
                 print(fit_e.fit.format(maxline=True))
+            if switches['debug_phys']:
+                fit_e.report_phys_point(phys_point)['phys']
 
             if switches['make_plots']:
                 epi_range = dict()
@@ -233,48 +246,102 @@ def perform_analysis(switches,priors):
                 ax.set_xlim(0,.1)
                 ax.set_ylim(1.05, 1.25)
                 plt.savefig('figures/vs_episq_'+model+'.pdf',transparent=True)
+    if not switches['debug']:
+        bayes_model_avg(switches,fit_results,phys_point)
 
-    bayes_model_avg(fit_results,phys_point)
     '''
     for base_model in switches['ansatz']['models']:
-        for FPK in ['PP','PK','KK']:
+        for FPK in switches['scales']:
             model = base_model +'_'+FPK
+            if fit_results[model].
             L5_rho  = fit_results[model].fit.p['L5']
             L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
             print('%25s: L5(m_rho) = %s' %(model,L5_rho))
     '''
 
-def bayes_model_avg(results,phys_point):
+def bayes_model_avg(switches,results,phys_point):
     logGBF_list = []
     r_list      = []
     w_list      = []
+    models      = []
     FKFpi       = 0.
     pdf         = 0
     cdf         = 0
+    pdf_pp      = 0
+    pdf_pk      = 0
+    pdf_kk      = 0
     x = np.arange(1.1,1.301,.001)
     for model in results:
         logGBF_list.append(results[model].fit.logGBF)
+        FPK=model.split('_')[-1]
+        results[model].switches['scale'] = FPK
         r_list.append(results[model].report_phys_point(phys_point)['phys'])
+        if switches['debug']:
+            print('\nDEBUG:',model,results[model].switches['scale'])
+    print('\nAll Models')
+    print("%33s %5s %8s %s" %('model','Q','w','FK/Fpi'))
+    print('-------------------------------------------------------------------')
     for i_m,model in enumerate(results):
+        models.append(model)
         r = r_list[i_m]
         w = np.exp(logGBF_list[i_m])
         w = w / np.sum(np.exp(np.array(logGBF_list)))
         w_list.append(w)
-        print(model,w,r)
+        print("%33s %.3f %.2e %s" %(model,results[model].fit.Q,w,r))
         FKFpi += gv.gvar(w*r.mean, np.sqrt(w)*r.sdev)
         p = stats.norm.pdf(x,r.mean,r.sdev)
         pdf += w * p
+        if '_PP' in model:
+            pdf_pp += w * p
+        elif '_PK' in model:
+            pdf_pk += w * p
+        elif '_KK' in model:
+            pdf_kk += w * p
         c = stats.norm.cdf(x,r.mean,r.sdev)
         cdf += w * c
     w_list = np.array(w_list)
     r_list = np.array(r_list)
     model_var = np.sum(w_list * np.array([ r.mean**2 for r in r_list])) - FKFpi.mean**2
-    print(FKFpi,np.sqrt(model_var))
+
+    print('\nModels with Q > 0.05')
+    print("%33s %4s %5s %s" %('model','Q','w','FK/Fpi'))
+    print('-------------------------------------------------------------------')
+    for i_m,model in enumerate(models):
+        if results[model].fit.Q > 0.05:
+            print("%33s %.2f %.3f %s" %(model,results[model].fit.Q,w_list[i_m],r_list[i_m]))
+        else:
+            if w_list[i_m] > 0.05:
+                print("%33s %.2f %.3f %s" %(model,results[model].fit.Q,w_list[i_m],'NEGLECTED'))
+
+    print('\nFull average')
+    print("%s +- %.4f" %(FKFpi,np.sqrt(model_var)))
+
     fig = plt.figure('hist')
-    ax = plt.axes([0.1,0.1,0.88,0.88])
-    ax.fill_between(x=x,y1=pdf)
-    ax.set_xlim([1.14,1.25])
-    plt.savefig('figures/model_avg_hist.pdf',transpareent=True)
+    ax = plt.axes([0.12,0.12,0.87,0.87])
+    x0 = FKFpi.mean
+    dx = np.sqrt(model_var + FKFpi.sdev**2)
+    ax.axvspan(x0-dx,x0+dx,color='k',alpha=0.05)
+    ax.axvline(x0-dx,color='k',linestyle='-.')
+    ax.axvline(x0+dx,color='k',linestyle='-.')
+    dx = FKFpi.sdev
+    ax.axvspan(x0-dx,x0+dx,color='k',alpha=0.2)
+    ax.axvline(x0,color='k')
+    ax.axvline(x0-dx,color='k',linestyle='--')
+    ax.axvline(x0+dx,color='k',linestyle='--')
+    ax.plot(x,pdf,color='k')
+    ax.fill_between(x=x,y1=pdf,color='k',alpha=0.1)
+    ax.fill_between(x=x,y1=pdf_pp,color='r',alpha=0.5,label=r'$F^2 \rightarrow F_\pi^2$')
+    ax.fill_between(x=x,y1=pdf_pk,color='g',alpha=0.5,label=r'$F^2 \rightarrow F_\pi F_K$')
+    ax.fill_between(x=x,y1=pdf_kk,color='b',alpha=0.5,label=r'$F^2 \rightarrow F_K^2$')
+    ax.set_xlim([1.16,1.21])
+    ax.set_ylim(ymin=0)
+    ax.set_xlabel(r'$F_K / F_\pi$',fontsize=16)
+    ax.set_ylabel(r'Bayes Model Avg PDF',fontsize=16)
+    ax.legend()
+    if switches['default_priors']:
+        plt.savefig('figures/model_avg_hist_default_priors.pdf',transpareent=True)
+    else:
+        plt.savefig('figures/model_avg_hist_logGBF_optimal_priors.pdf',transpareent=True)
 
 def bma(switches,result,isospin):
     # read Bayes Factors
@@ -333,7 +400,7 @@ def bma(switches,result,isospin):
 
 def nnlo_prior_scan(switches,priors):
     for base_model in switches['ansatz']['models']:
-        for FPK in ['PP','PK','KK']:
+        for FPK in switches['scales']:
             if os.path.exists('data/saved_prior_search.yaml'):
                 with open('data/saved_prior_search.yaml','r') as fin:
                     prior_grid = yaml.safe_load(fin.read())
@@ -361,6 +428,30 @@ def nnlo_prior_scan(switches,priors):
             if switches['prior_group']:
                 p_range = priors['p_range']
                 a_range = priors['a_range']
+                if switches['refine_prior'] and len(prior_grid[model]) > 0:
+                    df = pd.DataFrame(prior_grid[model])
+                    print('    maximum logGBF', df.stack().max())
+                    sp_max = df.stack().idxmax()
+                    print('    (s_4, p_4) = ', sp_max[0],sp_max[1])
+                    new_s = []
+                    sf = float("%.1f" %float(sp_max[0]))
+                    for i in np.arange(sf-0.5,sf+0.5,.1):
+                        ii = float("%.1f" %i)
+                        if ii not in a_range and ii > 0.:
+                            new_s.append(ii)
+                    new_s = np.array(new_s)
+                    a_range = np.concatenate((a_range,new_s))
+                    new_p = []
+                    pf = float(sp_max[1])
+                    for i in np.arange(pf-0.5,pf+0.5,.1):
+                        ii = float("%.1f" %i)
+                        if ii not in p_range and ii > 0.:
+                            new_p.append(ii)
+                    new_p = np.array(new_p)
+                    p_range = np.concatenate((p_range,new_p))
+                    print(a_range)
+                    print(p_range)
+                    #sys.exit()
                 z = np.zeros([len(a_range),len(p_range)])
                 tot = len(a_range) * len(p_range)
                 i_t = 0
@@ -396,6 +487,10 @@ def nnlo_prior_scan(switches,priors):
             else:
                 print('individual prior width study not supported [yet]')
 
+            df = pd.DataFrame(prior_grid[model])
+            print('    maximum logGBF', df.stack().max())
+            sp_max = df.stack().idxmax()
+            print('    (s_4, p_4) = ', sp_max[0],sp_max[1])
             logGBF_array = np.array(logGBF_array)
             logGBF_max = np.argmax(logGBF_array[:,-1])
             print('optimal prior widths for %s' %model)
@@ -548,6 +643,7 @@ if __name__ == "__main__":
     print("python     version:", sys.version)
     #print("pandas version:", pd.__version__)
     print("numpy      version:", np.__version__)
+    print("pandas     version:", pd.__version__)
     print("matplotlib version:", matplotlib.__version__)
     print("gvar       version:", gv.__version__)
     print("lsqfit     version:", lsqfit.__version__)
