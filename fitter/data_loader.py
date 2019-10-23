@@ -34,12 +34,11 @@ class data_loader(object):
         return data
 
     # whose: 'mine', 'others'
-    def get_fit_info(self, whose=None):
-        filepath = None
-        if whose=='mine' or whose is None:
+    def get_fit_info(self, filename=None):
+        if filename is None:
             filepath = os.path.normpath(self.project_path + '/results/fit_results.csv')
-        elif whose=='others':
-            filepath = os.path.normpath(self.project_path + '/results/other_results.csv')
+        else:
+            filepath = os.path.normpath(self.project_path + '/results/'+filename)
 
         if not os.path.isfile(filepath):
             return None
