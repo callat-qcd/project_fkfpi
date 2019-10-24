@@ -55,6 +55,7 @@ class data_loader(object):
             index = np.argwhere(df_fit['name'].values == name)
 
             output_dict[name]= {key: np.asscalar(df_fit[key].values[index]) for key in cols}
+            output_dict[name]['params'] = self.unpickle_fit_parameters(name)
 
         return output_dict
 
@@ -94,6 +95,11 @@ class data_loader(object):
                 for key in f[ensemble].keys():
                     names.append(key)
         return sorted(np.unique([names]))
+
+    def pickle_fit_parameters(self, g, name):
+        filename = self.project_path+'/pickles/'+name+'.p'
+        gv.dump(g, filename)
+        return None
 
     def save_fit_info(self, fit_info):
         print "Saving..."
@@ -264,3 +270,10 @@ class data_loader(object):
 
         print "Done."
         return None
+
+    def unpickle_fit_parameters(self, name):
+        filepath = self.project_path+'/pickles/'+name+'.p'
+        if os.path.isfile(filepath):
+            return gv.load(filepath)
+        else:
+            return None

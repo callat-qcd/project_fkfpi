@@ -34,8 +34,6 @@ def model_average(results, param):
     return gv.gvar(expct_y, np.sqrt(var_y))
 
 
-
-
 def plot_comparison(param, fit_results, other_results=None, title=None, xlabel=None,
                     show_model_avg=False):
 

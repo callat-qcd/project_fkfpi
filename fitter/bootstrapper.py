@@ -136,16 +136,7 @@ class bootstrapper(object):
     def __str__(self):
         bs_fit_parameters = self.get_bootstrapped_fit_parameters()
         prior = self.prior
-
-        name = self.fit_type +'_'+ self.F2+'_'+self.order['fit']
-        if self.order['vol'] > 6:
-            name = name + '_FV'
-        if self.order['include_log']:
-            name = name + '_alphaS'
-        if self.order['include_log2']:
-            name = name + '_logSq'
-
-        output = "\nModel: %s" %(name)
+        output = "\nModel: %s" %(self.get_name())
         output = output + "\n\nFitting to %s \n" %(self.order['fit'])
         #output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
@@ -355,16 +346,8 @@ class bootstrapper(object):
 
     def get_fit_info(self):
 
-        name = self.fit_type +'_'+ self.F2+'_'+self.order['fit']
-        if self.order['vol'] > 6:
-            name = name + '_FV'
-        if self.order['include_log']:
-            name = name + '_alphaS'
-        if self.order['include_log2']:
-            name = name + '_logSq'
-
         fit_info = {
-            'name' : name,
+            'name' : self.get_name(),
             'fit' : self.extrapolate_to_phys_point(include_su2_isospin_corrrection=True),
             'delta_su2' : self.get_delta_su2_correction(),
             'logGBF' : self.fits[0].logGBF,
@@ -408,6 +391,18 @@ class bootstrapper(object):
             return fit_parameters[parameter]
         else:
             return fit_parameters
+
+    def get_name(self):
+        name = self.fit_type +'_'+ self.F2+'_'+self.order['fit']
+        if self.order['vol'] > 6:
+            name = name + '_FV'
+        if self.order['include_log']:
+            name = name + '_alphaS'
+        if self.order['include_log2']:
+            name = name + '_logSq'
+
+        return name
+
 
     # need to convert to/from lattice units
     def get_phys_point_data(self, parameter=None):

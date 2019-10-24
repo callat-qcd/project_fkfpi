@@ -97,6 +97,11 @@ for fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
                     if p_dict['save_results']:
                         data_loader.save_fit_info(bootstrapper.get_fit_info())
 
+                        data_loader.pickle_fit_parameters(
+                            bootstrapper.get_fit_parameters(),
+                            bootstrapper.get_name()
+                        )
+
 
                     t1 = time.time()
 

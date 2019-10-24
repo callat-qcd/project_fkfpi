@@ -8,7 +8,7 @@ import sys
 import scipy.stats as stats
 from collections import OrderedDict
 
-from fitter import fitter
+from fitter import fk_fpi_model
 
 class model_average(object):
     def __init__(self, fit_results):
@@ -16,8 +16,9 @@ class model_average(object):
 
     def _get_model_info_from_name(self, name):
         output_dict = {}
-        output_dict['base'] = name.split('_')[0]
-        output_dict['F2'] = name.split('_')[1]
+        output_dict['base'] = name.split('_')[0] # eg, 'ma-ratio'
+        output_dict['F2'] = name.split('_')[1] # eg, 'FKFPi'
+        output_dict['order'] = name.split('_')[2] # eg, 'FKFPi'
         output_dict['include_alphaS'] = False
         output_dict['include_FV'] = False
         output_dict['include_logSq'] = False
@@ -30,6 +31,38 @@ class model_average(object):
             output_dict['include_logSq'] = True
 
         return output_dict
+
+    def _get_fit_parameters(self, name):
+        return self.fit_results[name]['params']
+
+    def _get_phys_point_data(self, name):
+        model_info = self._get_model_info_from_name(name)
+
+        phys_point_data = {
+            'a/w0' : 0,
+            'a' : 0,
+            'L' : np.infty,
+            'alpha_s' : 0, # Not sure, but not important since it comes with a^2
+
+            'mpi' : gv.gvar('134.8(3)'), # '138.05638(37)'
+            'mk' : gv.gvar('494.2(3)'), # '495.6479(92)'
+
+            'a2DI' : 0,
+            'Fpi' : gv.gvar(130.2/np.sqrt(2), 1.7/np.sqrt(2)), #gv.gvar('91.9(3.5)'),
+            'FK' : gv.gvar(155.6/np.sqrt(2), 0.4/np.sqrt(2)), #gv.gvar('110.38(64)'),
+            'w0' : gv.gvar('0.175(10)'),
+        }
+
+        FK = phys_point_data['FK']
+        Fpi = phys_point_data['Fpi']
+        if model_info['F2'] == 'FKFpi':
+            phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *Fpi
+        elif model_info['F2'] == 'FpiFpi':
+            phys_point_data['lam2_chi'] = (4*np.pi)**2 *Fpi *Fpi
+        elif model_info['F2'] == 'FKFK':
+            phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *FK
+
+        return phys_point_data
 
     def _param_keys_dict(self, param):
         if param == 'fit':
@@ -93,7 +126,30 @@ class model_average(object):
 
         return gv.gvar(expct_y, np.sqrt(var_y))
 
+    def fitfcn(self, name, data, p=None):
+        model_info = self._get_model_info_from_name(name)
 
+        if p is None:
+            p = self._get_fit_parameters(name)
+
+        order = {
+            'fit' : model_info['order'],
+            'include_log' : model_info['include_alphaS'],
+            'include_log2' : model_info['include_logSq'],
+            'exclude' : []
+        }
+
+        if model_info['include_FV']:
+            order['vol'] = 10
+        else:
+            order['vol'] = 10
+
+        if model_info['base'] in ['xpt', 'ma']:
+            fitfcn = fk_fpi_model(datatag='xpt', fit_type='xpt', order=order).fitfcn
+        elif model_info['base'] in ['xpt-ratio', 'ma-ratio']:
+            fitfcn = fk_fpi_model(datatag='xpt-ratio', fit_type='xpt-ratio', order=order).fitfcn
+
+        return fitfcn(p=p, fit_data=data)
 
     def plot_comparison(self, param=None, other_results=None, title=None, xlabel=None,
                         show_model_avg=True):
