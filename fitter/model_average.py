@@ -2,8 +2,8 @@ import lsqfit
 import numpy as np
 import gvar as gv
 import time
-import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import sys
 import scipy.stats as stats
 from collections import OrderedDict
@@ -35,8 +35,7 @@ class model_average(object):
     def _get_fit_parameters(self, name):
         return self.fit_results[name]['params']
 
-    def _get_phys_point_data(self, name):
-        model_info = self._get_model_info_from_name(name)
+    def _get_phys_point_data(self, name=None):
 
         phys_point_data = {
             'a/w0' : 0,
@@ -51,16 +50,21 @@ class model_average(object):
             'Fpi' : gv.gvar(130.2/np.sqrt(2), 1.7/np.sqrt(2)), #gv.gvar('91.9(3.5)'),
             'FK' : gv.gvar(155.6/np.sqrt(2), 0.4/np.sqrt(2)), #gv.gvar('110.38(64)'),
             'w0' : gv.gvar('0.175(10)'),
+
+            'FK/Fpi_pm' : gv.gvar('1.1932(19)'), # FLAG, SU(2) isospin corrected value (arxiv/1902.08191, eqn 80)
         }
 
-        FK = phys_point_data['FK']
-        Fpi = phys_point_data['Fpi']
-        if model_info['F2'] == 'FKFpi':
-            phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *Fpi
-        elif model_info['F2'] == 'FpiFpi':
-            phys_point_data['lam2_chi'] = (4*np.pi)**2 *Fpi *Fpi
-        elif model_info['F2'] == 'FKFK':
-            phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *FK
+        if name is not None:
+            model_info = self._get_model_info_from_name(name)
+
+            FK = phys_point_data['FK']
+            Fpi = phys_point_data['Fpi']
+            if model_info['F2'] == 'FKFpi':
+                phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *Fpi
+            elif model_info['F2'] == 'FpiFpi':
+                phys_point_data['lam2_chi'] = (4*np.pi)**2 *Fpi *Fpi
+            elif model_info['F2'] == 'FKFK':
+                phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *FK
 
         return phys_point_data
 
@@ -386,6 +390,82 @@ class model_average(object):
 
         return fig
 
+    def plot_fits(self, parameter):
+        colors = ['darkorange', 'mediumaquamarine', 'orchid', 'skyblue', 'silver']
+        #colors = ['cyan', 'magenta', 'yellow', 'black', 'silver']
+
+        data = self._get_phys_point_data()
+        if parameter == 'a':
+            xlabel = '$a$ (fm)'
+
+            x = np.linspace(0, 0.8804, 50)
+            data['a/w0'] = x
+            x = x *gv.mean(self._get_phys_point_data()['w0'])
+
+        elif parameter == 'mpi':
+            xlabel = '$m_\pi$ (MeV)'
+            plt.axvline(gv.mean(self._get_phys_point_data()['mpi']))
+
+            x = np.linspace(10, 400, 50)
+            data['mpi'] = x
+
+
+        elif parameter == 'volume':
+            xlabel = '$e^{-m_\pi L} / \sqrt{m_\pi L}$'
+
+            x = np.linspace(3, 6, 50) /gv.mean(self._get_phys_point_data()['mpi'])
+            data['L'] = x
+            x = np.exp(-x *self._get_phys_point_data()['mpi']) / np.sqrt(x *self._get_phys_point_data()['mpi'])
+
+
+        else:
+            return None
+
+        total_GBF = np.sum([np.exp(self.fit_results[model_l]['logGBF']) for model_l in self.fit_results.keys()])
+
+        pm = lambda g, k : gv.mean(g) + k*gv.sdev(g)
+        for name in self.fit_results.keys():
+
+            model_info = self._get_model_info_from_name(name)
+            data['lam2_chi'] = self._get_phys_point_data(name)['lam2_chi']
+            if model_info['F2'] == 'FKFK':
+                color = colors[0]
+                F2 = self._param_keys_dict('FKFK')
+            elif model_info['F2'] == 'FKFpi':
+                color = colors[1]
+                F2 = self._param_keys_dict('FKFpi')
+            elif model_info['F2'] == 'FpiFpi':
+                color = colors[2]
+                F2 = self._param_keys_dict('FpiFpi')
+            else:
+                color = colors[3]
+
+            y = self.fitfcn(name, data)
+
+            weight = np.exp(self.fit_results[name]['logGBF']) / total_GBF
+            plt.fill_between(pm(x, 0), pm(y, -1), pm(y, 1), color=color, alpha=2*weight, rasterized=False)
+
+
+        y = np.repeat(self._get_phys_point_data(name)['FK/Fpi_pm'],len(x))
+        plt.fill_between(pm(x, 0), pm(y, -1), pm(y, 1), color=colors[3], alpha=0.5, rasterized=False)
+
+
+        # Add legend
+        kk_patch = mpatches.Patch(color=colors[0], alpha=0.5, label=self._param_keys_dict('FKFK'))
+        kp_patch = mpatches.Patch(color=colors[1], alpha=0.5, label=self._param_keys_dict('FKFpi'))
+        pp_patch = mpatches.Patch(color=colors[2], alpha=0.5, label=self._param_keys_dict('FpiFpi'))
+        flag_patch = mpatches.Patch(color=colors[3], alpha=0.5, label='FLAG')
+        plt.legend(handles=[flag_patch,kk_patch, kp_patch, pp_patch], fontsize=15)
+
+
+        plt.xlim(np.min(gv.mean(x)), np.max(gv.mean(x)))
+        plt.xlabel(xlabel, fontsize=24)
+        plt.ylabel('$F^\pm_K/F^\pm_\pi$', fontsize=24)
+
+
+        fig = plt.gcf()
+        plt.close()
+        return fig
 
     def plot_histogram(self, param, title=None, xlabel=None):
 

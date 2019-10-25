@@ -23,14 +23,26 @@ other_results = data_loader.get_fit_info('other_results.csv')
 
 model_average = md.model_average(fit_results)
 
+
 fig = model_average.plot_histogram('fit')
 data_loader.save_plots(fig, output_filename='histogram_fit')
 
 fig = model_average.plot_histogram('delta_su2')
 data_loader.save_plots(fig, output_filename='histogram_delta_su2')
 
+
 fig = model_average.plot_comparison(other_results=other_results, param='fit')
 data_loader.save_plots(fig, output_filename='comparison_fits')
 
 fig = model_average.plot_comparison(other_results=other_results, param='delta_su2')
 data_loader.save_plots(fig, output_filename='comparison_delta_su2')
+
+
+fig = model_average.plot_fits('a')
+data_loader.save_plots(fig, output_filename='all_fits_vs_latt_spacing')
+
+fig = model_average.plot_fits('mpi')
+data_loader.save_plots(fig, output_filename='all_fits_vs_mpi')
+
+fig = model_average.plot_fits('volume')
+data_loader.save_plots(fig, output_filename='all_fits_vs_volume')
