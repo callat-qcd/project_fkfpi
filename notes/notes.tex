@@ -72,9 +72,9 @@ The pseudoscalar decay constants themselves are defined as follows,
 \begin{equation}
 \langle 0 | \overline{d} \gamma_\mu \gamma_5 u | \pi^+(p) \rangle = i p_\mu f_{\pi^+}
 \qquad 
-\langle 0 | \overline{s} \gamma_\mu \gamma_5 u | K^+(p) \rangle = i p_\mu f_{K^+}
+\langle 0 | \overline{s} \gamma_\mu \gamma_5 u | K^+(p) \rangle = i p_\mu f_{K^+} \, .
 \end{equation}
-That is, they are related to the expectation value for the pseudoscalar to return to the (QCD) vacuum, which occurs by the action of its antiparticle on the state. This particular combination of gamma matrices ensures the antiparticle is a pseudoscalar also.
+That is, they are related to the expectation value for the respective pseudoscalar particle to return to the (QCD) vacuum, which occurs by the action of its antiparticle on the state. This particular combination of gamma matrices ensures the antiparticle is a pseudoscalar also.
 
 \subsection{As a Benchmark Calculation for the Lattice Action}
 
@@ -447,21 +447,6 @@ Now we can estimate the mean and variance of $Y$.
 	\item For the next higher order (NNLO) fits, we used \texttt{lsqfit.empbayes\_fit} to determine the priors for the NNLO LECs, which searches the parameter space for priors such that the Bayes Factor is maximized. While performing this search, we constrain the NNLO LECs such that \texttt{p[`A\_k'] = p[`A\_p']} (per chiral symmetry, these LECs should be roughly the same size) and such that \texttt{p[`A\_a'] = p[`A\_loga']} (we assume the lattice spacing corrections come at the same order).
 \end{enumerate}
 
-\subsection{Comparison of results for taylor expanded NLO models}
-As a first test of our fits, André and I performed the \texttt{ma-taylor} and \texttt{xpt-taylor} fits at NLO on each ensemble, where there is only one parameter that needs to be determined ($L_5$). See fig \ref{fig:L5-comparison}.
-
-\begin{figure}
-	\begin{subfigure}[t]{0.45\textwidth}
-		\includegraphicsifexists[width=\textwidth]{./../tmp/L5_comparison_ma-taylor.pdf}
-	\end{subfigure}
-	~
-	\begin{subfigure}[t]{0.45\textwidth}
-		\includegraphicsifexists[width=\textwidth]{./../tmp/L5_comparison_xpt-taylor.pdf}
-	\end{subfigure}
-	\caption{Value of $L_5$ as independently determined by me (NM) and André. The difference between the central values is likely caused by my choice to use \texttt{boot0} vs André's choice to use the mean of the bootstrap list. }
-	\label{fig:L5-comparison}
-\end{figure}
-
 \subsection{Effect of NNLO LECs on fit convergence}
 We compare the effect of adding each NNLO LEC to the fit as well as the effect of chaining the fits. The priors for the NNLO LECs were set in accordance to the method described earlier in these notes, unless the figure corresponds to not chaining the fits, in which case that step is skipped.
 
@@ -501,40 +486,42 @@ Alternatively, one often uses the ratio instead.
 
 I haven't noticed a visible difference in using one versus the other.
 
-\begin{figure}
-	\centering
-	\begin{subfigure}[b]{.45\linewidth}
-		\includegraphicsifexists[width=\linewidth]{"./../tmp/vol-corrections_ma_chained-True".pdf}
-		\caption{\texttt{ma\_nnlo}}
-	\end{subfigure}
-	\begin{subfigure}[b]{.45\linewidth}
-		\includegraphicsifexists[width=\linewidth]{"./../tmp/vol-corrections_ma-taylor_chained-True".pdf}
-		\caption{\texttt{ma-taylor\_nnlo}}
-	\end{subfigure}
-
-	\begin{subfigure}[b]{.45\linewidth}
-		\includegraphicsifexists[width=\linewidth]{"./../tmp/vol-corrections_xpt_chained-True".pdf}
-		\caption{\texttt{xpt\_nnlo}}
-	\end{subfigure}
-	\begin{subfigure}[b]{.45\linewidth}
-		\includegraphicsifexists[width=\linewidth]{"./../tmp/vol-corrections_xpt-taylor_chained-True".pdf}
-		\caption{\texttt{xpt-taylor\_nnlo}}
-	\end{subfigure}
-	\caption{Including volume corrections up to $n$. When computing $\mathcal{I}(m)$ per \eqref{eqn:I(m)} (ie, the finite volume corrections), we only include $K_1(mL|\mathbf{n}|)$ up to some $n$. We see that $F_K^\pm /F_\pi^\pm$ quickly converges after only including a few terms.}
-	\label{fig:volume_corrections}
-\end{figure}
-
 \section{Fit Results}
 Here we present the results for each of the fits.
 
-\begin{figure}
-	\includegraphicsifexists[width=0.9\textwidth]{./../tmp/fit_comparison.pdf}
-	\caption{Extrapolations of $F^\pm_K/F^\pm_\pi$ to the physical point for the various models, with the FLAG result shown as a red band.}
+\begin{figure}[H]
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/comparison_fits.pdf}
+	\caption{Extrapolations of $F^\pm_K/F^\pm_\pi$ to the physical point for the various models, with the FLAG average overlaid.}
 \end{figure}
 
-\begin{figure}
-	\includegraphicsifexists[width=0.9\textwidth]{./../tmp/delta-su2_comparison.pdf}
+\begin{figure}[H]
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/comparison_delta_su2.pdf}
 	\caption{Extrapolations of $\delta_{\text{SU(2)}}$ to the physical point for the various models.}
+\end{figure}
+
+\begin{figure}[H]
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/histogram_fit.pdf}
+	\caption{Distribution of $F^\pm_K/F^\pm_\pi$, weighed by Bayes factor.}
+\end{figure}
+
+\begin{figure}[H]
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/histogram_delta_su2.pdf}
+	\caption{Distribution of $\delta_{\text{SU(2)}}$, weighed by Bayes factor.}
+\end{figure}
+
+\begin{figure}[H]
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/all_fits_vs_latt_spacing.pdf}
+	\caption{Plotting $F^\pm_K/F^\pm_\pi$ as a function of lattice spacing, fixing the other parameters at the physical point. Every model in the analysis is included in this graphic, but the amount of transparency allotted to a given model is inversely proportional to the Bayes factor of that model. Therefore models that contribute more heavily are more opaque than models that contribute negligibly, the latter of which might be invisible on the plot.}
+\end{figure}
+
+\begin{figure}[H]
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/all_fits_vs_mpi.pdf}
+	\caption{Plotting $F^\pm_K/F^\pm_\pi$ as a function of $m_\pi$, fixing the other parameters at the physical point.. Every model in the analysis is included in this graphic, but the amount of transparency allotted to a given model is inversely proportional to the Bayes factor of that model. Therefore models that contribute more heavily are more opaque than models that contribute negligibly, the latter of which might be invisible on the plot.}
+\end{figure}
+
+\begin{figure}[H]
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/all_fits_vs_volume.pdf}
+	\caption{Plotting $F^\pm_K/F^\pm_\pi$ as a function of the volume correction (varying $L$), fixing the other parameters at the physical point. Every model in the analysis is included in this graphic, but the amount of transparency allotted to a given model is inversely proportional to the Bayes factor of that model. Therefore models that contribute more heavily are more opaque than models that contribute negligibly, the latter of which might be invisible on the plot.}
 \end{figure}
 
 %\csvautotabular[respect all]{"./../results/fit"_"results".csv}
@@ -546,91 +533,6 @@ Here we present the results for each of the fits.
 %	{\\ \fit & \num{\logGBF}}%
 %	\\\hline
 %\end{tabular}
-
-\iffalse
-
-	\DTLloaddb{myDB}{"./../results/fit_results".csv}
-	
-	% Convoluted function used to escape underscore
-	\DeclareUrlCommand\UScore{\urlstyle{rm}}
-	\newcommand{\expUScore}{%
-		\expandafter\expandafter\expandafter
-		\UScore
-		\expandafter\expandafter\expandafter
-	}
-	
-	% Table for fit results
-	\begin{table}
-	\begin{center}
-		\sisetup{round-mode=places,
-			table-number-alignment = center-decimal-marker
-		}
-		\begin{tabular}{l|lllll}\toprule
-			\textbf{Name} & $F^\pm_K/F^\pm_\pi$ & $\delta_{\text{SU(2)}}$ & logGBF & $Q$ & $\chi^2_\nu$%
-			\DTLforeach*{myDB}{\Name=name, \Fit=fit, \delta=delta_su2, \logGBF=logGBF, \Q=Q, \chi=chi2/df}{%
-				\DTLiffirstrow{\\\hline\\}{\\}%
-				\expUScore{\Name} & \Fit & \delta &\num{\logGBF} & \num{\Q} & \num{\chi}
-			}%
-			\\\bottomrule
-		\end{tabular}
-	
-	\end{center}
-	\caption{Results of models and statistics}
-	\end{table}
-	
-	% Table for LEC results
-	\begin{table}
-		\begin{center}
-			\sisetup{round-mode=places,
-				table-number-alignment = center-decimal-marker
-			}
-			\begin{tabular}{l|ll|lll}\toprule%|llllll}\toprule
-				\textbf{Name} & $L_5$ & $L_4$ & $A_a$ & $A_\pi$ & $A_K$% & $A_{aa}$ & $A_{a\pi}$ & $A_{aK}$ & $A_{KK}$ & $A_{K\pi}$ & $A_{\pi\pi}$ %
-				\DTLforeach*{myDB}{\Name=name, \Lfive=L_5, \Lfour=L_4, \Aa=A_a, \Ap=A_p, \Ak=A_k}{%, \Aaa=A_aa, \Aap=A_ap, \Aak=A_ak, \Akk=A_kk, \Akp=A_kp, \App=A_pp}{%
-					\DTLiffirstrow{\\\hline\\}{\\}%
-					\expUScore{\Name} & \Lfive & \Lfour & \Aa & \Ap & \Ak% & \Aaa & \Aap & \Aak & \Akk & \Akp & \App
-				}%
-				\\\bottomrule
-			\end{tabular}
-	
-		\end{center}
-		\caption{Determined LECs}
-	\end{table}
-	
-	% Tables for priors
-	\begin{table}
-	\foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
-	{
-		\begin{minipage}{0.20\textwidth}
-			\begin{tabular}{l|l}
-				\textbf{LEC} & \textbf{Value}
-				\DTLloaddb[noheader,keys={lec,value},headers={lec,value},omitlines=1]{\model-prior-db}{"./../priors/\model".csv}
-				\DTLforeach*{\model-prior-db}{\lec=lec, \value=value}{%
-					\DTLiffirstrow{\\\hline\\}{\\}%
-					\texttt{p[`\expUScore{\lec}']} & \value
-				}%
-			\end{tabular}
-			\caption{\texttt{\model}}
-			\label{\model-prior}
-		\end{minipage}
-		\hspace*{-0.01\textwidth}
-	}
-	\end{table}
-	
-	% Plot fits vs eps2_pi
-	\foreach \model in {ma, ma-taylor, xpt, xpt-taylor}
-	{
-		\subsection{\tt \model}
-		\foreach \order in {nlo, nnlo}
-		{
-			\begin{figure}[H]
-				\caption{\texttt{\model\_\order}}
-				\includegraphicsifexists[width=\textwidth, page=3]{"./../tmp/fits/\model"_"\order".pdf}
-			\end{figure}
-		}
-	}
-
-\fi
 
 
 
@@ -656,7 +558,7 @@ The physical point values are given in Table \ref{table:phys_point_values}. The 
 \label{table:phys_point_values}
 \end{table}
 
-\section{Experimental results}
+\section{Comparison with Experiment}
 The CKM matrix element $|V_{ud}|$ has been determined to an accuracy better than 0.03 \% using super-allowed nuclear beta-decays. 
 
 \bibliographystyle{ieeetr}
