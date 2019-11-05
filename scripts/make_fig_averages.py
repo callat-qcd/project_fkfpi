@@ -24,14 +24,14 @@ other_results = data_loader.get_fit_info('other_results.csv')
 model_average = md.model_average(fit_results)
 
 
-fig = model_average.plot_histogram('fit')
+fig = model_average.plot_histogram('FK/Fpi')
 data_loader.save_plots(fig, output_filename='histogram_fit')
 
 fig = model_average.plot_histogram('delta_su2')
 data_loader.save_plots(fig, output_filename='histogram_delta_su2')
 
 
-fig = model_average.plot_comparison(other_results=other_results, param='fit')
+fig = model_average.plot_comparison(other_results=other_results, param='FK/Fpi_pm')
 data_loader.save_plots(fig, output_filename='comparison_fits')
 
 fig = model_average.plot_comparison(other_results=other_results, param='delta_su2')

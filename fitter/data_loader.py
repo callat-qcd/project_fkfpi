@@ -109,7 +109,7 @@ class data_loader(object):
         filepath = os.path.normpath(self.project_path + '/results/fit_results.csv')
 
         # get fit info
-        cols = np.array(['name', 'fit', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol corr'])
+        cols = np.array(['name', 'FK/Fpi', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol corr'])
         lecs_cols = ['L_4', 'L_5', # nlo terms
                      'A_a', 'A_k', 'A_p', 'A_loga'] # nnlo terms
                      #'A_aa', 'A_ak', 'A_ap', # nnnlo terms

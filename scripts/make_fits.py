@@ -81,8 +81,10 @@ for fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
                                                      include_alphaS=p_dict['order']['include_log'], include_logSq=p_dict['order']['include_log2'])
 
                     # Make bootstrapper
-                    bootstrapper = bs.bootstrapper(fit_data, prior=prior, order=p_dict['order'], F2=p_dict['F2'], chain_fits=p_dict['chained'],
-                                                   fit_type=p_dict['fit_type'], bs_N=p_dict['bs_N'], abbrs=p_dict['abbrs'], bias_correct=p_dict['bias_correct'],)
+                    bootstrapper = bs.bootstrapper(
+                        fit_data, prior=prior, order=p_dict['order'], F2=p_dict['F2'], chain_fits=p_dict['chained'],
+                        fit_type=p_dict['fit_type'], bs_N=p_dict['bs_N'], abbrs=p_dict['abbrs'], bias_correct=p_dict['bias_correct']
+                    )
 
                     if p_dict['make_plots']:
                         data_loader.save_plots(

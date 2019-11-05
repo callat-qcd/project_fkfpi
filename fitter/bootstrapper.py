@@ -12,12 +12,17 @@ from fitter import fitter
 
 class bootstrapper(object):
 
-    def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None,
-                 order=None, fit_type=None, F2=None, chain_fits=None, bias_correct=True):
+    def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None, include_su2_isospin_corrrection=None,
+                 order=None, fit_type=None, F2=None, chain_fits=None, bias_correct=None):
 
         w0 = gv.gvar('0.175(10)') # Still needs to be determined, but something like this
         self.w0 = w0
 
+        if bias_correct is None:
+            bias_correct = True
+
+        if include_su2_isospin_corrrection is None:
+            include_su2_isospin_corrrection = False
 
         if F2 is None:
             F2 = 'FKFpi'
@@ -120,6 +125,7 @@ class bootstrapper(object):
                 plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['Fpi'] *plot_data[abbr]['Fpi']
 
 
+        self.include_su2_isospin_corrrection = include_su2_isospin_corrrection
         self.bs_N = bs_N
         self.plot_bs_N = plot_bs_N
         self.abbrs = sorted(abbrs)
@@ -141,10 +147,10 @@ class bootstrapper(object):
         #output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
         output = output + " chained: %s \n" %(self.chain_fits)
-        output = output + "Fitted/[FLAG] values at physical point (including SU(2) isospin corrections):\n"
+        output = output + "Fitted/[FLAG] values at physical point (including SU(2) isospin corrections: %s):\n" %(self.include_su2_isospin_corrrection)
         output = output + '\nF_K / F_pi = %s [%s]'%(
-                            self.extrapolate_to_phys_point(include_su2_isospin_corrrection=True),
-                            self.get_phys_point_data('FK/Fpi_pm'))
+                            self.extrapolate_to_phys_point(),
+                            self.get_phys_point_data('FK/Fpi'))
         output = output + '   (delta_su2 = %s)' %(self.get_delta_su2_correction())
         output = output + "\n\n"
 
@@ -277,7 +283,10 @@ class bootstrapper(object):
                 results.append(gv.mean(temp_fit.fcn(temp_fit.p)[model_name][abbr_n]))
             return gv.gvar(np.mean(results), np.std(results))
 
-    def extrapolate_to_phys_point(self, include_su2_isospin_corrrection=False):
+    def extrapolate_to_phys_point(self, include_su2_isospin_corrrection=None):
+        if include_su2_isospin_corrrection is None:
+            include_su2_isospin_corrrection = self.include_su2_isospin_corrrection
+
         output = self.fk_fpi_fit_fcn(self.get_phys_point_data())
         if include_su2_isospin_corrrection:
             output *= np.sqrt(1 + self.get_delta_su2_correction()) # include SU(2) isospin breaking correction
@@ -348,7 +357,7 @@ class bootstrapper(object):
 
         fit_info = {
             'name' : self.get_name(),
-            'fit' : self.extrapolate_to_phys_point(include_su2_isospin_corrrection=True),
+            'FK/Fpi' : self.extrapolate_to_phys_point(),
             'delta_su2' : self.get_delta_su2_correction(),
             'logGBF' : self.fits[0].logGBF,
             'chi2/df' : self.fits[0].chi2 / self.fits[0].dof,
@@ -423,6 +432,8 @@ class bootstrapper(object):
 
             'FK/Fpi_pm' : gv.gvar('1.1932(19)'), # FLAG, SU(2) isospin corrected value (arxiv/1902.08191, eqn 80)
         }
+
+
         # Or get mss, mrs with Gell-Mann-Oakes-Renner relations: arxiv/0505265 (3.45)
         mpi = phys_point_data['mpi']
         mk = phys_point_data['mk']
@@ -447,10 +458,17 @@ class bootstrapper(object):
         elif self.F2 == 'FKFK':
             phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *FK
 
+        print parameter
+
         if parameter is None:
             return phys_point_data
+        elif parameter == 'FK/Fpi':
+            # Physical point without su(2) isospin correction
+            return phys_point_data['FK/Fpi_pm'] / np.sqrt(1 + self.get_delta_su2_correction())
         else:
             return phys_point_data[parameter]
+
+
 
     def make_plots(self, show_error_ellipses=False, show_bootstrap_histograms=False):
         figs = [self.plot_fit_info()]
@@ -553,7 +571,7 @@ class bootstrapper(object):
             plt.axhline(y-2, ls ='-', color='C4')
 
             # FLAG
-            data = self.get_phys_point_data('FK/Fpi_pm') / np.sqrt(1 + self.get_delta_su2_correction())
+            data = self.get_phys_point_data('FK/Fpi')
             x = gv.mean(data)
             xerr = gv.sdev(data)
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
@@ -691,7 +709,7 @@ class bootstrapper(object):
         # Plot FLAG result
         x_phys = self.get_phys_point_data('mpi')**2 / self.get_phys_point_data('lam2_chi')
         plt.axvline(gv.mean(x_phys), label='Phys point')
-        y_phys = self.get_phys_point_data('FK/Fpi_pm') / np.sqrt(1 + self.get_delta_su2_correction())
+        y_phys = self.get_phys_point_data('FK/Fpi')
 
         plt.errorbar(x=gv.mean(x_phys), xerr=0,
                      y=gv.mean(y_phys), yerr=gv.sdev(y_phys), label='FLAG',

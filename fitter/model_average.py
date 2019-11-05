@@ -12,7 +12,10 @@ from fitter import fk_fpi_model
 
 class model_average(object):
     def __init__(self, fit_results):
+        for model in fit_results.keys():
+            fit_results[model]['FK/Fpi_pm'] = gv.gvar(fit_results[model]['FK/Fpi']) *np.sqrt(1 + gv.gvar(fit_results[model]['delta_su2']))
         self.fit_results = fit_results
+
 
     def _get_model_info_from_name(self, name):
         output_dict = {}
@@ -69,8 +72,10 @@ class model_average(object):
         return phys_point_data
 
     def _param_keys_dict(self, param):
-        if param == 'fit':
+        if param == 'FK/Fpi':
             return '$F_K/F_\pi$'
+        elif param == 'FK/Fpi_pm':
+            return '$F^\pm_K/F^\pm_\pi$'
         elif param == 'delta_su2':
             return '$\delta_{SU(2)}$'
 
@@ -100,7 +105,7 @@ class model_average(object):
 
     def average(self, param=None):
         if param is None:
-            param = 'fit'
+            param = 'FK/Fpi'
 
 
         # Only get results that aren't None
@@ -159,7 +164,7 @@ class model_average(object):
                         show_model_avg=True):
 
         if param is None:
-            param = 'fit'
+            param = 'FK/Fpi_pm'
 
 
         if title is None:
@@ -217,8 +222,10 @@ class model_average(object):
                         else:
                             marker = markers[3]
 
+
                         x = gv.mean(gv.gvar(results[name][param]))
                         xerr = gv.sdev(gv.gvar(results[name][param]))
+
                         plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
                                      marker=marker, capsize=0.0, mec='white', ms=10.0, alpha=0.6,
                                      color=color, elinewidth=5.0, label=name.split('_')[0])
@@ -440,7 +447,7 @@ class model_average(object):
             else:
                 color = colors[3]
 
-            y = self.fitfcn(name, data)
+            y = self.fitfcn(name, data) *np.sqrt(1 + gv.gvar(self.fit_results[name]['delta_su2']))
 
             weight = np.exp(self.fit_results[name]['logGBF']) / total_GBF
             plt.fill_between(pm(x, 0), pm(y, -1), pm(y, 1), color=color, alpha=2*weight, rasterized=False)
