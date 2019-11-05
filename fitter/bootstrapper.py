@@ -458,8 +458,6 @@ class bootstrapper(object):
         elif self.F2 == 'FKFK':
             phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *FK
 
-        print parameter
-
         if parameter is None:
             return phys_point_data
         elif parameter == 'FK/Fpi':
