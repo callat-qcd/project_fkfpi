@@ -40,7 +40,7 @@ p_dict = {
 }
 
 for fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
-    for F2 in ['FKFK', 'FKFpi', 'FpiFpi']:
+    for F2 in ['FKFK', 'FKFpi', 'FpiFpi']: #for F2 in ['F0F0']:
         for vol in [0, 10]:
             for include_alphaS in [False, True]:
                 for include_logSq in [False, True]:

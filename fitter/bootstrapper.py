@@ -124,15 +124,15 @@ class bootstrapper(object):
                 gv_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *gv_data[abbr]['Fpi'] *gv_data[abbr]['Fpi']
                 plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['Fpi'] *plot_data[abbr]['Fpi']
             elif F2 == 'F0F0':
-                w0_dict = {
-                    'a15' : gv.gvar('0.1511(18)'),
-                    'a12' : gv.gvar('0.1216(11)'),
-                    'a09' : gv.gvar('0.0873(11)')
+                latt_spacing = { # Taken from arxiv/1503.02769, Table VIII
+                    'a15' : gv.gvar('0.1511(18)')*1.00,
+                    'a12' : gv.gvar('0.1206(11)')*1.00,
+                    'a09' : gv.gvar('0.0873(11)')*1.00,
                 }
                 F0 = 131.5 / np.sqrt(2)
                 hbar_c = 197.327
-                gv_data[abbr]['lam2_chi'] = (4 * np.pi *w0_dict[abbr[:3]] *F0 / hbar_c)**2
-                plot_data[abbr]['lam2_chi'] = (4 * np.pi *w0_dict[abbr[:3]] *F0 / hbar_c)**2
+                gv_data[abbr]['lam2_chi'] = (4 * np.pi *latt_spacing[abbr[:3]] *F0 / hbar_c)**2
+                plot_data[abbr]['lam2_chi'] = (4 * np.pi *latt_spacing[abbr[:3]] *F0 / hbar_c)**2
 
 
         self.include_su2_isospin_corrrection = include_su2_isospin_corrrection
