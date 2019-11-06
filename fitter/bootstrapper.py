@@ -123,6 +123,16 @@ class bootstrapper(object):
             elif F2 == 'FpiFpi':
                 gv_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *gv_data[abbr]['Fpi'] *gv_data[abbr]['Fpi']
                 plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['Fpi'] *plot_data[abbr]['Fpi']
+            elif F2 == 'F0F0':
+                w0_dict = {
+                    'a15' : gv.gvar('0.1511(18)'),
+                    'a12' : gv.gvar('0.1216(11)'),
+                    'a09' : gv.gvar('0.0873(11)')
+                }
+                F0 = 131.5 / np.sqrt(2)
+                hbar_c = 197.327
+                gv_data[abbr]['lam2_chi'] = (4 * np.pi *w0_dict[abbr[:3]] *F0 / hbar_c)**2
+                plot_data[abbr]['lam2_chi'] = (4 * np.pi *w0_dict[abbr[:3]] *F0 / hbar_c)**2
 
 
         self.include_su2_isospin_corrrection = include_su2_isospin_corrrection
@@ -457,6 +467,8 @@ class bootstrapper(object):
             phys_point_data['lam2_chi'] = (4*np.pi)**2 *Fpi *Fpi
         elif self.F2 == 'FKFK':
             phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *FK
+        elif self.F2 == 'F0F0':
+            phys_point_data['lam2_chi'] = (4*np.pi)**2 *(gv.gvar('131.5(0.1)') / np.sqrt(2))**2
 
         if parameter is None:
             return phys_point_data
