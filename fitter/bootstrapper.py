@@ -338,7 +338,7 @@ class bootstrapper(object):
         return bs_fit_parameters
 
     def get_delta_su2_correction(self):
-        lam2_chi = self.get_phys_point_data('lam2_chi')
+        lam2_chi = (4 *np.pi *gv.gvar('80(20)'))**2 #lam2_chi = self.get_phys_point_data('lam2_chi')
         eps2_pi = (self.get_phys_point_data('mpi'))**2 / lam2_chi
         eps2_k = (self.get_phys_point_data('mk'))**2 / lam2_chi
         fkfpi = self.extrapolate_to_phys_point()
@@ -348,7 +348,7 @@ class bootstrapper(object):
 
         delta = np.sqrt(3) *eps_su2 *(
             - (4.0/3.0) *(fkfpi - 1)
-            + (4.0/3.0) *(eps2_k - eps2_pi - eps2_pi *np.log(eps2_k/eps2_pi))
+            + (2.0/6.0) *(eps2_k - eps2_pi - eps2_pi *np.log(eps2_k/eps2_pi))
         )
         return delta
 

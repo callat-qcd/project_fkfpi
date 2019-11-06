@@ -58,6 +58,8 @@ class model_average(object):
         }
 
         if name is not None:
+            print name
+
             model_info = self._get_model_info_from_name(name)
 
             FK = phys_point_data['FK']
@@ -103,9 +105,12 @@ class model_average(object):
         else:
             return param
 
-    def average(self, param=None):
+    def average(self, param=None, split_unc=None):
         if param is None:
             param = 'FK/Fpi'
+
+        if split_unc is None:
+            split_unc == False
 
 
         # Only get results that aren't None
@@ -125,15 +130,29 @@ class model_average(object):
             expct_y += gv.mean(gv.gvar(self.fit_results[model][param])) *prob_Mk_given_D(model)
 
         # Get variance
-        var_y = 0
-        for model in nonempty_keys:
-            var_y += gv.var(gv.gvar(self.fit_results[model][param])) *prob_Mk_given_D(model)
-        for model in nonempty_keys:
-            var_y += (gv.mean(gv.gvar(self.fit_results[model][param])))**2 *prob_Mk_given_D(model)
+        if not split_unc:
+            var_y = 0
+            for model in nonempty_keys:
+                var_y += gv.var(gv.gvar(self.fit_results[model][param])) *prob_Mk_given_D(model)
+            for model in nonempty_keys:
+                var_y += (gv.mean(gv.gvar(self.fit_results[model][param])))**2 *prob_Mk_given_D(model)
 
-        var_y -= (expct_y)**2
+            var_y -= (expct_y)**2
 
-        return gv.gvar(expct_y, np.sqrt(var_y))
+            return gv.gvar(expct_y, np.sqrt(var_y))
+
+        #
+        if split_unc:
+            var_model = 0
+            for model in nonempty_keys:
+                var_model += gv.var(gv.gvar(self.fit_results[model][param])) *prob_Mk_given_D(model)
+
+            var_selection = 0
+            for model in nonempty_keys:
+                var_selection += (gv.mean(gv.gvar(self.fit_results[model][param])))**2 *prob_Mk_given_D(model)
+            var_selection -= (expct_y)**2
+
+            return [expct_y, np.sqrt(var_model), np.sqrt(var_selection)]
 
     def fitfcn(self, name, data, p=None):
         model_info = self._get_model_info_from_name(name)
