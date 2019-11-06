@@ -58,8 +58,6 @@ class model_average(object):
         }
 
         if name is not None:
-            print name
-
             model_info = self._get_model_info_from_name(name)
 
             FK = phys_point_data['FK']
