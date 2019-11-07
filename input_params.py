@@ -14,34 +14,34 @@ switches['ensembles_fit'] = [
     'a15m350','a12m350','a09m350',
     'a15m310','a12m310','a09m310',
     'a15m220','a12m220S','a12m220','a12m220L','a09m220',
-    'a12m130','a15m135XL']
+    'a12m130','a15m135XL'
+    ]
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = [
     'xpt_nnlo'                      ,'ma_nnlo',
+    'xpt_nnlo_alphaS'               ,'ma_nnlo_alphaS',
+    'xpt_nnlo_logSq'                ,'ma_nnlo_logSq',
+    'xpt_nnlo_alphaS_logSq'         ,'ma_nnlo_alphaS_logSq',
     'xpt_nnlo_FV'                   ,'ma_nnlo_FV',
     'xpt_nnlo_FV_alphaS'            ,'ma_nnlo_FV_alphaS',
+    'xpt_nnlo_FV_logSq'             ,'ma_nnlo_FV_logSq',
     'xpt_nnlo_FV_alphaS_logSq'      ,'ma_nnlo_FV_alphaS_logSq',
     'xpt-ratio_nnlo'                ,'ma-ratio_nnlo',
+    'xpt-ratio_nnlo_alphaS'         ,'ma-ratio_nnlo_alphaS',
+    'xpt-ratio_nnlo_logSq'          ,'ma-ratio_nnlo_logSq',
+    'xpt-ratio_nnlo_alphaS_logSq'   ,'ma-ratio_nnlo_alphaS_logSq',
     'xpt-ratio_nnlo_FV'             ,'ma-ratio_nnlo_FV',
     'xpt-ratio_nnlo_FV_alphaS'      ,'ma-ratio_nnlo_FV_alphaS',
+    'xpt-ratio_nnlo_FV_logSq'       ,'ma-ratio_nnlo_FV_logSq',
     'xpt-ratio_nnlo_FV_alphaS_logSq','ma-ratio_nnlo_FV_alphaS_logSq'
 ]
-#switches['ansatz']['models'] = ['xpt_nnlo_FV_alphaS']
-switches['ansatz']['models'] = [
-    'xpt_nnlo'                   ,'ma_nnlo',
-    'xpt_nnlo_alphaS'            ,'ma_nnlo_alphaS',
-    'xpt_nnlo_alphaS_logSq'      ,'ma_nnlo_alphaS_logSq',
-    'xpt-ratio_nnlo'             ,'ma-ratio_nnlo',
-    'xpt-ratio_nnlo_alphaS'      ,'ma-ratio_nnlo_alphaS',
-    'xpt-ratio_nnlo_alphaS_logSq','ma-ratio_nnlo_alphaS_logSq'
-    ]
 #switches['ansatz']['models'] =  ['xpt_nnlo_FV']
 #    'xpt_nnlo_FV_alphaS_logSq',
 #    'xpt_nnlo_FV_alphaS'
 #]
 switches['ansatz']['a2dm']  = 'individual' # avg or individual
 switches['scales']          = ['PP','PK','KK']
-#switches['scales']          = ['PK']
+#switches['scales']          = ['PP']
 switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
 switches['do_analysis']     = True
 # use default or optimized priors
@@ -113,4 +113,4 @@ phys_point['Lchi_PP'] = 4*np.pi*phys_point['Fpi']
 #elif switches['scale'] == 'KK':
 phys_point['Lchi_KK'] = 4*np.pi*phys_point['FK']
 phys_point['aw0'] = 0
-phys_point['FKFPi_FLAG'] = gv.gvar(1.1933, 0.0029)
+phys_point['FKFPi_FLAG'] = gv.gvar(1.1932, 0.0019)

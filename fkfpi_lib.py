@@ -159,7 +159,7 @@ def dsu2(FKpi,mpi,mk,F0):
     eps_su2 = np.sqrt(3) / 4 / R
     d = np.sqrt(3) * eps_su2 * (\
         -4./3 * (FKpi-1) \
-        + 2./(6*(4*np.pi)**2*F0**2)*(mk**2-mpi**2-mpi**2*np.log(mk**2/mpi**2))\
+        + 2. * (mk**2 -mpi**2 -mpi**2*np.log(mk**2/mpi**2)) / (6*(4*np.pi)**2*F0**2)
         )
     return d
 
@@ -179,7 +179,7 @@ def plot_data(ax,e,x,y):
 
     return ax
 
-def perform_analysis(switches,priors):
+def perform_analysis(switches,priors,phys_point):
     fit_results = dict()
     for base_model in switches['ansatz']['models']:
         if not switches['default_priors']:
@@ -203,8 +203,8 @@ def perform_analysis(switches,priors):
             if not switches['default_priors']:
                 df = pd.DataFrame(prior_grid[model])
                 sp_max = df.stack().idxmax()
-                print('    setting prior widths:')
-                print('    (s_4, saS_4) = %s; (p_4, k_4) = %s' %(sp_max[0],sp_max[1]))
+                print('      setting prior widths:')
+                print('      (s_4, saS_4) = %s; (p_4, k_4) = %s' %(sp_max[0],sp_max[1]))
                 for key in ['s_4','saS_4']:
                     if key in p_e:
                         p_e[key] = gv.gvar(0,float(sp_max[0]))
@@ -212,7 +212,7 @@ def perform_analysis(switches,priors):
                     if key in p_e:
                         p_e[key] = gv.gvar(0,float(sp_max[1]))
             else:
-                print('    using default prior widths')
+                print('      using default prior widths')
             d_e = dict()
             d_e['x'] = x_e
             d_e['y'] = y_e
@@ -224,6 +224,10 @@ def perform_analysis(switches,priors):
                 print(fit_e.fit.format(maxline=True))
             if switches['debug_phys']:
                 fit_e.report_phys_point(phys_point)['phys']
+
+            print('DEBUG: error budget')
+            tmp = fit_e.report_phys_point(phys_point)['phys']
+            print(tmp.partialsdev(fit_e.fit.y))
 
             if switches['make_plots']:
                 epi_range = dict()
@@ -247,7 +251,9 @@ def perform_analysis(switches,priors):
                 ax.set_ylim(1.05, 1.25)
                 plt.savefig('figures/vs_episq_'+model+'.pdf',transparent=True)
     if not switches['debug']:
-        bayes_model_avg(switches,fit_results,phys_point)
+        model_avg,model_var = bayes_model_avg(switches,fit_results,phys_point)
+        #dsu2(FKpi,mpi,mk,F0)
+        print('SU(2) correction',dsu2(model_avg,phys_point['mpi'],phys_point['mk'],phys_point['F0']))
 
     '''
     for base_model in switches['ansatz']['models']:
@@ -313,7 +319,7 @@ def bayes_model_avg(switches,results,phys_point):
             if w_list[i_m] > 0.05:
                 print("%33s %.2f %.3f %s" %(model,results[model].fit.Q,w_list[i_m],'NEGLECTED'))
 
-    print('\nFull average')
+    print('\nFull average with %d Models' %len(results))
     print("%s +- %.4f" %(FKFpi,np.sqrt(model_var)))
 
     fig = plt.figure('hist')
@@ -342,6 +348,8 @@ def bayes_model_avg(switches,results,phys_point):
         plt.savefig('figures/model_avg_hist_default_priors.pdf',transpareent=True)
     else:
         plt.savefig('figures/model_avg_hist_logGBF_optimal_priors.pdf',transpareent=True)
+
+    return FKFpi, model_var
 
 def bma(switches,result,isospin):
     # read Bayes Factors
@@ -430,7 +438,7 @@ def nnlo_prior_scan(switches,priors):
                 a_range = priors['a_range']
                 if switches['refine_prior'] and len(prior_grid[model]) > 0:
                     df = pd.DataFrame(prior_grid[model])
-                    print('    maximum logGBF', df.stack().max())
+                    print('    maximum logGBF = %.4f' %(df.stack().max()))
                     sp_max = df.stack().idxmax()
                     print('    (s_4, p_4) = ', sp_max[0],sp_max[1])
                     new_s = []
@@ -498,7 +506,7 @@ def nnlo_prior_scan(switches,priors):
             tmp = ''
             for i_k,k in enumerate(['p_4','s_4']):
                 tmp += '%s = %.2f ' %(k,logGBF_optimal[i_k])
-            print(tmp,'logGBF = ',logGBF_optimal[-1],'\n')
+            print(tmp,'logGBF = %.4f\n' %(logGBF_optimal[-1]))
 
             lgbf = logGBF_array[:,-1]
             w = np.exp(lgbf - logGBF_optimal[-1])
@@ -665,7 +673,7 @@ if __name__ == "__main__":
     data.close()
 
     if switches['do_analysis']:
-        perform_analysis(switches,priors)
+        perform_analysis(switches,priors,phys_point)
 
     if switches['check_fit']:
         fit_checker(switches,priors)
