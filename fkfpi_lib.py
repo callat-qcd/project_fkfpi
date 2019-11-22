@@ -60,6 +60,12 @@ r_a = {
     'a09m220'  :gv.gvar(3.566,0.014)
     }
 
+a_ens = {
+    'a15':gv.gvar(0.1509,0.0013),
+    'a12':gv.gvar(0.1206,0.0010),
+    'a09':gv.gvar(0.0875,0.0008),
+}
+
 def format_h5_data(switches,data):
     x = dict()
     y = dict()
@@ -122,6 +128,7 @@ def format_h5_data(switches,data):
         p[(ens,'Lchi_PP')] = 4 * np.pi * gvdata['Fpi']
         p[(ens,'Lchi_PK')] = 4 * np.pi * np.sqrt(gvdata['FK'] * gvdata['Fpi'])
         p[(ens,'Lchi_KK')] = 4 * np.pi * gvdata['FK']
+        p[(ens,'Lchi_F0')] = 4 * np.pi * gv.gvar(80,1) / 197.3 * a_ens[ens[0:3]]
         # HISQ params
         aw0 = data.get_node('/'+ens+'/aw0').read()
         p[(ens,'aw0')] = gv.gvar(aw0[0],aw0[1])
@@ -182,7 +189,7 @@ def plot_data(ax,e,x,y):
 def perform_analysis(switches,priors,phys_point):
     fit_results = dict()
     for base_model in switches['ansatz']['models']:
-        if not switches['default_priors']:
+        if switches['optimized_priors']:
             if not os.path.exists('data/saved_prior_search.yaml'):
                 print('ERROR: you asked for optimized priors but')
                 print('data/saved_prior_search.yaml')
@@ -200,7 +207,7 @@ def perform_analysis(switches,priors,phys_point):
             p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
             for key in priors:
                 p_e[key] = priors[key]
-            if not switches['default_priors']:
+            if switches['optimized_priors']:
                 df = pd.DataFrame(prior_grid[model])
                 sp_max = df.stack().idxmax()
                 print('      setting prior widths:')
@@ -227,29 +234,63 @@ def perform_analysis(switches,priors,phys_point):
 
             print('DEBUG: error budget')
             tmp = fit_e.report_phys_point(phys_point)['phys']
+            Lchi_phys = phys_point['Lchi_'+FPK]
+            p_phys = dict()
+            p_phys[('phys','p2')] = phys_point['mpi']**2 / Lchi_phys**2
+            p_phys[('phys','k2')] = phys_point['mk']**2 / Lchi_phys**2
+            p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
             print(tmp.partialsdev(fit_e.fit.y))
+            print(tmp.partialsdev(fit_e.fit.y,p_phys[('phys','p2')]))
+            print(tmp.partialsdev(fit_e.fit.y,p_phys[('phys','p2')],p_phys[('phys','k2')]))
+            print(tmp.partialsdev(fit_e.fit.y,p_phys[('phys','p2')],p_phys[('phys','k2')],p_phys[('phys','e2')]))
 
             if switches['make_plots']:
-                epi_range = dict()
-                epi_range['Lchi'] = phys_point['Lchi']
-                epi_range['mk']   = phys_point['mk']
-                epi_range['mpi']  = np.sqrt(np.arange(1,400**2,400**2 // 100))
-                epi_range['mpi_phys'] = phys_point['mpi']
+                if base_model in ['xpt_nnlo_FV','xpt_nnlo_FV_a4']:#, 'xpt_nnlo_FV_logSq', 'xpt-ratio_nnlo_FV', 'xpt-ratio_nnlo_FV_logSq']:
+                    ea_range = dict()
+                    ea_range['Lchi'] = phys_point['Lchi_'+FPK]
+                    ea_range['mpi']  = phys_point['mpi']
+                    ea_range['mk']   = phys_point['mk']
+                    ea_range['a']    = np.sqrt(np.arange(0,.16**2,.16**2/100))
+                    ea_range['w0']   = phys_point['w0']
 
-                fig_vs_epi = plt.figure('FKFpi_vs_epi_'+model)
-                ax = plt.axes([.12, .12, .85, .85])
-                ax = fit_e.vs_epi(epi_range, ax)
-                y_shift = fit_e.shift_phys_epsK(phys_point)
-                for e in switches['ensembles_fit']:
-                    x = fit_e.fit.p[(e,'p2')]
-                    y = y_e[e] + y_shift[e]
-                    ax = plot_data(ax, e, x, y)
-                ax.legend()
-                ax.set_xlabel(r'$\epsilon_\pi^2$',fontsize=16)
-                ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
-                ax.set_xlim(0,.1)
-                ax.set_ylim(1.05, 1.25)
-                plt.savefig('figures/vs_episq_'+model+'.pdf',transparent=True)
+                    fig_vs_ea = plt.figure('FKFpi_vs_ea_'+model)
+                    ax = plt.axes([.12, .12, .85, .85])
+                    #print(fit_e.fit.format(maxline=True))
+                    ax = fit_e.vs_ea(ea_range, ax)
+                    # add data
+                    y_shift = fit_e.shift_phys_mass(phys_point)
+                    for e in switches['ensembles_fit']:
+                        x = fit_e.fit.p[(e,'a2')]
+                        y = y_e[e] + y_shift[e]
+                        #print(e,y_e[e],y_shift[e])
+                        ax = plot_data(ax, e, x, y)
+                    ax.legend(ncol=3)
+                    ax.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=16)
+                    ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
+                    ax.set_xlim(0,.065)
+                    ax.set_ylim(1.135, 1.205)
+                    plt.savefig('figures/vs_epasq_'+model+'.pdf',transparent=True)
+                if False:
+                    epi_range = dict()
+                    epi_range['Lchi'] = phys_point['Lchi']
+                    epi_range['mk']   = phys_point['mk']
+                    epi_range['mpi']  = np.sqrt(np.arange(1,400**2,400**2 // 100))
+                    epi_range['mpi_phys'] = phys_point['mpi']
+
+                    fig_vs_epi = plt.figure('FKFpi_vs_epi_'+model)
+                    ax = plt.axes([.12, .12, .85, .85])
+                    ax = fit_e.vs_epi(epi_range, ax)
+                    y_shift = fit_e.shift_phys_epsK(phys_point)
+                    for e in switches['ensembles_fit']:
+                        x = fit_e.fit.p[(e,'p2')]
+                        y = y_e[e] + y_shift[e]
+                        ax = plot_data(ax, e, x, y)
+                    ax.legend()
+                    ax.set_xlabel(r'$\epsilon_\pi^2$',fontsize=16)
+                    ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
+                    ax.set_xlim(0,.1)
+                    ax.set_ylim(1.05, 1.25)
+                    plt.savefig('figures/vs_episq_'+model+'.pdf',transparent=True)
     if not switches['debug']:
         model_avg,model_var = bayes_model_avg(switches,fit_results,phys_point)
         #dsu2(FKpi,mpi,mk,F0)
@@ -264,6 +305,7 @@ def perform_analysis(switches,priors,phys_point):
             L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
             print('%25s: L5(m_rho) = %s' %(model,L5_rho))
     '''
+    return fit_results
 
 def bayes_model_avg(switches,results,phys_point):
     logGBF_list = []
@@ -276,7 +318,7 @@ def bayes_model_avg(switches,results,phys_point):
     pdf_pp      = 0
     pdf_pk      = 0
     pdf_kk      = 0
-    x = np.arange(1.1,1.301,.001)
+    x = np.arange(1.15,1.2101,.0001)
     for model in results:
         logGBF_list.append(results[model].fit.logGBF)
         FPK=model.split('_')[-1]
@@ -323,31 +365,48 @@ def bayes_model_avg(switches,results,phys_point):
     print("%s +- %.4f" %(FKFpi,np.sqrt(model_var)))
 
     fig = plt.figure('hist')
-    ax = plt.axes([0.12,0.12,0.87,0.87])
+    ax = plt.axes([0.11,0.12,0.87,0.87])
     x0 = FKFpi.mean
     dx = np.sqrt(model_var + FKFpi.sdev**2)
-    ax.axvspan(x0-dx,x0+dx,color='k',alpha=0.05)
-    ax.axvline(x0-dx,color='k',linestyle='-.')
-    ax.axvline(x0+dx,color='k',linestyle='-.')
-    dx = FKFpi.sdev
-    ax.axvspan(x0-dx,x0+dx,color='k',alpha=0.2)
-    ax.axvline(x0,color='k')
-    ax.axvline(x0-dx,color='k',linestyle='--')
-    ax.axvline(x0+dx,color='k',linestyle='--')
+    #ax.axvspan(x0-dx,x0+dx,color='k',alpha=0.05)
+    #ax.axvline(x0-dx,color='k',linestyle='-.')
+    #ax.axvline(x0+dx,color='k',linestyle='-.')
+    #dx = FKFpi.sdev
+    #ax.axvspan(x0-dx,x0+dx,color='k',alpha=0.2)
+    #ax.axvline(x0,color='k')
+    #ax.axvline(x0-dx,color='k',linestyle='--')
+    #ax.axvline(x0+dx,color='k',linestyle='--')
     ax.plot(x,pdf,color='k')
     ax.fill_between(x=x,y1=pdf,color='k',alpha=0.1)
-    ax.fill_between(x=x,y1=pdf_pp,color='r',alpha=0.5,label=r'$F^2 \rightarrow F_\pi^2$')
-    ax.fill_between(x=x,y1=pdf_pk,color='g',alpha=0.5,label=r'$F^2 \rightarrow F_\pi F_K$')
-    ax.fill_between(x=x,y1=pdf_kk,color='b',alpha=0.5,label=r'$F^2 \rightarrow F_K^2$')
-    ax.set_xlim([1.16,1.21])
+    # 95%
+    lidx95 = abs(cdf-0.025).argmin()
+    uidx95 = abs(cdf-0.975).argmin()
+    ax.fill_between(x=x[lidx95:uidx95],y1=pdf[lidx95:uidx95],facecolor='k',edgecolor='k',alpha=0.1)
+    #68%
+    lidx68 = abs(cdf-0.158655254).argmin()
+    uidx68 = abs(cdf-0.841344746).argmin()
+    ax.fill_between(x=x[lidx68:uidx68],y1=pdf[lidx68:uidx68],facecolor='k',edgecolor='k',alpha=0.1)
+    # black lines
+    ax.errorbar(x=[x[lidx95],x[lidx95]],y=[0,pdf[lidx95]],color='k')#,lw=0.5)
+    ax.errorbar(x=[x[uidx95],x[uidx95]],y=[0,pdf[uidx95]],color='k')#,lw=0.5)
+    ax.errorbar(x=[x[lidx68],x[lidx68]],y=[0,pdf[lidx68]],color='k')#,lw=0.5)
+    ax.errorbar(x=[x[uidx68],x[uidx68]],y=[0,pdf[uidx68]],color='k')#,lw=0.5)
+
+    # split Fpi, FK and Fpi FK results
+    ax.fill_between(x=x,y1=pdf_kk,color='b',alpha=0.6,label=r'$F^2 \rightarrow F_K^2$')
+    ax.fill_between(x=x,y1=pdf_pk,color='g',alpha=0.6,label=r'$F^2 \rightarrow F_\pi F_K$')
+    ax.fill_between(x=x,y1=pdf_pp,color='r',alpha=0.6,label=r'$F^2 \rightarrow F_\pi^2$')
+    ax.set_xlim([1.1575,1.2075])
     ax.set_ylim(ymin=0)
     ax.set_xlabel(r'$F_K / F_\pi$',fontsize=16)
-    ax.set_ylabel(r'Bayes Model Avg PDF',fontsize=16)
     ax.legend()
-    if switches['default_priors']:
-        plt.savefig('figures/model_avg_hist_default_priors.pdf',transpareent=True)
-    else:
+    ax.set_ylabel(r'Bayes Model Avg PDF',fontsize=16)
+    if switches['optimized_priors']:
+        ax.text(0.05,0.95, 'optimized prior widths',verticalalignment='center',horizontalalignment='left',transform=ax.transAxes,fontsize=16)
         plt.savefig('figures/model_avg_hist_logGBF_optimal_priors.pdf',transpareent=True)
+    else:
+        ax.text(0.05,0.95, 'default prior widths',verticalalignment='center',horizontalalignment='left',transform=ax.transAxes,fontsize=16)
+        plt.savefig('figures/model_avg_hist_default_priors.pdf',transpareent=True)
 
     return FKFpi, model_var
 
@@ -620,7 +679,7 @@ def fit_checker(switches,priors):
         p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
         for key in priors:
             p_e[key] = priors[key]
-        if not switches['default_priors']:
+        if switches['optimized_priors']:
             try:
                 for key in ['p_4','k_4','s_4','saS_4']:
                     p_e[key] = gv.gvar(0,ip.nnlo_width[model][switches['scale']][key])
@@ -668,12 +727,12 @@ if __name__ == "__main__":
     phys_point = ip.phys_point
 
     # Load data
-    data  = h5.open_file('FK_Fpi_data.h5','r')
+    data    = h5.open_file('FK_Fpi_data.h5','r')
     gv_data = format_h5_data(switches,data)
     data.close()
 
     if switches['do_analysis']:
-        perform_analysis(switches,priors,phys_point)
+        fit_results = perform_analysis(switches,priors,phys_point)
 
     if switches['check_fit']:
         fit_checker(switches,priors)

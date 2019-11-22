@@ -5,6 +5,17 @@ import matplotlib.pyplot as plt
 import gvar as gv
 import lsqfit
 
+sys.path.append('py_chiron')
+import chiron
+def FF(x):
+    if isinstance(x, gv.GVar):
+        f = chiron.FF(x.mean)
+        stepSize = 1e-5 * chiron.FF(x.mean)
+        dfdx = 0.5*(chiron.FF(x.mean+stepSize) - chiron.FF(x.mean-stepSize))/stepSize
+        return gv.gvar_function(x, f, dfdx)
+    else:
+        return chiron.FF(x)
+
 
 class Fit(object):
     def __init__(self,switches,xyp_init):
@@ -15,11 +26,12 @@ class Fit(object):
         self.model    = self.switches['ansatz']['model']
         self.eft      = self.switches['ansatz']['model'].split('_')[0]
         self.order    = self.switches['ansatz']['model'].split('_')[1]
-        self.fv       = 'FV' in self.switches['ansatz']['model']
+        self.fv       = 'FV'     in self.switches['ansatz']['model']
         self.alphaS   = 'alphaS' in self.switches['ansatz']['model']
-        self.logSq    = 'logSq' in self.switches['ansatz']['model']
+        self.logSq    = 'logSq'  in self.switches['ansatz']['model']
+        self.a4       = 'a4'     in self.switches['ansatz']['model']
         self.lec_nnlo = ['L5','L4','k_4','p_4','s_4','saS_4']
-        self.lec_nnnlo= ['s_6','sk_6','sp_6','kp_6','k_6','p_6']
+        self.lec_nnnlo= ['s_6','sk_6','sp_6','kp_6','k_6','p_6','L1','L2','L3','L6','L7','L8']
 
         if self.eft   == 'xpt':
             self.fit_function = self.xpt_nlo
@@ -143,14 +155,23 @@ class Fit(object):
         ''' Add LECs '''
         if self.order in ['nlo','nnlo','nnnlo']:
             p['L5'] = self.p_init['L5']
-            if 'ratio' in self.eft:
+            if 'ratio' in self.eft or self.switches['nnlo_correct']:
                 p['L4'] = self.p_init['L4']
+            if self.switches['nnlo_correct']:
+                p['L1'] = self.p_init['L1']
+                p['L2'] = self.p_init['L2']
+                p['L3'] = self.p_init['L3']
+                p['L6'] = self.p_init['L6']
+                p['L7'] = self.p_init['L7']
+                p['L8'] = self.p_init['L8']
         if self.order in ['nnlo','nnnlo']:
             p['s_4'] = self.p_init['s_4']
             p['k_4'] = self.p_init['k_4']
             p['p_4'] = self.p_init['p_4']
             if self.alphaS:
                 p['saS_4'] = self.p_init['saS_4']
+            if self.a4 and self.order not in ['nnnlo']:
+                p['s_6'] = self.p_init['s_6']
         if self.order in ['nnnlo']:
             p['kp_6'] = self.p_init['kp_6']
             p['k_6']  = self.p_init['k_6']
@@ -204,6 +225,7 @@ class Fit(object):
         '''
         k2 = x['k2']['esq']
         p2 = x['p2']['esq']
+        e2 = 4./3 * k2 - 1./3 * p2
         if self.order in ['nnlo','nnnlo']:
             a2 = x['a2']
         if self.alphaS:
@@ -218,9 +240,97 @@ class Fit(object):
             '''
             if self.alphaS:
                 ct += (k2 - p2) * a2 * alphaS * lec['saS_4']
-            if self.logSq:
-                ct += 1./96 * (k2 - p2)* (17*k2 + 37*p2)*(np.log(np.sqrt(k2*p2)))**2
+            if self.logSq and not self.switches['nnlo_correct']:
+                import bijnens_nnlo
+                ct += k2**2 * bijnens_nnlo.FF(p2/k2)
+                #ct += 1./96 * (k2 - p2)* (17*k2 + 37*p2)*(np.log(np.sqrt(k2*p2)))**2
+                ct += np.log(p2)**2         * ( 11./24 * p2 * k2 -131./192 * p2**2)
+                ct += np.log(p2)*np.log(k2) * (-41./96 * p2 * k2 -3./32 * p2**2)
+                ct += np.log(p2)*np.log(e2) * ( 13./24 * p2 * k2 +59./96 * p2**2)
+                ct += np.log(k2)**2         * ( 17./36 * k2 * k2 +7./144 * p2 * k2)
+                ct += np.log(k2)*np.log(e2) * (-163./144 * k2*k2 -67./288 * p2 * k2 + 3./32 * p2**2)
+                ct += np.log(e2)**2         * ( 241./288 * k2*k2 - 13./72 * p2 * k2 - 61./192 * p2**2)
+                if self.switches['scale'] == 'PK':
+                    #ct += 9./16 * (k2 -p2)**2 * (np.log(np.sqrt(k2*p2)))**2
+                    ct += np.log(p2)**2         * 25./64 * p2**2
+                    ct += np.log(p2)*np.log(k2) * (-5./16 * p2 * k2)
+                    ct += np.log(p2)*np.log(e2) * (5./32 * p2**2 - 5./8 * p2 * k2)
+                    ct += np.log(k2)**2         * k2**2 / 16
+                    ct += np.log(k2)*np.log(e2) * (1./4 * k2**2 - 1./16 * k2 * p2)
+                    ct += np.log(e2)**2         * (1./4 * k2**2 - 1./8 * k2 * p2 + 1./64 * p2**2)
+                elif self.switches['scale'] == 'KK':
+                    #ct += 18./16 * (k2 -p2)**2 * (np.log(np.sqrt(k2*p2)))**2
+                    ct += 2*np.log(p2)**2         * 25./64 * p2**2
+                    ct += 2*np.log(p2)*np.log(k2) * (-5./16 * p2 * k2)
+                    ct += 2*np.log(p2)*np.log(e2) * (5./32 * p2**2 - 5./8 * p2 * k2)
+                    ct += 2*np.log(k2)**2         * k2**2 / 16
+                    ct += 2*np.log(k2)*np.log(e2) * (1./4 * k2**2 - 1./16 * k2 * p2)
+                    ct += 2*np.log(e2)**2         * (1./4 * k2**2 - 1./8 * k2 * p2 + 1./64 * p2**2)
                 #ct += 1./96 * (k2 - p2)* (17*k2 + 37*p2)*(np.log(p2))**2
+            if self.a4 and self.order not in ['nnnlo']:
+                ct += (k2 - p2)    * a2**2   * lec['s_6']
+            if self.switches['nnlo_correct']:
+
+                # logSq terms
+                K1 =  11./24 *p2*k2 -131./192 *p2**2
+                K2 = -41./96 *p2*k2 -3./32    *p2**2
+                K3 =  13./24 *p2*k2 +59./96   *p2**2
+                K4 =  17./36 *k2**2 +7./144   *p2*k2
+                K5 = -163./144*k2**2 -67./288 *p2*k2 +3./32 *p2**2
+                K6 =  241./288*k2**2 -13./72*p2*k2 -61./192*p2**2
+                ct += K1 * np.log(p2) * np.log(p2)
+                ct += K2 * np.log(p2) * np.log(k2)
+                ct += K3 * np.log(p2) * np.log(e2)
+                ct += K4 * np.log(k2) * np.log(k2)
+                ct += K5 * np.log(k2) * np.log(e2)
+                ct += K6 * np.log(e2) * np.log(e2)
+
+                ct += k2**2 * FF(p2/k2)
+
+                # log terms
+                L1 = lec['L1']
+                L2 = lec['L2']
+                L3 = lec['L3']
+                L4 = lec['L4']
+                L5 = lec['L5']
+                L6 = lec['L6']
+                L7 = lec['L7']
+                L8 = lec['L8']
+                C1  = -(7./9 + 11./42*(4*np.pi)**2*L5)*p2*k2
+                C1 += -(113./72 + (4*np.pi)**2 *(4*L1 +10*L2 +13./2*L3 -21./2*L5))*p2**2
+                C2  =  (209./144 + 3*(4*np.pi)**2*L5)*p2*k2
+                C2 +=  (53./96 +(4*np.pi)**2 *(4*L1 +10*L2 +5*L3 -5*L5))*k2**2
+                C3  =  (13./18 +(4*np.pi)**2 *(8./3*L3 -2./3*L5 -16*L7 -8*L8))* k2**2
+                C3 += -(4./9 +(4*np.pi)**2 *(4./3*L3 +25./6*L5 -32*L7 -16*L8))* p2*k2
+                C3 +=  (19./288 +(4*np.pi)**2 *(L3/6 +11./6*L5 -16*L7 -8*L8))*  p2**2
+                ct += C1 * np.log(p2)
+                ct += C2 * np.log(k2)
+                ct += C3 * np.log(e2)
+
+                # extra ct
+                tk  = 8*(4*np.pi)**2 *L5 *(8*L4 +3*L5 -16*L6 -8*L8)
+                tk += -2*L1 -L2 -L3/18 +4./3*L5 -16*L7 -8*L8
+                tp  = 8*(4*np.pi)**2 *L5 *(4*L4 +5*L5 -8*L6 -8*L8)
+                tp += -2*L1 -L2 -5./18*L3 -4./3*L5 +16*L7 +8*L8
+                ct += (4*np.pi)**2 *(k2-p2) *tk * k2
+                ct += (4*np.pi)**2 *(k2-p2) *tp * p2
+
+                # fix mu-scale and F=Fpi,FK choice
+                if self.switches['scale'] == 'PP':
+                    ct += 3./2 *(k2-p2) * (p2*np.log(p2) + 0.5*k2*np.log(k2))
+                    ct += 3./2 *(k2-p2) * (-4)*(4*np.pi)**2*(p2 *(lec['L5'] + lec['L4']) +2*k2*lec['L4'])
+                else:
+                    dFKFpi_nlo  = 5./8 * p2*np.log(p2) - 1./4*k2*np.log(k2) -3./8*e2*np.log(e2)
+                    dFKFpi_nlo += 4*(4*np.pi)**2 *lec['L5'] *(k2-p2)
+                if self.switches['scale'] == 'KP':
+                    ct += 3./4 *(k2-p2) * (11./8 *p2*np.log(p2) +5./4 *k2*np.log(k2) +3./8*e2*np.log(e2))
+                    ct += 3./4 *(k2-p2) * (-4)**(4*np.pi)**2* (p2*(2*lec['L4']+lec['L5']) + k2*(4*lec['L4']+lec['L5']))
+                    ct += dFKFpi_nlo**2
+                if self.switches['scale'] == 'KK':
+                    ct += 3./2 *(k2-p2) * (3./8*p2*np.log(p2) +3./4*k2*np.log(k2) +3./8*e2*np.log(e2))
+                    ct += 3./2 *(k2-p2) * (-4)*(4*np.pi)**2* (p2*lec['L4'] +k2*(2*lec['L4'] +lec['L5']))
+                    ct += 2 * dFKFpi_nlo**2
+
         if self.order in ['nnnlo']:
             ct += (k2 - p2)**2 * k2 * p2 * lec['kp_6']
             ct += (k2 - p2)**2 * k2      * lec['k_6']
@@ -405,7 +515,7 @@ class Fit(object):
         p_phys[('phys','k2')] = phys_point['mk']**2  / Lchi_phys**2
         p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
         p_phys[('phys','a2')] = 0.
-        for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6']:
+        for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6','L1','L2','L3','L6','L7','L8']:
             if k in self.fit.p:
                 p_phys[k] = self.fit.p[k]
         if 'ratio' in self.eft:
@@ -482,7 +592,6 @@ class Fit(object):
 
         return self.fit.chi2/self.fit.dof, self.fit.dof, self.fit.logGBF, self.fit.p['L5'], self.fit.p['k_4'], self.fit.p['p_4'], self.fit.p['s_4'], fkfpi['phys']
 
-
     def vs_epi(self,epi_range, ax):
         # get copy of all self attributes
         self_dict = self.__dict__.copy()
@@ -550,6 +659,59 @@ class Fit(object):
 
         return ax
 
+    def vs_ea(self,ea_range, ax):
+        # get copy of all self attributes
+        self_dict = self.__dict__.copy()
+        # switch to continuum fit func
+        if 'ratio' in self.eft:
+            self.eft          = 'xpt-ratio'
+            self.fit_function = self.xpt_ratio_nlo
+        else:
+            self.eft          = 'xpt'
+            self.fit_function = self.xpt_nlo
+        self.fv = False
+        # set x,y,p
+        x = dict()
+        y_phys = dict()
+        p = dict()
+        for k in self.fit.p:
+            if isinstance(k,str):
+                print(k,self.fit.p[k])
+        for k in self.lec_nnlo + self.lec_nnnlo:
+            if k in self.fit.p:
+                p[k] = self.fit.p[k]
+        x_plot = []
+        y_plot = dict()
+        y_plot['m135'] = []
+        y_plot['m220'] = []
+        p2 = ea_range['mpi']**2 / ea_range['Lchi']**2
+        k2 = ea_range['mk']**2 / ea_range['Lchi']**2
+        for a in ea_range['a']:
+            x[a] = {k:np.inf for k in ['mpiL','mkL']}
+            p2 = ea_range['mpi']**2 / ea_range['Lchi']**2
+            p[(a,'p2')] = p2
+            p[(a,'k2')] = k2
+            p[(a,'e2')] = 4./3*k2 - 1./3*p2
+            p[(a,'a2')] = (a / ea_range['w0'])**2 / 4 / np.pi
+            x_plot.append(p[(a,'a2')])
+            y_plot['m135'].append(self.fit_function(x,p)[a])
+            p2 = 220**2 / ea_range['Lchi']**2
+            p[(a,'p2')] = p2
+            p[(a,'e2')] = 4./3*k2 - 1./3*p2
+            y_plot['m220'].append(self.fit_function(x,p)[a])
+        x_plot = np.array(x_plot)
+        y  = np.array([k.mean for k in y_plot['m135']])
+        dy = np.array([k.sdev for k in y_plot['m135']])
+
+        ax.fill_between(x_plot, y-dy, y+dy, color='#ec5d57', alpha=0.4)
+        #y  = np.array([k.mean for k in y_plot['m220']])
+        #ax.plot(x_plot, y, color='g')
+
+        # restore original self attributes
+        for key,val in self_dict.items():
+            setattr(self, key, val)
+        return ax
+
     def shift_phys_epsK(self,phys_point):
         '''
             Compute the shift in FK/FPi from the fit, to the point where
@@ -611,6 +773,80 @@ class Fit(object):
             Lchi = self.p_init[(e,'Lchi_'+self.switches['scale'])]
             p_tmp[(e,'p2')] = self.p_init[(e,'mpi')]**2 / Lchi**2
             p_tmp[(e,'k2')] = phys_point['mk']**2 / phys_point['Lchi']**2
+            p_tmp[(e,'e2')] = 4./3 *p_tmp[(e,'k2')] - 1./3 *p_tmp[(e,'p2')]
+            p_tmp[(e,'a2')] = self.p_init[(e,'aw0')]**2 / (4 * np.pi)
+            y_shift[e] += self.fit_function(x_tmp,p_tmp)[e]
+            if self.switches['verbose']:
+                print("%9s %12s %12s" %(e, self.y[e], y_shift[e].mean))
+
+        # restore original self attributes
+        for key,val in self_dict.items():
+            setattr(self, key, val)
+
+        return y_shift
+
+    def shift_phys_mass(self,phys_point):
+        '''
+            Compute the shift in FK/FPi from the fit, to the point where
+            m_K = m_K^phys
+            if MA:
+                m_ju = m_pi
+                m_js = m_K^phys
+                m_ru = m_K^phys
+                m_rs = m_ss
+                dju  = 0
+                drs  = 0
+            and apply this shift to the numerical data, so that it can be
+            plotted with a fit that only depends upon eps_pi = m_pi**2 / L_chi**2
+
+            1: compute FK/FPi from the particular fit
+                y_fit
+
+            2: computee FK/FPi from the corresponding XPT fit function + a**2 terms
+                y_shift
+            3: shift all the data by
+                FK/FPi -> FK/FPi + (y_shift - y_fit).mean
+
+            return a dictionary of shifts
+        '''
+        # get copy of all self attributes
+        self_dict = self.__dict__.copy()
+
+        # determine fitted values of FK/FPi
+        y_shift = dict()
+        print('correcting FK/Fpi data for plot')
+        print('for model %s' %self.switches['ansatz']['model'])
+        x = self.prune_x()
+        PK = self.switches['scale']
+        for e in x:
+            Lchi = self.p_init[(e,'Lchi_'+PK)]
+            p    = self.prune_priors()
+            for k in self.lec_nnlo + self.lec_nnnlo:
+                if k in self.fit.p:
+                    p[k] = self.fit.p[k]
+            y_shift[e] = -self.fit_function(x,p)[e]
+        # switch to XPT + a**2 terms
+        if 'ratio' in self.eft:
+            self.eft          = 'xpt-ratio'
+            self.fit_function = self.xpt_ratio_nlo
+        else:
+            self.eft          = 'xpt'
+            self.fit_function = self.xpt_nlo
+        self.fv = False
+        if self.switches['verbose']:
+            print("%9s %12s %12s" %('ensemble','data', 'shift'))
+            print('-------- | ----------- | ----------')
+        for e in x:
+            x_tmp = dict()
+            p_tmp = dict()
+            x_tmp[e] = {k:np.inf for k in ['mpiL','mkL']}
+            x_tmp[e]['alphaS'] = self.x[e]['alphaS']
+            for k in self.lec_nnlo + self.lec_nnnlo:
+                if k in self.fit.p:
+                    p_tmp[k] = self.fit.p[k]
+            Lchi = self.p_init[(e,'Lchi_'+PK)]
+            p_tmp[(e,'p2')] = phys_point['mpi']**2 / phys_point['Lchi_'+PK]**2
+            p_tmp[(e,'k2')] = phys_point['mk']**2 / phys_point['Lchi_'+PK]**2
             p_tmp[(e,'e2')] = 4./3 *p_tmp[(e,'k2')] - 1./3 *p_tmp[(e,'p2')]
             p_tmp[(e,'a2')] = self.p_init[(e,'aw0')]**2 / (4 * np.pi)
             y_shift[e] += self.fit_function(x_tmp,p_tmp)[e]
