@@ -62,7 +62,7 @@ class data_loader(object):
     def get_prior(self, fit_type, F2, include_FV, include_alphaS, include_logSq):
         filepath = os.path.normpath(self.project_path + '/priors/'+fit_type+'.csv')
 
-        print filepath
+        print(filepath)
 
         if not os.path.isfile(filepath):
             return None
@@ -102,7 +102,7 @@ class data_loader(object):
         return None
 
     def save_fit_info(self, fit_info):
-        print "Saving..."
+        print("Saving...")
 
         if not os.path.exists(self.project_path + '/results/'):
             os.makedirs(self.project_path + '/results/')
@@ -126,22 +126,11 @@ class data_loader(object):
         # fit_info keys not in cols -> create key in fit_info
         for key in cols:
             if key not in fit_info.keys():
-                #print "fit info key not in col: ", key
                 fit_info[key] = np.nan
 
         # Add result to file if file exists
         if os.path.isfile(filepath):
             df_best_fits = pd.read_csv(filepath, index_col=0).to_dict()
-            #print df_best_fits.keys()
-            #print sorted(list(set(cols).symmetric_difference(df_best_fits.keys())))
-
-
-            # Get keys in df but not in cols
-            #diff = sorted(list(set(cols).symmetric_difference(df_best_fits.keys())))
-            #cols = np.concatenate((cols, diff), axis=0)
-            #print "\n\n---"
-            #print cols
-            #print"---"
 
             output_dict = {}
             for key in df_best_fits.keys():
@@ -151,7 +140,7 @@ class data_loader(object):
             # df keys not in cols -> create keys in df
             for key in cols:
                 if key not in output_dict.keys():
-                    print "df key not in col: ", key
+                    print("df key not in col: ", key)
                     output_dict[key] = np.repeat(np.nan, len(output_dict['name']))
 
 
@@ -169,9 +158,6 @@ class data_loader(object):
             df.sort_values('name')
             df.to_csv(filepath)
 
-            #print
-            #print df
-
         # Create new file if it doesn't exist
         else:
             output_dict = {key : [fit_info[key]] for key in fit_info.keys()}
@@ -179,7 +165,7 @@ class data_loader(object):
             df = df[cols] # rearrange in logical order
             df.to_csv(filepath)
 
-        print "Done."
+        print("Done.")
         return None
 
     def save_plots(self, figs=None, output_filename=None):
@@ -203,12 +189,12 @@ class data_loader(object):
             output_pdf.savefig(figs)
 
         output_pdf.close()
-        print "Done."
+        print("Done.")
 
         return None
 
     def save_prior(self, prior, fit_type, F2, include_FV, include_alphaS, include_logSq):
-        print "Saving..."
+        print("Saving...")
 
         if not os.path.exists(self.project_path + '/priors/'):
             os.makedirs(self.project_path + '/priors/')
@@ -229,7 +215,6 @@ class data_loader(object):
         # fit_info keys not in cols -> create key in fit_info
         for key in cols:
             if key not in prior.keys():
-                #print "fit info key not in col: ", key
                 prior[key] = np.nan
 
         # Add result to file if file exists
@@ -257,9 +242,6 @@ class data_loader(object):
             df.sort_values('name')
             df.to_csv(filepath)
 
-            #print
-            #print df
-
         # Create new file if it doesn't exist
         else:
             output_dict = {key : [prior[key]] for key in prior.keys()}
@@ -268,7 +250,7 @@ class data_loader(object):
             df = df[cols] # rearrange in logical order
             df.to_csv(filepath)
 
-        print "Done."
+        print("Done.")
         return None
 
     def unpickle_fit_parameters(self, name):

@@ -3,7 +3,7 @@ import numpy as np
 import gvar as gv
 
 # import fcn_T_m, fcn_dI_m, etc
-from special_functions import *
+from .special_functions import *
 
 class fitter(object):
 
@@ -35,8 +35,8 @@ class fitter(object):
 
         fitfcn = self._make_models()[-1].fitfcn
 
-        print z
-        print prior['A_k'], prior['A_a']
+        print(z)
+        print(prior['A_k'], prior['A_a'])
 
         return dict(data=y_data, fcn=fitfcn, prior=prior)
 
@@ -74,7 +74,7 @@ class fitter(object):
                         #pass
 
         self.fit = fit
-        print "Done!"
+        print("Done!")
         return fit
 
     def _make_models(self):
@@ -230,8 +230,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             elif self.fit_type == 'ma-old':
                 output = self.fitfcn_ma_old(p)
 
-        #print "model: ", output
-
         if self.order['fit'] in ['nnlo', 'nnnlo']:
             output = output + self.fitfcn_nnlo_cts(p)
 
@@ -265,18 +263,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         for key in self.order['exclude']:
             del(p[key])
-        #print "+ nnlo", output *(eps2_k - eps2_pi)
-
-        #print "A_a: ", np.median(eps2_a)
-        #print "A_k: ", np.median(eps2_k)
-        #print "A_pi: ", np.median(eps2_pi)
-
-        #print "\n\n"
-
-        #try:
-        #    print gv.corr(p['mpi'][0], p['mk'][0])
-        #except ValueError:
-        #    pass
 
         return output *(eps2_k - eps2_pi)
 

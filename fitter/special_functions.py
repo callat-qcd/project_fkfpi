@@ -13,7 +13,6 @@ def fcn_Kn(n, g):
 
         ysdev = np.abs(ss.kvp(n, gv.mean(g), 1)) * gv.sdev(g)
 
-        #print gv.gvar(ymean, ysdev)
         return gv.gvar(ymean, ysdev)
     else:
         return ymean
@@ -43,19 +42,22 @@ def fcn_dI_m(m, L, mu, order):
     return output
 
 # K(m, M) in notes
-def fcn_K_mM((m, M), L, mu, order):
+def fcn_K_mM(mM, L, mu, order):
+    m, M = mM
     output = 1.0/(M**2 - m**2) *(fcn_I_m(M, L, mu, order) - fcn_I_m(m, L, mu, order))
     return output
 
 # K_21(m, M) in notes
-def fcn_K21_mM((m, M), L, mu, order):
+def fcn_K21_mM(mM, L, mu, order):
+    m, M = mM
     output = (
         1.0/(M**2 - m**2)**2 *(fcn_I_m(M, L, mu, order) - fcn_I_m(m, L, mu, order))
         - 1.0/(M**2 - m**2) *fcn_dI_m(m, L, mu, order)
     )
     return output
 
-def fcn_K_m1m2m3((m1, m2, m3), L, mu, order):
+def fcn_K_m1m2m3(m1m2m3, L, mu, order):
+    m1, m2, m3 = m1m2m3
     output = (
         1.0/((m1**2 - m2**2) *(m1**2 - m3**2)) *fcn_I_m(m1, L, mu, order)
         + 1.0/((m2**2 - m1**2) *(m2**2 - m3**2)) *fcn_I_m(m2, L, mu, order)
