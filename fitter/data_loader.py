@@ -16,7 +16,8 @@ class data_loader(object):
 
     def get_ensembles(self):
         with h5py.File(self.file_h5, "r") as f:
-            ensembles = f.keys()
+            ensembles = list(f.keys())
+
         return sorted(ensembles)
 
     def get_fit_data(self):
@@ -115,13 +116,7 @@ class data_loader(object):
                      #'A_aa', 'A_ak', 'A_ap', # nnnlo terms
                      #'A_kk', 'A_kp', 'A_pp'] # more nnnlo terms
 
-        # append LEC results
         cols = np.concatenate((cols,lecs_cols), axis=0)
-        #diff = sorted(list(set(cols).symmetric_difference(fit_info.keys()))) # Gets set difference (ie, LEC keys)
-        #cols = np.concatenate((cols, diff), axis=0) # Append LEC keys to columns
-        #print "\n\n---"
-        #print cols
-        #print"---"
 
         # fit_info keys not in cols -> create key in fit_info
         for key in cols:
@@ -134,8 +129,7 @@ class data_loader(object):
 
             output_dict = {}
             for key in df_best_fits.keys():
-                output_dict[key] = np.array(df_best_fits[key].values(), dtype="object")
-
+                output_dict[key] = np.array(list(df_best_fits[key].values()), dtype="object")
 
             # df keys not in cols -> create keys in df
             for key in cols:
@@ -144,18 +138,20 @@ class data_loader(object):
                     output_dict[key] = np.repeat(np.nan, len(output_dict['name']))
 
 
-
             if fit_info['name'] in output_dict['name']:
                 index = np.asscalar(np.argwhere(output_dict['name'] == fit_info['name']))
+
                 for key in fit_info.keys():
                     output_dict[key][index] = fit_info[key]
             else:
                 for key in output_dict.keys():
                     output_dict[key] = np.append(output_dict[key], fit_info[key])
 
+
             df = pd.DataFrame.from_dict(output_dict)
             df = df[cols]
             df.sort_values('name')
+            #print(df)
             df.to_csv(filepath)
 
         # Create new file if it doesn't exist

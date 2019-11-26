@@ -8,7 +8,7 @@ import sys
 import re
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 
-from fitter import fitter
+from .fitter import fitter
 
 class bootstrapper(object):
 
@@ -55,7 +55,7 @@ class bootstrapper(object):
                     order[key] = order_temp[key]
 
         if prior is None:
-            print "Using default prior."
+            print("Using default prior.")
             prior = {
                 # nlo terms
                 'L_5' : '0.0(0.005)', #'0(0.001)',
@@ -250,7 +250,7 @@ class bootstrapper(object):
         return new_prior
 
     def bootstrap_fits(self):
-        print "Making fits..."
+        print("Making fits...")
         start_time = time.time()
         self.fits = np.array([])
 
@@ -259,11 +259,11 @@ class bootstrapper(object):
             self.fits = np.append(self.fits, temp_fit)
 
             sys.stdout.write("\r{0}% complete".format(int((float(j+1)/self.bs_N)*100)))
-            print "",
+            print("",)
             sys.stdout.flush()
         end_time = time.time()
-        print "Time (s): ",  end_time - start_time
-        print "Compiling results..."
+        print("Time (s): ",  end_time - start_time)
+        print("Compiling results...")
 
     def create_prior_from_fit(self):
         output = {}
@@ -280,7 +280,7 @@ class bootstrapper(object):
 
     def extrapolate_to_ensemble(self, abbr):
         abbr_n = self.abbrs.index(abbr)
-        model_name = self.fits[0].data.keys()[-1] # pretty hacky way to get this
+        model_name = list(self.fits[0].data.keys())[-1] # pretty hacky way to get this
 
         if self.bs_N == 1:
             temp_fit = self.fits[0]
@@ -319,7 +319,7 @@ class bootstrapper(object):
             fit_parameters[key] = fit_data[key]
 
         temp_fit = self.fits[0]
-        model_name = temp_fit.fcn(temp_fit.p).keys()[-1]
+        model_name = list(temp_fit.fcn(temp_fit.p))[-1]
 
         return temp_fit.fcn(p=fit_parameters)[model_name]
 
@@ -386,8 +386,8 @@ class bootstrapper(object):
         if self.fits is None:
             self.bootstrap_fits()
 
-        keys1 = self.prior.keys()
-        keys2 = self.fits[0].p.keys()
+        keys1 = list(self.prior.keys())
+        keys2 = list(self.fits[0].p.keys())
         parameters = np.intersect1d(keys1, keys2)
         return sorted(parameters)
 
@@ -398,8 +398,8 @@ class bootstrapper(object):
             if self.fits is None:
                 self.bootstrap_fits()
 
-            keys1 = self.prior.keys()
-            keys2 = self.fits[0].p.keys()
+            keys1 = list(self.prior.keys())
+            keys2 = list(self.fits[0].p.keys())
             parameters = np.intersect1d(keys1, keys2)
 
             fit_parameters = {parameter : self.fits[0].p[parameter] for parameter in parameters}
@@ -536,7 +536,6 @@ class bootstrapper(object):
 
         C = np.cov([x, y])
         eVe, eVa = np.linalg.eig(C)
-        #print eVe, eVa
         for e, v in zip(eVe, eVa.T):
             plt.plot([np.mean(x)-1*np.sqrt(e)*v[0], 1*np.sqrt(e)*v[0] + np.mean(x)],
                      [np.mean(y)-1*np.sqrt(e)*v[1], 1*np.sqrt(e)*v[1] + np.mean(y)],
@@ -571,7 +570,6 @@ class bootstrapper(object):
         return fig
 
     def plot_fit_bar_graph(self):
-        #print "----Plotting fit bar graph-----"
 
         y = 1
         labels = np.array([])
@@ -639,21 +637,19 @@ class bootstrapper(object):
 
         plt.legend()
 
-        plt.yticks(1*range(len(labels)), labels, fontsize=15, rotation=45)
+        plt.yticks(1*list(range(len(labels))), labels, fontsize=15, rotation=45)
         plt.ylim(-1, y)
         plt.xlabel(self._fmt_key_as_latex('FK/Fpi'), fontsize = 24)
 
         fig = plt.gcf()
         plt.close()
 
-        #print "----Done plotting fit bar graph-----"
 
         return fig
 
 
     def plot_fit_vs_eps2pi(self):
 
-        #print "-----Plotting fit----"
         # used to convert to phys units
         hbar_c = 197.327
 
@@ -754,7 +750,6 @@ class bootstrapper(object):
         fig = plt.gcf()
         plt.close()
 
-        #print "----Done plotting fit----"
         return fig
 
     def plot_parameter_histogram(self, parameter):
