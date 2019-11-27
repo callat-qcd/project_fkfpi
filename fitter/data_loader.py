@@ -139,7 +139,7 @@ class data_loader(object):
 
 
             if fit_info['name'] in output_dict['name']:
-                index = np.asscalar(np.argwhere(output_dict['name'] == fit_info['name']))
+                index = np.argwhere(output_dict['name'] == fit_info['name']).item()
 
                 for key in fit_info.keys():
                     output_dict[key][index] = fit_info[key]
@@ -219,10 +219,10 @@ class data_loader(object):
 
             output_dict = {}
             for key in df_prior.keys():
-                output_dict[key] = np.array(df_prior[key].values(), dtype="object")
+                output_dict[key] = np.array(list(df_prior[key].values()), dtype="object")
 
             if name in output_dict['name']:
-                index = np.asscalar(np.argwhere(output_dict['name'] == name))
+                index = (np.argwhere(output_dict['name'] == name)).item()
                 for key in prior.keys():
                     output_dict[key][index] = prior[key]
                 output_dict['name'][index] = name

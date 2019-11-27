@@ -55,8 +55,8 @@ for fit_type in ['ma-ratio']:
                     if include_logSq:
                         name = name + '_logSq'
 
-                    print name
-                    print "(model, F2, Vol, alphaS, logSq):", (p_dict['fit_type'], p_dict['F2'], include_FV, include_alphaS, include_logSq)
+                    print(name)
+                    print("(model, F2, Vol, alphaS, logSq):", (p_dict['fit_type'], p_dict['F2'], include_FV, include_alphaS, include_logSq))
 
                     # Load data
                     data_loader = dl.data_loader()
@@ -76,4 +76,4 @@ for fit_type in ['ma-ratio']:
                     t1 = time.time()
 
 
-                    print "\nTotal time (s): ", t1 - t0, "\n"
+                    print("\nTotal time (s): ", t1 - t0, "\n")
