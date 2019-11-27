@@ -464,7 +464,6 @@ def bma(switches,result,isospin):
     plot_params = {'x':x, 'pdf':pdf, 'pdfdict':pdfdict, 'cdf':cdf, 'cdfdict':cdfdict}
     return error, plot_params
 
-
 def nnlo_prior_scan(switches,priors):
     for base_model in switches['ansatz']['models']:
         for FPK in switches['scales']:
@@ -704,6 +703,57 @@ def fit_checker(switches,priors):
         print('%34s& %s& %.3f [%2d]& %.2f& %14s& %8s& %8s& %8s& %10s\\\\'\
             %(model.replace('_','\_'),switches['scale'],chi2dof,dof,logGBF,L5,k4,p4,s4,FKFpi))
 
+def check_fit_function(switches,check_point):
+    print('Performing check of fit function')
+    for k in check_point:
+        print('%s = %f' %(k,check_point[k]))
+    switches['ensembles_fit'] = ['check']
+
+    x_check = dict()
+    x_check['check'] = {k:np.inf for k in ['mpiL','mkL']}
+    x_check['check']['alphaS'] = 0.
+
+    y_check = dict()
+    y_check['check'] = 1.19897
+
+    p_check = dict()
+    for k in ['s_4','saS_4','s_6','sk_6','sp_6']:
+        p_check[k] = 0.
+    for key in ['L1','L2','L3','L4','L5','L6','L7','L8','k_4','p_4']:
+        p_check[key] = check_point[key]
+
+    d_e = dict()
+    d_e['x'] = x_check
+    d_e['y'] = y_check
+
+    for FPK in switches['scales']:
+        model = 'xpt_nnlo_'+FPK
+        switches['scale'] = FPK
+        switches['ansatz']['model'] = model
+        if FPK == 'PP':
+            Lchi_check = 4*np.pi * check_point['Fpi']
+        elif FPK == 'PK':
+            Lchi_check = 4*np.pi * np.sqrt(check_point['Fpi'] * check_point['FK'])
+        elif FPK == 'KK':
+            Lchi_check = 4*np.pi * check_point['FK']
+        p_check[('check','Lchi_'+FPK)] = Lchi_check
+        d_e['p'] = p_check
+        #print('debug p',d_e['p'])
+
+        fit_check = xpt.Fit(switches,xyp_init=d_e)
+        fit_check.check_fit_function(check_point)
+
+        # ratio
+        model = 'xpt-ratio_nnlo_'+FPK
+        switches['ansatz']['model'] = model
+
+        #Lchi_check = 4*np.pi * check_point['Fpi']
+        #p_check[('check','Lchi_'+FPK)] = Lchi_check
+        #d_e['p'] = p_check
+
+        fit_check = xpt.Fit(switches,xyp_init=d_e)
+        fit_check.check_fit_function(check_point)
+
 
 if __name__ == "__main__":
     import input_params as ip
@@ -725,6 +775,12 @@ if __name__ == "__main__":
     switches   = ip.switches
     priors     = ip.priors
     phys_point = ip.phys_point
+    check_fit  = ip.check_fit
+
+    # check fit
+    if switches['check_fit']:
+        check_fit_function(switches,check_fit)
+        sys.exit()
 
     # Load data
     data    = h5.open_file('FK_Fpi_data.h5','r')

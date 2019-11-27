@@ -16,13 +16,13 @@ switches['ensembles_fit'] = [
     'a15m220','a12m220S','a12m220','a12m220L','a09m220',
     'a12m130','a15m135XL'
     ]
-switches['ensembles_fit'] = [
-    'a12m400','a09m400',
-    'a12m350','a09m350',
-    'a12m310','a09m310',
-    'a12m220S','a12m220','a12m220L','a09m220',
-    'a12m130'
-    ]
+#switches['ensembles_fit'] = [
+#    'a12m400','a09m400',
+#    'a12m350','a09m350',
+#    'a12m310','a09m310',
+#    'a12m220S','a12m220','a12m220L','a09m220',
+#    'a12m130'
+#    ]
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = [
     'xpt_nnlo'                      ,'ma_nnlo',
@@ -43,11 +43,12 @@ switches['ansatz']['models'] = [
     'xpt-ratio_nnlo_FV_alphaS_logSq','ma-ratio_nnlo_FV_alphaS_logSq'
 ]
 switches['ansatz']['models'] = [
-    'xpt_nnlo'                      ,'ma_nnlo',
-    'xpt_nnlo_alphaS'               ,'ma_nnlo_alphaS',
-    'xpt_nnlo_FV'                   ,'ma_nnlo_FV',
-    'xpt_nnlo_FV_alphaS'            ,'ma_nnlo_FV_alphaS',
-]
+    #'xpt_nnlo'                      ,'ma_nnlo',
+    #'xpt_nnlo_alphaS'               ,'ma_nnlo_alphaS',
+    #'xpt_nnlo_FV'                   ,'ma_nnlo_FV',
+    'xpt_nnlo_FV_alphaS'            ,'xpt_nnlo_FV_alphaS_logSq',
+    'xpt_nnlo_FV_alphaS_a4'            ,'xpt_nnlo_FV_alphaS_a4_logSq',
+    ]
 #switches['ansatz']['models'] =  ['xpt_nnlo_FV']#,'xpt_nnlo_FV_logSq']
 #    'xpt_nnlo_FV_alphaS_logSq',
 #    'xpt_nnlo_FV_alphaS'
@@ -95,7 +96,6 @@ switches['scales']          = ['PP','PK','KK']
 #switches['scales']          = ['PP']
 #switches['scales']          = ['F0']
 switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
-switches['nnlo_correct']    = True
 switches['do_analysis']     = True
 # use optimized (True) or default (False) priors
 switches['optimized_priors']  = False
@@ -104,7 +104,7 @@ switches['bs_bias']         = True
 # use scipy instead of GSL?
 switches['scipy']           = False
 # fit options
-switches['print_fit']       = False
+switches['print_fit']       = True
 switches['report_fit']      = False
 switches['make_plots']      = True
 switches['verbose']         = False
@@ -115,21 +115,25 @@ switches['refine_prior']    = True
 # fit checks
 switches['nlo_report']      = False
 switches['nlo_fv_report']   = False
-switches['check_fit']       = False
+#switches['check_fit']       = False
 # DEBUGGING
 switches['debug']           = False
 switches['debug_phys']      = False
+switches['debug_nnlo_check']= False
+# testing NNLO function
+switches['check_fit']       = False # need a new name
+switches['FF_approximate']  = False
 
 priors = dict()
 priors['L5']   = gv.gvar(0, 0.005)
 priors['L4']   = gv.gvar(0, 0.005)
 
-priors['L1']   = gv.gvar( 0.0005,.001)
-priors['L2']   = gv.gvar( 0.0008,.001)
-priors['L3']   = gv.gvar(-0.003,.001)
-priors['L6']   = gv.gvar( 0.0002,.001)
-priors['L7']   = gv.gvar(-0.0003,.001)
-priors['L8']   = gv.gvar( 0.0005,.001)
+priors['L1']   = gv.gvar( 0.000372,0.000372)
+priors['L2']   = gv.gvar( 0.000493,0.000493)
+priors['L3']   = gv.gvar(-0.003070,0.003070)
+priors['L6']   = gv.gvar( 0.000011,0.000011)
+priors['L7']   = gv.gvar(-0.000340,0.000340)
+priors['L8']   = gv.gvar( 0.000294,0.000294)
 
 ''' default values '''
 n2lo_width = 5.
@@ -137,6 +141,11 @@ priors['s_4']   = gv.gvar(0.0, n2lo_width)
 priors['k_4']   = gv.gvar(0.0, n2lo_width)
 priors['p_4']   = gv.gvar(0.0, n2lo_width)
 priors['saS_4'] = gv.gvar(0.0, n2lo_width)
+
+# Ananthanarayan et al, 1711.11328
+priors['k_4']   = gv.gvar(2.2, 4)
+priors['p_4']   = gv.gvar(7.9, 10)
+
 
 n3lo_width = 5.
 priors['kp_6']  = gv.gvar(0.0, n3lo_width)
@@ -177,3 +186,19 @@ phys_point['Lchi_F0'] = 4*np.pi* gv.gvar(80,1)
 phys_point['aw0'] = 0
 phys_point['w0']  = 0.1714
 phys_point['FKFPi_FLAG'] = gv.gvar(1.1932, 0.0019)
+
+check_fit = dict()
+check_fit['mpi'] = 135.0
+check_fit['mk']  = 495.5
+check_fit['Fpi'] = 92.2
+check_fit['FK']  = 110.5
+check_fit['L1']  =  0.000372
+check_fit['L2']  =  0.000493
+check_fit['L3']  = -0.003070
+check_fit['L4']  =  0.000089
+check_fit['L5']  =  0.000377
+check_fit['L6']  =  0.000011
+check_fit['L7']  = -0.000340
+check_fit['L8']  =  0.000294
+check_fit['k_4'] = -3.0
+check_fit['p_4'] =  4.0
