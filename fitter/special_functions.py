@@ -4,19 +4,13 @@ import scipy.special as ss
 
 # gvar version of modified Bessel function of the second kind
 def fcn_Kn(n, g):
+    if isinstance(g, gv._gvarcore.GVar):
+        f = ss.kn(n, gv.mean(g))
+        dfdg = ss.kvp(n, gv.mean(g), 1)
 
-    ymean = ss.kn(n, gv.mean(g))
-
-    if isinstance(g, gv._gvarcore.GVar) or (np.ndim(g) == 1 and isinstance(g[0], gv._gvarcore.GVar)):
-        if (np.ndim(g) == 1 and gv.sdev(g[0]) == 0): # prevents assertion error
-            return ymean
-
-        ysdev = np.abs(ss.kvp(n, gv.mean(g), 1)) * gv.sdev(g)
-
-        #print gv.gvar(ymean, ysdev)
-        return gv.gvar(ymean, ysdev)
+        return gv.gvar_function(g, f, dfdg)
     else:
-        return ymean
+        return ss.kn(n, gv.mean(g))
 
 # I(m) in notes
 def fcn_I_m(m, L, mu, order):
@@ -43,19 +37,22 @@ def fcn_dI_m(m, L, mu, order):
     return output
 
 # K(m, M) in notes
-def fcn_K_mM((m, M), L, mu, order):
+def fcn_K_mM(mM, L, mu, order):
+    m, M = mM
     output = 1.0/(M**2 - m**2) *(fcn_I_m(M, L, mu, order) - fcn_I_m(m, L, mu, order))
     return output
 
 # K_21(m, M) in notes
-def fcn_K21_mM((m, M), L, mu, order):
+def fcn_K21_mM(mM, L, mu, order):
+    m, M = mM
     output = (
         1.0/(M**2 - m**2)**2 *(fcn_I_m(M, L, mu, order) - fcn_I_m(m, L, mu, order))
         - 1.0/(M**2 - m**2) *fcn_dI_m(m, L, mu, order)
     )
     return output
 
-def fcn_K_m1m2m3((m1, m2, m3), L, mu, order):
+def fcn_K_m1m2m3(m1m2m3, L, mu, order):
+    m1, m2, m3 = m1m2m3
     output = (
         1.0/((m1**2 - m2**2) *(m1**2 - m3**2)) *fcn_I_m(m1, L, mu, order)
         + 1.0/((m2**2 - m1**2) *(m2**2 - m3**2)) *fcn_I_m(m2, L, mu, order)

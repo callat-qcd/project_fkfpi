@@ -67,8 +67,8 @@ for fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
                     if include_logSq:
                         name = name + '_logSq'
 
-                    print name
-                    print "(model, F2, Vol, alphaS, logSq):", (p_dict['fit_type'], p_dict['F2'], include_FV, include_alphaS, include_logSq)
+                    print(name)
+                    print("(model, F2, Vol, alphaS, logSq):", (p_dict['fit_type'], p_dict['F2'], include_FV, include_alphaS, include_logSq))
 
                     # Load data
                     data_loader = dl.data_loader()
@@ -92,7 +92,7 @@ for fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
                             output_filename='fits/'+name
                         )
                     else:
-                        print bootstrapper
+                        print(bootstrapper)
 
                     if p_dict['save_results']:
                         data_loader.save_fit_info(bootstrapper.get_fit_info())
@@ -100,4 +100,4 @@ for fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
 
                     t1 = time.time()
 
-                    print "\nTotal time (s): ", t1 - t0, "\n"
+                    print("\nTotal time (s): ", t1 - t0, "\n")
