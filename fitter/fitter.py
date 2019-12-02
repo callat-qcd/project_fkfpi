@@ -7,7 +7,7 @@ from .special_functions import *
 
 class fitter(object):
 
-    def __init__(self, order, fit_type, fit_data=None, prior=None, chain_fits=True):
+    def __init__(self, order, fit_type, F2, fit_data=None, prior=None, chain_fits=True):
         self.prior = prior
         self.fit_data = fit_data
         self.fit = None
@@ -15,6 +15,7 @@ class fitter(object):
         self.order = order
         self.fit_type = fit_type
         self.chain_fits = chain_fits
+        self.F2 = F2
 
     def _make_fitargs(self, z):
         y_data = self._make_y_data()
@@ -62,16 +63,8 @@ class fitter(object):
             fitter = lsqfit.MultiFitter(models=models)
             fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
         else:
-            for model in models:
-                fitter = lsqfit.MultiFitter(models=model)
-                fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
-                for key in fit.p:
-                    if key in ['L_4', 'L_5']:
-                        #pass
-                        prior[key] = gv.gvar(fit.pmean[key], 3*fit.psdev[key])
-                    elif key in ['A_a', 'A_p', 'A_k']:
-                        prior[key] = fit.p[key]
-                        #pass
+            fitter = lsqfit.MultiFitter(models=models)
+            fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
 
         self.fit = fit
         print("Done!")
@@ -88,27 +81,11 @@ class fitter(object):
                             order=self.order, fit_type=fit_type))
             return models
 
-        if not self.chain_fits:
-            order = self.order.copy()
-            models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
-                        order=order, fit_type=self.fit_type))
-            return models
 
-        if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
-            order = self.order.copy()
-            order['fit'] = 'nlo'
-            models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
-                        order=order, fit_type=self.fit_type))
-        if self.order['fit'] in ['nnlo', 'nnnlo']:
-            order = self.order.copy()
-            order['fit'] = 'nnlo'
-            models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
-                        order=order, fit_type=self.fit_type))
-        if self.order['fit'] in ['nnnlo']:
-            order = self.order.copy()
-            order['fit'] = 'nnnlo'
-            models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
-                        order=order, fit_type=self.fit_type))
+        order = self.order.copy()
+        models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
+                    order=order, fit_type=self.fit_type))
+
         return models
 
     def _make_prior(self, fit_data=None):
@@ -158,23 +135,6 @@ class fitter(object):
             newprior['L_5'] = prior['L_5']
 
 
-        if order['fit'] in ['nnlo', 'nnnlo']:
-            newprior['A_a'] = prior['A_a']
-            newprior['A_k'] = prior['A_k']
-            newprior['A_p'] = prior['A_p']
-
-        if order['fit'] in ['nnnlo']:
-            newprior['A_aa'] = prior['A_aa']
-            newprior['A_ak'] = prior['A_ak']
-            newprior['A_ap'] = prior['A_ap']
-            newprior['A_kk'] = prior['A_kk']
-            newprior['A_kp'] = prior['A_kp']
-            newprior['A_pp'] = prior['A_pp']
-
-        if order['include_log'] == True:
-            newprior['A_loga'] = prior['A_loga']
-            newprior['alpha_s'] = fit_data['alpha_s']
-
         for key in self.order['exclude']:
             if key in newprior.keys():
                 del(newprior[key])
@@ -205,12 +165,13 @@ class fitter(object):
 
 class fk_fpi_model(lsqfit.MultiFitterModel):
 
-    def __init__(self, datatag, fit_type, order):
+    def __init__(self, datatag, fit_type, order, F2):
         super(fk_fpi_model, self).__init__(datatag)
 
-        # Fit data
-        self.order = order
         self.fit_type = fit_type
+        self.order = order
+        self.F2 = F2
+
 
     def fitfcn(self, p, fit_data=None):
         if fit_data is not None:
@@ -227,8 +188,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 output = self.fitfcn_xpt_ratio(p)
             elif self.fit_type == 'xpt':
                 output = self.fitfcn_xpt(p)
-            elif self.fit_type == 'ma-old':
-                output = self.fitfcn_ma_old(p)
 
         if self.order['fit'] in ['nnlo', 'nnnlo']:
             output = output + self.fitfcn_nnlo_cts(p)
@@ -236,257 +195,74 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if self.order['fit'] in ['nnnlo']:
             output = output + self.fitfcn_nnnlo_cts(p)
 
-        if self.order['include_log']:
-            output = output + self.fitfcn_nnlo_log_ct(p)
+        return output
 
-        if self.order['include_log2']:
-            output = output + self.fitfcn_nnlo_log2_ct(p)
+    def fitfcn_kr_j(self, p, j):
+        lam2_chi = p['lam2_chi']
+        mpi = p['mpi']
+        mk = p['mk']
+
+        c = {}
+        if j == 1:
+            c['kk'], c['kp'], c['pp'] = [0, 11./24, 131./192]
+        elif j == 2:
+            c['kk'], c['kp'], c['pp'] = [0, -41./96, -3./32]
+        elif j == 3:
+            c['kk'], c['kp'], c['pp'] = [0, 13./24, 59./96]
+        elif j == 4:
+            c['kk'], c['kp'], c['pp'] = [17./36, 7./144, 0]
+        elif j == 5:
+            c['kk'], c['kp'], c['pp'] = [-163./144, -67./288, 3./32]
+        elif j ==6:
+            c['kk'], c['kp'], c['pp'] = [241./288, -13./72, -61./192]
+
+        output = (
+            + c['kk'] *mk**2
+            + c['kp'] *mk *mpi
+            + c['pp'] *mpi**2
+        ) / lam2_chi
 
         return output
 
-    def fitfcn_nnlo_cts(self, p):
-        #w0 = p['w0']
 
+    def fitfcn_nnlo_cts(self, p):
         lam2_chi = p['lam2_chi']
         eps2_a = (p['a/w0'])**2 / (4 *np.pi)
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
+        eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi
 
-        for key in self.order['exclude']:
-            p[key] = 0
+        fcn_l = lambda x : x *np.log(x)
 
-        output = (
-            + (eps2_a) *p['A_a']
-            + (eps2_k) *p['A_k']
-            + (eps2_pi) *p['A_p']
-        )
+        if self.F2 == 'FKFK':
+            output = (3./2) *(
+                + (3./8) * fcn_l(eps2_pi)
+                + (3./4) * fcn_l(eps2_k)
+                + (3./8) * fcn_l(eps2_eta)
 
-        for key in self.order['exclude']:
-            del(p[key])
+                - 4 *(4 *np.pi)**2 *(
+                    + eps2_pi *p['L_4']
+                    + eps2_k *(2 *p['L_4'] + p['L_5'])
+                )
+            )
+        elif self.F2 == 'FKFpi':
+            output = 0
+        elif self.F2 == 'FpiFpi':
+            output = 0
 
         return output *(eps2_k - eps2_pi)
 
     def fitfcn_nnnlo_cts(self, p):
-
-        #w0 = p['w0']
-
-        lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
-        eps2_pi = p['mpi']**2 / lam2_chi
-        eps2_k = p['mk']**2 / lam2_chi
-
-        for key in self.order['exclude']:
-            p[key] = 0
-
-        output = (
-              + (eps2_a) *(
-                + eps2_a *p['A_aa']
-                #+ (eps2_k - eps2_pi) *p['A_ax']
-                + eps2_k *p['A_ak']
-                + eps2_pi *p['A_ap']
-              )
-              #+ (eps2_k - eps2_pi) *(
-                #+ (eps2_k - eps2_pi) *p['A_xx']
-                #+ eps2_k *p['A_xk']
-                #+ eps2_pi *p['A_xp']
-              #)
-              + (eps2_k) *(
-                + eps2_k *p['A_kk']
-                + eps2_pi *p['A_kp']
-              )
-              + (eps2_pi) *(
-                + eps2_pi *p['A_pp']
-              )
-        )
-
-        for key in self.order['exclude']:
-            del(p[key])
-
-        return output *(eps2_k - eps2_pi)
-
-    def fitfcn_nnlo_log_ct(self, p):
-        lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
-        eps2_pi = p['mpi']**2 / lam2_chi
-        eps2_k = p['mk']**2 / lam2_chi
-        alpha_s = p['alpha_s']
-
-        output = (
-            alpha_s *eps2_a *(eps2_k - eps2_pi) *p['A_loga']
-        )
-        return output
-
-    def fitfcn_nnlo_log2_ct(self, p):
-        lam2_chi = p['lam2_chi']
-        eps2_pi = p['mpi']**2 / lam2_chi
-        eps2_k = p['mk']**2 / lam2_chi
-
-        output = (
-            (1.0 / 96.0) *(eps2_k - eps2_pi) *(17 *eps2_k + 37 *eps2_pi) *(np.log(np.sqrt(eps2_pi *eps2_k)))**2
-        )
-        return output
+        return None
 
     def fitfcn_ma_ratio(self, p):
-        # Constants
-        order_vol = self.order['vol']
-
-        # Independent variables
-        mju = p['mju']
-        mpi = p['mpi']
-        mk = p['mk']
-        mru = p['mru']
-        msj = p['mjs'] #msj = mjs
-        mss = p['mss']
-        mrs = p['mrs']
-        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2) + p['a2DI'])
-
-        del2_ju = p['a2DI']
-        del2_rs = del2_ju
-        L = p['L']
-
-        lam2_chi = p['lam2_chi']
-        mu = np.sqrt(lam2_chi)
-        F2 = lam2_chi /(4*np.pi)**2
-
-        eps2_pi = mpi**2 / lam2_chi
-        eps2_k = mk**2 / lam2_chi
-
-        Fpi_nlo_per_F0 = (
-            + 1
-
-            - fcn_I_m(mju, L, mu, order_vol) / F2
-            - (1.0/2.0) *fcn_I_m(mru, L, mu, order_vol) / F2
-
-            + 4 *eps2_pi *(4 *np.pi)**2 *(p['L_4'] + p['L_5'])
-            + 8 *eps2_k *(4 *np.pi)**2 *p['L_4']
-        )
-
-        FK_nlo_per_F0 = (
-            + 1
-
-            - (1.0/2.0) *fcn_I_m(mju, L, mu, order_vol) / F2
-            + (1.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
-            - (1.0/4.0) *fcn_I_m(mru, L, mu, order_vol) / F2
-            - (1.0/2.0) *fcn_I_m(msj, L, mu, order_vol) / F2
-            - (1.0/4.0) *fcn_I_m(mrs, L, mu, order_vol) / F2
-            + (1.0/4.0) *fcn_I_m(mss, L, mu, order_vol) / F2
-            - (3.0/8.0) *fcn_I_m(mx, L, mu, order_vol) / F2
-
-            + 4 *eps2_pi *(4 *np.pi)**2 *p['L_4']
-            + 4 *eps2_k *(4 *np.pi)**2 *(2 *p['L_4'] + p['L_5'])
-
-            + del2_ju *(
-                - fcn_dI_m(mpi, L, mu, order_vol) / (8 *F2)
-                + fcn_K_mM((mpi, mx), L, mu, order_vol) / (4 *F2)
-            )
-            - (del2_ju)**2 *(
-                + fcn_K21_mM((mpi, mx), L, mu, order_vol) / (24 *F2)
-            )
-            + del2_ju *del2_rs *(
-                - fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2) # May need to change sign
-                + fcn_K21_mM((mss, mx), L, mu, order_vol) / (12 *F2)
-            )
-            + del2_rs *(
-                + fcn_K_mM((mss, mx), L, mu, order_vol) / (4 *F2)
-                - (mk)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
-                + (mpi)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
-            )
-        )
-
-        return FK_nlo_per_F0 / Fpi_nlo_per_F0
-
+        return None
 
     def fitfcn_ma(self, p):
-        # Constants
-        order_vol = self.order['vol']
-
-        # Independent variables
-        mju = p['mju']
-        mpi = p['mpi']
-        mk = p['mk']
-        mru = p['mru']
-        msj = p['mjs'] #msj = mjs
-        mss = p['mss']
-        mrs = p['mrs']
-        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2) + p['a2DI'])
-
-        del2_ju = p['a2DI']
-        del2_rs = del2_ju
-        L = p['L']
-
-        lam2_chi = p['lam2_chi']
-        mu = np.sqrt(lam2_chi)
-        F2 = lam2_chi /(4*np.pi)**2
-
-        output = (
-            1
-
-            + (1.0/2.0) *fcn_I_m(mju, L, mu, order_vol) / F2
-            + (1.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
-            + (1.0/4.0) *fcn_I_m(mru, L, mu, order_vol) / F2
-            - (1.0/2.0) *fcn_I_m(msj, L, mu, order_vol) / F2
-            + (1.0/4.0) *fcn_I_m(mss, L, mu, order_vol) / F2
-            - (1.0/4.0) *fcn_I_m(mrs, L, mu, order_vol) / F2
-            - (3.0/8.0) *fcn_I_m(mx, L, mu, order_vol) / F2
-
-            + del2_ju *(
-                - fcn_dI_m(mpi, L, mu, order_vol) / (8 *F2)
-                + fcn_K_mM((mpi, mx), L, mu, order_vol) / (4 *F2)
-            )
-            - (del2_ju)**2 *(
-                + fcn_K21_mM((mpi, mx), L, mu, order_vol) / (24 *F2)
-            )
-            + del2_ju *del2_rs *(
-                - fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2)
-                + fcn_K21_mM((mss, mx), L, mu, order_vol) / (12 *F2)
-            )
-            + del2_rs *(
-                + fcn_K_mM((mss, mx), L, mu, order_vol) / (4 *F2)
-                - (mk)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
-                + (mpi)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
-            )
-
-            + 4 *(4 *np.pi)**2 *(mk**2 - mpi**2) / lam2_chi *p['L_5']
-        )
-
-        return output
-
+        return None
 
     def fitfcn_xpt_ratio(self, p):
-        # Constants
-        order_vol = self.order['vol']
-
-        # Independent variables
-        mpi = p['mpi']
-        mk = p['mk']
-        meta = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2))
-
-        lam2_chi = p['lam2_chi']
-        eps2_pi = mpi**2 / lam2_chi
-        eps2_k = mk**2 / lam2_chi
-        #eps2_eta = meta**2 / lam2_chi
-
-        L = p['L']
-        mu = np.sqrt(lam2_chi)
-        F2 = lam2_chi /(4*np.pi)**2
-
-        Fpi_nlo_per_F0 = (1
-            - fcn_I_m(mpi, L, mu, order_vol) / F2
-            - (1.0/2.0) *fcn_I_m(mk, L, mu, order_vol) / F2
-            + 4 *eps2_pi *(4 *np.pi)**2 *(p['L_4'] + p['L_5'])
-            + 8 *eps2_k *(4 *np.pi)**2 *p['L_4']
-        )
-
-        FK_nlo_per_F0 = (1
-            - (3.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
-            - (3.0/4.0) *fcn_I_m(mk, L, mu, order_vol) / F2
-            - (3.0/8.0) *fcn_I_m(meta, L, mu, order_vol) / F2
-            + 4 *eps2_pi *(4 *np.pi)**2 *p['L_4']
-            + 4 *eps2_k *(4 *np.pi)**2 *(2 *p['L_4'] + p['L_5'])
-        )
-
-        return FK_nlo_per_F0 / Fpi_nlo_per_F0
-
+        return None
 
     def fitfcn_xpt(self, p):
 
@@ -496,7 +272,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         # Independent variables
         mpi = p['mpi']
         mk = p['mk']
-        meta = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2))
+        meta = np.sqrt((4./3) *(mk**2) - (1./3) *(mpi**2))
 
         lam2_chi = p['lam2_chi']
         eps2_pi = mpi**2 / lam2_chi
@@ -510,121 +286,11 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         output = (
             1
             + 1*(
-            + (5.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
-            - (1.0/4.0) *fcn_I_m(mk, L, mu, order_vol) / F2
-            - (3.0/8.0) *fcn_I_m(meta, L, mu, order_vol) / F2)
+            + (5./8) *fcn_I_m(mpi, L, mu, order_vol) / F2
+            - (1./4) *fcn_I_m(mk, L, mu, order_vol) / F2
+            - (3./8) *fcn_I_m(meta, L, mu, order_vol) / F2)
             + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
         )
-
-        return output
-
-
-    # Taken from arxiv/1701.07559, eqn (17);
-    # finite volume correction from notes
-    def fitfcn_ma_old(self, p):
-
-        # Constants
-        pi = np.pi
-
-        # Independent variables
-        lam2_chi = p['lam2_chi']
-        eps2_pi = p['mpi']**2 / lam2_chi
-        eps2_k = p['mk']**2 / lam2_chi
-        eps2_ss = p['mss']**2 / lam2_chi
-        eps2_ju = p['mju']**2 / lam2_chi
-        eps2_ru = p['mru']**2 / lam2_chi
-        eps2_sj = p['mjs']**2 / lam2_chi
-        eps2_rs = p['mrs']**2 / lam2_chi
-        del2_pq = p['a2DI'] / lam2_chi
-        #del2_pq = p['a2DI'] / lam2_chi
-        eps2_x = (4.0/3.0) *eps2_k - (1.0/3.0) *eps2_pi + del2_pq
-        L = p['L']
-
-        # Log terms
-        l_ju, l_pi, l_sj, l_ru, l_rs, l_ss, l_x = [np.log(eps2) for eps2
-                                                     in [eps2_ju, eps2_pi, eps2_sj,
-                                                         eps2_ru, eps2_rs, eps2_ss, eps2_x]]
-
-        output = (1 +
-                 + 1/2.0 *eps2_ju *l_ju
-                 + 1/8.0 *l_pi *(
-                    + eps2_pi
-                    - del2_pq *(eps2_x + eps2_pi) / (eps2_x - eps2_pi)
-                    + (del2_pq)**2 *eps2_x / (3.0 *(eps2_x - eps2_pi)**2)
-                    - 4 *(del2_pq)**2 *eps2_pi / (3.0 *(eps2_x - eps2_pi) *(eps2_ss - eps2_pi))
-                 )
-                 - 1/2.0 *eps2_sj *l_sj
-                 + 1/4.0 *eps2_ru *l_ru
-                 - 1/4.0 *eps2_rs *l_rs
-                 + 1/4.0 *l_ss *(
-                    + eps2_ss
-                    + del2_pq *(3 *(eps2_ss)**2 + 2 *(eps2_k - eps2_pi) *eps2_x - 3 *eps2_ss *eps2_x) / (3.0 *(eps2_x - eps2_ss)**2)
-                    - (del2_pq)**2 *(2 *(eps2_ss)**2 - eps2_x *(eps2_ss + eps2_pi)) / (3.0 *(eps2_x - eps2_ss)**2 *(eps2_ss - eps2_pi))
-                 )
-                 - 3/8.0 *eps2_x *l_x *(
-                    + 1
-                    - 2 *del2_pq / (3.0 *(eps2_x -eps2_pi))
-                    + del2_pq *(4 *(eps2_k - eps2_pi) + 6 *(eps2_ss - eps2_x)) / (9.0 *(eps2_x - eps2_ss)**2)
-                    + (del2_pq)**2 / (9.0 *(eps2_x - eps2_pi)**2)
-                    - 2 *(del2_pq)**2 *(2 *eps2_ss - eps2_pi - eps2_x) / (9.0 *(eps2_x - eps2_ss)**2 *(eps2_x - eps2_pi))
-                 )
-                  + (del2_pq *(eps2_k - eps2_pi)) / (6.0 *(eps2_x - eps2_ss))
-                  + (del2_pq)**2 / (24.0 *(eps2_x - eps2_pi))
-                  - (del2_pq)**2 / (12.0 *(eps2_x - eps2_ss))
-                  - del2_pq / 8.0
-                  + 4 *(eps2_k - eps2_pi) *(4*pi)**2 *p['L_5']
-        )
-
-        # Next add finite volume corrections
-        # Constants
-        c = [None, 6, 12, 8, 6, 24, 24, 0, 12, 30, 24]
-        order_vol = self.order['vol']
-
-        # Variables
-        L = L = p['L']
-        lam2_chi = p['lam2_chi']
-        to_eps2 = lambda x : x**2/lam2_chi
-
-        mju = p['mju']
-        mpi = p['mpi']
-        mss = p['mss']
-        mk = p['mk']
-        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2) + p['a2DI'])
-
-        del2_ju = p['a2DI']
-        del2_rs = p['a2DI']
-
-        eps2_ju = to_eps2(mju)
-        eps2_pi = to_eps2(mpi)
-        eps2_ss = to_eps2(mss)
-        eps2_x = to_eps2(mx)
-
-        eps2_D_ju = (del2_ju/lam2_chi)
-        eps2_D_rs = (del2_rs/lam2_chi)
-
-        for n in range(1, np.min((order_vol, 11))):
-            xju = mju *L *n
-            xpi = mpi *L *n
-
-            output = output + c[n]*(
-                + 2 *eps2_ju *fcn_Kn(1, xju) / xju
-                + (1.0/2.0) *eps2_pi *fcn_Kn(1, xpi) / xpi
-                - (1.0/8.0) *eps2_D_ju *(
-                    + 2 *fcn_Kn(1, xpi) / xpi
-                    - fcn_Kn(0, xpi)
-                    - fcn_Kn(2, xpi)
-                )
-                - eps2_D_ju *eps2_pi / (eps2_x - eps2_pi) *fcn_Kn(1, xpi) / xpi
-                + (1/24) *(eps2_D_ju)**2 *(
-                    + 4 *eps2_pi / (eps2_x - eps2_pi)**2 *fcn_Kn(1, xpi) / xpi
-                    + 1 / (eps2_x - eps2_pi) *(
-                        + 2 *fcn_Kn(1, xpi) / xpi
-                        - fcn_Kn(0, xpi)
-                        - fcn_Kn(2, xpi)
-                    )
-                )
-                + (2.0/3.0) *eps2_D_ju *eps2_D_rs *eps2_pi / ((eps2_pi - eps2_x) *(eps2_pi - eps2_ss)) *fcn_Kn(1, xpi) / xpi
-            )
 
         return output
 

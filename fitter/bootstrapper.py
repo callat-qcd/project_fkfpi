@@ -205,14 +205,14 @@ class bootstrapper(object):
         prepped_data = self._make_fit_data(j)
         # Need to randomize prior in bayesian-bootstrap hybrid
         temp_prior = self._randomize_prior(self.prior, j)
-        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior,
+        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
                         order=self.order, fit_type=self.fit_type, chain_fits=self.chain_fits)
         return temp_fitter.get_fit()
 
     def _make_empbayes_fit(self):
         prepped_data = self._make_fit_data(0)
         temp_prior = self._randomize_prior(self.prior, 0)
-        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior,
+        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
                         order=self.order, fit_type=self.fit_type, chain_fits=self.chain_fits)
         return temp_fitter.get_empbayes_fit()
 
