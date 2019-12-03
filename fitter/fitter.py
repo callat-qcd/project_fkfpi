@@ -3,7 +3,7 @@ import numpy as np
 import gvar as gv
 
 # import fcn_T_m, fcn_dI_m, etc
-from .special_functions import *
+from .special_functions import fcn_Kn, fcn_I_m, fcn_dI_m, fcn_K_mM, fcn_K21_mM, fcn_K_m1m2m3, fcn_Kr_j, FF
 
 class fitter(object):
 
@@ -78,13 +78,13 @@ class fitter(object):
             order = self.order.copy()
             for fit_type in ['ma', 'xpt']:
                 models = np.append(models, fk_fpi_model(datatag=fit_type+'_'+order['fit'],
-                            order=self.order, fit_type=fit_type))
+                            F2=self.F2, order=self.order, fit_type=fit_type))
             return models
 
 
         order = self.order.copy()
         models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
-                    order=order, fit_type=self.fit_type))
+                    F2=self.F2, order=order, fit_type=self.fit_type))
 
         return models
 
@@ -178,6 +178,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             for key in fit_data.keys():
                 p[key] = fit_data[key]
 
+        for key in self.order['exclude']:
+            p[key] = 0
+
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             # mixed-action/xpt fits
             if self.fit_type == 'ma-ratio':
@@ -195,32 +198,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if self.order['fit'] in ['nnnlo']:
             output = output + self.fitfcn_nnnlo_cts(p)
 
-        return output
-
-    def fitfcn_kr_j(self, p, j):
-        lam2_chi = p['lam2_chi']
-        mpi = p['mpi']
-        mk = p['mk']
-
-        c = {}
-        if j == 1:
-            c['kk'], c['kp'], c['pp'] = [0, 11./24, 131./192]
-        elif j == 2:
-            c['kk'], c['kp'], c['pp'] = [0, -41./96, -3./32]
-        elif j == 3:
-            c['kk'], c['kp'], c['pp'] = [0, 13./24, 59./96]
-        elif j == 4:
-            c['kk'], c['kp'], c['pp'] = [17./36, 7./144, 0]
-        elif j == 5:
-            c['kk'], c['kp'], c['pp'] = [-163./144, -67./288, 3./32]
-        elif j ==6:
-            c['kk'], c['kp'], c['pp'] = [241./288, -13./72, -61./192]
-
-        output = (
-            + c['kk'] *mk**2
-            + c['kp'] *mk *mpi
-            + c['pp'] *mpi**2
-        ) / lam2_chi
+        for key in self.order['exclude']:
+            del(p[key])
 
         return output
 
@@ -267,7 +246,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
     def fitfcn_xpt(self, p):
 
         # Constants
-        order_vol = self.order['vol']
+        #order_vol = self.order['vol']
 
         # Independent variables
         mpi = p['mpi']
@@ -277,19 +256,31 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         lam2_chi = p['lam2_chi']
         eps2_pi = mpi**2 / lam2_chi
         eps2_k = mk**2 / lam2_chi
-        #eps2_eta = mx**2 / lam2_chi
+        eps2_eta = meta**2 / lam2_chi
 
-        L = p['L']
-        mu = np.sqrt(lam2_chi)
-        F2 = lam2_chi /(4*np.pi)**2
+        #L = p['L']
+        #mu = np.sqrt(lam2_chi)
+        #F2 = lam2_chi /(4*np.pi)**2
+
+        fcn_l = lambda x : x *np.log(x)
 
         output = (
-            1
-            + 1*(
-            + (5./8) *fcn_I_m(mpi, L, mu, order_vol) / F2
-            - (1./4) *fcn_I_m(mk, L, mu, order_vol) / F2
-            - (3./8) *fcn_I_m(meta, L, mu, order_vol) / F2)
+            + 1
+
+            + (5./8) *fcn_l(eps2_pi)
+            - (1./4) *fcn_l(eps2_k)
+            - (3./8) *fcn_l(eps2_eta)
+
             + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
+
+            + eps2_k**2 *FF(eps2_pi/eps2_k)
+
+            + fcn_Kr_j(1, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_pi)
+            + fcn_Kr_j(2, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_k)
+            + fcn_Kr_j(3, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_eta)
+            + fcn_Kr_j(4, mpi, mk, lam2_chi) *np.log(eps2_k) *np.log(eps2_k)
+            + fcn_Kr_j(5, mpi, mk, lam2_chi) *np.log(eps2_k) *np.log(eps2_eta)
+            + fcn_Kr_j(6, mpi, mk, lam2_chi) *np.log(eps2_eta) *np.log(eps2_eta)
         )
 
         return output
