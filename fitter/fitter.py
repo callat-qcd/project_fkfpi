@@ -1,9 +1,11 @@
 import lsqfit
 import numpy as np
 import gvar as gv
+import sys
+import os
 
-# import fcn_T_m, fcn_dI_m, etc
-from .special_functions import fcn_Kn, fcn_I_m, fcn_dI_m, fcn_K_mM, fcn_K21_mM, fcn_K_m1m2m3, fcn_Kr_j, FF
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import special_functions as sf
 
 class fitter(object):
 
@@ -133,6 +135,16 @@ class fitter(object):
         elif self.fit_type == 'simultaneous':
             newprior['L_4'] = prior['L_4']
             newprior['L_5'] = prior['L_5']
+
+
+        newprior['L_1'] = prior['L_1']
+        newprior['L_2'] = prior['L_2']
+        newprior['L_3'] = prior['L_3']
+        newprior['L_4'] = prior['L_4']
+        newprior['L_5'] = prior['L_5']
+        newprior['L_6'] = prior['L_6']
+        newprior['L_7'] = prior['L_7']
+        newprior['L_8'] = prior['L_8']
 
 
         for key in self.order['exclude']:
@@ -273,14 +285,18 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
             + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
 
-            + eps2_k**2 *FF(eps2_pi/eps2_k)
+            + eps2_k**2 *sf.fcn_FF(eps2_pi/eps2_k)
 
-            + fcn_Kr_j(1, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_pi)
-            + fcn_Kr_j(2, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_k)
-            + fcn_Kr_j(3, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_eta)
-            + fcn_Kr_j(4, mpi, mk, lam2_chi) *np.log(eps2_k) *np.log(eps2_k)
-            + fcn_Kr_j(5, mpi, mk, lam2_chi) *np.log(eps2_k) *np.log(eps2_eta)
-            + fcn_Kr_j(6, mpi, mk, lam2_chi) *np.log(eps2_eta) *np.log(eps2_eta)
+            + sf.fcn_Kr_j(1, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_pi)
+            + sf.fcn_Kr_j(2, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_k)
+            + sf.fcn_Kr_j(3, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_eta)
+            + sf.fcn_Kr_j(4, mpi, mk, lam2_chi) *np.log(eps2_k) *np.log(eps2_k)
+            + sf.fcn_Kr_j(5, mpi, mk, lam2_chi) *np.log(eps2_k) *np.log(eps2_eta)
+            + sf.fcn_Kr_j(6, mpi, mk, lam2_chi) *np.log(eps2_eta) *np.log(eps2_eta)
+
+            + sf.fcn_Cr_j(1, mpi, mk, lam2_chi, p) *np.log(eps2_pi)
+            + sf.fcn_Cr_j(2, mpi, mk, lam2_chi, p) *np.log(eps2_k)
+            + sf.fcn_Cr_j(3, mpi, mk, lam2_chi, p) *np.log(eps2_eta)
         )
 
         return output

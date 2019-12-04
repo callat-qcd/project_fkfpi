@@ -2,8 +2,9 @@ import gvar as gv
 import numpy as np
 import scipy.special as ss
 import sys
+import os
 
-sys.path.append("../fitter/py_chiron")
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/py_chiron")
 import chiron
 
 
@@ -99,7 +100,68 @@ def fcn_Kr_j(j, mpi, mk, lam2_chi):
 
     return output
 
-def FF(x):
+def fcn_Cr_j(j, mpi, mk, lam2_chi, p):
+
+    c = {}
+    if j in [1, 2, 3]:
+        if j == 1:
+            c['kk'] = 0
+            c['kp'] = -(+ 7./9
+                        + (4 *np.pi)**2 *(
+                            11./2 *p['L_5']
+                            )
+                        )
+            c['pp'] = -(+ 113./72
+                        + (4 *np.pi)**2 *(
+                            4 *p['L_1'] + 10 *p['L_2'] + 13./2 *p['L_3'] - 21./2 * p['L_5']
+                            )
+                        )
+
+        elif j == 2:
+            c['kk'] = +(+ 53./96
+                        + (4 *np.pi)**2 *(
+                            4 *p['L_1'] + 10 *p['L_2'] + 5 *p['L_3'] - 5 *p['L_5']
+                            )
+                        )
+            c['kp'] = +(+ 209./144
+                        + (4 *np.pi)**2 *(
+                            3 *p['L_5']
+                            )
+                        )
+            c['pp'] = 0
+
+        elif j == 3:
+            c['kk'] = +(+ 13./8
+                        + (4 *np.pi)**2 *(
+                            8./3 *p['L_3'] - 2./3 *p['L_5'] - 16 *p['L_7'] - 8 *p['L_8']
+                            )
+                        )
+            c['kp'] = -(+ 4./9
+                        + (4 *np.pi)**2 *(
+                            4./3 *p['L_3'] + 25./6 *p['L_5'] - 32 *p['L_7'] - 16 *p['L_8']
+                            )
+                        )
+            c['pp'] = +(+ 19./288
+                        + (4 *np.pi)**2 *(
+                            1./6 *p['L_3'] + 11./6 *p['L_5'] - 16 *p['L_7'] - 8 *p['L_8']
+                            )
+                        )
+
+        output = (
+            + c['kk'] *mk**2
+            + c['kp'] *mk *mpi
+            + c['pp'] *mpi**2
+        ) / lam2_chi
+
+        return output
+
+    elif j ==4:
+        return None
+
+    else:
+        return None
+
+def fcn_FF(x):
     stepSize = 1e-7
     # input is a vector
     if hasattr(x, "__len__"):
