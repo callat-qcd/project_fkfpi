@@ -226,7 +226,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         fcn_l = lambda x : x *np.log(x)
 
         if self.F2 == 'FKFK':
-            output = (3./2) *(
+            output = (3./2) *(eps2_k - eps2_pi) *(
                 + (3./8) * fcn_l(eps2_pi)
                 + (3./4) * fcn_l(eps2_k)
                 + (3./8) * fcn_l(eps2_eta)
@@ -235,13 +235,34 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                     + eps2_pi *p['L_4']
                     + eps2_k *(2 *p['L_4'] + p['L_5'])
                 )
+
+            output = (
+                + output
+                + 2 *(eps2_k - eps2_pi)**2 *(
+                    + (5./8) * fcn_l(eps2_pi)
+                    - (1./4) * fcn_l(eps2_k)
+                    - (3./8) * fcn_l(eps2_eta)
+                    + 4 *(4 *np.pi)**2 *(
+                        + eps2_pi *p['L_4']
+                    )
+                )**2
             )
+
         elif self.F2 == 'FKFpi':
             output = 0
-        elif self.F2 == 'FpiFpi':
-            output = 0
 
-        return output *(eps2_k - eps2_pi)
+        elif self.F2 == 'FpiFpi':
+            output = (3./2) *(eps2_k - eps2_pi) *(
+                + fcn_l(eps2_pi)
+                + (1./2) * fcn_l(eps2_k)
+
+                - 4 *(4 *np.pi)**2 *(
+                    + eps2_pi *(p['L_4'] + p['L_5'])
+                    + eps2_k *(2 *p['L_4'])
+                )
+            )
+
+        return output
 
     def fitfcn_nnnlo_cts(self, p):
         return None
