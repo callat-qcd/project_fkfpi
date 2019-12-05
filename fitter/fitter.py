@@ -345,8 +345,23 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         output = output + extra_ct
         return output
 
-
     def fitfcn_nnlo_log_ct(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+        eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi
+
+        output = (
+            + sf.fcn_Cr_j(1, eps2_pi, eps2_k, p) *np.log(eps2_pi)
+            + sf.fcn_Cr_j(2, eps2_pi, eps2_k, p) *np.log(eps2_k)
+            + sf.fcn_Cr_j(3, eps2_pi, eps2_k, p) *np.log(eps2_eta)
+        )
+
+        if self.debug:
+            print('log', output)
+        return output
+
+    def fitfcn_nnlo_log2_ct(self, p):
         lam2_chi = p['lam2_chi']
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
@@ -365,21 +380,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             print('logSq', output)
         return output
 
-    def fitfcn_nnlo_log2_ct(self, p):
-        lam2_chi = p['lam2_chi']
-        eps2_pi = p['mpi']**2 / lam2_chi
-        eps2_k = p['mk']**2 / lam2_chi
-        eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi
-
-        output = (
-            + sf.fcn_Cr_j(1, eps2_pi, eps2_k, p) *np.log(eps2_pi)
-            + sf.fcn_Cr_j(2, eps2_pi, eps2_k, p) *np.log(eps2_k)
-            + sf.fcn_Cr_j(3, eps2_pi, eps2_k, p) *np.log(eps2_eta)
-        )
-
-        if self.debug:
-            print('log', output)
-        return output
 
     def fitfcn_nnnlo_cts(self, p):
         return None
@@ -402,10 +402,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_k = p['mk']**2 / lam2_chi
         eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi
 
-        if self.debug:
-            print('eps2_pi', eps2_pi)
-            print('eps2_k', eps2_k)
-            print('eps2_eta', eps2_eta)
         #L = p['L']
         #mu = np.sqrt(lam2_chi)
         #F2 = lam2_chi /(4*np.pi)**2

@@ -131,7 +131,7 @@ def fcn_Cr_j(j, eps2_pi, eps2_k, p):
         c['pp']['lecs'] = 0
 
     elif j == 3:
-        c['kk']['const'] = (13./8)
+        c['kk']['const'] = (13./18)
         c['kk']['lecs'] = (8./3 *p['L_3'] - 2./3 *p['L_5'] - 16 *p['L_7'] - 8 *p['L_8'])
 
         c['kp']['const'] = -(4./9)
