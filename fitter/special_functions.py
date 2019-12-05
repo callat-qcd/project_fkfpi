@@ -76,11 +76,11 @@ def fcn_K_m1m2m3(m1m2m3, L, mu, order):
     return output
 
 ### functions from hep-ph/1711.11328
-def fcn_Kr_j(j, mpi, mk, lam2_chi):
+def fcn_Kr_j(j, eps2_pi, eps2_k):
 
     c = {}
     if j == 1:
-        c['kk'], c['kp'], c['pp'] = [0, 11./24, 131./192]
+        c['kk'], c['kp'], c['pp'] = [0, 11./24, -131./192]
     elif j == 2:
         c['kk'], c['kp'], c['pp'] = [0, -41./96, -3./32]
     elif j == 3:
@@ -93,73 +93,60 @@ def fcn_Kr_j(j, mpi, mk, lam2_chi):
         c['kk'], c['kp'], c['pp'] = [241./288, -13./72, -61./192]
 
     output = (
-        + c['kk'] *mk**2
-        + c['kp'] *mk *mpi
-        + c['pp'] *mpi**2
-    ) / lam2_chi
+        + c['kk'] *eps2_k**2
+        + c['kp'] *eps2_k *eps2_pi
+        + c['pp'] *eps2_pi**2
+    )
 
     return output
 
-def fcn_Cr_j(j, mpi, mk, lam2_chi, p):
+def fcn_Cr_j(j, eps2_pi, eps2_k, p):
 
-    c = {}
-    if j in [1, 2, 3]:
-        if j == 1:
-            c['kk'] = 0
-            c['kp'] = -(+ 7./9
-                        + (4 *np.pi)**2 *(
-                            11./2 *p['L_5']
-                            )
-                        )
-            c['pp'] = -(+ 113./72
-                        + (4 *np.pi)**2 *(
-                            4 *p['L_1'] + 10 *p['L_2'] + 13./2 *p['L_3'] - 21./2 * p['L_5']
-                            )
-                        )
-
-        elif j == 2:
-            c['kk'] = +(+ 53./96
-                        + (4 *np.pi)**2 *(
-                            4 *p['L_1'] + 10 *p['L_2'] + 5 *p['L_3'] - 5 *p['L_5']
-                            )
-                        )
-            c['kp'] = +(+ 209./144
-                        + (4 *np.pi)**2 *(
-                            3 *p['L_5']
-                            )
-                        )
-            c['pp'] = 0
-
-        elif j == 3:
-            c['kk'] = +(+ 13./8
-                        + (4 *np.pi)**2 *(
-                            8./3 *p['L_3'] - 2./3 *p['L_5'] - 16 *p['L_7'] - 8 *p['L_8']
-                            )
-                        )
-            c['kp'] = -(+ 4./9
-                        + (4 *np.pi)**2 *(
-                            4./3 *p['L_3'] + 25./6 *p['L_5'] - 32 *p['L_7'] - 16 *p['L_8']
-                            )
-                        )
-            c['pp'] = +(+ 19./288
-                        + (4 *np.pi)**2 *(
-                            1./6 *p['L_3'] + 11./6 *p['L_5'] - 16 *p['L_7'] - 8 *p['L_8']
-                            )
-                        )
-
-        output = (
-            + c['kk'] *mk**2
-            + c['kp'] *mk *mpi
-            + c['pp'] *mpi**2
-        ) / lam2_chi
-
-        return output
-
-    elif j ==4:
+    if j not in [1, 2, 3]:
         return None
 
-    else:
-        return None
+    c = {
+        'kk' : {},
+        'kp' : {},
+        'pp' : {}
+    }
+    if j == 1:
+        c['kk']['const'] = 0
+        c['kk']['lecs'] = 0
+
+        c['kp']['const'] = -(7./9)
+        c['kp']['lecs'] = -(11./2 *p['L_5'])
+
+        c['pp']['const'] = -(113./72)
+        c['pp']['lecs'] = -(4 *p['L_1'] + 10 *p['L_2'] + 13./2 *p['L_3'] - 21./2 * p['L_5'])
+
+    elif j == 2:
+        c['kk']['const'] = (53./96)
+        c['kk']['lecs'] = (4 *p['L_1'] + 10 *p['L_2'] + 5 *p['L_3'] - 5 *p['L_5'])
+
+        c['kp']['const'] = (209./144)
+        c['kp']['lecs'] = (3 *p['L_5'])
+
+        c['pp']['const'] = 0
+        c['pp']['lecs'] = 0
+
+    elif j == 3:
+        c['kk']['const'] = (13./8)
+        c['kk']['lecs'] = (8./3 *p['L_3'] - 2./3 *p['L_5'] - 16 *p['L_7'] - 8 *p['L_8'])
+
+        c['kp']['const'] = -(4./9)
+        c['kp']['lecs'] = -(4./3 *p['L_3'] + 25./6 *p['L_5'] - 32 *p['L_7'] - 16 *p['L_8'])
+
+        c['pp']['const'] = (19./288)
+        c['pp']['lecs'] = (1./6 *p['L_3'] + 11./6 *p['L_5'] - 16 *p['L_7'] - 8 *p['L_8'])
+
+    output = (
+        + (c['kk']['const'] + (4 *np.pi)**2 *c['kk']['lecs']) *eps2_k**2
+        + (c['kp']['const'] + (4 *np.pi)**2 *c['kp']['lecs']) *eps2_k *eps2_pi
+        + (c['pp']['const'] + (4 *np.pi)**2 *c['pp']['lecs']) *eps2_pi**2
+    )
+
+    return output
 
 def fcn_FF(x):
     stepSize = 1e-7

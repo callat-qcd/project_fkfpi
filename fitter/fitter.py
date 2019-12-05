@@ -136,15 +136,18 @@ class fitter(object):
             newprior['L_4'] = prior['L_4']
             newprior['L_5'] = prior['L_5']
 
+        if order['include_log']:
+            newprior['L_1'] = prior['L_1']
+            newprior['L_2'] = prior['L_2']
+            newprior['L_3'] = prior['L_3']
+            newprior['L_4'] = prior['L_4']
+            newprior['L_7'] = prior['L_7']
+            newprior['L_8'] = prior['L_8']
 
-        newprior['L_1'] = prior['L_1']
-        newprior['L_2'] = prior['L_2']
-        newprior['L_3'] = prior['L_3']
-        newprior['L_4'] = prior['L_4']
-        newprior['L_5'] = prior['L_5']
-        newprior['L_6'] = prior['L_6']
-        newprior['L_7'] = prior['L_7']
-        newprior['L_8'] = prior['L_8']
+        if order['fit'] in ['nnlo', 'nnnlo']:
+            newprior['L_6'] = prior['L_6']
+            newprior['A_k'] = prior['A_k']
+            newprior['A_p'] = prior['A_p']
 
 
         for key in self.order['exclude']:
@@ -183,9 +186,13 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         self.fit_type = fit_type
         self.order = order
         self.F2 = F2
+        self.debug = False
 
 
-    def fitfcn(self, p, fit_data=None):
+    def fitfcn(self, p, fit_data=None, debug=None):
+        if debug is not None:
+            self.debug = debug
+
         if fit_data is not None:
             for key in fit_data.keys():
                 p[key] = fit_data[key]
@@ -193,6 +200,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         for key in self.order['exclude']:
             p[key] = 0
 
+        # NLO fits
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             # mixed-action/xpt fits
             if self.fit_type == 'ma-ratio':
@@ -204,21 +212,48 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             elif self.fit_type == 'xpt':
                 output = self.fitfcn_xpt(p)
 
+        if debug:
+            temp = output
+
         if self.order['fit'] in ['nnlo', 'nnnlo']:
             output = output + self.fitfcn_nnlo_cts(p)
+            output = output + self.fitfcn_mu_fix(p)
+            output = output + self.fitfcn_FF_ct(p)
 
         if self.order['fit'] in ['nnnlo']:
             output = output + self.fitfcn_nnnlo_cts(p)
 
+        if self.order['include_log']:
+            output = output + self.fitfcn_nnlo_log_ct(p)
+
+        if self.order['include_log2']:
+            output = output + self.fitfcn_nnlo_log2_ct(p)
+
         for key in self.order['exclude']:
             del(p[key])
 
+        if self.debug:
+            print('nnlo', output - temp)
+            print('p', p)
+
+
+
         return output
 
-
-    def fitfcn_nnlo_cts(self, p):
+    def fitfcn_FF_ct(self, p):
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+
+        output = eps2_k**2 *sf.fcn_FF(eps2_pi/eps2_k)
+
+        if self.debug:
+            print('FF', output)
+        return output
+
+    def fitfcn_mu_fix(self, p):
+        lam2_chi = p['lam2_chi']
+        #eps2_a = (p['a/w0'])**2 / (4 *np.pi)
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
         eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi
@@ -235,17 +270,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                     + eps2_pi *p['L_4']
                     + eps2_k *(2 *p['L_4'] + p['L_5'])
                 )
-
-            output = (
-                + output
-                + 2 *(eps2_k - eps2_pi)**2 *(
-                    + (5./8) * fcn_l(eps2_pi)
-                    - (1./4) * fcn_l(eps2_k)
-                    - (3./8) * fcn_l(eps2_eta)
-                    + 4 *(4 *np.pi)**2 *(
-                        + eps2_pi *p['L_4']
-                    )
-                )**2
             )
 
         elif self.F2 == 'FKFpi':
@@ -262,6 +286,99 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 )
             )
 
+        if self.debug:
+            print('mu fix', output)
+        return output
+
+    # Find a better name for this later
+    def fitfcn_other(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+        eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi
+
+        output = (
+            + (5./8) * fcn_l(eps2_pi)
+            - (1./4) * fcn_l(eps2_k)
+            - (3./8) * fcn_l(eps2_eta)
+
+            + 4 *(4 *np.pi)**2 *(
+                + eps2_pi *p['L_4']
+            )
+        )
+
+        return output
+
+    def fitfcn_nnlo_cts(self, p):
+        lam2_chi = p['lam2_chi']
+        #eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+
+        output = (
+            #+ (eps2_a) *p['A_a']
+            + (eps2_k) *p['A_k']
+            + (eps2_pi) *p['A_p']
+        ) *(eps2_k - eps2_pi)
+
+        if self.debug:
+            print('ct', output)
+
+        extra_ct = (4 *np.pi)**2 *(eps2_k - eps2_pi) *(
+            + eps2_k *(
+                + 8 *(4 *np.pi)**2 *p['L_5']*(
+                    + 8 *p['L_4'] + 3 *p['L_5'] - 16 *p['L_6'] - 8 *p['L_8']
+                )
+                - 2 *p['L_1'] - p['L_2'] - 1./18 *p['L_3'] +4./3 *p['L_5'] - 16 *p['L_7'] - 8 *p['L_8']
+            )
+            + eps2_pi *(
+                + 8 *(4 *np.pi)**2 *p['L_5']*(
+                    + 4 *p['L_4'] + 5 *p['L_5'] - 8 *p['L_6'] - 8 *p['L_8']
+                )
+                - 2 *p['L_1'] - p['L_2'] - 5./18 *p['L_3'] - 4./3 *p['L_5'] + 16 *p['L_7'] + 8 *p['L_8']
+            )
+        )
+
+        if self.debug:
+            print('extra ct', extra_ct)
+
+        output = output + extra_ct
+        return output
+
+
+    def fitfcn_nnlo_log_ct(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+        eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi
+
+        output = (
+            + sf.fcn_Kr_j(1, eps2_pi, eps2_k) *np.log(eps2_pi) *np.log(eps2_pi)
+            + sf.fcn_Kr_j(2, eps2_pi, eps2_k) *np.log(eps2_pi) *np.log(eps2_k)
+            + sf.fcn_Kr_j(3, eps2_pi, eps2_k) *np.log(eps2_pi) *np.log(eps2_eta)
+            + sf.fcn_Kr_j(4, eps2_pi, eps2_k) *np.log(eps2_k) *np.log(eps2_k)
+            + sf.fcn_Kr_j(5, eps2_pi, eps2_k) *np.log(eps2_k) *np.log(eps2_eta)
+            + sf.fcn_Kr_j(6, eps2_pi, eps2_k) *np.log(eps2_eta) *np.log(eps2_eta)
+        )
+
+        if self.debug:
+            print('logSq', output)
+        return output
+
+    def fitfcn_nnlo_log2_ct(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+        eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi
+
+        output = (
+            + sf.fcn_Cr_j(1, eps2_pi, eps2_k, p) *np.log(eps2_pi)
+            + sf.fcn_Cr_j(2, eps2_pi, eps2_k, p) *np.log(eps2_k)
+            + sf.fcn_Cr_j(3, eps2_pi, eps2_k, p) *np.log(eps2_eta)
+        )
+
+        if self.debug:
+            print('log', output)
         return output
 
     def fitfcn_nnnlo_cts(self, p):
@@ -280,17 +397,15 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         # Constants
         #order_vol = self.order['vol']
-
-        # Independent variables
-        mpi = p['mpi']
-        mk = p['mk']
-        meta = np.sqrt((4./3) *(mk**2) - (1./3) *(mpi**2))
-
         lam2_chi = p['lam2_chi']
-        eps2_pi = mpi**2 / lam2_chi
-        eps2_k = mk**2 / lam2_chi
-        eps2_eta = meta**2 / lam2_chi
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+        eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi
 
+        if self.debug:
+            print('eps2_pi', eps2_pi)
+            print('eps2_k', eps2_k)
+            print('eps2_eta', eps2_eta)
         #L = p['L']
         #mu = np.sqrt(lam2_chi)
         #F2 = lam2_chi /(4*np.pi)**2
@@ -305,21 +420,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             - (3./8) *fcn_l(eps2_eta)
 
             + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
-
-            + eps2_k**2 *sf.fcn_FF(eps2_pi/eps2_k)
-
-            + sf.fcn_Kr_j(1, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_pi)
-            + sf.fcn_Kr_j(2, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_k)
-            + sf.fcn_Kr_j(3, mpi, mk, lam2_chi) *np.log(eps2_pi) *np.log(eps2_eta)
-            + sf.fcn_Kr_j(4, mpi, mk, lam2_chi) *np.log(eps2_k) *np.log(eps2_k)
-            + sf.fcn_Kr_j(5, mpi, mk, lam2_chi) *np.log(eps2_k) *np.log(eps2_eta)
-            + sf.fcn_Kr_j(6, mpi, mk, lam2_chi) *np.log(eps2_eta) *np.log(eps2_eta)
-
-            + sf.fcn_Cr_j(1, mpi, mk, lam2_chi, p) *np.log(eps2_pi)
-            + sf.fcn_Cr_j(2, mpi, mk, lam2_chi, p) *np.log(eps2_k)
-            + sf.fcn_Cr_j(3, mpi, mk, lam2_chi, p) *np.log(eps2_eta)
         )
 
+        if self.debug:
+            print('1 + nlo', output)
         return output
 
     def buildprior(self, prior, mopt=None, extend=False):

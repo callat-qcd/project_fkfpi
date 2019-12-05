@@ -304,7 +304,7 @@ class bootstrapper(object):
         if include_su2_isospin_corrrection is None:
             include_su2_isospin_corrrection = self.include_su2_isospin_corrrection
 
-        output = self.fk_fpi_fit_fcn(self.get_phys_point_data())
+        output = self.fk_fpi_fit_fcn(fit_data=self.get_phys_point_data())
         if include_su2_isospin_corrrection:
             output *= np.sqrt(1 + self.get_delta_su2_correction()) # include SU(2) isospin breaking correction
 
@@ -314,7 +314,7 @@ class bootstrapper(object):
         except TypeError:
             return output
 
-    def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None, fit_type=None):
+    def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None, fit_type=None, debug=None):
         if fit_data is None:
             fit_data = self.get_phys_point_data()
         if fit_parameters is None:
@@ -322,13 +322,8 @@ class bootstrapper(object):
         if fit_type is None:
             fit_type = self.fit_type
 
-        for key in fit_data.keys():
-            fit_parameters[key] = fit_data[key]
-
-        temp_fit = self.fits[0]
-        model_name = list(temp_fit.fcn(temp_fit.p))[-1]
-
-        return temp_fit.fcn(p=fit_parameters)[model_name]
+        model = fitter(order=self.order, fit_type=fit_type, F2=self.F2)._make_models()[0]
+        return model.fitfcn(p=fit_parameters, fit_data=fit_data, debug=debug)
 
     # Returns dictionary with keys fit parameters, entries bs results
     def get_bootstrapped_fit_parameters(self):
