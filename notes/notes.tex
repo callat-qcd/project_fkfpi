@@ -90,15 +90,15 @@ In general, our fits are of the form
 \end{equation}
 where the $n_V$ denotes to which order we fit the finite volume effects.
 \subsection{Special Functions}
-For reference, we use the following special functions in our fits, which encapsulate the finite volume dependence. The values for the $c_n$'s are given in Table \ref{tab:cN_weights}.
+For reference later in these notes, we now list the following special functions in our fits which encapsulate the finite volume dependence. The values for the $c_n$'s are given in Table \ref{tab:cN_weights}.
 \begin{align}
-\mathcal{I}(m) &= \frac{m^2}{(4\pi)^2} \ln \left( \frac{m^2}{\mu^2} \right)
+\mathcal{I}(m) &= \frac{m^2}{(4\pi)^2} \log \left( \frac{m^2}{\mu^2} \right)
 + \frac{m^2}{4\pi^2} \sum_{|\mathbf{n}|\neq0} \frac{c_n}{mL|\mathbf{n}|} K_1(mL|\mathbf{n}|) \label{eqn:I(m)} \\
 %%%
 d\mathcal{I}(m) &=
 \frac{1}{(4\pi)^2} + \frac{\mathcal{I}(m)}{m^2}
 +\sum_{|\mathbf{n}|\neq0} \frac{c_n}{(4\pi)^2} \left[
-\frac{2K_1(mL|\mathbf{n}|)}{mL|\mathbf{n}|}
+\frac{K_1(mL|\mathbf{n}|)}{mL|\mathbf{n}|}
 -K_0(mL|\mathbf{n}|)
 -K_2(mL|\mathbf{n}|)\right] \\
 %%%
@@ -113,6 +113,7 @@ d\mathcal{I}(m) &=
 \nonumber\\&\phantom{=}
 +\frac{1}{m_3^2 - m_1^2} \frac{1}{m_3^2 - m_2^2} \mathcal{I}(m_3)
 \end{align}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 % cN table
@@ -287,6 +288,26 @@ The NNLO and NNNLO counterterms are formed by taking powers of $\epsilon^2_\xi$ 
 \end{equation}
 One might expect a term like $(\epsilon_K^2 - \epsilon_\pi^2)^2 A_{\chi}$ to show up in the NNLO expansion; however, this term is already covered by $[\epsilon_K^2  A_{K}+\epsilon_\pi^2  A_{\pi}] (\epsilon_K^2 - \epsilon_\pi^2)$.
 
+In fact, the pure NNLO counterterm (sans lattice spacing) was worked out in  \cite{Ananthanarayan:2017qmx}. We have that
+\begin{align} \label{eqn:C_j_defn}
+\delta\left(\frac{F_K}{F_\pi}\right)_{\text{NNLO} / \{a^2 \}}
+&= (4 \pi)^2 \left(\epsilon_K^2 - \epsilon_\pi^2\right) \\
+&\times \Bigg\{ 
+8 (4 \pi)^2 \big[ 2 \left(C_{14} + C_{15}\right) \epsilon_K^2 + \left( C_{15} + 2 C_{17} \right) \epsilon_\pi^2 \big] \nonumber \\
+&\phantom{= \Bigg\}} +  \left[ 8 (4 \pi)^2 L_5  \big( 8 L_4 + 3L_5 - 16 L_6 -8L_8 \big)
+-2 L_1 - L_2 - \frac{1}{18} L_3 + \frac{4}{3} L_5 - 16 L_7 - 8 L_8
+\right] \epsilon_K^2 \nonumber \\
+&\phantom{= \Bigg\}} +  \left[ 8 (4 \pi)^2  L_5  \big( 4 L_4 + 5 L_5 - 8 L_6 - 8 L_8 \big)
+-2 L_1 - L_2 - \frac{5}{18} L_3 - \frac{4}{3} L_5 + 16 L_7 + 8 L_8
+\right] \epsilon_\pi^2 \nonumber 
+\Bigg\} \, .
+\end{align}
+When we include the single log terms in our fit (see the next section), we determine the $L_i$ LECs; however, we never determine the $C_{ij}$ constants in our fits. Therefore when we include single log terms, we fit the full counterterm, with $A_K$ and $A_\pi$ absorbing the $C_{ij}$ dependence. That is,
+\begin{align}
+&A_K = 16 (4 \pi)^4 (C_{14} + C_{15}) \qquad A_\pi = 8 (4 \pi)^4 (C_{15} + 2 C_{17}) &&  \text{(only if including single log terms)}
+\end{align}
+When we don't include the single log terms, then attempting to determine all the LECs in \eqref{eqn:C_j_defn} is futile. In this case, we let $(\epsilon_K^2  A_{K} +\epsilon_\pi^2  A_{\pi}) (\epsilon_K^2 - \epsilon_\pi^2)$ stand-in for the entirety of \eqref{eqn:C_j_defn}.
+
 For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$ (and vice-versa).
 \begin{align}
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO} &= \bigg[
@@ -316,6 +337,47 @@ Note that we can't subsume $\alpha_S$ into $A_{\log a}$ since the former varies 
 \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
 + \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}\, .
 \end{equation}
+
+For the $\chi$PT fit in particular, we can use the results derived in \cite{Ananthanarayan:2017qmx}. First, let us define
+The NNLO $\chi$PT fits can be more succinctly written with the following definitions. Let
+\begin{equation}
+\begin{aligned}[c]
+\hat K^r_1  &=  \frac{11}{24} \epsilon_\pi^2 \epsilon_K^2 - \frac{131}{192} \epsilon_\pi^4 \\
+\hat K^r_3 & = \frac{13}{24} \epsilon_\pi^2 \epsilon_K^2 + \frac{59}{96} \epsilon_\pi^4 \qquad \\
+\hat K^r_5  &= -\frac{163}{144}  \epsilon_K^4 - \frac{67}{288} \epsilon_\pi^2 \epsilon_K^2 + \frac{3}{32} \epsilon_\pi^4 \qquad
+\end{aligned}
+\qquad
+\begin{aligned}[c]
+\hat K^r_2 &= -\frac{41}{96} \epsilon_\pi^2 \epsilon_K^2 - \frac{3}{32} \epsilon_\pi^4  \\
+\hat K^r_4 &= \frac{17}{36} \epsilon_K^4 + \frac{7}{144} \epsilon_\pi^2 \epsilon_K^2 \\
+\hat K^r_6 &= \frac{241}{288}  \epsilon_K^4 - \frac{13}{72} \epsilon_\pi^2 \epsilon_K^2 - \frac{61}{192}  \epsilon_\pi^4 \qquad
+\end{aligned}
+\end{equation}
+and also
+\begin{align}
+\hat C^r_1 
+&= - \left[ \frac{7}{9} + \frac{11}{2} (4 \pi)^2 L_5 \right] \epsilon_\pi^2 \epsilon_K^2
+- \left[ \frac{113}{72} + (4 \pi)^2 \left( 
+4 L_1 + 10 L_2 + \frac{13}{2} L_3 - \frac{21}{2} L_5
+\right) \right] \epsilon_\pi^4\\
+\hat C^r_2 
+&=   \left[ \frac{53}{96} + (4 \pi)^2 \left( 
+4 L_1 + 10 L_2 + 5 L_3 - 5 L_5
+\right) \right] \epsilon_K^4
++ \left[ \frac{209}{144} + 3 (4 \pi)^2 L_5 \right] \epsilon_\pi^2 \epsilon_K^2 \\
+\hat C^r_3
+&=   \left[ \frac{13}{18} + (4 \pi)^2 \left( 
+\frac 83 L_3 - \frac 23 L_5 -16 L_7 - 8 L_8
+\right) \right] \epsilon_K^4 \\
+&\qquad 
+- \left[ \frac{4}{9} + 3 (4 \pi)^2 \left(
+\frac 43 L_3 + \frac {25}{6} L_5 -32 L_7 - 16 L_8
+\right) \right] \epsilon_\pi^2 \epsilon_K^2 \nonumber \\
+&\qquad 
++ \left[ \frac{19}{288} + (4 \pi)^2 \left( 
+\frac 16 L_3 + \frac{11}{6} L_5 -16 L_7 - 8 L_8
+\right) \right] \epsilon_\pi^4 \nonumber
+\end{align}
 
 \subsubsection{ SU(2) isospin breaking}
 The breaking of SU(2) isospin symmetry is characterized by

@@ -45,7 +45,7 @@ def fcn_dI_m(m, L, mu, order):
 
     for n in range(1, np.min((order, 11))):
         output = output + c[n]/(4 *np.pi)**2 *(
-            2 *fcn_Kn(1, m *L *np.sqrt(n))/(m *L *np.sqrt(n))
+            + fcn_Kn(1, m *L *np.sqrt(n))/(m *L *np.sqrt(n))
             - fcn_Kn(0, m *L *np.sqrt(n))
             - fcn_Kn(2, m *L *np.sqrt(n))
         )
