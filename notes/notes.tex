@@ -320,11 +320,12 @@ For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^
 Notice that the lattice spacing and $am_\xi$ ($\xi \in \{\pi, K, \eta\}$) corrections are included in these counterterms. For example, the term $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$ accounts for the lowest order lattice spacing correction. Further note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of terms at that order.
 
 \subsubsection{Semi-NNLO counterterms}
-Finally, there are counterterms that lies between NNLO and NNNLO. These come in three varieties: 
+Finally, there are counterterms that lies between NNLO and NNNLO. These come in four varieties: 
 \begin{enumerate}
 	\item semi-NNLO lattice spacing corrections
 	\item single log terms
 	\item log-squared terms
+	\item pure sunset
 \end{enumerate}
 As it turns out, the lattice space discretization corrections cannot be exactly accounted for by a purely polynomial expansion: there remains a semi-NNLO counterterm that goes as $\sim \epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2) \log(a)$. Since $\alpha_S \sim \log(a)$, we have the first semi-NNLO correction:
 \begin{equation}
@@ -391,13 +392,26 @@ Then
   +\hat K^r_6 \left( \log \epsilon_\eta^2 \right)^2 \nonumber
 \end{align}
 
+The decomposition of the log-squared terms and the sunset terms is not unique. The remaining terms two-loop terms are encapsulated by the following function, which is implemented in \texttt{CHIRON} \cite{Bijnens:2014gsa}. A python wrapper of \texttt{chiron.FF} was written for this project.
+\begin{equation}
+\delta\left(\frac{F_K}{F_\pi}\right)_{\text{sunset}} = F_F \left( \frac{m_\pi^2}{m_K^2}\right)
+\end{equation}
+
 In totality, the semi-NNLO terms are
 \begin{equation}
 \delta\left(\frac{F_K}{F_\pi}\right)_{\text{semi-NNLO}} =
 \delta\left(\frac{F_K}{F_\pi}\right)_{\alpha_S}
 + \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
-+ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}\, .
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{sunset}} \, .
 \end{equation}
+
+\subsubsection{Renormalization scale dependence}
+In our analysis, we have three choices for the chiral symmetry scale:
+\begin{equation}
+\Lambda_\chi  = 4 \pi \{ F_\pi, \sqrt{F_\pi F_K}, F_K\} \, .
+\end{equation}
+We make the agnostic choice of averaging the results of all three choices (see section \ref{section:model_average}). However, there's a nick in this approach: the choice of $F$ actually introduces errors at NNLO.
 
 
 \subsubsection{ SU(2) isospin breaking}
@@ -473,7 +487,7 @@ where $m^{(res)}_q$ is the residual mass of quark $q$ (which characterizes the b
 \section{The Weeds}
 The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
 
-\subsection{Model Average}
+\subsection{Model Average} \label{section:model_average}
 Per section \ref{Fit Functions}, we see that our analysis includes numerous possible models: we have four different base models, three choices for $\Lambda_\chi$, counterterms to three orders, log-squared and semi-log terms, and up to ten volume corrections. Our model average is determined by weighing included models by their Bayes factor, as will be explained shortly. However, even without explaining this weighing process, it should be clear that fits having a comparatively small Bayes factor will contribute negligibly to the fit. In particular, the NLO fits have Bayes factors many orders of magnitude smaller than the NNLO fits. We therefore exclude the NLO fits from our analysis.
 
 In the other direction, we exclude the NNNLO fits. These fits can have much better Bayes factors (comparable to the NNLO fits), but the fits are also highly sensitive to choice of prior, which we can only weakly determine (see subsection \ref{Selection of Prior} below). We therefore exclude the NNNLO fits due to the lack of a robust measure by which we can judge whether the priors have been set appropriately.
