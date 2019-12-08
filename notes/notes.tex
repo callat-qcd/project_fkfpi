@@ -22,6 +22,7 @@
 \newcommand{\mydate}{\ \today \ - \number\hour :\number\minute}
 \newcommand{\includegraphicsifexists}[2][]{\IfFileExists{#2}{\includegraphics[draft=false, #1]{#2}}{\includegraphics[draft=true, #1]{#2}}}
 
+\raggedbottom
 
 \begin{document}
 
@@ -319,41 +320,20 @@ For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^
 Notice that the lattice spacing and $am_\xi$ ($\xi \in \{\pi, K, \eta\}$) corrections are included in these counterterms. For example, the term $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$ accounts for the lowest order lattice spacing correction. Further note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of terms at that order.
 
 \subsubsection{Semi-NNLO counterterms}
-Finally, there are counterterms that lies between NNLO and NNNLO. Per eqn (15) of \cite{Beane:2006kx}, we include an NNLO log-squared term
+Finally, there are counterterms that lies between NNLO and NNNLO. These come in three varieties: 
+\begin{enumerate}
+	\item semi-NNLO lattice spacing corrections
+	\item single log terms
+	\item log-squared terms
+\end{enumerate}
+As it turns out, the lattice space discretization corrections cannot be exactly accounted for by a purely polynomial expansion: there remains a semi-NNLO counterterm that goes as $\sim \epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2) \log(a)$. Since $\alpha_S \sim \log(a)$, we have the first semi-NNLO correction:
 \begin{equation}
-\delta\left(\frac{F_K}{F_\pi}\right)_\text{log-log-NNLO} =
-\frac{1}{6144} \left( \epsilon_K^2 - \epsilon_\pi^2 \right) \left( 17 \epsilon_K^2 + 37 \epsilon_\pi^2 \right) \left[\log \left(\epsilon_K \epsilon_\pi \right) \right]^2
+\delta\left(\frac{F_K}{F_\pi}\right)_{\alpha_S} =
+A_{\log a} \alpha_S \, \epsilon_a^2  (\epsilon_K^2 - \epsilon_\pi^2) \, .
 \end{equation}
-It's contribution, however, appears to be minuscule: its effect is on the order of between $10^{-4}$ and $10^{-3}$, depending on the ensemble.
+Note that we can't subsume $\alpha_S$ into $A_{\log a}$ since the former varies by ensemble. 
 
-As it turns out, the lattice space discretization corrections cannot be exactly accounted for by a purely polynomial expansion: there remains a semi-NNLO counterterm that goes as $\sim \epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2) \log(a)$. Since $\alpha_S \sim \log(a)$, we add another counterterm:
-\begin{equation}
-\delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}} =
-A_{\log a} \alpha_S \, \epsilon_a^2  (\epsilon_K^2 - \epsilon_\pi^2)
-\end{equation}
-Note that we can't subsume $\alpha_S$ into $A_{\log a}$ since the former varies by ensemble. In totality, the semi-NNLO terms are
-\begin{equation}
-\delta\left(\frac{F_K}{F_\pi}\right)_{\text{semi-NNLO}} =
-\delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
-+ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}\, .
-\end{equation}
-
-For the $\chi$PT fit in particular, we can use the results derived in \cite{Ananthanarayan:2017qmx}. First, let us define
-The NNLO $\chi$PT fits can be more succinctly written with the following definitions. Let
-\begin{equation}
-\begin{aligned}[c]
-\hat K^r_1  &=  \frac{11}{24} \epsilon_\pi^2 \epsilon_K^2 - \frac{131}{192} \epsilon_\pi^4 \\
-\hat K^r_3 & = \frac{13}{24} \epsilon_\pi^2 \epsilon_K^2 + \frac{59}{96} \epsilon_\pi^4 \qquad \\
-\hat K^r_5  &= -\frac{163}{144}  \epsilon_K^4 - \frac{67}{288} \epsilon_\pi^2 \epsilon_K^2 + \frac{3}{32} \epsilon_\pi^4 \qquad
-\end{aligned}
-\qquad
-\begin{aligned}[c]
-\hat K^r_2 &= -\frac{41}{96} \epsilon_\pi^2 \epsilon_K^2 - \frac{3}{32} \epsilon_\pi^4  \\
-\hat K^r_4 &= \frac{17}{36} \epsilon_K^4 + \frac{7}{144} \epsilon_\pi^2 \epsilon_K^2 \\
-\hat K^r_6 &= \frac{241}{288}  \epsilon_K^4 - \frac{13}{72} \epsilon_\pi^2 \epsilon_K^2 - \frac{61}{192}  \epsilon_\pi^4 \qquad
-\end{aligned}
-\end{equation}
-and also
+Next we consider the single log terms, which account for loop-corrections in the chiral expansion. These were also worked out in \cite{Ananthanarayan:2017qmx}. For convenience, we define
 \begin{align}
 \hat C^r_1 
 &= - \left[ \frac{7}{9} + \frac{11}{2} (4 \pi)^2 L_5 \right] \epsilon_\pi^2 \epsilon_K^2
@@ -378,6 +358,47 @@ and also
 \frac 16 L_3 + \frac{11}{6} L_5 -16 L_7 - 8 L_8
 \right) \right] \epsilon_\pi^4 \nonumber
 \end{align}
+Now we can write the second semi-NNLO contribution.
+\begin{equation}
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{log-NNLO} =
+C_1 \log \epsilon_\pi^2
++ C_2  \log \epsilon_K^2
++ C_3 \log \epsilon_\eta^2
+\end{equation}
+
+Finally we include the log-squared two-loop corrections, which again are taken from \cite{Ananthanarayan:2017qmx}.  Let us define 
+\begin{equation}
+\begin{aligned}[c]
+\hat K^r_1  &=  \frac{11}{24} \epsilon_\pi^2 \epsilon_K^2 - \frac{131}{192} \epsilon_\pi^4 \\
+\hat K^r_3 & = \frac{13}{24} \epsilon_\pi^2 \epsilon_K^2 + \frac{59}{96} \epsilon_\pi^4 \qquad \\
+\hat K^r_5  &= -\frac{163}{144}  \epsilon_K^4 - \frac{67}{288} \epsilon_\pi^2 \epsilon_K^2 + \frac{3}{32} \epsilon_\pi^4 \qquad
+\end{aligned}
+\qquad
+\begin{aligned}[c]
+\hat K^r_2 &= -\frac{41}{96} \epsilon_\pi^2 \epsilon_K^2 - \frac{3}{32} \epsilon_\pi^4  \\
+\hat K^r_4 &= \frac{17}{36} \epsilon_K^4 + \frac{7}{144} \epsilon_\pi^2 \epsilon_K^2 \\
+\hat K^r_6 &= \frac{241}{288}  \epsilon_K^4 - \frac{13}{72} \epsilon_\pi^2 \epsilon_K^2 - \frac{61}{192}  \epsilon_\pi^4 \qquad
+\end{aligned}
+\end{equation}
+Then
+\begin{align}
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{log-log-NNLO} &=
+ \hat K^r_1 \left( \log \epsilon_\pi^2 \right)^2
+ + \hat K^r_2 \log \epsilon_\pi^2  \log \epsilon_K^2
+ + \hat K^r_3 \log \epsilon_\pi^2 \log \epsilon_\eta^2 \\
+ &+\hat K^r_4 \left( \log \epsilon_K^2 \right)^2
+ +\hat K^r_5 \log \epsilon_K^2  \log \epsilon_\eta^2
+  +\hat K^r_6 \left( \log \epsilon_\eta^2 \right)^2 \nonumber
+\end{align}
+
+In totality, the semi-NNLO terms are
+\begin{equation}
+\delta\left(\frac{F_K}{F_\pi}\right)_{\text{semi-NNLO}} =
+\delta\left(\frac{F_K}{F_\pi}\right)_{\alpha_S}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}\, .
+\end{equation}
+
 
 \subsubsection{ SU(2) isospin breaking}
 The breaking of SU(2) isospin symmetry is characterized by
@@ -398,7 +419,7 @@ The corrected charge ratio $F^\pm_K/F^\pm_\pi$ is the value reported by FLAG.
 %%%%%%%%%%%%%%%%%%
 \section{Fit Strategy}
 
-From inspections, one sees that the fit depends on the pion, kaon, and mixed meson masses; the taste-identity splitting $\Delta_{rs}^2 = \Delta_{ju}^2 = a^2 \Delta_\text{I}$; the lattice spacing $a$; the Wilson flow scale $w_0$; and the pion and kaon decay constants. First we briefly explain how these quantities were determined, then how we can use them to determine $F_K / F_\pi$ at the physical point.
+From inspections, one sees that the fit depends on the pion, kaon, and mixed meson masses; the taste-identity splitting $\Delta_{rs}^2 = \Delta_{ju}^2 = a^2 \Delta_\text{I}$; the lattice spacing $a$ (or its proxy $a/w_0$); and the pion and kaon decay constants. First we briefly explain how these quantities were determined, then how we can use them to determine $F_K / F_\pi$ at the physical point.
 
 
 \subsection{Meson masses}
