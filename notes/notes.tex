@@ -270,8 +270,6 @@ For these fits,
 -\frac{3}{8} \frac{\mathcal{I}(m_\eta)}{F^2}
 %\nonumber\\&\phantom{=}
 +4(\epsilon_K^2 - \epsilon_\pi^2) (4\pi)^2 L_5
-%\nonumber\\&\phantom{=}
-+ \delta_{c.t.}^{\rm NNLO}
 \end{align}
 A less refined variant of this equation is given in (17) of \cite{Berkowitz:2017opd}.
 
@@ -362,9 +360,9 @@ Next we consider the single log terms, which account for loop-corrections in the
 Now we can write the second semi-NNLO contribution.
 \begin{equation}
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{log-NNLO} =
-C_1 \log \epsilon_\pi^2
-+ C_2  \log \epsilon_K^2
-+ C_3 \log \epsilon_\eta^2
+\hat C^r_1 \log \epsilon_\pi^2
++\hat  C^r_2  \log \epsilon_K^2
++\hat  C^r_3 \log \epsilon_\eta^2
 \end{equation}
 
 Finally we include the log-squared two-loop corrections, which again are taken from \cite{Ananthanarayan:2017qmx}.  Let us define 
@@ -407,11 +405,36 @@ In totality, the semi-NNLO terms are
 \end{equation}
 
 \subsubsection{Renormalization scale dependence}
-In our analysis, we have three choices for the chiral symmetry scale:
+In our analysis, we have three choices for the chiral symmetry breaking scale:
 \begin{equation}
 \Lambda_\chi  = 4 \pi \{ F_\pi, \sqrt{F_\pi F_K}, F_K\} \, .
 \end{equation}
-We make the agnostic choice of averaging the results of all three choices (see section \ref{section:model_average}). However, there's a nick in this approach: the choice of $F$ actually introduces errors at NNLO.
+We make the agnostic choice of averaging the results of all three choices (see section \ref{section:model_average}). However, there's a nick in this approach: the choice of $F$ actually introduces errors at NNLO. We therefore introduce a counterterm to account for our choice of $F^2$:
+\begin{align}
+\delta\left(\frac{F_K}{F_\pi}\right)_{\mu = 4\pi F^2} &=
+\begin{cases}
+\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
+\log \epsilon_\pi^2 + \frac 12 \log \epsilon^2_K \\
+\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 (L_4 + L_5 ) + 2\epsilon_K^2 L_4 \right)
+\big] 
+&\qquad \text{for $F^2= F_\pi^2$} \\ \\
+\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
+\frac{11}{8} \log \epsilon_\pi^2 + \frac 54 \log \epsilon^2_K + \frac 38 \log \epsilon_\eta^2 \\
+\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 (2 L_4 + L_5) + \epsilon_K^2 (4 L_4 + L_5) \right)
+\big] + \xi^2
+&\qquad \text{for $F^2= F_K F_\pi $} \\ \\
+\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
+\frac{3}{8} \log \epsilon_\pi^2 + \frac 34 \log \epsilon^2_K + \frac 38 \log \epsilon_\eta^2 \\
+\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 L_4 + 2\epsilon_K^2  (2 L_4 + L_5) \right)
+\big] + 2 \xi^2
+&\qquad \text{for $F^2= F_K^2$}
+\end{cases}
+\end{align}
+where
+\begin{equation}
+\xi = \frac 58 \log \epsilon_\pi^2 - \frac 14 \log \epsilon_K^2 - \frac 38 \log \epsilon_\eta^2 
++ 4 (4 \pi)^2 \left(\epsilon_K^2 - \epsilon_\pi^2\right) L_5 \, .
+\end{equation}
 
 
 \subsubsection{ SU(2) isospin breaking}
