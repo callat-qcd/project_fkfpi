@@ -301,7 +301,7 @@ In fact, the pure NNLO counterterm (sans lattice spacing) was worked out in  \ci
 \right] \epsilon_\pi^2 \nonumber 
 \Bigg\} \, .
 \end{align}
-When we include the single log terms in our fit (see the next section), we determine the $L_i$ LECs; however, we never determine the $C_{ij}$ constants in our fits. Therefore when we include single log terms, we fit the full counterterm, with $A_K$ and $A_\pi$ absorbing the $C_{ij}$ dependence. That is,
+When we include the single log terms in our fit (see section \ref{section:semi_nnlo}), we determine the $L_i$ LECs; however, we never determine the $C_{ij}$ constants in our fits. Therefore when we include single log terms, we fit the full counterterm, with $A_K$ and $A_\pi$ absorbing the $C_{ij}$ dependence. That is,
 \begin{align}
 &A_K = 16 (4 \pi)^4 (C_{14} + C_{15}) \qquad A_\pi = 8 (4 \pi)^4 (C_{15} + 2 C_{17}) &&  \text{(only if including single log terms)}
 \end{align}
@@ -317,7 +317,39 @@ For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^
 
 Notice that the lattice spacing and $am_\xi$ ($\xi \in \{\pi, K, \eta\}$) corrections are included in these counterterms. For example, the term $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$ accounts for the lowest order lattice spacing correction. Further note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of terms at that order.
 
-\subsubsection{Semi-NNLO counterterms}
+\subsubsection{Renormalization scale dependence}
+In our analysis, we have three choices for the chiral symmetry breaking scale:
+\begin{equation}
+\Lambda_\chi  = 4 \pi \{ F_\pi, \sqrt{F_\pi F_K}, F_K\} \, .
+\end{equation}
+We make the agnostic choice of averaging the results of all three choices (see section \ref{section:model_average}). However, there's a nick in this approach: the choice of $F$ actually introduces errors at NNLO. We therefore introduce a counterterm to account for our choice of $F^2$:
+\begin{align}
+\delta\left(\frac{F_K}{F_\pi}\right)_{\mu = 4\pi F^2} &=
+\begin{cases}
+\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
+\log \epsilon_\pi^2 + \frac 12 \log \epsilon^2_K \\
+\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 (L_4 + L_5 ) + 2\epsilon_K^2 L_4 \right)
+\big] 
+&\qquad \text{for $F^2= F_\pi^2$} \\ \\
+\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
+\frac{11}{8} \log \epsilon_\pi^2 + \frac 54 \log \epsilon^2_K + \frac 38 \log \epsilon_\eta^2 \\
+\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 (2 L_4 + L_5) + \epsilon_K^2 (4 L_4 + L_5) \right)
+\big] + \xi^2
+&\qquad \text{for $F^2= F_K F_\pi $} \\ \\
+\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
+\frac{3}{8} \log \epsilon_\pi^2 + \frac 34 \log \epsilon^2_K + \frac 38 \log \epsilon_\eta^2 \\
+\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 L_4 + 2\epsilon_K^2  (2 L_4 + L_5) \right)
+\big] + 2 \xi^2
+&\qquad \text{for $F^2= F_K^2$}
+\end{cases}
+\end{align}
+where
+\begin{equation}
+\xi = \frac 58 \log \epsilon_\pi^2 - \frac 14 \log \epsilon_K^2 - \frac 38 \log \epsilon_\eta^2 
++ 4 (4 \pi)^2 \left(\epsilon_K^2 - \epsilon_\pi^2\right) L_5 \, .
+\end{equation}
+
+\subsubsection{Semi-NNLO counterterms} \label{section:semi_nnlo}
 Finally, there are counterterms that lies between NNLO and NNNLO. These come in four varieties: 
 \begin{enumerate}
 	\item semi-NNLO lattice spacing corrections
@@ -390,7 +422,7 @@ Then
   +\hat K^r_6 \left( \log \epsilon_\eta^2 \right)^2 \nonumber
 \end{align}
 
-The decomposition of the log-squared terms and the sunset terms is not unique. The remaining terms two-loop terms are encapsulated by the following function, which is implemented in \texttt{CHIRON} \cite{Bijnens:2014gsa}. A python wrapper of \texttt{chiron.FF} was written for this project.
+The decomposition of the log-squared terms and the sunset terms is not unique. The remaining terms two-loop terms are encapsulated by the following function, which is implemented in \texttt{CHIRON} \cite{Bijnens:2014gsa}. A python wrapper for \texttt{chiron.FF} was written for this project.
 \begin{equation}
 \delta\left(\frac{F_K}{F_\pi}\right)_{\text{sunset}} = F_F \left( \frac{m_\pi^2}{m_K^2}\right)
 \end{equation}
@@ -403,39 +435,6 @@ In totality, the semi-NNLO terms are
 + \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}
 + \delta\left(\frac{F_K}{F_\pi}\right)_{\text{sunset}} \, .
 \end{equation}
-
-\subsubsection{Renormalization scale dependence}
-In our analysis, we have three choices for the chiral symmetry breaking scale:
-\begin{equation}
-\Lambda_\chi  = 4 \pi \{ F_\pi, \sqrt{F_\pi F_K}, F_K\} \, .
-\end{equation}
-We make the agnostic choice of averaging the results of all three choices (see section \ref{section:model_average}). However, there's a nick in this approach: the choice of $F$ actually introduces errors at NNLO. We therefore introduce a counterterm to account for our choice of $F^2$:
-\begin{align}
-\delta\left(\frac{F_K}{F_\pi}\right)_{\mu = 4\pi F^2} &=
-\begin{cases}
-\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
-\log \epsilon_\pi^2 + \frac 12 \log \epsilon^2_K \\
-\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 (L_4 + L_5 ) + 2\epsilon_K^2 L_4 \right)
-\big] 
-&\qquad \text{for $F^2= F_\pi^2$} \\ \\
-\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
-\frac{11}{8} \log \epsilon_\pi^2 + \frac 54 \log \epsilon^2_K + \frac 38 \log \epsilon_\eta^2 \\
-\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 (2 L_4 + L_5) + \epsilon_K^2 (4 L_4 + L_5) \right)
-\big] + \xi^2
-&\qquad \text{for $F^2= F_K F_\pi $} \\ \\
-\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
-\frac{3}{8} \log \epsilon_\pi^2 + \frac 34 \log \epsilon^2_K + \frac 38 \log \epsilon_\eta^2 \\
-\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 L_4 + 2\epsilon_K^2  (2 L_4 + L_5) \right)
-\big] + 2 \xi^2
-&\qquad \text{for $F^2= F_K^2$}
-\end{cases}
-\end{align}
-where
-\begin{equation}
-\xi = \frac 58 \log \epsilon_\pi^2 - \frac 14 \log \epsilon_K^2 - \frac 38 \log \epsilon_\eta^2 
-+ 4 (4 \pi)^2 \left(\epsilon_K^2 - \epsilon_\pi^2\right) L_5 \, .
-\end{equation}
-
 
 \subsubsection{ SU(2) isospin breaking}
 The breaking of SU(2) isospin symmetry is characterized by
@@ -509,6 +508,33 @@ where $m^{(res)}_q$ is the residual mass of quark $q$ (which characterizes the b
 
 \section{The Weeds}
 The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
+
+\subsection{Models}
+Including all two-loop corrections, we can write our fit function as follows:
+\begin{align}
+\left(\frac{F_K}{F_\pi}\right)_\text{lattice} &=
+\left(\frac{F_K}{F_\pi}\right)_\text{model}  + \delta \left(\frac{F_K}{F_\pi}\right)_\text{FV} 
+&& \text{NLO + F.V.} \\
+&+ \delta \left(\frac{F_K}{F_\pi}\right)_\text{NNLO}  + \delta \left(\frac{F_K}{F_\pi}\right)_{\mu = 4 \pi F^2} 
+&& \text{NNLO} \nonumber \\
+&+ \delta\left(\frac{F_K}{F_\pi}\right)_{\alpha_S}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{sunset}} 
+&& \text{semi-NNLO} \nonumber
+\end{align}
+
+However, since most of these corrections introduce at least one fitting parameter, it isn't necessarily advantageous to include all these corrections. Instead, we fit several models which are then averaged per section \ref{section:model_average}. To generate the different models, we use the following procedure:
+\begin{enumerate}
+	\item Choose a base model (\texttt{$\chi$PT}, \texttt{ma-ratio}, etc).
+	\item Choose a renormalization scale $\mu = 4 \pi F^2$.
+	\item Add the pure NNLO counterterm (including the lattice spacing term) and the renormalization scale, which is dependent on choice of $F^2$ . That is, we add both NNLO corrections.
+	\item Add the semi-NNLO pure sunset term.
+	\item Choose whether to including/excluding finite volume corrections.
+	\item Choose whether to add no more terms, add the log squared  terms, or add the log-squared terms and the single log terms (notice that we don't include the single log terms without the log-squared terms).
+\end{enumerate}
+
+In totality, this procedure will generate $4 \times 3 \times 2 \times 3 = 72$ different models.
 
 \subsection{Model Average} \label{section:model_average}
 Per section \ref{Fit Functions}, we see that our analysis includes numerous possible models: we have four different base models, three choices for $\Lambda_\chi$, counterterms to three orders, log-squared and semi-log terms, and up to ten volume corrections. Our model average is determined by weighing included models by their Bayes factor, as will be explained shortly. However, even without explaining this weighing process, it should be clear that fits having a comparatively small Bayes factor will contribute negligibly to the fit. In particular, the NLO fits have Bayes factors many orders of magnitude smaller than the NNLO fits. We therefore exclude the NLO fits from our analysis.
