@@ -215,19 +215,20 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if debug:
             temp = output
 
-        if self.order['fit'] in ['nnlo', 'nnnlo']:
+        if self.order['fit'] in ['nnlo', 'semi-nnlo', 'nnnlo']:
             output = output + self.fitfcn_nnlo_pure_ct(p)
             output = output + self.fitfcn_nnlo_renormalization_ct(p)
-            output = output + self.fitfcn_seminnlo_sunset_ct(p)
+
+        if self.order['fit'] in ['semi-nnlo'];
+            if self.order['include_log']:
+                output = output + self.fitfcn_seminnlo_log_ct(p)
+            if self.order['include_log2']:
+                output = output + self.fitfcn_seminnlo_log_squared_ct(p)
+            if self.order['include_sunset']:
+                output = output + self.fitfcn_seminnlo_sunset_ct(p)
 
         if self.order['fit'] in ['nnnlo']:
             output = output + self.fitfcn_nnnlo_ct(p)
-
-        if self.order['include_log']:
-            output = output + self.fitfcn_seminnlo_log_ct(p)
-
-        if self.order['include_log2']:
-            output = output + self.fitfcn_seminnlo_log_squared_ct(p)
 
         for key in self.order['exclude']:
             del(p[key])
@@ -239,56 +240,213 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return output
 
     def fitfcn_nlo_ma(self, p):
-        return None
+        # Constants
+        order_vol = self.order['vol']
+
+        # Independent variables
+        mju = p['mju']
+        mpi = p['mpi']
+        mk = p['mk']
+        mru = p['mru']
+        msj = p['mjs'] #msj = mjs
+        mss = p['mss']
+        mrs = p['mrs']
+        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2) + p['a2DI'])
+
+        del2_ju = p['a2DI']
+        del2_rs = del2_ju
+        L = p['L']
+
+        lam2_chi = p['lam2_chi']
+        mu = np.sqrt(lam2_chi)
+        F2 = lam2_chi /(4*np.pi)**2
+
+        output = (
+            1
+
+            + (1.0/2.0) *fcn_I_m(mju, L, mu, order_vol) / F2
+            + (1.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
+            + (1.0/4.0) *fcn_I_m(mru, L, mu, order_vol) / F2
+            - (1.0/2.0) *fcn_I_m(msj, L, mu, order_vol) / F2
+            + (1.0/4.0) *fcn_I_m(mss, L, mu, order_vol) / F2
+            - (1.0/4.0) *fcn_I_m(mrs, L, mu, order_vol) / F2
+            - (3.0/8.0) *fcn_I_m(mx, L, mu, order_vol) / F2
+
+            + del2_ju *(
+                - fcn_dI_m(mpi, L, mu, order_vol) / (8 *F2)
+                + fcn_K_mM((mpi, mx), L, mu, order_vol) / (4 *F2)
+            )
+            - (del2_ju)**2 *(
+                + fcn_K21_mM((mpi, mx), L, mu, order_vol) / (24 *F2)
+            )
+            + del2_ju *del2_rs *(
+                - fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2)
+                + fcn_K21_mM((mss, mx), L, mu, order_vol) / (12 *F2)
+            )
+            + del2_rs *(
+                + fcn_K_mM((mss, mx), L, mu, order_vol) / (4 *F2)
+                - (mk)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
+                + (mpi)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
+            )
+
+            + 4 *(4 *np.pi)**2 *(mk**2 - mpi**2) / lam2_chi *p['L_5']
+        )
+
+        return output
+
 
     def fitfcn_nlo_ma_ratio(self, p):
-        return None
+        # Constants
+        order_vol = self.order['vol']
+
+        # Independent variables
+        mju = p['mju']
+        mpi = p['mpi']
+        mk = p['mk']
+        mru = p['mru']
+        msj = p['mjs'] #msj = mjs
+        mss = p['mss']
+        mrs = p['mrs']
+        mx = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2) + p['a2DI'])
+
+        del2_ju = p['a2DI']
+        del2_rs = del2_ju
+        L = p['L']
+
+        lam2_chi = p['lam2_chi']
+        mu = np.sqrt(lam2_chi)
+        F2 = lam2_chi /(4*np.pi)**2
+
+        eps2_pi = mpi**2 / lam2_chi
+        eps2_k = mk**2 / lam2_chi
+
+        Fpi_nlo_per_F0 = (
+            + 1
+
+            - fcn_I_m(mju, L, mu, order_vol) / F2
+            - (1.0/2.0) *fcn_I_m(mru, L, mu, order_vol) / F2
+
+            + 4 *eps2_pi *(4 *np.pi)**2 *(p['L_4'] + p['L_5'])
+            + 8 *eps2_k *(4 *np.pi)**2 *p['L_4']
+        )
+
+        FK_nlo_per_F0 = (
+            + 1
+
+            - (1.0/2.0) *fcn_I_m(mju, L, mu, order_vol) / F2
+            + (1.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
+            - (1.0/4.0) *fcn_I_m(mru, L, mu, order_vol) / F2
+            - (1.0/2.0) *fcn_I_m(msj, L, mu, order_vol) / F2
+            - (1.0/4.0) *fcn_I_m(mrs, L, mu, order_vol) / F2
+            + (1.0/4.0) *fcn_I_m(mss, L, mu, order_vol) / F2
+            - (3.0/8.0) *fcn_I_m(mx, L, mu, order_vol) / F2
+
+            + 4 *eps2_pi *(4 *np.pi)**2 *p['L_4']
+            + 4 *eps2_k *(4 *np.pi)**2 *(2 *p['L_4'] + p['L_5'])
+
+            + del2_ju *(
+                - fcn_dI_m(mpi, L, mu, order_vol) / (8 *F2)
+                + fcn_K_mM((mpi, mx), L, mu, order_vol) / (4 *F2)
+            )
+            - (del2_ju)**2 *(
+                + fcn_K21_mM((mpi, mx), L, mu, order_vol) / (24 *F2)
+            )
+            + del2_ju *del2_rs *(
+                - fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2) # May need to change sign
+                + fcn_K21_mM((mss, mx), L, mu, order_vol) / (12 *F2)
+            )
+            + del2_rs *(
+                + fcn_K_mM((mss, mx), L, mu, order_vol) / (4 *F2)
+                - (mk)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
+                + (mpi)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
+            )
+        )
+
+        return FK_nlo_per_F0 / Fpi_nlo_per_F0
+
 
     def fitfcn_nlo_xpt(self, p):
 
         # Constants
-        #order_vol = self.order['vol']
+        order_vol = self.order['vol']
+
+        # Independent variables
+        mpi = p['mpi']
+        mk = p['mk']
+        meta = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2))
+
         lam2_chi = p['lam2_chi']
-        eps2_pi = p['mpi']**2 / lam2_chi
-        eps2_k = p['mk']**2 / lam2_chi
-        eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi
+        eps2_pi = mpi**2 / lam2_chi
+        eps2_k = mk**2 / lam2_chi
 
-        #L = p['L']
-        #mu = np.sqrt(lam2_chi)
-        #F2 = lam2_chi /(4*np.pi)**2
-
-        fcn_l = lambda x : x *np.log(x)
+        L = p['L']
+        mu = np.sqrt(lam2_chi)
+        F2 = lam2_chi /(4*np.pi)**2
 
         output = (
-            + 1
-
-            + (5./8) *fcn_l(eps2_pi)
-            - (1./4) *fcn_l(eps2_k)
-            - (3./8) *fcn_l(eps2_eta)
-
+            1
+            + 1*(
+            + (5.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
+            - (1.0/4.0) *fcn_I_m(mk, L, mu, order_vol) / F2
+            - (3.0/8.0) *fcn_I_m(meta, L, mu, order_vol) / F2)
             + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
         )
 
-        if self.debug:
-            print('1 + nlo', output)
         return output
 
-    def fitfcn_nlo_xpt_ratio(self, p):
-        return None
 
-    def fitfcn_nnlo_pure_ct(self, p):
+    def fitfcn_nlo_xpt_ratio(self, p):
+       # Constants
+        order_vol = self.order['vol']
+
+        # Independent variables
+        mpi = p['mpi']
+        mk = p['mk']
+        meta = np.sqrt((4.0/3.0) *(mk**2) - (1.0/3.0) *(mpi**2))
+
         lam2_chi = p['lam2_chi']
-        #eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_pi = mpi**2 / lam2_chi
+        eps2_k = mk**2 / lam2_chi
+        #eps2_eta = meta**2 / lam2_chi
+
+        L = p['L']
+        mu = np.sqrt(lam2_chi)
+        F2 = lam2_chi /(4*np.pi)**2
+
+        Fpi_nlo_per_F0 = (1
+            - fcn_I_m(mpi, L, mu, order_vol) / F2
+            - (1.0/2.0) *fcn_I_m(mk, L, mu, order_vol) / F2
+            + 4 *eps2_pi *(4 *np.pi)**2 *(p['L_4'] + p['L_5'])
+            + 8 *eps2_k *(4 *np.pi)**2 *p['L_4']
+        )
+
+        FK_nlo_per_F0 = (1
+            - (3.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
+            - (3.0/4.0) *fcn_I_m(mk, L, mu, order_vol) / F2
+            - (3.0/8.0) *fcn_I_m(meta, L, mu, order_vol) / F2
+            + 4 *eps2_pi *(4 *np.pi)**2 *p['L_4']
+            + 4 *eps2_k *(4 *np.pi)**2 *(2 *p['L_4'] + p['L_5'])
+        )
+
+        return FK_nlo_per_F0 / Fpi_nlo_per_F0
+
+
+    def fitfcn_nnlo_pure_ct(self, p, include_log=None):
+        if include_log is None:
+            include_log = self.order['include_log']
+
+        lam2_chi = p['lam2_chi']
+        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
         output = (
-            #+ (eps2_a) *p['A_a']
+            + (eps2_a) *p['A_a']
             + (eps2_k) *p['A_k']
             + (eps2_pi) *p['A_p']
         ) *(eps2_k - eps2_pi)
 
-        if self.include_log['True']:
+        if include_log:
             output += (4 *np.pi)**2 *(eps2_k - eps2_pi) *(
                 + eps2_k *(
                     + 8 *(4 *np.pi)**2 *p['L_5']*(
