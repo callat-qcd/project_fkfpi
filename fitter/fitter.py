@@ -100,8 +100,6 @@ class fitter(object):
         order = self.order
 
         # Move fit_data into prior
-        #newprior['Fpi'] = fit_data['Fpi']
-        #newprior['FK'] = fit_data['FK']
         newprior['mpi'] = fit_data['mpi']
         newprior['mk'] = fit_data['mk']
         newprior['mss'] = fit_data['mss']
@@ -111,43 +109,31 @@ class fitter(object):
         newprior['mrs'] = fit_data['mrs']
         newprior['a2DI'] = fit_data['a2DI']
         newprior['lam2_chi'] = fit_data['lam2_chi']
-        #newprior['a'] = fit_data['a']
         newprior['L'] = fit_data['L']
-        #newprior['w0'] = fit_data['w0']
         newprior['a/w0'] = fit_data['a/w0']
 
-        #for key in newprior.keys():
-        #    newprior[key] = gv.gvar(gv.mean(newprior[key]), gv.sdev(newprior[key])/100)
+        if order['include_alpha_s'] :
+            newprior['alpha_s'] = fit_data['alpha_s']
+            newprior['A_loga'] = prior['A_loga']
 
         # Fit parameters, depending on fit type
-        if self.fit_type == 'xpt-ratio':
-            newprior['L_4'] = prior['L_4']
-            newprior['L_5'] = prior['L_5']
-        elif self.fit_type == 'xpt':
-            newprior['L_5'] = prior['L_5']
-        elif self.fit_type == 'ma-ratio':
-            newprior['L_4'] = prior['L_4']
-            newprior['L_5'] = prior['L_5']
-        elif self.fit_type == 'ma':
-            newprior['L_5'] = prior['L_5']
-        elif self.fit_type == 'ma-old':
-            newprior['L_5'] = prior['L_5']
-        elif self.fit_type == 'simultaneous':
-            newprior['L_4'] = prior['L_4']
-            newprior['L_5'] = prior['L_5']
+        newprior['L_4'] = prior['L_4']
+        newprior['L_5'] = prior['L_5']
 
         if order['include_log']:
             newprior['L_1'] = prior['L_1']
             newprior['L_2'] = prior['L_2']
             newprior['L_3'] = prior['L_3']
             newprior['L_4'] = prior['L_4']
+            newprior['L_6'] = prior['L_6']
             newprior['L_7'] = prior['L_7']
             newprior['L_8'] = prior['L_8']
 
         if order['fit'] in ['nnlo', 'nnnlo']:
-            newprior['L_6'] = prior['L_6']
             newprior['A_k'] = prior['A_k']
             newprior['A_p'] = prior['A_p']
+            newprior['A_a'] = prior['A_a']
+
 
 
         for key in self.order['exclude']:
@@ -215,17 +201,19 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if debug:
             temp = output
 
-        if self.order['fit'] in ['nnlo', 'semi-nnlo', 'nnnlo']:
+        if self.order['fit'] in ['nnlo', 'nnnlo']:
             output = output + self.fitfcn_nnlo_pure_ct(p)
             output = output + self.fitfcn_nnlo_renormalization_ct(p)
 
-        if self.order['fit'] in ['semi-nnlo'];
-            if self.order['include_log']:
-                output = output + self.fitfcn_seminnlo_log_ct(p)
-            if self.order['include_log2']:
-                output = output + self.fitfcn_seminnlo_log_squared_ct(p)
-            if self.order['include_sunset']:
-                output = output + self.fitfcn_seminnlo_sunset_ct(p)
+        # semi-nnlo corrections
+        if self.order['include_log']:
+            output = output + self.fitfcn_seminnlo_log_ct(p)
+        if self.order['include_log2']:
+            output = output + self.fitfcn_seminnlo_log_squared_ct(p)
+        if self.order['include_sunset']:
+            output = output + self.fitfcn_seminnlo_sunset_ct(p)
+        if self.order['include_alpha_s']:
+            output = output + self.fitfcn_seminnlo_alpha_s_ct(p)
 
         if self.order['fit'] in ['nnnlo']:
             output = output + self.fitfcn_nnnlo_ct(p)
@@ -264,29 +252,29 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         output = (
             1
 
-            + (1.0/2.0) *fcn_I_m(mju, L, mu, order_vol) / F2
-            + (1.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
-            + (1.0/4.0) *fcn_I_m(mru, L, mu, order_vol) / F2
-            - (1.0/2.0) *fcn_I_m(msj, L, mu, order_vol) / F2
-            + (1.0/4.0) *fcn_I_m(mss, L, mu, order_vol) / F2
-            - (1.0/4.0) *fcn_I_m(mrs, L, mu, order_vol) / F2
-            - (3.0/8.0) *fcn_I_m(mx, L, mu, order_vol) / F2
+            + (1.0/2.0) *sf.fcn_I_m(mju, L, mu, order_vol) / F2
+            + (1.0/8.0) *sf.fcn_I_m(mpi, L, mu, order_vol) / F2
+            + (1.0/4.0) *sf.fcn_I_m(mru, L, mu, order_vol) / F2
+            - (1.0/2.0) *sf.fcn_I_m(msj, L, mu, order_vol) / F2
+            + (1.0/4.0) *sf.fcn_I_m(mss, L, mu, order_vol) / F2
+            - (1.0/4.0) *sf.fcn_I_m(mrs, L, mu, order_vol) / F2
+            - (3.0/8.0) *sf.fcn_I_m(mx, L, mu, order_vol) / F2
 
             + del2_ju *(
-                - fcn_dI_m(mpi, L, mu, order_vol) / (8 *F2)
-                + fcn_K_mM((mpi, mx), L, mu, order_vol) / (4 *F2)
+                - sf.fcn_dI_m(mpi, L, mu, order_vol) / (8 *F2)
+                + sf.fcn_K_mM((mpi, mx), L, mu, order_vol) / (4 *F2)
             )
             - (del2_ju)**2 *(
-                + fcn_K21_mM((mpi, mx), L, mu, order_vol) / (24 *F2)
+                + sf.fcn_K21_mM((mpi, mx), L, mu, order_vol) / (24 *F2)
             )
             + del2_ju *del2_rs *(
-                - fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2)
-                + fcn_K21_mM((mss, mx), L, mu, order_vol) / (12 *F2)
+                - sf.fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2)
+                + sf.fcn_K21_mM((mss, mx), L, mu, order_vol) / (12 *F2)
             )
             + del2_rs *(
-                + fcn_K_mM((mss, mx), L, mu, order_vol) / (4 *F2)
-                - (mk)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
-                + (mpi)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
+                + sf.fcn_K_mM((mss, mx), L, mu, order_vol) / (4 *F2)
+                - (mk)**2 *sf.fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
+                + (mpi)**2 *sf.fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
             )
 
             + 4 *(4 *np.pi)**2 *(mk**2 - mpi**2) / lam2_chi *p['L_5']
@@ -323,8 +311,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         Fpi_nlo_per_F0 = (
             + 1
 
-            - fcn_I_m(mju, L, mu, order_vol) / F2
-            - (1.0/2.0) *fcn_I_m(mru, L, mu, order_vol) / F2
+            - sf.fcn_I_m(mju, L, mu, order_vol) / F2
+            - (1.0/2.0) *sf.fcn_I_m(mru, L, mu, order_vol) / F2
 
             + 4 *eps2_pi *(4 *np.pi)**2 *(p['L_4'] + p['L_5'])
             + 8 *eps2_k *(4 *np.pi)**2 *p['L_4']
@@ -333,32 +321,32 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         FK_nlo_per_F0 = (
             + 1
 
-            - (1.0/2.0) *fcn_I_m(mju, L, mu, order_vol) / F2
-            + (1.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
-            - (1.0/4.0) *fcn_I_m(mru, L, mu, order_vol) / F2
-            - (1.0/2.0) *fcn_I_m(msj, L, mu, order_vol) / F2
-            - (1.0/4.0) *fcn_I_m(mrs, L, mu, order_vol) / F2
-            + (1.0/4.0) *fcn_I_m(mss, L, mu, order_vol) / F2
-            - (3.0/8.0) *fcn_I_m(mx, L, mu, order_vol) / F2
+            - (1.0/2.0) *sf.fcn_I_m(mju, L, mu, order_vol) / F2
+            + (1.0/8.0) *sf.fcn_I_m(mpi, L, mu, order_vol) / F2
+            - (1.0/4.0) *sf.fcn_I_m(mru, L, mu, order_vol) / F2
+            - (1.0/2.0) *sf.fcn_I_m(msj, L, mu, order_vol) / F2
+            - (1.0/4.0) *sf.fcn_I_m(mrs, L, mu, order_vol) / F2
+            + (1.0/4.0) *sf.fcn_I_m(mss, L, mu, order_vol) / F2
+            - (3.0/8.0) *sf.fcn_I_m(mx, L, mu, order_vol) / F2
 
             + 4 *eps2_pi *(4 *np.pi)**2 *p['L_4']
             + 4 *eps2_k *(4 *np.pi)**2 *(2 *p['L_4'] + p['L_5'])
 
             + del2_ju *(
-                - fcn_dI_m(mpi, L, mu, order_vol) / (8 *F2)
-                + fcn_K_mM((mpi, mx), L, mu, order_vol) / (4 *F2)
+                - sf.fcn_dI_m(mpi, L, mu, order_vol) / (8 *F2)
+                + sf.fcn_K_mM((mpi, mx), L, mu, order_vol) / (4 *F2)
             )
             - (del2_ju)**2 *(
-                + fcn_K21_mM((mpi, mx), L, mu, order_vol) / (24 *F2)
+                + sf.fcn_K21_mM((mpi, mx), L, mu, order_vol) / (24 *F2)
             )
             + del2_ju *del2_rs *(
-                - fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2) # May need to change sign
-                + fcn_K21_mM((mss, mx), L, mu, order_vol) / (12 *F2)
+                - sf.fcn_K_m1m2m3((mpi, mss, mx), L, mu, order_vol) / (6 *F2) # May need to change sign
+                + sf.fcn_K21_mM((mss, mx), L, mu, order_vol) / (12 *F2)
             )
             + del2_rs *(
-                + fcn_K_mM((mss, mx), L, mu, order_vol) / (4 *F2)
-                - (mk)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
-                + (mpi)**2 *fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
+                + sf.fcn_K_mM((mss, mx), L, mu, order_vol) / (4 *F2)
+                - (mk)**2 *sf.fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
+                + (mpi)**2 *sf.fcn_K21_mM((mss, mx), L, mu, order_vol) / (6 *F2)
             )
         )
 
@@ -386,9 +374,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         output = (
             1
             + 1*(
-            + (5.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
-            - (1.0/4.0) *fcn_I_m(mk, L, mu, order_vol) / F2
-            - (3.0/8.0) *fcn_I_m(meta, L, mu, order_vol) / F2)
+            + (5.0/8.0) *sf.fcn_I_m(mpi, L, mu, order_vol) / F2
+            - (1.0/4.0) *sf.fcn_I_m(mk, L, mu, order_vol) / F2
+            - (3.0/8.0) *sf.fcn_I_m(meta, L, mu, order_vol) / F2)
             + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
         )
 
@@ -414,16 +402,16 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         F2 = lam2_chi /(4*np.pi)**2
 
         Fpi_nlo_per_F0 = (1
-            - fcn_I_m(mpi, L, mu, order_vol) / F2
-            - (1.0/2.0) *fcn_I_m(mk, L, mu, order_vol) / F2
+            - sf.fcn_I_m(mpi, L, mu, order_vol) / F2
+            - (1.0/2.0) *sf.fcn_I_m(mk, L, mu, order_vol) / F2
             + 4 *eps2_pi *(4 *np.pi)**2 *(p['L_4'] + p['L_5'])
             + 8 *eps2_k *(4 *np.pi)**2 *p['L_4']
         )
 
         FK_nlo_per_F0 = (1
-            - (3.0/8.0) *fcn_I_m(mpi, L, mu, order_vol) / F2
-            - (3.0/4.0) *fcn_I_m(mk, L, mu, order_vol) / F2
-            - (3.0/8.0) *fcn_I_m(meta, L, mu, order_vol) / F2
+            - (3.0/8.0) *sf.fcn_I_m(mpi, L, mu, order_vol) / F2
+            - (3.0/4.0) *sf.fcn_I_m(mk, L, mu, order_vol) / F2
+            - (3.0/8.0) *sf.fcn_I_m(meta, L, mu, order_vol) / F2
             + 4 *eps2_pi *(4 *np.pi)**2 *p['L_4']
             + 4 *eps2_k *(4 *np.pi)**2 *(2 *p['L_4'] + p['L_5'])
         )
@@ -525,6 +513,19 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if self.debug:
             print('mu fix', output)
         return output
+
+    def fitfcn_seminnlo_alpha_s_ct(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+        alpha_s = p['alpha_s']
+
+        output = (
+            alpha_s *eps2_a *(eps2_k - eps2_pi) *p['A_loga']
+        )
+        return output
+
 
     def fitfcn_seminnlo_log_ct(self, p):
         lam2_chi = p['lam2_chi']
