@@ -63,6 +63,10 @@ class Fit(object):
             self.lec_nnlo += ['L1','L2','L3','L6','L7','L8']
         self.lec_nnnlo = ['s_6','sk_6','sp_6','kp_6','k_6','p_6']
 
+        #self.x_prune   = self.prune_x(self.x)
+        #self.y_prune   = self.prune_data(self.y)
+        #self.p_prune   = self.prune_priors(self.p)
+
         if self.eft   == 'xpt':
             self.fit_function = self.xpt
         elif self.eft == 'xpt-ratio':
@@ -276,6 +280,10 @@ class Fit(object):
         r  = -self.I(x['p2'])
         r += -0.5 * self.I(x['k2'])
         r += lec['L5'] * (4*pi)**2 * 4 * x['p2']['esq']
+        if self.switches['debug_nlo_check']:
+            print('    -eps2_p log(eps2_p) = %s' %(-self.I(x['p2'])))
+            print('-1/2 eps2_k log(eps2_k) = %s' %(-0.5 * self.I(x['k2'])))
+            print('   4 eps2_p L5bar      = %s' %(lec['L5'] * (4*pi)**2 * 4 * x['p2']['esq']))
         if 'ratio' in self.eft:
             r += lec['L4'] * (4*pi)**2 * (4 * x['p2']['esq'] + 8 * x['k2']['esq'])
         return r
@@ -285,6 +293,11 @@ class Fit(object):
         r += -3./4 * self.I(x['k2'])
         r += -3./8 * self.I(x['e2'])
         r += lec['L5'] * (4*pi)**2 * 4 * x['k2']['esq']
+        if self.switches['debug_nlo_check']:
+            print('-3/8 eps2_p log(eps2_p) = %s' %(-3./8 * self.I(x['p2'])))
+            print('-3/4 eps2_k log(eps2_k) = %s' %(-3./4 * self.I(x['k2'])))
+            print('-3/8 eps2_e log(eps2_e) = %s' %(-3./8 * self.I(x['e2'])))
+            print('-3/8 eps2_k L5bar      = %s' %(lec['L5'] * (4*pi)**2 * 4 * x['k2']['esq']))
         if 'ratio' in self.eft:
             r += lec['L4'] * (4*pi)**2 * (4 * x['p2']['esq'] + 8 * x['k2']['esq'])
         return r
@@ -402,9 +415,9 @@ class Fit(object):
             C2  =  (209./144 + (4*pi)**2 *3*L5)*p2*k2
             C2 +=  (53./96   + (4*pi)**2 *(4*L1 +10*L2 +5*L3 -5*L5))*k2**2
 
-            C3  =  (13./18   + (4*pi)**2 *(8./3*L3 -2./3*L5 -16*L7 -8*L8))* k2**2
+            C3  =  (13./18   + (4*pi)**2 *(8./3*L3 -2./3 *L5 -16*L7  -8*L8))* k2*k2
             C3 += -(4./9     + (4*pi)**2 *(4./3*L3 +25./6*L5 -32*L7 -16*L8))* p2*k2
-            C3 +=  (19./288  + (4*pi)**2 *(L3/6 +11./6*L5 -16*L7 -8*L8))*  p2**2
+            C3 +=  (19./288  + (4*pi)**2 *(1./6*L3 +11./6*L5 -16*L7  -8*L8))* p2*p2
 
             r  += C1 * lp
             r  += C2 * lk
@@ -412,6 +425,9 @@ class Fit(object):
 
             if self.switches['debug_nnlo_check']:
                 tmp = C1 * lp + C2 * lk + C3 * le
+                print('C1 = %s' %C1)
+                print('C2 = %s' %C2)
+                print('C3 = %s' %C3)
                 print('log terms = %f' %tmp)
 
 
@@ -562,8 +578,6 @@ class Fit(object):
                     )
         return r
 
-
-
     def fit_data(self):
         x = self.prune_x()
         y = self.prune_data()
@@ -692,12 +706,25 @@ class Fit(object):
             print('  APPROXIMATE FF(mpi**2/mK**2)')
         #for k in p:
         #    print(k,p[k])
-        nlo_P = self.Fpi_xpt_nlo(x_in,lec)
+        print('eps2_p = %s' %x_in['p2']['esq'])
+        print('eps2_k = %s' %x_in['k2']['esq'])
+        print('eps2_e = %s' %x_in['e2']['esq'])
+        if self.switches['debug_nlo_check']:
+            print('FK_NLO terms')
         nlo_K = self.FK_xpt_nlo(x_in,lec)
+        if self.switches['debug_nlo_check']:
+            print('               -------------------------------')
+            print('               FK_NLO = %s' %nlo_K)
+            print('FP_NLO terms')
+        nlo_P = self.Fpi_xpt_nlo(x_in,lec)
+        if self.switches['debug_nlo_check']:
+            print('               -------------------------------')
+            print('               FP_NLO = %s' %nlo_P)
         if 'ratio' in self.eft:
             nlo = (1 + nlo_K) / (1 + nlo_P)
         else:
             nlo = 1 + nlo_K - nlo_P
+        print('NNLO\n----------------------------------------------')
         nnlo = self.fkfpi_nnlo(x_in,lec)
         print('FK - Fpi | 1 + NLO = %f' %nlo)
         print('FK - Fpi | NNLO    = %f' %nnlo)

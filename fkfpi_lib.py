@@ -4,6 +4,7 @@ import numpy as np
 import scipy.stats as stats
 import tables as h5
 import pandas as pd
+import pickle
 import lsqfit
 import gvar as gv
 import matplotlib
@@ -137,6 +138,76 @@ def format_h5_data(switches,data):
         x[ens]['alphaS'] = data.get_node('/'+ens+'/alpha_s').read()
     return {'x':x, 'y':y, 'p':p}
 
+def pickle_fit(model,fit_result):
+    fit = gv.BufferDict()
+    for k in fit_result.fit.prior:
+        if type(k) is tuple:
+            fit['prior_'+k[0]+'_'+k[1]] = fit_result.fit.prior[k]
+        else:
+            fit['prior_'+k] = fit_result.fit.prior[k]
+    for k in fit_result.fit.p:
+        if type(k) is tuple:
+            fit['p_'+k[0]+'_'+k[1]] = fit_result.fit.p[k]
+        else:
+            fit['p_'+k] = fit_result.fit.p[k]
+    # we can't save the fit.cov easily, as it is an np.array
+    # but, we can reconstruct this cov after reading in all the fit.p values
+    fit['chi2']   = gv.gvar(fit_result.fit.chi2)
+    fit['dof']    = gv.gvar(fit_result.fit.dof)
+    fit['logGBF'] = gv.gvar(fit_result.fit.logGBF)
+    fit['Q']      = gv.gvar(fit_result.fit.Q)
+    for k in fit_result.fit.y:
+        fit['data_'+k] = fit_result.fit.y[k]
+    #for k in fit:
+    #    print(k,type(k),fit[k],type(fit[k]))
+
+    if not os.path.exists('pickled_fits'):
+        os.makedirs('pickled_fits')
+    gv.dump(fit,'pickled_fits/'+model+'.p')
+
+def read_fit(model):
+    fit = gv.load('pickled_fits/'+model+'.p')
+    fit_processed = dict()
+    fit_processed['prior'] = dict()
+    fit_processed['p']     = dict()
+    fit_processed['stat']  = dict()
+    fit_processed['data']  = dict()
+    for k in fit:
+        if 'data' in k:
+            fit_processed['data'][k.split('_')[1]] = fit[k]
+        if k in ['chi2','dof','logGBF','Q']:
+            fit_processed['stat'][k] = fit[k]
+        if 'p_' in k and 'prior' not in k:
+            if any(part in k for part in ['a09','a12','a15']):
+                tmp,ens,kk = k.split('_')
+                fit_processed['p'][(ens,kk)] = fit[k]
+            elif len(k.split('p_')) == 3:
+                fit_processed['p']['p_'+k.split('p_')[2]] = fit[k]
+            elif len(k.split('p_')) == 2:
+                fit_processed['p'][k.split('p_')[1]] = fit[k]
+            else:
+                print('what to do?',k)
+        if 'prior' in k:
+            if any(part in k for part in ['a09','a12','a15']):
+                tmp,ens,kk = k.split('_')
+                fit_processed['prior'][(ens,kk)] = fit[k]
+            else:
+                fit_processed['prior'][k.split('prior_')[1]] = fit[k]
+
+    return fit_processed
+
+class PickledFit():
+    def __init__(self,pickled_fit):
+        self.p      = pickled_fit['p']
+        self.prior  = pickled_fit['prior']
+        self.y      = pickled_fit['data']
+        self.dof    = pickled_fit['stat']['dof']
+        self.chi2   = pickled_fit['stat']['chi2']
+        self.logGBF = pickled_fit['stat']['logGBF']
+        self.Q      = pickled_fit['stat']['Q']
+        self.cov    = gv.evalcov(self.p)
+        self.corr   = gv.evalcorr(self.p)
+
 def fkfpi_phys(x_phys,fit):
     # use metaSq = 4/3 mK**2 - 1/3 mpi**2
     print('prediction from LQCD')
@@ -227,6 +298,11 @@ def perform_analysis(switches,priors,phys_point):
             fit_e = xpt.Fit(switches,xyp_init=d_e)
             fit_e.fit_data()
             fit_results[model] = fit_e
+
+            pickle_fit(model,fit_e)
+            print('reading fit')
+            disk_read = read_fit(model)
+
             if switches['print_fit']:
                 print(fit_e.fit.format(maxline=True))
             if switches['debug_phys']:
@@ -234,15 +310,39 @@ def perform_analysis(switches,priors,phys_point):
 
             print('DEBUG: error budget')
             tmp = fit_e.report_phys_point(phys_point)['phys']
+            print('FK/Fpi = %s' %tmp)
+
+            test = dict()
+            test['x'] = {'phys':{k:np.inf for k in ['mpiL','mkL']}}
+            test['x'].update({'alphaS':0})
+            test['y'] = {'phys':phys_point['FKFPi_FLAG']}
+            test['p'] = disk_read['p']
+            test['p'][('phys','Lchi_PP')] = phys_point['Lchi_PP']
+            test['p'][('phys','mpi')]     = phys_point['mpi']
+            test['p'][('phys','mk')]      = phys_point['mk']
+            switches_test = dict(switches)
+            switches_test['ensembles'] = ['phys']
+            switches_test['ensembles_fit'] = ['phys']
+            test_reconstruct = xpt.Fit(switches_test,xyp_init=test)
+            test_reconstruct.fit = PickledFit(disk_read)
+            print('reconstruct = %s' %test_reconstruct.report_phys_point(phys_point)['phys'])
+            '''
             Lchi_phys = phys_point['Lchi_'+FPK]
             p_phys = dict()
             p_phys[('phys','p2')] = phys_point['mpi']**2 / Lchi_phys**2
             p_phys[('phys','k2')] = phys_point['mk']**2 / Lchi_phys**2
             p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
-            print(tmp.partialsdev(fit_e.fit.y))
-            print(tmp.partialsdev(fit_e.fit.y,p_phys[('phys','p2')]))
-            print(tmp.partialsdev(fit_e.fit.y,p_phys[('phys','p2')],p_phys[('phys','k2')]))
-            print(tmp.partialsdev(fit_e.fit.y,p_phys[('phys','p2')],p_phys[('phys','k2')],p_phys[('phys','e2')]))
+            print('stat',tmp.partialsdev(fit_e.fit.y))
+            for i in range(1,9):
+                print('L'+str(i), fit_e.fit.p['L'+str(i)], tmp.partialsdev(fit_e.fit.prior['L'+str(i)]))
+            for lec in ['p_4','k_4','s_4','saS_4','s_6']:
+                if lec in fit_e.fit.prior:
+                    print(lec, fit_e.fit.p[lec], tmp.partialsdev(fit_e.fit.prior[lec]))
+            print('phys point','e_piSq = %s, e_KSq = %s'
+                %(str(p_phys[('phys','p2')]),str(p_phys[('phys','k2')])), \
+                    tmp.partialsdev(p_phys[('phys','p2')],p_phys[('phys','k2')]))
+            '''
+
 
             if switches['make_plots']:
                 if base_model in ['xpt_nnlo_FV','xpt_nnlo_FV_a4']:#, 'xpt_nnlo_FV_logSq', 'xpt-ratio_nnlo_FV', 'xpt-ratio_nnlo_FV_logSq']:
@@ -746,11 +846,6 @@ def check_fit_function(switches,check_point):
         # ratio
         model = 'xpt-ratio_nnlo_'+FPK
         switches['ansatz']['model'] = model
-
-        #Lchi_check = 4*np.pi * check_point['Fpi']
-        #p_check[('check','Lchi_'+FPK)] = Lchi_check
-        #d_e['p'] = p_check
-
         fit_check = xpt.Fit(switches,xyp_init=d_e)
         fit_check.check_fit_function(check_point)
 

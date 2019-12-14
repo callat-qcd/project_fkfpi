@@ -46,8 +46,9 @@ switches['ansatz']['models'] = [
     #'xpt_nnlo'                      ,'ma_nnlo',
     #'xpt_nnlo_alphaS'               ,'ma_nnlo_alphaS',
     #'xpt_nnlo_FV'                   ,'ma_nnlo_FV',
-    'xpt_nnlo_FV_alphaS'            ,'xpt_nnlo_FV_alphaS_logSq',
-    'xpt_nnlo_FV_alphaS_a4'            ,'xpt_nnlo_FV_alphaS_a4_logSq',
+    'xpt_nnlo_FV_alphaS_a4'                   #,'xpt_nnlo_FV_a4',
+    #'xpt_nnlo_FV_alphaS'            ,'xpt_nnlo_FV_alphaS_logSq',
+    #'xpt_nnlo_FV_alphaS_a4'            ,'xpt_nnlo_FV_alphaS_a4_logSq',
     ]
 #switches['ansatz']['models'] =  ['xpt_nnlo_FV']#,'xpt_nnlo_FV_logSq']
 #    'xpt_nnlo_FV_alphaS_logSq',
@@ -92,7 +93,7 @@ switches['ansatz']['models'] = [
 #]
 
 switches['ansatz']['a2dm']  = 'individual' # avg or individual
-switches['scales']          = ['PP','PK','KK']
+switches['scales']          = ['PP']#,'PK','KK']
 #switches['scales']          = ['PP']
 #switches['scales']          = ['F0']
 switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
@@ -104,9 +105,9 @@ switches['bs_bias']         = True
 # use scipy instead of GSL?
 switches['scipy']           = False
 # fit options
-switches['print_fit']       = True
+switches['print_fit']       = False
 switches['report_fit']      = False
-switches['make_plots']      = True
+switches['make_plots']      = False
 switches['verbose']         = False
 # for tuning prior widths
 switches['nnlo_priors']     = False
@@ -119,6 +120,7 @@ switches['nlo_fv_report']   = False
 # DEBUGGING
 switches['debug']           = False
 switches['debug_phys']      = False
+switches['debug_nlo_check'] = False
 switches['debug_nnlo_check']= False
 # testing NNLO function
 switches['check_fit']       = False # need a new name
@@ -131,7 +133,7 @@ priors['L4']   = gv.gvar(0, 0.005)
 priors['L1']   = gv.gvar( 0.000372,0.000372)
 priors['L2']   = gv.gvar( 0.000493,0.000493)
 priors['L3']   = gv.gvar(-0.003070,0.003070)
-priors['L6']   = gv.gvar( 0.000011,0.000011)
+priors['L6']   = gv.gvar( 0.000011,0.00011)
 priors['L7']   = gv.gvar(-0.000340,0.000340)
 priors['L8']   = gv.gvar( 0.000294,0.000294)
 
@@ -168,8 +170,8 @@ phys_point = dict()
 #phys_point['mk']  = gv.gvar(497,0.3)
 #phys_point['meta'] = gv.gvar(547.862,0.017) #PDG
 # http://pdg.lbl.gov/2015/reviews/rpp2015-rev-pseudoscalar-meson-decay-cons.pdf
-phys_point['Fpi'] = gv.gvar(130.2/np.sqrt(2), 1.7/np.sqrt(2)) #PDG fpi+ eq(16)
-phys_point['FK']  = gv.gvar(155.6/np.sqrt(2), 0.4/np.sqrt(2)) #PDG fK++ eq(16)
+phys_point['Fpi'] = gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2)) #PDG fpi+ eq(16)
+phys_point['FK']  = gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2)) #PDG fK++ eq(16)
 # FLAG values for "pure" QCD point
 phys_point['mpi'] = gv.gvar(134.8, 0.3) #FLAG 2017 (16)
 phys_point['mk']  = gv.gvar(494.2 , 0.3) #FLAG 2017 (16)
