@@ -510,6 +510,22 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 )
             )
 
+        if self.fit_type in ['ma-ratio', 'xpt-ratio']:
+            output = output + (
+                (
+                    + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
+                    - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
+                ) *(
+                    + 3./8 *fcn_l(eps2_pi) + 3./4 *fcn_l(eps2_k) + 3./8 *fcn_l(eps2_eta)
+                    + 4 *(4*np.pi)**2 *(eps2_pi *p['L_4'] + eps2_k *(2 *p['L_4'] + p['L_5']))
+                )
+
+                + 1./2 *(
+                    + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
+                    - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
+                )**2
+            )
+
         if self.debug:
             print('mu fix', output)
         return output
