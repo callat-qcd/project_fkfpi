@@ -103,7 +103,8 @@ class data_loader(object):
 
         index = np.argwhere(df_prior['name'].values == name)
         prior = gv.BufferDict()
-        for key in ['L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga']:
+        for key in ['L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8',
+                    'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga']:
             value = np.asscalar(df_prior[key].values[index])
             if value is not np.nan:
                 prior[key] = gv.gvar(value)
@@ -222,7 +223,8 @@ class data_loader(object):
         filepath = os.path.normpath(self.project_path + '/priors/'+fit_type+'.csv')
 
         # get fit info
-        cols = np.array(['name', 'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga'])
+        cols = np.array(['name', 'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8',
+                         'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga'])
 
         name = F2
         if include_FV:
