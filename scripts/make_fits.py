@@ -49,6 +49,7 @@ for fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
 
                     # Loop through combinations
                     p_dict['order']['vol'] = vol
+                    p_dict['order']['include_alpha_s'] = include_alphaS
                     p_dict['order']['include_log'] = include_alphaS
                     p_dict['order']['include_log2'] = include_logSq
                     p_dict['F2'] = F2
