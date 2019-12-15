@@ -21,7 +21,7 @@ def fcn_Kn(n, g):
     elif hasattr(g, "__len__") and isinstance(g[0], gv._gvarcore.GVar):
         f = ss.kn(n, gv.mean(g))
         dfdg = ss.kvp(n, gv.mean(g), 1)
-        return [gv.gvar_function(g[j], f[j], dfdg[j]) for j in range(len(g))]
+        return np.array([gv.gvar_function(g[j], f[j], dfdg[j]) for j in range(len(g))])
 
     # input is not a gvar variable
     else:
@@ -155,9 +155,9 @@ def fcn_FF(x):
         if isinstance(x[0], gv.GVar):
             f = [chiron.FF(e.mean) for e in x]
             dfdx = [0.5*(chiron.FF(e.mean+stepSize) - chiron.FF(e.mean-stepSize))/stepSize for e in x]
-            return [gv.gvar_function(x[j], f[j], dfdx[j]) for j in range(len(x))]
+            return np.array([gv.gvar_function(x[j], f[j], dfdx[j]) for j in range(len(x))])
         else:
-            return [chiron.FF(e) for e in x]
+            return np.array([chiron.FF(e) for e in x])
     # input is a scalar
     else:
         if isinstance(x, gv.GVar):
