@@ -104,7 +104,7 @@ class data_loader(object):
         index = np.argwhere(df_prior['name'].values == name)
         prior = gv.BufferDict()
         for key in ['L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8',
-                    'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga']:
+                    'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga', 'A_aa']:
             value = np.asscalar(df_prior[key].values[index])
             if value is not np.nan:
                 prior[key] = gv.gvar(value)
@@ -134,7 +134,7 @@ class data_loader(object):
         cols = np.array(['name', 'FK/Fpi', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol'])
         lecs_cols = ['L_4', 'L_5', # nlo terms
                      'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-nnlo terms
-                     'A_a', 'A_k', 'A_p', 'A_loga'] # nnlo terms
+                     'A_a', 'A_k', 'A_p', 'A_loga', 'A_aa'] # nnlo terms
                      #'A_aa', 'A_ak', 'A_ap', # nnnlo terms
                      #'A_kk', 'A_kp', 'A_pp'] # more nnnlo terms
 
@@ -224,7 +224,7 @@ class data_loader(object):
 
         # get fit info
         cols = np.array(['name', 'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8',
-                         'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga'])
+                         'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga', 'A_aa'])
 
         name = F2
         if include_FV:

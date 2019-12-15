@@ -42,10 +42,15 @@ class bootstrapper(object):
             'fit' : 'nlo',
             'vol' : 1,
             'exclude' : [],
+
+            # semi-nnlo corrections
             'include_alpha_s' : False,
             'include_log' : False,
             'include_log2' : False,
-            'include_sunset' : False
+            'include_sunset' : False,
+
+            # nnnlo corrections
+            'include_latt_n3lo' : False,
         }
         if order is None:
             order = order_temp
@@ -448,6 +453,8 @@ class bootstrapper(object):
             name = name + '_sunset'
         if self.order['include_alpha_s']:
             name = name + '_alphaS'
+        if self.order['include_latt_n3lo']:
+            name = name + '_a4'
         if self.order['vol'] > 6:
             name = name + '_FV'
         if self.use_bijnens_central_value:

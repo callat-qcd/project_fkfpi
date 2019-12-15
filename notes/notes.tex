@@ -529,12 +529,14 @@ However, since most of these corrections introduce at least one fitting paramete
 \begin{enumerate}
 	\item Choose a base model (\texttt{$\chi$PT}, \texttt{ma-ratio}, etc).
 	\item Choose a renormalization scale $\mu = 4 \pi F^2$.
-	\item Add the pure NNLO counterterm (including the lattice spacing term) and the renormalization scale, which is dependent on choice of $F^2$ . That is, we add both NNLO corrections.
+	\item Add the pure NNLO counterterm (including the lattice spacing term) and the renormalization scale, which is dependent on choice of $F^2$  and whether we are fitting the expanded ratio or not. That is, we add both NNLO corrections.
+	\item Choose whether to include the semi-NNLO lattice space correction (\texttt{alphaS}).
+	\item Choose whether to include the NNNLO lattice space correction.
 	\item Choose whether to including/excluding finite volume corrections.
 	\item Choose whether to add no more terms; add the log squared  terms; or add the log-squared terms,  the single log terms, and the semi-NNLO pure sunset term.
 \end{enumerate}
 
-In totality, this procedure will generate $4 \times 3 \times 2 \times 3 = 72$ different models.
+In totality, this procedure will generate $4 \times 3 \times 2 \times 2 \times 2 \times 3 = 288$ different models.
 
 \subsection{Model Average} \label{section:model_average}
 Per section \ref{Fit Functions}, we see that our analysis includes numerous possible models: we have four different base models, three choices for $\Lambda_\chi$, counterterms to three orders, log-squared and semi-log terms, and up to ten volume corrections. Our model average is determined by weighing included models by their Bayes factor, as will be explained shortly. However, even without explaining this weighing process, it should be clear that fits having a comparatively small Bayes factor will contribute negligibly to the fit. In particular, the NLO fits have Bayes factors many orders of magnitude smaller than the NNLO fits. We therefore exclude the NLO fits from our analysis.

@@ -26,20 +26,21 @@ class fitter(object):
         #z['chiral'] = np.around(z['chiral'], 2)
         #z['spacing'] = np.around(z['spacing'], 2)
         z['chiral'] = np.abs(z['chiral'])
-        z['spacing'] = np.abs(z['spacing'])
+        z['spacing_n2lo'] = np.abs(z['spacing_n2lo'])
+        if self.order['include_latt_n3lo']:
+            z['spacing_n3lo'] = np.abs(z['spacing_n3lo'])
 
         for key in prior.keys():
             if key in ['A_p', 'A_k']:
-                #prior[key] = prior[key] *z['chiral']
                 prior[key] = gv.gvar(0, z['chiral'])
             if key in ['A_loga', 'A_a']:
-                #prior[key] = prior[key] *z['spacing']
-                prior[key] = gv.gvar(0, z['spacing'])
+                prior[key] = gv.gvar(0, z['spacing_n2lo'])
+            if key in ['A_aa']:
+                prior[key] = gv.gvar(0, z['spacing_n3lo'])
 
         fitfcn = self._make_models()[-1].fitfcn
 
         print(z)
-        print(prior['A_k'], prior['A_a'])
 
         return dict(data=y_data, fcn=fitfcn, prior=prior)
 
@@ -50,7 +51,9 @@ class fitter(object):
 
         z0 = gv.BufferDict()
         z0['chiral'] = 1.0
-        z0['spacing'] = 1.0
+        z0['spacing_n2lo'] = 1.0
+        if self.order['include_latt_n3lo']:
+            z0['spacing_n3lo'] = 1.0
 
         fit, z = lsqfit.empbayes_fit(z0, self._make_fitargs)
 
@@ -134,7 +137,8 @@ class fitter(object):
             newprior['A_p'] = prior['A_p']
             newprior['A_a'] = prior['A_a']
 
-
+        if order['include_latt_n3lo']:
+            newprior['A_aa'] = prior['A_aa']
 
         for key in self.order['exclude']:
             if key in newprior.keys():
@@ -215,8 +219,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if self.order['include_alpha_s']:
             output = output + self.fitfcn_seminnlo_alpha_s_ct(p)
 
-        if self.order['fit'] in ['nnnlo']:
-            output = output + self.fitfcn_nnnlo_ct(p)
+        if self.order['include_latt_n3lo']:
+            output = output + self.fitfcn_nnnlo_latt_spacing_ct(p)
 
         for key in self.order['exclude']:
             del(p[key])
@@ -590,8 +594,17 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return output
 
 
-    def fitfcn_nnnlo_ct(self, p):
-        return None
+    def fitfcn_nnnlo_latt_spacing_ct(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+
+        output = (
+            + (eps2_a)**2 *p['A_aa']
+        ) *(eps2_k - eps2_pi)
+
+        return output
 
     def buildprior(self, prior, mopt=None, extend=False):
         return prior
