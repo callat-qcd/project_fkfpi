@@ -42,8 +42,10 @@ class bootstrapper(object):
             'fit' : 'nlo',
             'vol' : 1,
             'exclude' : [],
+            'include_alpha_s' : False,
             'include_log' : False,
-            'include_log2' : True
+            'include_log2' : False,
+            'include_sunset' : False
         }
         if order is None:
             order = order_temp
@@ -54,35 +56,56 @@ class bootstrapper(object):
 
         if prior is None:
             print("Using default prior.")
-            prior = {
-                # nlo terms
-                'L_1' : '0.0(0.005)',
-                'L_2' : '0.0(0.005)',
-                'L_3' : '0.0(0.005)',
-                'L_4' : '0.0(0.005)',
-                'L_5' : '0.0(0.005)',
-                'L_6' : '0.0(0.005)',
-                'L_7' : '0.0(0.005)',
-                'L_8' : '0.0(0.005)',
 
+            # From Bijnens
+            gamma = np.array([3./32, 3./16, 0, 1./8, 3./8, 11./144, 0, 5./48])
+            L_mu0 = np.array([3.72, 4.93, -30.7, 0.89, 3.77, 0.11, -3.4, 2.94])*10**-4
 
-                # nlo-log terms
-                'A_loga' : '0.0(5.0)',
+            # F2 is F^2 in this context; but F0, F1 are F_0, F_1
+            if F2 == 'FpiFpi':
+                F1 = self.get_phys_point_data('Fpi')
+            elif F2 == 'FKFpi':
+                F1 = np.sqrt(self.get_phys_point_data('FK') *self.get_phys_point_data('Fpi'))
+            elif F2 == 'FKFK':
+                F1 = self.get_phys_point_data('Fpi')
 
-                # nnlo terms
-                'A_a' : '0.0(5.0)', #'0(100)',
-                'A_k' : '0.0(5.0)', #'0(1)',
-                'A_p' : '0.0(5.0)', #'0(10)',
+            F0 = 80 # MeV
+            L_mu1 = gv.mean(L_mu0 - gamma/(4 *np.pi)**2 *np.log(F1/F0))
+            if use_bijnens_central_value:
+                L_mu1 = gv.gvar(L_mu1, L_mu1/2)
+            else:
+                L_mu1 = gv.gvar(np.repeat(0, len(L_mu1)), L_mu1)
 
-                # nnnlo terms
-                'A_aa' : '0(5)', #'0(100000)',
-                'A_ak' : '0(5)', #'0(1000)',
-                'A_ap' : '0(5)',#'0(10000)',
-                'A_kk' : '0(5)', #'0(10)',
-                'A_kp' : '0(5)', #'0(100)',
-                'A_pp' : '0(5)', #'0(1000)',
-            }
-            prior = gv.gvar(prior)
+            # Have uncertainty of at least 10^-4
+            for j in range(len(L_mu1)):
+                if gv.sdev(L_mu1[j]) < 10**-4:
+                    L_mu1[j] = gv.gvar(gv.mean(L_mu1[j]), 10**-4)
+
+            prior = {}
+            # Gasser-Leutwyler LECs
+            for j, L_i in enumerate(L_mu1):
+                prior['L_'+str(j+1)] = L_i
+
+            # nlo Gasser-Leutwyler LECs
+            prior['L_4'] = gv.gvar('0.0(0.005)')
+            prior['L_5'] = gv.gvar('0.0(0.005)')
+
+            # Lattice spacing terms
+            prior['A_a'] = gv.gvar('0.0(5.0)')
+            prior['A_loga'] = gv.gvar('0.0(5.0)')
+            prior['A_aa'] = gv.gvar('0.0(5.0)')
+
+            # nnlo terms
+            prior['A_k'] = gv.gvar('0.0(5.0)')
+            prior['A_p'] = gv.gvar('0.0(5.0)')
+
+            # nnnlo terms
+            prior['A_aa'] = gv.gvar('0.0(5.0)')
+            prior['A_ak'] = gv.gvar('0.0(5.0)')
+            prior['A_ap'] = gv.gvar('0.0(5.0)')
+            prior['A_kk'] = gv.gvar('0.0(5.0)')
+            prior['A_kp'] = gv.gvar('0.0(5.0)')
+            prior['A_pp'] = gv.gvar('0.0(5.0)')
 
         if abbrs is None:
             abbrs = fit_data.keys()
