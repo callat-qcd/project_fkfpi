@@ -52,7 +52,6 @@ class data_loader(object):
                         data[ensemble][key] = dset[()]
         return data
 
-    # whose: 'mine', 'others'
     def get_fit_info(self, filename=None):
         if filename is None:
             filepath = os.path.normpath(self.project_path + '/results/fit_results.csv')
@@ -73,11 +72,15 @@ class data_loader(object):
         for name in sorted(fit_types):
             index = np.argwhere(df_fit['name'].values == name)
 
-            output_dict[name]= {key: np.asscalar(df_fit[key].values[index]) for key in cols}
+            output_dict[name] = {}
+            for key in cols:
+                if key in df_fit.keys():
+                    output_dict[name][key] = (df_fit[key].values[index]).item()
 
             fit_params = self._unpickle_fit_parameters(name)
-            output_dict[name]['prior'] = {key : fit_params[key][0] for key in fit_params.keys()}
-            output_dict[name]['posterior'] = {key : fit_params[key][1] for key in fit_params.keys()}
+            if fit_params is not None:
+                output_dict[name]['prior'] = {key : fit_params[key][0] for key in fit_params.keys()}
+                output_dict[name]['posterior'] = {key : fit_params[key][1] for key in fit_params.keys()}
 
         return output_dict
 
