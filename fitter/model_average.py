@@ -326,8 +326,12 @@ class model_average(object):
                 logGBF = gv.mean(gv.gvar(results[name]['logGBF']))
                 x = np.exp(logGBF - logGBF_max)
 
+                alpha = 1
+                if x < 0.01:
+                    alpha = 0
+
                 #plt.axvline(x, ls='--', alpha=0.4)
-                plt.scatter(x=x, y=y, color=color, marker=marker)
+                plt.scatter(x=x, y=y, color=color, marker=marker, alpha=alpha)
                 y = y + 1
                 labels = np.append(labels, str(name))
 
