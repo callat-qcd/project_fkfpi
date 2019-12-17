@@ -103,17 +103,9 @@ class fitter(object):
         order = self.order
 
         # Move fit_data into prior
-        newprior['mpi'] = fit_data['mpi']
-        newprior['mk'] = fit_data['mk']
-        newprior['mss'] = fit_data['mss']
-        newprior['mju'] = fit_data['mju']
-        newprior['mjs'] = fit_data['mjs']
-        newprior['mru'] = fit_data['mru']
-        newprior['mrs'] = fit_data['mrs']
-        newprior['a2DI'] = fit_data['a2DI']
-        newprior['lam2_chi'] = fit_data['lam2_chi']
-        newprior['L'] = fit_data['L']
-        newprior['a/w0'] = fit_data['a/w0']
+        for key in fit_data:
+            if key != 'y':
+                newprior[key] = fit_data[key]
 
         if order['include_alpha_s'] :
             newprior['alpha_s'] = fit_data['alpha_s']
@@ -587,7 +579,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
-        output = eps2_k**2 *sf.fcn_FF(eps2_pi/eps2_k)
+        if 'sunset' in p:
+            output = eps2_k**2 *p['sunset']
+        else:
+            output = eps2_k**2 *sf.fcn_FF(eps2_pi/eps2_k)
 
         if self.debug:
             print('FF', output)

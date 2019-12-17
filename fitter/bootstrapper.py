@@ -7,8 +7,12 @@ import matplotlib.pyplot as plt
 import sys
 import re
 from mpl_toolkits.mplot3d.axes3d import Axes3D
+import os
 
 from .fitter import fitter
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+#import fitter
+import special_functions as sf
 
 class bootstrapper(object):
 
@@ -149,6 +153,10 @@ class bootstrapper(object):
             gv_data[abbr]['FK/Fpi'] = gv_data[abbr]['FK'] / gv_data[abbr]['Fpi']
             plot_data[abbr]['FK/Fpi'] = plot_data[abbr]['FK'] / plot_data[abbr]['Fpi']
 
+            # Sunset term
+            if order['include_sunset']:
+                gv_data[abbr]['sunset'] = sf.fcn_FF((gv_data[abbr]['mpi'] / gv_data[abbr]['mk'])**2)
+
             to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
             for key in ['a2DI']:
                 gv_data[abbr][key] = to_gvar(fit_data[abbr][key])
@@ -273,10 +281,13 @@ class bootstrapper(object):
         prepped_data = {}
         for parameter in ['mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'lam2_chi']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter] for abbr in self.abbrs])
-        #for parameter in ['w0']:
-        #    prepped_data[parameter] = self.fit_data[abbr][parameter]
+        for parameter in ['sunset']:
+            if parameter in self.fit_data[self.abbrs[0]]:
+                prepped_data['sunset'] = np.array([self.fit_data[abbr]['sunset'] for abbr in self.abbrs])
         for parameter in ['a/w0', 'a2DI', 'L', 'alpha_s']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter] for abbr in self.abbrs])
+
+
 
         prepped_data['y'] = [self.fit_data[abbr]['FK/Fpi'] for abbr in self.abbrs]
 
@@ -320,14 +331,24 @@ class bootstrapper(object):
 
     def create_prior_from_fit(self):
         output = {}
-        temp_parameters = self._make_empbayes_fit().prior
+        temp_prior = self._make_empbayes_fit().prior
         for key in self.get_fit_keys():
             if key in ['L_4', 'L_5']:
                 output[key] = gv.gvar(0, 0.005)
-            if key in ['A_a', 'A_k', 'A_p', 'A_loga']:
+            elif key in ['A_a', 'A_k', 'A_p', 'A_loga', 'A_aa']:
                 mean = 0
-                sdev = gv.sdev(temp_parameters[key])
+                sdev = gv.sdev(temp_prior[key])
                 output[key] = gv.gvar(mean, sdev)
+            elif ['L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9']:
+                if self.use_bijnens_central_value:
+                    output[key] = temp_prior[key]
+                else:
+                    output[key] = gv.gvar(0, gv.sdev(temp_prior[key]))
+            else:
+                print('Missing key when saving prior!', key)
+
+
+
 
         return output
 
