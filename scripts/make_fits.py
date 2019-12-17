@@ -96,10 +96,13 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
 
     # Get prior
     prior = None
-    if p_dict['use_prior']:
-        prior = data_loader.get_prior(fit_type=p_dict['fit_type'], F2=p_dict['F2'], include_FV=(p_dict['order']['vol']>0),
-                                     include_alphaS=p_dict['order']['include_log'], include_logSq=p_dict['order']['include_log2'])
-
+    prior = data_loader.get_prior(fit_type=p_dict['fit_type'], order=p_dict['order']['fit'], F2=p_dict['F2'],
+                  include_log=p_dict['order']['include_log'], include_log2=p_dict['order']['include_log2'],
+                  include_sunset=p_dict['order']['include_sunset'], include_alpha_s=p_dict['order']['include_alpha_s'],
+                  include_latt_n3lo=p_dict['order']['include_latt_n3lo'], include_FV=(p_dict['order']['vol'] > 6),
+                  use_bijnens_central_value=p_dict['use_bijnens_central_value']
+             )
+             
     # Make bootstrapper
     bootstrapper = bs.bootstrapper(
         fit_data, prior=prior, order=p_dict['order'], F2=p_dict['F2'],

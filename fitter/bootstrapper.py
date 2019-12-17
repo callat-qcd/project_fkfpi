@@ -250,7 +250,6 @@ class bootstrapper(object):
                         order=self.order, fit_type=self.fit_type, chain_fits=self.chain_fits)
 
         empbayes_fit = temp_fitter.get_empbayes_fit()
-        print(empbayes_fit)
         self.fits = [empbayes_fit]
         return empbayes_fit
 
