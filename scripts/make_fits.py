@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import h5py
 import time
+import itertools
 
 sys.path.append("../")
 from fitter import data_loader as dl
@@ -23,88 +24,102 @@ p_dict = {
         'fit' : 'nnlo', # 'nlo', 'nnlo', or 'nnnlo'
         'exclude' : [], # put LECs here
     },
-    'bs_N' : 1,  # if 0, use full list
     'chained' : False,
     'bias_correct' : True,
+    'include_su2_isospin_corrrection' : False,
 
-    'use_prior' : True,
+    'use_prior' : False,
     'abbrs' : [u'a09m220', u'a09m310', u'a09m350', u'a09m400', u'a12m130',
            u'a12m220',  u'a12m220S', u'a12m220L', u'a12m310', u'a12m350',
            u'a12m400',  u'a15m135XL', u'a15m220', u'a15m310', u'a15m350', 'a15m400'], # u'a15m130'
 
-    'make_plots' : False,
-    'show_error_ellipses' : False,
-    'show_bs_histograms' : False,
-
     'save_results' : True,
 }
 
-for fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
-    for F2 in ['FKFK', 'FKFpi', 'FpiFpi']: #for F2 in ['F0F0']:
-        for vol in [0, 10]:
-            for include_alphaS in [False, True]:
-                for include_logSq in [False, True]:
+choices = {
+    'fit_type' : ['ma', 'ma-ratio', 'xpt', 'xpt-ratio'],
+    'F2' : ['FKFK', 'FKFpi', 'FpiFpi'],
+    'vol' : [0, 10],
 
-                    t0 = time.time()
+    # semi-nnlo corrections
+    'include_alpha_s' : [False, True],
+    'semi-nnlo_corrections' : ['nnlo-full_bijnens', 'nnlo-full', 'nnlo-logSq_ct', 'nnlo-ct'],
 
-                    # Loop through combinations
-                    p_dict['order']['vol'] = vol
-                    p_dict['order']['include_log'] = include_alphaS
-                    p_dict['order']['include_log2'] = include_logSq
-                    p_dict['F2'] = F2
-                    p_dict['fit_type'] = fit_type
+    # nnnlo corrections
+    'include_latt_n3lo' : [False, True],
+}
 
-                    if vol > 0:
-                        include_FV = True
-                    else:
-                        include_FV = False
+t0_all = time.time()
 
-                    name = fit_type +"_"+F2
-                    if include_FV:
-                        name = name + '_FV'
-                    if include_alphaS:
-                        name = name + '_alphaS'
-                    if include_logSq:
-                        name = name + '_logSq'
+# Get all enumerations of these choices
+for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*choices.values())):
+    print(choice)
+    print(j+1, 'of', len(list(itertools.product(*[choices[key] for key in list(choices)]))))
 
-                    print(name)
-                    print("(model, F2, Vol, alphaS, logSq):", (p_dict['fit_type'], p_dict['F2'], include_FV, include_alphaS, include_logSq))
+    p_dict['fit_type'] = choice['fit_type']
+    p_dict['F2'] = choice['F2']
 
-                    # Load data
-                    data_loader = dl.data_loader()
-                    fit_data = data_loader.get_fit_data()
+    p_dict['order']['vol'] = choice['vol']
+    p_dict['order']['include_alpha_s'] = choice['include_alpha_s']
+    p_dict['order']['include_latt_n3lo'] = choice['include_latt_n3lo']
 
-                    # Get prior
-                    prior = None
-                    if p_dict['use_prior']:
-                        prior = data_loader.get_prior(fit_type=p_dict['fit_type'], F2=p_dict['F2'], include_FV=(p_dict['order']['vol']>0),
-                                                     include_alphaS=p_dict['order']['include_log'], include_logSq=p_dict['order']['include_log2'])
+    if choice['semi-nnlo_corrections'] == 'nnlo-full_bijnens':
+        p_dict['order']['include_log'] = True
+        p_dict['order']['include_log2'] = True
+        p_dict['order']['include_sunset'] = True
+        p_dict['use_bijnens_central_value'] = True
 
-                    # Make bootstrapper
-                    bootstrapper = bs.bootstrapper(
-                        fit_data, prior=prior, order=p_dict['order'], F2=p_dict['F2'], chain_fits=p_dict['chained'],
-                        fit_type=p_dict['fit_type'], bs_N=p_dict['bs_N'], abbrs=p_dict['abbrs'], bias_correct=p_dict['bias_correct']
-                    )
+    elif choice['semi-nnlo_corrections'] == 'nnlo-full':
+        p_dict['order']['include_log'] = True
+        p_dict['order']['include_log2'] = True
+        p_dict['order']['include_sunset'] = True
+        p_dict['use_bijnens_central_value'] = False
 
-                    if p_dict['make_plots']:
-                        data_loader.save_plots(
-                            bootstrapper.make_plots(
-                                show_error_ellipses=p_dict['show_error_ellipses'],
-                                show_bootstrap_histograms=p_dict['show_bs_histograms']),
-                            output_filename='fits/'+name
-                        )
-                    else:
-                        print(bootstrapper)
+    elif choice['semi-nnlo_corrections'] == 'nnlo-logSq_ct':
+        p_dict['order']['include_log'] = False
+        p_dict['order']['include_log2'] = True
+        p_dict['order']['include_sunset'] = False
+        p_dict['use_bijnens_central_value'] = False
 
-                    if p_dict['save_results']:
-                        data_loader.save_fit_info(bootstrapper.get_fit_info())
-
-                        data_loader.pickle_fit_parameters(
-                            bootstrapper.get_fit_parameters(),
-                            bootstrapper.get_name()
-                        )
+    elif choice['semi-nnlo_corrections'] == 'nnlo-ct':
+        p_dict['order']['include_log'] = False
+        p_dict['order']['include_log2'] = False
+        p_dict['order']['include_sunset'] = False
+        p_dict['use_bijnens_central_value'] = False
 
 
-                    t1 = time.time()
+    t0 = time.time()
 
-                    print("\nTotal time (s): ", t1 - t0, "\n")
+    # Load data
+    data_loader = dl.data_loader()
+    fit_data = data_loader.get_fit_data()
+
+    # Get prior
+    prior = None
+    prior = data_loader.get_prior(fit_type=p_dict['fit_type'], order=p_dict['order']['fit'], F2=p_dict['F2'],
+                  include_log=p_dict['order']['include_log'], include_log2=p_dict['order']['include_log2'],
+                  include_sunset=p_dict['order']['include_sunset'], include_alpha_s=p_dict['order']['include_alpha_s'],
+                  include_latt_n3lo=p_dict['order']['include_latt_n3lo'], include_FV=(p_dict['order']['vol'] > 6),
+                  use_bijnens_central_value=p_dict['use_bijnens_central_value']
+             )
+             
+    # Make bootstrapper
+    bootstrapper = bs.bootstrapper(
+        fit_data, prior=prior, order=p_dict['order'], F2=p_dict['F2'],
+        include_su2_isospin_corrrection=p_dict['include_su2_isospin_corrrection'], use_bijnens_central_value=p_dict['use_bijnens_central_value'],
+        fit_type=p_dict['fit_type'], abbrs=p_dict['abbrs'], bias_correct=p_dict['bias_correct']
+    )
+
+    print(bootstrapper)
+
+    # Save results
+    data_loader.save_fit_info(bootstrapper.get_fit_info())
+
+
+    t1 = time.time()
+
+    print("\nTotal time (s): ", t1 - t0, "\n")
+
+
+t1_all = time.time()
+print("\nTotal time for all fits (s): ", t1_all - t0_all, "\n")

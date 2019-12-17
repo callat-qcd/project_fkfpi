@@ -12,14 +12,18 @@ from .fitter import fitter
 
 class bootstrapper(object):
 
-    def __init__(self, fit_data, prior=None, abbrs=None, bs_N=None, include_su2_isospin_corrrection=None,
-                 order=None, fit_type=None, F2=None, chain_fits=None, bias_correct=None):
+    def __init__(self, fit_data, prior=None, abbrs=None, chain_fits=None,
+                 include_su2_isospin_corrrection=None, use_bijnens_central_value=None,
+                 order=None, fit_type=None, F2=None, bias_correct=None):
 
         w0 = gv.gvar('0.175(10)') # Still needs to be determined, but something like this
         self.w0 = w0
 
         if bias_correct is None:
             bias_correct = True
+
+        if use_bijnens_central_value:
+            use_bijnens_central_value = True
 
         if include_su2_isospin_corrrection is None:
             include_su2_isospin_corrrection = False
@@ -31,12 +35,6 @@ class bootstrapper(object):
         if chain_fits is None:
             chain_fits = False
 
-        if bs_N is None:
-            bs_N = 1
-
-        if bs_N==0:
-            bs_N = len(fit_data[fit_data.keys()[0]]['mpi'])
-
         plot_bs_N = 100
 
         # Add default values to order dict
@@ -44,8 +42,15 @@ class bootstrapper(object):
             'fit' : 'nlo',
             'vol' : 1,
             'exclude' : [],
+
+            # semi-nnlo corrections
+            'include_alpha_s' : False,
             'include_log' : False,
-            'include_log2' : True
+            'include_log2' : False,
+            'include_sunset' : False,
+
+            # nnnlo corrections
+            'include_latt_n3lo' : False,
         }
         if order is None:
             order = order_temp
@@ -56,28 +61,56 @@ class bootstrapper(object):
 
         if prior is None:
             print("Using default prior.")
-            prior = {
-                # nlo terms
-                'L_5' : '0.0(0.005)', #'0(0.001)',
-                'L_4' : '0.0(0.005)',
 
-                # nlo-log terms
-                'A_loga' : '0.0(5.0)',
+            # From Bijnens
+            gamma = np.array([3./32, 3./16, 0, 1./8, 3./8, 11./144, 0, 5./48])
+            L_mu0 = np.array([3.72, 4.93, -30.7, 0.89, 3.77, 0.11, -3.4, 2.94])*10**-4
 
-                # nnlo terms
-                'A_a' : '0.0(5.0)', #'0(100)',
-                'A_k' : '0.0(5.0)', #'0(1)',
-                'A_p' : '0.0(5.0)', #'0(10)',
+            # F2 is F^2 in this context; but F0, F1 are F_0, F_1
+            if F2 == 'FpiFpi':
+                F1 = self.get_phys_point_data('Fpi')
+            elif F2 == 'FKFpi':
+                F1 = np.sqrt(self.get_phys_point_data('FK') *self.get_phys_point_data('Fpi'))
+            elif F2 == 'FKFK':
+                F1 = self.get_phys_point_data('Fpi')
 
-                # nnnlo terms
-                'A_aa' : '0(5)', #'0(100000)',
-                'A_ak' : '0(5)', #'0(1000)',
-                'A_ap' : '0(5)',#'0(10000)',
-                'A_kk' : '0(5)', #'0(10)',
-                'A_kp' : '0(5)', #'0(100)',
-                'A_pp' : '0(5)', #'0(1000)',
-            }
-            prior = gv.gvar(prior)
+            F0 = 80 # MeV
+            L_mu1 = gv.mean(L_mu0 - gamma/(4 *np.pi)**2 *np.log(F1/F0))
+            if use_bijnens_central_value:
+                L_mu1 = gv.gvar(L_mu1, L_mu1/2)
+            else:
+                L_mu1 = gv.gvar(np.repeat(0, len(L_mu1)), L_mu1)
+
+            # Have uncertainty of at least 10^-4
+            for j in range(len(L_mu1)):
+                if gv.sdev(L_mu1[j]) < 10**-4:
+                    L_mu1[j] = gv.gvar(gv.mean(L_mu1[j]), 10**-4)
+
+            prior = {}
+            # Gasser-Leutwyler LECs
+            for j, L_i in enumerate(L_mu1):
+                prior['L_'+str(j+1)] = L_i
+
+            # nlo Gasser-Leutwyler LECs
+            prior['L_4'] = gv.gvar('0.0(0.005)')
+            prior['L_5'] = gv.gvar('0.0(0.005)')
+
+            # Lattice spacing terms
+            prior['A_a'] = gv.gvar('0.0(5.0)')
+            prior['A_loga'] = gv.gvar('0.0(5.0)')
+            prior['A_aa'] = gv.gvar('0.0(5.0)')
+
+            # nnlo terms
+            prior['A_k'] = gv.gvar('0.0(5.0)')
+            prior['A_p'] = gv.gvar('0.0(5.0)')
+
+            # nnnlo terms
+            prior['A_aa'] = gv.gvar('0.0(5.0)')
+            prior['A_ak'] = gv.gvar('0.0(5.0)')
+            prior['A_ap'] = gv.gvar('0.0(5.0)')
+            prior['A_kk'] = gv.gvar('0.0(5.0)')
+            prior['A_kp'] = gv.gvar('0.0(5.0)')
+            prior['A_pp'] = gv.gvar('0.0(5.0)')
 
         if abbrs is None:
             abbrs = fit_data.keys()
@@ -136,7 +169,8 @@ class bootstrapper(object):
 
 
         self.include_su2_isospin_corrrection = include_su2_isospin_corrrection
-        self.bs_N = bs_N
+        self.use_bijnens_central_value = use_bijnens_central_value
+        self.bs_N = 1
         self.plot_bs_N = plot_bs_N
         self.abbrs = sorted(abbrs)
         #self.variable_names = sorted(fit_data[self.abbrs[0]].keys())
@@ -170,7 +204,7 @@ class bootstrapper(object):
         output = output + gv.tabulate(new_table, ncol=2, headers=['Parameter', 'Result[0] / Prior[1]'])
 
         output = output + '\n---\nboot0 fit results:\n'
-        output = output + self.fits[0].format(pstyle=None)
+        output = output + self.get_fit().format(pstyle=None)
 
         return output
 
@@ -205,16 +239,19 @@ class bootstrapper(object):
         prepped_data = self._make_fit_data(j)
         # Need to randomize prior in bayesian-bootstrap hybrid
         temp_prior = self._randomize_prior(self.prior, j)
-        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior,
+        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
                         order=self.order, fit_type=self.fit_type, chain_fits=self.chain_fits)
         return temp_fitter.get_fit()
 
     def _make_empbayes_fit(self):
         prepped_data = self._make_fit_data(0)
         temp_prior = self._randomize_prior(self.prior, 0)
-        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior,
+        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
                         order=self.order, fit_type=self.fit_type, chain_fits=self.chain_fits)
-        return temp_fitter.get_empbayes_fit()
+
+        empbayes_fit = temp_fitter.get_empbayes_fit()
+        self.fits = [empbayes_fit]
+        return empbayes_fit
 
     def _make_fit_data(self, j):
         prepped_data = {}
@@ -280,10 +317,10 @@ class bootstrapper(object):
 
     def extrapolate_to_ensemble(self, abbr):
         abbr_n = self.abbrs.index(abbr)
-        model_name = list(self.fits[0].data.keys())[-1] # pretty hacky way to get this
+        model_name = list(self.get_fit().data.keys())[-1] # pretty hacky way to get this
 
         if self.bs_N == 1:
-            temp_fit = self.fits[0]
+            temp_fit = self.get_fit()
             return temp_fit.fcn(temp_fit.p)[model_name][abbr_n]
 
         else:
@@ -297,7 +334,7 @@ class bootstrapper(object):
         if include_su2_isospin_corrrection is None:
             include_su2_isospin_corrrection = self.include_su2_isospin_corrrection
 
-        output = self.fk_fpi_fit_fcn(self.get_phys_point_data())
+        output = self.fk_fpi_fit_fcn(fit_data=self.get_phys_point_data())
         if include_su2_isospin_corrrection:
             output *= np.sqrt(1 + self.get_delta_su2_correction()) # include SU(2) isospin breaking correction
 
@@ -307,7 +344,7 @@ class bootstrapper(object):
         except TypeError:
             return output
 
-    def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None, fit_type=None):
+    def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None, fit_type=None, debug=None):
         if fit_data is None:
             fit_data = self.get_phys_point_data()
         if fit_parameters is None:
@@ -315,27 +352,19 @@ class bootstrapper(object):
         if fit_type is None:
             fit_type = self.fit_type
 
-        for key in fit_data.keys():
-            fit_parameters[key] = fit_data[key]
-
-        temp_fit = self.fits[0]
-        model_name = list(temp_fit.fcn(temp_fit.p))[-1]
-
-        return temp_fit.fcn(p=fit_parameters)[model_name]
+        model = fitter(order=self.order, fit_type=fit_type, F2=self.F2)._make_models()[0]
+        return model.fitfcn(p=fit_parameters, fit_data=fit_data, debug=debug)
 
     # Returns dictionary with keys fit parameters, entries bs results
     def get_bootstrapped_fit_parameters(self):
-        # Make fits if they haven't been made yet
-        if self.fits is None:
-            self.bootstrap_fits()
 
         # Get all fit parameters
         keys1 = self.prior.keys()
-        keys2 = self.fits[0].p.keys()
+        keys2 = self.get_fit().p.keys()
         parameters = np.intersect1d(keys1, keys2)
 
         # Make dictionary
-        temp_fit = self.fits[0]
+        temp_fit = self.get_fit()
         bs_fit_parameters = {parameter : np.array([gv.mean(temp_fit.p[parameter])]).flatten() for parameter in parameters}
 
         # Populate it with bs fits
@@ -362,21 +391,27 @@ class bootstrapper(object):
         )
         return delta
 
+    def get_fit(self):
+        if self.fits is None:
+            self.bootstrap_fits()
+        return self.fits[0]
 
     def get_fit_info(self):
-
         fit_info = {
             'name' : self.get_name(),
             'FK/Fpi' : self.extrapolate_to_phys_point(),
             'delta_su2' : self.get_delta_su2_correction(),
-            'logGBF' : self.fits[0].logGBF,
-            'chi2/df' : self.fits[0].chi2 / self.fits[0].dof,
-            'Q' : self.fits[0].Q,
-            'vol corr' : self.order['vol'],
-            #'latt corr' : self.order['latt_spacing']
+            'logGBF' : self.get_fit().logGBF,
+            'chi2/df' : self.get_fit().chi2 / self.get_fit().dof,
+            'Q' : self.get_fit().Q,
+            'vol' : self.order['vol'],
+            'prior' : {},
+            'posterior' : {},
         }
+
         for key in self.get_fit_keys():
-            fit_info[key] = self.get_fit_parameters(key)
+            fit_info['prior'][key] = self.get_fit().prior[key]
+            fit_info['posterior'][key] = self.get_fit_parameters(key)
 
         return fit_info
 
@@ -387,7 +422,7 @@ class bootstrapper(object):
             self.bootstrap_fits()
 
         keys1 = list(self.prior.keys())
-        keys2 = list(self.fits[0].p.keys())
+        keys2 = list(self.get_fit().p.keys())
         parameters = np.intersect1d(keys1, keys2)
         return sorted(parameters)
 
@@ -399,10 +434,10 @@ class bootstrapper(object):
                 self.bootstrap_fits()
 
             keys1 = list(self.prior.keys())
-            keys2 = list(self.fits[0].p.keys())
+            keys2 = list(self.get_fit().p.keys())
             parameters = np.intersect1d(keys1, keys2)
 
-            fit_parameters = {parameter : self.fits[0].p[parameter] for parameter in parameters}
+            fit_parameters = {parameter : self.get_fit().p[parameter] for parameter in parameters}
         else:
             fit_parameters = gv.dataset.avg_data(self.get_bootstrapped_fit_parameters(), bstrap=True)
 
@@ -413,13 +448,20 @@ class bootstrapper(object):
 
     def get_name(self):
         name = self.fit_type +'_'+ self.F2+'_'+self.order['fit']
-        if self.order['vol'] > 6:
-            name = name + '_FV'
         if self.order['include_log']:
-            name = name + '_alphaS'
+            name = name + '_log'
         if self.order['include_log2']:
             name = name + '_logSq'
-
+        if self.order['include_sunset']:
+            name = name + '_sunset'
+        if self.order['include_alpha_s']:
+            name = name + '_alphaS'
+        if self.order['include_latt_n3lo']:
+            name = name + '_a4'
+        if self.order['vol'] > 6:
+            name = name + '_FV'
+        if self.use_bijnens_central_value:
+            name = name + '_bijnens'
         return name
 
 
@@ -879,8 +921,7 @@ class bootstrapper(object):
         plt.close()
         return fig
 
-
-    def shift_fk_fpi_for_phys_mk_alt(self, abbr, data):
+    def shift_fk_fpi_for_phys_mk(self, abbr, data, use_ratio=False):
         pi = np.pi
         hbar_c = 197.327
         lam2_chi = self.get_phys_point_data('lam2_chi')
@@ -893,23 +934,9 @@ class bootstrapper(object):
         temp_data['a/w0'] = data[abbr]['a/w0']
         fkfpi_fit_phys_vary_mpi = self.fk_fpi_fit_fcn(fit_data=temp_data)
 
-        shifted_fkfpi = fkfpi_ens *(fkfpi_fit_phys_vary_mpi / fkfpi_fit_ens)
-
-        return shifted_fkfpi
-
-    def shift_fk_fpi_for_phys_mk(self, abbr, data):
-        pi = np.pi
-        hbar_c = 197.327
-        lam2_chi = self.get_phys_point_data('lam2_chi')
-
-        fkfpi_ens = data[abbr]['FK'] / data[abbr]['Fpi']
-        fkfpi_fit_ens = self.extrapolate_to_ensemble(abbr)
-
-        temp_data = self.get_phys_point_data()
-        temp_data['mpi'] = data[abbr]['mpi'] *hbar_c / (data[abbr]['a/w0'] *self.w0)
-        temp_data['a/w0'] = data[abbr]['a/w0']
-        fkfpi_fit_phys_vary_mpi = self.fk_fpi_fit_fcn(fit_data=temp_data)
-
-        shifted_fkfpi = fkfpi_ens + fkfpi_fit_phys_vary_mpi - fkfpi_fit_ens
+        if use_ratio:
+            shifted_fkfpi = fkfpi_ens *(fkfpi_fit_phys_vary_mpi / fkfpi_fit_ens)
+        else:
+            shifted_fkfpi = fkfpi_ens + fkfpi_fit_phys_vary_mpi - fkfpi_fit_ens
 
         return shifted_fkfpi

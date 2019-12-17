@@ -21,22 +21,31 @@ class model_average(object):
         output_dict = {}
         output_dict['base'] = name.split('_')[0] # eg, 'ma-ratio'
         output_dict['F2'] = name.split('_')[1] # eg, 'FKFPi'
-        output_dict['order'] = name.split('_')[2] # eg, 'FKFPi'
-        output_dict['include_alphaS'] = False
+        output_dict['order'] = name.split('_')[2] # eg, 'nnlo'
         output_dict['include_FV'] = False
-        output_dict['include_logSq'] = False
+        output_dict['include_alpha_s'] = False
+        output_dict['include_log'] = False
+        output_dict['include_log2'] = False
+        output_dict['include_sunset'] = False
+        output_dict['include_latt_n3lo'] = False
 
         if '_FV' in name:
             output_dict['include_FV'] = True
         if '_alphaS' in name:
-            output_dict['include_alphaS'] = True
+            output_dict['include_alpha_s'] = True
+        if '_log_' in name or name.endswith('_log'):
+            output_dict['include_log'] = True
         if '_logSq' in name:
-            output_dict['include_logSq'] = True
+            output_dict['include_log2'] = True
+        if '_sunset' in name:
+            output_dict['include_sunset'] = True
+        if '_a4' in name:
+            output_dict['include_latt_n3lo'] = True
 
         return output_dict
 
     def _get_fit_parameters(self, name):
-        return self.fit_results[name]['params']
+        return self.fit_results[name]['posterior']
 
     def _get_phys_point_data(self, name=None):
 
@@ -160,9 +169,16 @@ class model_average(object):
 
         order = {
             'fit' : model_info['order'],
-            'include_log' : model_info['include_alphaS'],
-            'include_log2' : model_info['include_logSq'],
-            'exclude' : []
+            'exclude' : [], # put LECs here
+
+            # semi-nnlo corrections
+            'include_alpha_s' : model_info['include_alpha_s'],
+            'include_log' : model_info['include_log'],
+            'include_log2' : model_info['include_log2'],
+            'include_sunset' : model_info['include_sunset'],
+
+            # nnnlo corrections
+            'include_latt_n3lo' : model_info['include_latt_n3lo'],
         }
 
         if model_info['include_FV']:
@@ -171,9 +187,9 @@ class model_average(object):
             order['vol'] = 10
 
         if model_info['base'] in ['xpt', 'ma']:
-            fitfcn = fk_fpi_model(datatag='xpt', fit_type='xpt', order=order).fitfcn
+            fitfcn = fk_fpi_model(datatag='xpt', fit_type='xpt', order=order, F2=model_info['F2']).fitfcn
         elif model_info['base'] in ['xpt-ratio', 'ma-ratio']:
-            fitfcn = fk_fpi_model(datatag='xpt-ratio', fit_type='xpt-ratio', order=order).fitfcn
+            fitfcn = fk_fpi_model(datatag='xpt-ratio', fit_type='xpt-ratio', order=order, F2=model_info['F2']).fitfcn
 
         return fitfcn(p=p, fit_data=data)
 
@@ -310,8 +326,12 @@ class model_average(object):
                 logGBF = gv.mean(gv.gvar(results[name]['logGBF']))
                 x = np.exp(logGBF - logGBF_max)
 
+                alpha = 1
+                if x < 0.01:
+                    alpha = 0
+
                 #plt.axvline(x, ls='--', alpha=0.4)
-                plt.scatter(x=x, y=y, color=color, marker=marker)
+                plt.scatter(x=x, y=y, color=color, marker=marker, alpha=alpha)
                 y = y + 1
                 labels = np.append(labels, str(name))
 
@@ -414,6 +434,7 @@ class model_average(object):
 
         return fig
 
+    # parameter = 'a', 'mpi', 'volume'
     def plot_fits(self, parameter):
         colors = ['darkorange', 'mediumaquamarine', 'orchid', 'skyblue', 'silver']
         #colors = ['cyan', 'magenta', 'yellow', 'black', 'silver']

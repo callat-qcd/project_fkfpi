@@ -14,6 +14,24 @@ class data_loader(object):
         self.project_path = os.path.normpath(os.path.join(os.path.realpath(__file__), os.pardir, os.pardir))
         self.file_h5 = os.path.normpath(self.project_path+'/FK_Fpi_data.h5')
 
+    def _pickle_fit_parameters(self, fit_info):
+        name = fit_info['name']
+        filename = self.project_path+'/pickles/'+name+'.p'
+
+        output = {}
+        for key in fit_info['prior'].keys():
+            output[key] = [fit_info['prior'][key], fit_info['posterior'][key]]
+
+        gv.dump(output, filename)
+        return None
+
+    def _unpickle_fit_parameters(self, name):
+        filepath = self.project_path+'/pickles/'+name+'.p'
+        if os.path.isfile(filepath):
+            return gv.load(filepath)
+        else:
+            return None
+
     def get_ensembles(self):
         with h5py.File(self.file_h5, "r") as f:
             ensembles = list(f.keys())
@@ -34,7 +52,6 @@ class data_loader(object):
                         data[ensemble][key] = dset[()]
         return data
 
-    # whose: 'mine', 'others'
     def get_fit_info(self, filename=None):
         if filename is None:
             filepath = os.path.normpath(self.project_path + '/results/fit_results.csv')
@@ -55,12 +72,21 @@ class data_loader(object):
         for name in sorted(fit_types):
             index = np.argwhere(df_fit['name'].values == name)
 
-            output_dict[name]= {key: np.asscalar(df_fit[key].values[index]) for key in cols}
-            output_dict[name]['params'] = self.unpickle_fit_parameters(name)
+            output_dict[name] = {}
+            for key in cols:
+                if key in df_fit.keys():
+                    output_dict[name][key] = (df_fit[key].values[index]).item()
+
+            fit_params = self._unpickle_fit_parameters(name)
+            if fit_params is not None:
+                output_dict[name]['prior'] = {key : fit_params[key][0] for key in fit_params.keys()}
+                output_dict[name]['posterior'] = {key : fit_params[key][1] for key in fit_params.keys()}
 
         return output_dict
 
-    def get_prior(self, fit_type, F2, include_FV, include_alphaS, include_logSq):
+    def get_prior(self, fit_type, order, F2,
+                  include_log, include_log2, include_sunset,
+                  include_alpha_s, include_latt_n3lo, include_FV, use_bijnens_central_value):
         filepath = os.path.normpath(self.project_path + '/priors/'+fit_type+'.csv')
 
         print(filepath)
@@ -68,13 +94,21 @@ class data_loader(object):
         if not os.path.isfile(filepath):
             return None
 
-        name = F2
+        name = fit_type +'_'+ F2+'_'+order
+        if include_log:
+            name = name + '_log'
+        if include_log2:
+            name = name + '_logSq'
+        if include_sunset:
+            name = name + '_sunset'
+        if include_alpha_s:
+            name = name + '_alphaS'
+        if include_latt_n3lo:
+            name = name + '_a4'
         if include_FV:
             name = name + '_FV'
-        if include_alphaS:
-            name = name + '_alphaS'
-        if include_logSq:
-            name = name + '_logSq'
+        if use_bijnens_central_value:
+            name = name + '_bijnens'
 
         df_prior = pd.read_csv(filepath, header=0)
         if name not in df_prior['name'].values:
@@ -82,7 +116,8 @@ class data_loader(object):
 
         index = np.argwhere(df_prior['name'].values == name)
         prior = gv.BufferDict()
-        for key in ['L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga']:
+        for key in ['L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8',
+                    'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga', 'A_aa']:
             value = np.asscalar(df_prior[key].values[index])
             if value is not np.nan:
                 prior[key] = gv.gvar(value)
@@ -97,31 +132,32 @@ class data_loader(object):
                     names.append(key)
         return sorted(np.unique([names]))
 
-    def pickle_fit_parameters(self, g, name):
-        filename = self.project_path+'/pickles/'+name+'.p'
-        gv.dump(g, filename)
-        return None
-
+    # pickle correlated prior/posterior,
+    # save rest to csv file
     def save_fit_info(self, fit_info):
         print("Saving...")
+
+        self._pickle_fit_parameters(fit_info)
 
         if not os.path.exists(self.project_path + '/results/'):
             os.makedirs(self.project_path + '/results/')
         filepath = os.path.normpath(self.project_path + '/results/fit_results.csv')
 
         # get fit info
-        cols = np.array(['name', 'FK/Fpi', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol corr'])
+        cols = np.array(['name', 'FK/Fpi', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol'])
         lecs_cols = ['L_4', 'L_5', # nlo terms
-                     'A_a', 'A_k', 'A_p', 'A_loga'] # nnlo terms
+                     'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-nnlo terms
+                     'A_a', 'A_k', 'A_p', 'A_loga', 'A_aa'] # nnlo terms
                      #'A_aa', 'A_ak', 'A_ap', # nnnlo terms
                      #'A_kk', 'A_kp', 'A_pp'] # more nnnlo terms
 
-        cols = np.concatenate((cols,lecs_cols), axis=0)
+        posterior_params = {}
+        for key in lecs_cols:
+            if key in fit_info['posterior'].keys():
+                posterior_params[key] = fit_info['posterior'][key]
+            else:
+                posterior_params[key] = np.nan
 
-        # fit_info keys not in cols -> create key in fit_info
-        for key in cols:
-            if key not in fit_info.keys():
-                fit_info[key] = np.nan
 
         # Add result to file if file exists
         if os.path.isfile(filepath):
@@ -131,34 +167,37 @@ class data_loader(object):
             for key in df_best_fits.keys():
                 output_dict[key] = np.array(list(df_best_fits[key].values()), dtype="object")
 
-            # df keys not in cols -> create keys in df
-            for key in cols:
-                if key not in output_dict.keys():
-                    print("df key not in col: ", key)
-                    output_dict[key] = np.repeat(np.nan, len(output_dict['name']))
-
-
             if fit_info['name'] in output_dict['name']:
                 index = np.argwhere(output_dict['name'] == fit_info['name']).item()
 
-                for key in fit_info.keys():
+                for key in cols:
                     output_dict[key][index] = fit_info[key]
+                for key in lecs_cols:
+                    output_dict[key][index] = posterior_params[key]
+
             else:
-                for key in output_dict.keys():
+                for key in cols:
                     output_dict[key] = np.append(output_dict[key], fit_info[key])
+                for key in lecs_cols:
+                    output_dict[key] = np.append(output_dict[key], posterior_params[key])
 
-
+            output_cols = np.concatenate((cols,lecs_cols), axis=0)
             df = pd.DataFrame.from_dict(output_dict)
-            df = df[cols]
+            df = df[output_cols]
             df.sort_values('name')
-            #print(df)
             df.to_csv(filepath)
 
         # Create new file if it doesn't exist
         else:
-            output_dict = {key : [fit_info[key]] for key in fit_info.keys()}
+            output_dict = {}
+            for key in cols:
+                output_dict[key] = [fit_info[key]]
+            for key in lecs_cols:
+                output_dict[key] = [posterior_params[key]]
+
+            output_cols = np.concatenate((cols,lecs_cols), axis=0)
             df = pd.DataFrame.from_dict(output_dict)
-            df = df[cols] # rearrange in logical order
+            df = df[output_cols] # rearrange in logical order
             df.to_csv(filepath)
 
         print("Done.")
@@ -189,24 +228,18 @@ class data_loader(object):
 
         return None
 
-    def save_prior(self, prior, fit_type, F2, include_FV, include_alphaS, include_logSq):
+    def save_prior(self, prior, name):
         print("Saving...")
+
+        fit_type = name.split('_')[0]
 
         if not os.path.exists(self.project_path + '/priors/'):
             os.makedirs(self.project_path + '/priors/')
         filepath = os.path.normpath(self.project_path + '/priors/'+fit_type+'.csv')
 
         # get fit info
-        cols = np.array(['name', 'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga'])
-
-        name = F2
-        if include_FV:
-            name = name + '_FV'
-        if include_alphaS:
-            name = name + '_alphaS'
-        if include_logSq:
-            name = name + '_logSq'
-
+        cols = np.array(['name', 'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8',
+                         'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga', 'A_aa'])
 
         # fit_info keys not in cols -> create key in fit_info
         for key in cols:
@@ -248,10 +281,3 @@ class data_loader(object):
 
         print("Done.")
         return None
-
-    def unpickle_fit_parameters(self, name):
-        filepath = self.project_path+'/pickles/'+name+'.p'
-        if os.path.isfile(filepath):
-            return gv.load(filepath)
-        else:
-            return None

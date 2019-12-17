@@ -1,6 +1,7 @@
 .ipynb_checkpoints/
 *.pyc
 $*
+/fiiter/__pycache__/
 /notes/*.aux
 /notes/*.bbl
 /notes/*.bcf

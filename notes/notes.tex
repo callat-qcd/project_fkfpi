@@ -22,6 +22,7 @@
 \newcommand{\mydate}{\ \today \ - \number\hour :\number\minute}
 \newcommand{\includegraphicsifexists}[2][]{\IfFileExists{#2}{\includegraphics[draft=false, #1]{#2}}{\includegraphics[draft=true, #1]{#2}}}
 
+\raggedbottom
 
 \begin{document}
 
@@ -90,15 +91,15 @@ In general, our fits are of the form
 \end{equation}
 where the $n_V$ denotes to which order we fit the finite volume effects.
 \subsection{Special Functions}
-For reference, we use the following special functions in our fits, which encapsulate the finite volume dependence. The values for the $c_n$'s are given in Table \ref{tab:cN_weights}.
+For reference later in these notes, we now list the following special functions in our fits which encapsulate the finite volume dependence. The values for the $c_n$'s are given in Table \ref{tab:cN_weights}.
 \begin{align}
-\mathcal{I}(m) &= \frac{m^2}{(4\pi)^2} \ln \left( \frac{m^2}{\mu^2} \right)
+\mathcal{I}(m) &= \frac{m^2}{(4\pi)^2} \log \left( \frac{m^2}{\mu^2} \right)
 + \frac{m^2}{4\pi^2} \sum_{|\mathbf{n}|\neq0} \frac{c_n}{mL|\mathbf{n}|} K_1(mL|\mathbf{n}|) \label{eqn:I(m)} \\
 %%%
 d\mathcal{I}(m) &=
 \frac{1}{(4\pi)^2} + \frac{\mathcal{I}(m)}{m^2}
 +\sum_{|\mathbf{n}|\neq0} \frac{c_n}{(4\pi)^2} \left[
-\frac{2K_1(mL|\mathbf{n}|)}{mL|\mathbf{n}|}
+\frac{K_1(mL|\mathbf{n}|)}{mL|\mathbf{n}|}
 -K_0(mL|\mathbf{n}|)
 -K_2(mL|\mathbf{n}|)\right] \\
 %%%
@@ -113,6 +114,7 @@ d\mathcal{I}(m) &=
 \nonumber\\&\phantom{=}
 +\frac{1}{m_3^2 - m_1^2} \frac{1}{m_3^2 - m_2^2} \mathcal{I}(m_3)
 \end{align}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 % cN table
@@ -268,8 +270,6 @@ For these fits,
 -\frac{3}{8} \frac{\mathcal{I}(m_\eta)}{F^2}
 %\nonumber\\&\phantom{=}
 +4(\epsilon_K^2 - \epsilon_\pi^2) (4\pi)^2 L_5
-%\nonumber\\&\phantom{=}
-+ \delta_{c.t.}^{\rm NNLO}
 \end{align}
 A less refined variant of this equation is given in (17) of \cite{Berkowitz:2017opd}.
 
@@ -287,6 +287,26 @@ The NNLO and NNNLO counterterms are formed by taking powers of $\epsilon^2_\xi$ 
 \end{equation}
 One might expect a term like $(\epsilon_K^2 - \epsilon_\pi^2)^2 A_{\chi}$ to show up in the NNLO expansion; however, this term is already covered by $[\epsilon_K^2  A_{K}+\epsilon_\pi^2  A_{\pi}] (\epsilon_K^2 - \epsilon_\pi^2)$.
 
+In fact, the pure NNLO counterterm (sans lattice spacing) was worked out in  \cite{Ananthanarayan:2017qmx}. We have that
+\begin{align} \label{eqn:C_j_defn}
+\delta\left(\frac{F_K}{F_\pi}\right)_{\text{NNLO} / \{a^2 \}}
+&= (4 \pi)^2 \left(\epsilon_K^2 - \epsilon_\pi^2\right) \\
+&\times \Bigg\{ 
+8 (4 \pi)^2 \big[ 2 \left(C_{14} + C_{15}\right) \epsilon_K^2 + \left( C_{15} + 2 C_{17} \right) \epsilon_\pi^2 \big] \nonumber \\
+&\phantom{= \Bigg\}} +  \left[ 8 (4 \pi)^2 L_5  \big( 8 L_4 + 3L_5 - 16 L_6 -8L_8 \big)
+-2 L_1 - L_2 - \frac{1}{18} L_3 + \frac{4}{3} L_5 - 16 L_7 - 8 L_8
+\right] \epsilon_K^2 \nonumber \\
+&\phantom{= \Bigg\}} +  \left[ 8 (4 \pi)^2  L_5  \big( 4 L_4 + 5 L_5 - 8 L_6 - 8 L_8 \big)
+-2 L_1 - L_2 - \frac{5}{18} L_3 - \frac{4}{3} L_5 + 16 L_7 + 8 L_8
+\right] \epsilon_\pi^2 \nonumber 
+\Bigg\} \, .
+\end{align}
+When we include the single log terms in our fit (see section \ref{section:semi_nnlo}), we determine the $L_i$ LECs; however, we never determine the $C_{ij}$ constants in our fits. Therefore when we include single log terms, we fit the full counterterm, with $A_K$ and $A_\pi$ absorbing the $C_{ij}$ dependence. That is,
+\begin{align}
+&A_K = 16 (4 \pi)^4 (C_{14} + C_{15}) \qquad A_\pi = 8 (4 \pi)^4 (C_{15} + 2 C_{17}) &&  \text{(only if including single log terms)}
+\end{align}
+When we don't include the single log terms, then attempting to determine all the LECs in \eqref{eqn:C_j_defn} is futile. In this case, we let $(\epsilon_K^2  A_{K} +\epsilon_\pi^2  A_{\pi}) (\epsilon_K^2 - \epsilon_\pi^2)$ stand-in for the entirety of \eqref{eqn:C_j_defn}.
+
 For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$ (and vice-versa).
 \begin{align}
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO} &= \bigg[
@@ -297,24 +317,124 @@ For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^
 
 Notice that the lattice spacing and $am_\xi$ ($\xi \in \{\pi, K, \eta\}$) corrections are included in these counterterms. For example, the term $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$ accounts for the lowest order lattice spacing correction. Further note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of terms at that order.
 
-\subsubsection{Semi-NNLO counterterms}
-Finally, there are counterterms that lies between NNLO and NNNLO. Per eqn (15) of \cite{Beane:2006kx}, we include an NNLO log-squared term
+\subsubsection{Renormalization scale dependence}
+In our analysis, we have three choices for the chiral symmetry breaking scale:
 \begin{equation}
-\delta\left(\frac{F_K}{F_\pi}\right)_\text{log-log-NNLO} =
-\frac{1}{6144} \left( \epsilon_K^2 - \epsilon_\pi^2 \right) \left( 17 \epsilon_K^2 + 37 \epsilon_\pi^2 \right) \left[\log \left(\epsilon_K \epsilon_\pi \right) \right]^2
+\Lambda_\chi  = 4 \pi \{ F_\pi, \sqrt{F_\pi F_K}, F_K\} \, .
 \end{equation}
-It's contribution, however, appears to be minuscule: its effect is on the order of between $10^{-4}$ and $10^{-3}$, depending on the ensemble.
+We make the agnostic choice of averaging the results of all three choices (see section \ref{section:model_average}). However, there's a nick in this approach: the choice of $F$ actually introduces errors at NNLO. We therefore introduce a counterterm to account for our choice of $F^2$:
+\begin{align}
+\delta\left(\frac{F_K}{F_\pi}\right)_{\mu = 4\pi F^2} &=
+\begin{cases}
+\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
+\log \epsilon_\pi^2 + \frac 12 \log \epsilon^2_K \\
+\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 (L_4 + L_5 ) + 2\epsilon_K^2 L_4 \right)
+\big] 
+&\qquad \text{for $F^2= F_\pi^2$} \\ \\
+\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
+\frac{11}{8} \log \epsilon_\pi^2 + \frac 54 \log \epsilon^2_K + \frac 38 \log \epsilon_\eta^2 \\
+\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 (2 L_4 + L_5) + \epsilon_K^2 (4 L_4 + L_5) \right)
+\big] + \xi^2
+&\qquad \text{for $F^2= F_K F_\pi $} \\ \\
+\frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
+\frac{3}{8} \log \epsilon_\pi^2 + \frac 34 \log \epsilon^2_K + \frac 38 \log \epsilon_\eta^2 \\
+\qquad - 4 (4\pi)^2 \left( \epsilon_\pi^2 L_4 + \epsilon_K^2  (2 L_4 + L_5) \right)
+\big] + 2 \xi^2
+&\qquad \text{for $F^2= F_K^2$}
+\end{cases}
+\end{align}
+where
+\begin{align}
+\xi & = 1 - \left(\frac{F_K}{F_\pi}\right)_\text{$\chi$PT-ratio} \\
+&=  \frac 58 \log \epsilon_\pi^2 - \frac 14 \log \epsilon_K^2 - \frac 38 \log \epsilon_\eta^2 
++ 4 (4 \pi)^2 \left(\epsilon_K^2 - \epsilon_\pi^2\right) L_5 \, . \nonumber
+\end{align}
 
-As it turns out, the lattice space discretization corrections cannot be exactly accounted for by a purely polynomial expansion: there remains a semi-NNLO counterterm that goes as $\sim \epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2) \log(a)$. Since $\alpha_S \sim \log(a)$, we add another counterterm:
+\subsubsection{Semi-NNLO counterterms} \label{section:semi_nnlo}
+Finally, there are counterterms that lies between NNLO and NNNLO. These come in four varieties: 
+\begin{enumerate}
+	\item semi-NNLO lattice spacing corrections
+	\item single log terms
+	\item log-squared terms
+	\item pure sunset
+\end{enumerate}
+As it turns out, the lattice space discretization corrections cannot be exactly accounted for by a purely polynomial expansion: there remains a semi-NNLO counterterm that goes as $\sim \epsilon_a^2 (\epsilon_K^2 - \epsilon_\pi^2) \log(a)$. Since $\alpha_S \sim \log(a)$, we have the first semi-NNLO correction:
 \begin{equation}
-\delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}} =
-A_{\log a} \alpha_S \, \epsilon_a^2  (\epsilon_K^2 - \epsilon_\pi^2)
+\delta\left(\frac{F_K}{F_\pi}\right)_{\alpha_S} =
+A_{\log a} \alpha_S \, \epsilon_a^2  (\epsilon_K^2 - \epsilon_\pi^2) \, .
 \end{equation}
-Note that we can't subsume $\alpha_S$ into $A_{\log a}$ since the former varies by ensemble. In totality, the semi-NNLO terms are
+Note that we can't subsume $\alpha_S$ into $A_{\log a}$ since the former varies by ensemble. 
+
+Next we consider the single log terms, which account for loop-corrections in the chiral expansion. These were also worked out in \cite{Ananthanarayan:2017qmx}. For convenience, we define
+\begin{align}
+\hat C^r_1 
+&= - \left[ \frac{7}{9} + \frac{11}{2} (4 \pi)^2 L_5 \right] \epsilon_\pi^2 \epsilon_K^2
+- \left[ \frac{113}{72} + (4 \pi)^2 \left( 
+4 L_1 + 10 L_2 + \frac{13}{2} L_3 - \frac{21}{2} L_5
+\right) \right] \epsilon_\pi^4\\
+\hat C^r_2 
+&=   \left[ \frac{53}{96} + (4 \pi)^2 \left( 
+4 L_1 + 10 L_2 + 5 L_3 - 5 L_5
+\right) \right] \epsilon_K^4
++ \left[ \frac{209}{144} + 3 (4 \pi)^2 L_5 \right] \epsilon_\pi^2 \epsilon_K^2 \\
+\hat C^r_3
+&=   \left[ \frac{13}{18} + (4 \pi)^2 \left( 
+\frac 83 L_3 - \frac 23 L_5 -16 L_7 - 8 L_8
+\right) \right] \epsilon_K^4 \\
+&\qquad 
+- \left[ \frac{4}{9} + 3 (4 \pi)^2 \left(
+\frac 43 L_3 + \frac {25}{6} L_5 -32 L_7 - 16 L_8
+\right) \right] \epsilon_\pi^2 \epsilon_K^2 \nonumber \\
+&\qquad 
++ \left[ \frac{19}{288} + (4 \pi)^2 \left( 
+\frac 16 L_3 + \frac{11}{6} L_5 -16 L_7 - 8 L_8
+\right) \right] \epsilon_\pi^4 \nonumber
+\end{align}
+Now we can write the second semi-NNLO contribution.
+\begin{equation}
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{log-NNLO} =
+\hat C^r_1 \log \epsilon_\pi^2
++\hat  C^r_2  \log \epsilon_K^2
++\hat  C^r_3 \log \epsilon_\eta^2
+\end{equation}
+
+Finally we include the log-squared two-loop corrections, which again are taken from \cite{Ananthanarayan:2017qmx}.  Let us define 
+\begin{equation}
+\begin{aligned}[c]
+\hat K^r_1  &=  \frac{11}{24} \epsilon_\pi^2 \epsilon_K^2 - \frac{131}{192} \epsilon_\pi^4 \\
+\hat K^r_3 & = \frac{13}{24} \epsilon_\pi^2 \epsilon_K^2 + \frac{59}{96} \epsilon_\pi^4 \qquad \\
+\hat K^r_5  &= -\frac{163}{144}  \epsilon_K^4 - \frac{67}{288} \epsilon_\pi^2 \epsilon_K^2 + \frac{3}{32} \epsilon_\pi^4 \qquad
+\end{aligned}
+\qquad
+\begin{aligned}[c]
+\hat K^r_2 &= -\frac{41}{96} \epsilon_\pi^2 \epsilon_K^2 - \frac{3}{32} \epsilon_\pi^4  \\
+\hat K^r_4 &= \frac{17}{36} \epsilon_K^4 + \frac{7}{144} \epsilon_\pi^2 \epsilon_K^2 \\
+\hat K^r_6 &= \frac{241}{288}  \epsilon_K^4 - \frac{13}{72} \epsilon_\pi^2 \epsilon_K^2 - \frac{61}{192}  \epsilon_\pi^4 \qquad
+\end{aligned}
+\end{equation}
+Then
+\begin{align}
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{log-log-NNLO} &=
+ \hat K^r_1 \left( \log \epsilon_\pi^2 \right)^2
+ + \hat K^r_2 \log \epsilon_\pi^2  \log \epsilon_K^2
+ + \hat K^r_3 \log \epsilon_\pi^2 \log \epsilon_\eta^2 \\
+ &+\hat K^r_4 \left( \log \epsilon_K^2 \right)^2
+ +\hat K^r_5 \log \epsilon_K^2  \log \epsilon_\eta^2
+  +\hat K^r_6 \left( \log \epsilon_\eta^2 \right)^2 \nonumber
+\end{align}
+
+The decomposition of the log-squared terms and the sunset terms is not unique. The remaining terms two-loop terms are encapsulated by the following function, which is implemented in \texttt{CHIRON} \cite{Bijnens:2014gsa}. A python wrapper for \texttt{chiron.FF} was written for this project.
+\begin{equation}
+\delta\left(\frac{F_K}{F_\pi}\right)_{\text{sunset}} = F_F \left( \frac{m_\pi^2}{m_K^2}\right)
+\end{equation}
+
+In totality, the semi-NNLO terms are
 \begin{equation}
 \delta\left(\frac{F_K}{F_\pi}\right)_{\text{semi-NNLO}} =
-\delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
-+ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}\, .
+\delta\left(\frac{F_K}{F_\pi}\right)_{\alpha_S}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{sunset}} \, .
 \end{equation}
 
 \subsubsection{ SU(2) isospin breaking}
@@ -336,7 +456,7 @@ The corrected charge ratio $F^\pm_K/F^\pm_\pi$ is the value reported by FLAG.
 %%%%%%%%%%%%%%%%%%
 \section{Fit Strategy}
 
-From inspections, one sees that the fit depends on the pion, kaon, and mixed meson masses; the taste-identity splitting $\Delta_{rs}^2 = \Delta_{ju}^2 = a^2 \Delta_\text{I}$; the lattice spacing $a$; the Wilson flow scale $w_0$; and the pion and kaon decay constants. First we briefly explain how these quantities were determined, then how we can use them to determine $F_K / F_\pi$ at the physical point.
+From inspections, one sees that the fit depends on the pion, kaon, and mixed meson masses; the taste-identity splitting $\Delta_{rs}^2 = \Delta_{ju}^2 = a^2 \Delta_\text{I}$; the lattice spacing $a$ (or its proxy $a/w_0$); and the pion and kaon decay constants. First we briefly explain how these quantities were determined, then how we can use them to determine $F_K / F_\pi$ at the physical point.
 
 
 \subsection{Meson masses}
@@ -390,7 +510,35 @@ where $m^{(res)}_q$ is the residual mass of quark $q$ (which characterizes the b
 \section{The Weeds}
 The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
 
-\subsection{Model Average}
+\subsection{Models}
+Including all two-loop corrections, we can write our fit function as follows:
+\begin{align}
+\left(\frac{F_K}{F_\pi}\right)_\text{lattice} &=
+\left(\frac{F_K}{F_\pi}\right)_\text{model}  + \delta \left(\frac{F_K}{F_\pi}\right)_\text{FV} 
+&& \text{NLO + F.V.} \\
+&+ \delta \left(\frac{F_K}{F_\pi}\right)_\text{NNLO}  + \delta \left(\frac{F_K}{F_\pi}\right)_{\mu = 4 \pi F^2} 
+&& \text{NNLO} \nonumber \\
+&+ \delta\left(\frac{F_K}{F_\pi}\right)_{\alpha_S}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-log-NNLO}}
++ \delta\left(\frac{F_K}{F_\pi}\right)_{\text{sunset}} 
+&& \text{semi-NNLO} \nonumber
+\end{align}
+
+However, since most of these corrections introduce at least one fitting parameter, it isn't necessarily advantageous to include all these corrections. Instead, we fit several models which are then averaged per section \ref{section:model_average}. To generate the different models, we use the following procedure:
+\begin{enumerate}
+	\item Choose a base model (\texttt{$\chi$PT}, \texttt{ma-ratio}, etc).
+	\item Choose a renormalization scale $\mu = 4 \pi F^2$.
+	\item Add the pure NNLO counterterm (including the lattice spacing term) and the renormalization scale, which is dependent on choice of $F^2$  and whether we are fitting the expanded ratio or not. That is, we add both NNLO corrections.
+	\item Choose whether to include the semi-NNLO lattice space correction (\texttt{alphaS}).
+	\item Choose whether to include the NNNLO lattice space correction.
+	\item Choose whether to including/excluding finite volume corrections.
+	\item Choose whether to add no more terms (\texttt{nnlo-ct}); add the log squared  terms  (\texttt{nnlo-logSq\_ct});  add the log-squared terms,  the single log terms, and the semi-NNLO pure sunset term \emph{without} Bijnen's central values for the $L_i$'s  (\texttt{nnlo-full}); or add the log-squared terms,  the single log terms, and the semi-NNLO pure sunset term \emph{with} Bijnen's central values for the $L_i$'s  (\texttt{nnlo-full\_bijnens}).
+\end{enumerate}
+
+In totality, this procedure will generate $4 \times 3 \times 2 \times 2 \times 2 \times 4 = 384$ different models.
+
+\subsection{Model Average} \label{section:model_average}
 Per section \ref{Fit Functions}, we see that our analysis includes numerous possible models: we have four different base models, three choices for $\Lambda_\chi$, counterterms to three orders, log-squared and semi-log terms, and up to ten volume corrections. Our model average is determined by weighing included models by their Bayes factor, as will be explained shortly. However, even without explaining this weighing process, it should be clear that fits having a comparatively small Bayes factor will contribute negligibly to the fit. In particular, the NLO fits have Bayes factors many orders of magnitude smaller than the NNLO fits. We therefore exclude the NLO fits from our analysis.
 
 In the other direction, we exclude the NNNLO fits. These fits can have much better Bayes factors (comparable to the NNLO fits), but the fits are also highly sensitive to choice of prior, which we can only weakly determine (see subsection \ref{Selection of Prior} below). We therefore exclude the NNNLO fits due to the lack of a robust measure by which we can judge whether the priors have been set appropriately.
