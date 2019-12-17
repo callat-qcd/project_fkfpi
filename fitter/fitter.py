@@ -19,30 +19,53 @@ class fitter(object):
         self.chain_fits = chain_fits
         self.F2 = F2
 
+        # To force empbayes_fit to converge?
+        self.counter = 0
+        #self.z = {}
+
     def _make_fitargs(self, z):
         y_data = self._make_y_data()
         prior = self._make_prior()
 
-        #z['chiral'] = np.around(z['chiral'], 2)
-        #z['spacing'] = np.around(z['spacing'], 2)
-        z['chiral'] = np.abs(z['chiral'])
-        z['spacing_n2lo'] = np.abs(z['spacing_n2lo'])
+        #Force convergence
+        #plausibility = 0
+        #if self.counter > 100:
+        #    plausibility = -10 *np.random.random()
+        #    z['chiral'] = self.z['chiral'] #np.abs(z['chiral'])
+        #    z['spacing_n2lo'] = self.z['spacing_n2lo']
+        #    if self.order['include_latt_n3lo']:
+        #        z['spacing_n3lo'] = self.z['spacing_n3lo']
+        #else:
+
+
+        # Ideally:
+            # Don't bother with more than the hundredth place
+            # Don't let z=0 (=> null GBF)
+            # Don't bother with negative values (meaningless)
+        # But for some reason, these restrictions (other than the last) cause empbayes_fit not to converge
+        z['chiral'] = np.abs(z['chiral']) #np.max([np.abs(np.around(z['chiral'], 2)), 0.01])
+        z['spacing_n2lo'] = np.abs(z['spacing_n2lo']) #np.max([np.abs(np.around(z['spacing_n2lo'], 2)), 0.01]) #
         if self.order['include_latt_n3lo']:
-            z['spacing_n3lo'] = np.abs(z['spacing_n3lo'])
+            z['spacing_n3lo'] = np.abs(z['spacing_n3lo']) #np.max([np.abs(np.around(z['spacing_n3lo'], 2)), 0.01]) #
+
+            # Force convergence
+            #self.z ={}
+            #for key in z:
+            #    self.z[key] = z[key]
 
         for key in prior.keys():
             if key in ['A_p', 'A_k']:
-                prior[key] = gv.gvar(0, z['chiral'])
+                prior[key] = gv.gvar(0, 1) *z['chiral']
             if key in ['A_loga', 'A_a']:
-                prior[key] = gv.gvar(0, z['spacing_n2lo'])
+                prior[key] = gv.gvar(0, 1) *z['spacing_n2lo']
             if key in ['A_aa']:
-                prior[key] = gv.gvar(0, z['spacing_n3lo'])
+                prior[key] = gv.gvar(0, 1) *z['spacing_n3lo']
 
+        self.counter += 1
         fitfcn = self._make_models()[-1].fitfcn
+        print(self.counter, ' ', z)
 
-        print(z)
-
-        return dict(data=y_data, fcn=fitfcn, prior=prior)
+        return dict(data=y_data, fcn=fitfcn, prior=prior)#, plausibility
 
     def _make_empbayes_fit(self):
         models = self._make_models()
@@ -55,7 +78,7 @@ class fitter(object):
         if self.order['include_latt_n3lo']:
             z0['spacing_n3lo'] = 1.0
 
-        fit, z = lsqfit.empbayes_fit(z0, self._make_fitargs)
+        fit, z = lsqfit.empbayes_fit(z0, fitargs = self._make_fitargs, tol=0.01)
         self.empbayes_fit = fit
         return fit
 
