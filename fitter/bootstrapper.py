@@ -248,7 +248,11 @@ class bootstrapper(object):
         temp_prior = self._randomize_prior(self.prior, 0)
         temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
                         order=self.order, fit_type=self.fit_type, chain_fits=self.chain_fits)
-        return temp_fitter.get_empbayes_fit()
+
+        empbayes_fit = temp_fitter.get_empbayes_fit()
+        print(empbayes_fit)
+        self.fits = [empbayes_fit]
+        return empbayes_fit
 
     def _make_fit_data(self, j):
         prepped_data = {}

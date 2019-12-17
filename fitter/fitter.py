@@ -56,7 +56,7 @@ class fitter(object):
             z0['spacing_n3lo'] = 1.0
 
         fit, z = lsqfit.empbayes_fit(z0, self._make_fitargs)
-
+        self.empbayes_fit = fit
         return fit
 
     def _make_fit(self):

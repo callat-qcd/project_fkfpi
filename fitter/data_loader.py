@@ -84,7 +84,9 @@ class data_loader(object):
 
         return output_dict
 
-    def get_prior(self, fit_type, F2, include_FV, include_alphaS, include_logSq):
+    def get_prior(self, fit_type, order, F2,
+                  include_log, include_log2, include_sunset,
+                  include_alpha_s, include_latt_n3lo, include_FV, use_bijnens_central_value):
         filepath = os.path.normpath(self.project_path + '/priors/'+fit_type+'.csv')
 
         print(filepath)
@@ -92,13 +94,21 @@ class data_loader(object):
         if not os.path.isfile(filepath):
             return None
 
-        name = F2
+        name = fit_type +'_'+ F2+'_'+order
+        if include_log:
+            name = name + '_log'
+        if include_log2:
+            name = name + '_logSq'
+        if include_sunset:
+            name = name + '_sunset'
+        if include_alpha_s:
+            name = name + '_alphaS'
+        if include_latt_n3lo:
+            name = name + '_a4'
         if include_FV:
             name = name + '_FV'
-        if include_alphaS:
-            name = name + '_alphaS'
-        if include_logSq:
-            name = name + '_logSq'
+        if use_bijnens_central_value:
+            name = name + '_bijnens'
 
         df_prior = pd.read_csv(filepath, header=0)
         if name not in df_prior['name'].values:
@@ -218,8 +228,10 @@ class data_loader(object):
 
         return None
 
-    def save_prior(self, prior, fit_type, F2, include_FV, include_alphaS, include_logSq):
+    def save_prior(self, prior, name):
         print("Saving...")
+
+        fit_type = name.split('_')[0]
 
         if not os.path.exists(self.project_path + '/priors/'):
             os.makedirs(self.project_path + '/priors/')
@@ -228,15 +240,6 @@ class data_loader(object):
         # get fit info
         cols = np.array(['name', 'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8',
                          'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga', 'A_aa'])
-
-        name = F2
-        if include_FV:
-            name = name + '_FV'
-        if include_alphaS:
-            name = name + '_alphaS'
-        if include_logSq:
-            name = name + '_logSq'
-
 
         # fit_info keys not in cols -> create key in fit_info
         for key in cols:
