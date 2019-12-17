@@ -12,30 +12,48 @@ from .fitter import fitter
 
 class bootstrapper(object):
 
-    def __init__(self, fit_data, prior=None, abbrs=None, chain_fits=None,
-                 include_su2_isospin_corrrection=None, use_bijnens_central_value=None,
-                 order=None, fit_type=None, F2=None, bias_correct=None):
-
+    def __init__(self, fit_data, prior=None, **kwargs):
         w0 = gv.gvar('0.175(10)') # Still needs to be determined, but something like this
         self.w0 = w0
 
-        if bias_correct is None:
-            bias_correct = True
-
-        if use_bijnens_central_value:
-            use_bijnens_central_value = True
-
-        if include_su2_isospin_corrrection is None:
-            include_su2_isospin_corrrection = False
-
-        if F2 is None:
-            F2 = 'FKFpi'
-        self.F2 = F2
-
-        if chain_fits is None:
-            chain_fits = False
-
+        # Default values
+        order = None
+        fit_type = 'xpt'
+        abbrs = fit_data.keys()
+        include_su2_isospin_corrrection = False
+        use_bijnens_central_value = True
+        bias_correct = True
+        chain_fits = False
         plot_bs_N = 100
+        F2 = 'FpiFpi'
+        self.F2 = F2 # Set this now so get_phys_point_data('lam2_chi') works
+
+        # Overwrite defaults using kwargs
+        if 'fit_type' in kwargs:
+            fit_type = kwargs['fit_type']
+
+        if 'abbrs' in kwargs:
+            abbrs = kwargs['abbrs']
+
+        if 'include_su2_isospin_corrrection' in kwargs:
+            include_su2_isospin_corrrection = kwargs['include_su2_isospin_corrrection']
+
+        if 'use_bijnens_central_value' in kwargs:
+            use_bijnens_central_value = kwargs['use_bijnens_central_value']
+
+        if 'order' in kwargs:
+            order = kwargs['order']
+
+        if 'F2' in kwargs:
+            F2 = kwargs['F2']
+            # Set this now so get_phys_point_data('lam2_chi') works
+            self.F2 = F2
+
+        if 'bias_correct' in kwargs:
+            bias_correct = kwargs['bias_correct']
+
+        if 'plot_bs_N' in kwargs:
+            plot_bs_N = kwargs['plot_bs_N']
 
         # Add default values to order dict
         order_temp = {
@@ -59,6 +77,7 @@ class bootstrapper(object):
                 if key not in order.keys():
                     order[key] = order_temp[key]
 
+        # Default prior
         if prior is None:
             print("Using default prior.")
 
@@ -112,11 +131,8 @@ class bootstrapper(object):
             prior['A_kp'] = gv.gvar('0.0(5.0)')
             prior['A_pp'] = gv.gvar('0.0(5.0)')
 
-        if abbrs is None:
-            abbrs = fit_data.keys()
-
+        # Convert bootstrapped data into gvar data
         bias_corrector = lambda arr : arr[1:] + (arr[0] - np.mean(arr[1:]))
-
         gv_data = {}
         plot_data = {}
         for abbr in abbrs:
@@ -168,19 +184,19 @@ class bootstrapper(object):
                 plot_data[abbr]['lam2_chi'] = (4 * np.pi *latt_spacing[abbr[:3]] *F0 / hbar_c)**2
 
 
+        # Set object values
         self.include_su2_isospin_corrrection = include_su2_isospin_corrrection
         self.use_bijnens_central_value = use_bijnens_central_value
         self.bs_N = 1
+        self.F2 = F2
         self.plot_bs_N = plot_bs_N
         self.abbrs = sorted(abbrs)
-        #self.variable_names = sorted(fit_data[self.abbrs[0]].keys())
         self.fit_data = gv_data
         self.plot_data = plot_data
         self.prior = prior
         self.order = order
         self.fits = None
         self.chain_fits = chain_fits
-        #self.bs_fit_parameters = None
         self.fit_type = fit_type
 
     def __str__(self):
