@@ -603,7 +603,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
-        if self.fast_sunset:
+        if self.fast_sunset and 'sunset' in p:
             output = eps2_k**2 *p['sunset']
         else:
             output = eps2_k**2 *sf.fcn_FF(eps2_pi/eps2_k)
