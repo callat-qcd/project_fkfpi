@@ -9,15 +9,15 @@ import special_functions as sf
 
 class fitter(object):
 
-    def __init__(self, order, fit_type, F2, fit_data=None, prior=None, chain_fits=True):
+    def __init__(self, order, fit_type, F2, fit_data=None, prior=None, fast_sunset=False):
         self.prior = prior
         self.fit_data = fit_data
         self.fit = None
         self.empbayes_fit = None
         self.order = order
         self.fit_type = fit_type
-        self.chain_fits = chain_fits
         self.F2 = F2
+        self.fast_sunset=fast_sunset
 
         # To force empbayes_fit to converge?
         self.counter = 0
@@ -68,9 +68,9 @@ class fitter(object):
         return dict(data=y_data, fcn=fitfcn, prior=prior)#, plausibility
 
     def _make_empbayes_fit(self):
-        models = self._make_models()
-        y_data = self._make_y_data()
-        prior = self._make_prior()
+        #models = self._make_models(fast_sunset=True)
+        #y_data = self._make_y_data()
+        #prior = self._make_prior()
 
         z0 = gv.BufferDict()
         z0['chiral'] = 1.0
@@ -106,13 +106,13 @@ class fitter(object):
             order = self.order.copy()
             for fit_type in ['ma', 'xpt']:
                 models = np.append(models, fk_fpi_model(datatag=fit_type+'_'+order['fit'],
-                            F2=self.F2, order=self.order, fit_type=fit_type))
+                            F2=self.F2, order=self.order, fit_type=fit_type, fast_sunset=self.fast_sunset))
             return models
 
 
         order = self.order.copy()
         models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
-                    F2=self.F2, order=order, fit_type=self.fit_type))
+                    F2=self.F2, order=order, fit_type=self.fit_type, fast_sunset=self.fast_sunset))
 
         return models
 
@@ -185,9 +185,10 @@ class fitter(object):
 
 class fk_fpi_model(lsqfit.MultiFitterModel):
 
-    def __init__(self, datatag, fit_type, order, F2):
+    def __init__(self, datatag, fit_type, order, F2, fast_sunset=False):
         super(fk_fpi_model, self).__init__(datatag)
 
+        self.fast_sunset = fast_sunset # Use correlated gvar instead
         self.fit_type = fit_type
         self.order = order
         self.F2 = F2
@@ -602,7 +603,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
-        if 'sunset' in p:
+        if self.fast_sunset:
+            print('yes')
             output = eps2_k**2 *p['sunset']
         else:
             output = eps2_k**2 *sf.fcn_FF(eps2_pi/eps2_k)

@@ -24,7 +24,6 @@ p_dict = {
         'fit' : 'nnlo', # 'nlo', 'nnlo', or 'nnnlo'
         'exclude' : [], # put LECs here
     },
-    'chained' : False,
     'bias_correct' : True,
     'include_su2_isospin_corrrection' : False,
 
@@ -102,7 +101,7 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
                   include_latt_n3lo=p_dict['order']['include_latt_n3lo'], include_FV=(p_dict['order']['vol'] > 6),
                   use_bijnens_central_value=p_dict['use_bijnens_central_value']
              )
-             
+
     # Make bootstrapper
     bootstrapper = bs.bootstrapper(
         fit_data, prior=prior, order=p_dict['order'], F2=p_dict['F2'],

@@ -27,8 +27,8 @@ class bootstrapper(object):
         include_su2_isospin_corrrection = False
         use_bijnens_central_value = True
         bias_correct = True
-        chain_fits = False
         plot_bs_N = 100
+        fast_sunset = False
         F2 = 'FpiFpi'
         self.F2 = F2 # Set this now so get_phys_point_data('lam2_chi') works
 
@@ -58,6 +58,9 @@ class bootstrapper(object):
 
         if 'plot_bs_N' in kwargs:
             plot_bs_N = kwargs['plot_bs_N']
+
+        if 'fast_sunset' in kwargs:
+            fast_sunset = kwargs['fast_sunset']
 
         # Add default values to order dict
         order_temp = {
@@ -154,7 +157,7 @@ class bootstrapper(object):
             plot_data[abbr]['FK/Fpi'] = plot_data[abbr]['FK'] / plot_data[abbr]['Fpi']
 
             # Sunset term
-            if order['include_sunset']:
+            if fast_sunset and order['include_sunset']:
                 gv_data[abbr]['sunset'] = sf.fcn_FF((gv_data[abbr]['mpi'] / gv_data[abbr]['mk'])**2)
 
             to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
@@ -204,8 +207,8 @@ class bootstrapper(object):
         self.prior = prior
         self.order = order
         self.fits = None
-        self.chain_fits = chain_fits
         self.fit_type = fit_type
+        self.fast_sunset = fast_sunset
 
     def __str__(self):
         bs_fit_parameters = self.get_bootstrapped_fit_parameters()
@@ -214,7 +217,6 @@ class bootstrapper(object):
         output = output + "\n\nFitting to %s \n" %(self.order['fit'])
         #output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
         output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
-        output = output + " chained: %s \n" %(self.chain_fits)
         output = output + "Fitted/[FLAG] values at physical point (including SU(2) isospin corrections: %s):\n" %(self.include_su2_isospin_corrrection)
         output = output + '\nF_K / F_pi = %s [%s]'%(
                             self.extrapolate_to_phys_point(),
@@ -264,14 +266,14 @@ class bootstrapper(object):
         # Need to randomize prior in bayesian-bootstrap hybrid
         temp_prior = self._randomize_prior(self.prior, j)
         temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
-                        order=self.order, fit_type=self.fit_type, chain_fits=self.chain_fits)
+                        order=self.order, fit_type=self.fit_type, fast_sunset=self.fast_sunset)
         return temp_fitter.get_fit()
 
     def _make_empbayes_fit(self):
         prepped_data = self._make_fit_data(0)
         temp_prior = self._randomize_prior(self.prior, 0)
         temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
-                        order=self.order, fit_type=self.fit_type, chain_fits=self.chain_fits)
+                        order=self.order, fit_type=self.fit_type, fast_sunset=self.fast_sunset)
 
         empbayes_fit = temp_fitter.get_empbayes_fit()
         self.fits = [empbayes_fit]
@@ -389,7 +391,7 @@ class bootstrapper(object):
         if fit_type is None:
             fit_type = self.fit_type
 
-        model = fitter(order=self.order, fit_type=fit_type, F2=self.F2)._make_models()[0]
+        model = fitter(order=self.order, fit_type=fit_type, F2=self.F2, fast_sunset=self.fast_sunset)._make_models()[0]
         return model.fitfcn(p=fit_parameters, fit_data=fit_data, debug=debug)
 
     # Returns dictionary with keys fit parameters, entries bs results
