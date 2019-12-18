@@ -99,11 +99,7 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
     if temp_prior is None:
 
         # Make bootstrapper
-        bootstrapper = bs.bootstrapper(
-            fit_data, prior=None, order=p_dict['order'], F2=p_dict['F2'],
-            include_su2_isospin_corrrection=p_dict['include_su2_isospin_corrrection'], use_bijnens_central_value=p_dict['use_bijnens_central_value'],
-            fit_type=p_dict['fit_type'], abbrs=p_dict['abbrs'], bias_correct=p_dict['bias_correct']
-        )
+        bootstrapper = bs.bootstrapper(fit_data, prior=None, **p_dict)
 
         new_prior = bootstrapper.create_prior_from_fit()
         data_loader.save_prior(new_prior, bootstrapper.get_name())

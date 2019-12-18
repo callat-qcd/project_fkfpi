@@ -84,6 +84,8 @@ class bootstrapper(object):
                 if key not in order.keys():
                     order[key] = order_temp[key]
 
+        print(order)
+
         # Default prior
         if prior is None:
             print("Using default prior.")
