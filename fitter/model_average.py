@@ -33,7 +33,7 @@ class model_average(object):
             output_dict['include_FV'] = True
         if '_alphaS' in name:
             output_dict['include_alpha_s'] = True
-        if '_log_' in name or name.endswith('_log'):
+        if '_log_' in name or name.endswith('_log'): # (consider '_logSq')
             output_dict['include_log'] = True
         if '_logSq' in name:
             output_dict['include_log2'] = True
@@ -508,6 +508,10 @@ class model_average(object):
         plt.ylabel('$F^\pm_K/F^\pm_\pi$', fontsize=24)
 
 
+        fk_fpi_avg = self.average()
+        pm = lambda g, k : g.mean + k *g.sdev
+        plt.ylim(pm(fk_fpi_avg, -5), pm(fk_fpi_avg, +5))
+
         fig = plt.gcf()
         plt.close()
         return fig
@@ -518,6 +522,11 @@ class model_average(object):
             title = ""
         if xlabel is None:
             xlabel = self._param_keys_dict(param)
+
+        param_avg = self.average(param=param)
+        pm = lambda g, k : g.mean + k *g.sdev
+        x = np.linspace(pm(param_avg, -5), pm(param_avg, +5), 2000)
+
 
         colors = ['salmon', 'darkorange', 'mediumaquamarine', 'orchid', 'silver']
         for j, F2 in enumerate(['All', 'FKFK', 'FKFpi', 'FpiFpi']):
@@ -544,12 +553,12 @@ class model_average(object):
 
 
             # for plotting
-            temp_array = np.array([self.fit_results[model][param] for model in self.fit_results.keys()])
-            temp_array = gv.gvar(temp_array[temp_array != 'nan'])
-            pm_arr = lambda arr, k : gv.mean(temp_array) + k *gv.sdev(temp_array)
-            min_x = np.min(pm_arr(temp_array, -2))
-            max_x = np.max(pm_arr(temp_array, 2))
-            x = np.linspace(min_x, max_x, 2000)
+            #temp_array = np.array([self.fit_results[model][param] for model in self.fit_results.keys()])
+            #temp_array = gv.gvar(temp_array[temp_array != 'nan'])
+            #pm_arr = lambda arr, k : gv.mean(temp_array) + k *gv.sdev(temp_array)
+            #min_x = np.min(pm_arr(temp_array, -2))
+            #max_x = np.max(pm_arr(temp_array, 2))
+            #x = np.linspace(min_x, max_x, 2000)
 
 
             for model in self.fit_results.keys():
