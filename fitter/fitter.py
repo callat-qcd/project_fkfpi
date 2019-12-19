@@ -20,7 +20,7 @@ class fitter(object):
         self.fast_sunset=fast_sunset
 
         # To force empbayes_fit to converge?
-        self.counter = 0
+        self.counter = {'iters' : 0, 'evals' : 0}
         #self.z = {}
 
     def _make_fitargs(self, z):
@@ -61,9 +61,9 @@ class fitter(object):
             if key in ['A_aa']:
                 prior[key] = gv.gvar(0, 1) *z['spacing_n3lo']
 
-        self.counter += 1
+        self.counter['iters'] += 1
         fitfcn = self._make_models()[-1].fitfcn
-        print(self.counter, ' ', z)
+        print(self.counter['iters'], ' ', z)
 
         return dict(data=y_data, fcn=fitfcn, prior=prior)#, plausibility
 
@@ -79,11 +79,19 @@ class fitter(object):
             z0['spacing_n3lo'] = 1.0
 
 
-        # might need to change minargs default values for empbayes_fit to converge:
+        # Might need to change minargs default values for empbayes_fit to converge:
         # tol=1e-8, svdcut=1e-12, debug=False, maxit=1000, add_svdnoise=False, add_priornoise=False
         # Note: maxit != maxfev. See https://github.com/scipy/scipy/issues/3334
-        # For Nelder-Mead algorithm, maxfev < maxit < 3 maxfev
-        fit, z = lsqfit.empbayes_fit(z0, fitargs = self._make_fitargs, tol=0.01, maxit=100)
+        # For Nelder-Mead algorithm, maxfev < maxit < 3 maxfev?
+
+        # For debugging. Same as 'callback':
+        # https://github.com/scipy/scipy/blob/c0dc7fccc53d8a8569cde5d55673fca284bca191/scipy/optimize/optimize.py#L651
+        def analyzer(arg):
+            self.counter['evals'] += 1
+            print("\nEvals: ", self.counter['evals'], arg,"\n")
+            return None
+
+        fit, z = lsqfit.empbayes_fit(z0, fitargs = self._make_fitargs, tol=0.01, maxit=100, analyzer=None)
         self.empbayes_fit = fit
         return fit
 
