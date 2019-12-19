@@ -27,17 +27,6 @@ class fitter(object):
         y_data = self._make_y_data()
         prior = self._make_prior()
 
-        #Force convergence
-        #plausibility = 0
-        #if self.counter > 100:
-        #    plausibility = -10 *np.random.random()
-        #    z['chiral'] = self.z['chiral'] #np.abs(z['chiral'])
-        #    z['spacing_n2lo'] = self.z['spacing_n2lo']
-        #    if self.order['include_latt_n3lo']:
-        #        z['spacing_n3lo'] = self.z['spacing_n3lo']
-        #else:
-
-
         # Ideally:
             # Don't bother with more than the hundredth place
             # Don't let z=0 (=> null GBF)
@@ -48,10 +37,9 @@ class fitter(object):
         if self.order['include_latt_n3lo']:
             z['spacing_n3lo'] = np.abs(z['spacing_n3lo']) #np.max([np.abs(np.around(z['spacing_n3lo'], 2)), 0.01]) #
 
-            # Force convergence
-            #self.z ={}
-            #for key in z:
-            #    self.z[key] = z[key]
+        # Helps with convergence (minimizer doesn't use extra digits -- bug in lsqfit?)
+        for key in z:
+            z[key] = np.round(z[key], 8)
 
         for key in prior.keys():
             if key in ['A_p', 'A_k']:
@@ -89,6 +77,7 @@ class fitter(object):
         def analyzer(arg):
             self.counter['evals'] += 1
             print("\nEvals: ", self.counter['evals'], arg,"\n")
+            print(type(arg[0]))
             return None
 
         fit, z = lsqfit.empbayes_fit(z0, fitargs = self._make_fitargs, tol=0.01, maxit=100, analyzer=None)
