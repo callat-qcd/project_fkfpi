@@ -47,6 +47,9 @@ class model_average(object):
     def _get_fit_parameters(self, name):
         return self.fit_results[name]['posterior']
 
+    def _get_fit_prior(self, name):
+        return self.fit_results[name]['prior']
+
     def _get_phys_point_data(self, name=None):
 
         phys_point_data = {

@@ -78,7 +78,12 @@ class fitter(object):
         if self.order['include_latt_n3lo']:
             z0['spacing_n3lo'] = 1.0
 
-        fit, z = lsqfit.empbayes_fit(z0, fitargs = self._make_fitargs, tol=0.01)
+
+        # might need to change minargs default values for empbayes_fit to converge:
+        # tol=1e-8, svdcut=1e-12, debug=False, maxit=1000, add_svdnoise=False, add_priornoise=False
+        # Note: maxit != maxfev. See https://github.com/scipy/scipy/issues/3334
+        # For Nelder-Mead algorithm, maxfev < maxit < 3 maxfev
+        fit, z = lsqfit.empbayes_fit(z0, fitargs = self._make_fitargs, tol=0.01, maxit=100)
         self.empbayes_fit = fit
         return fit
 
