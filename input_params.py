@@ -46,7 +46,7 @@ switches['ansatz']['models'] = [
     #'xpt_nnlo'                      ,'ma_nnlo',
     #'xpt_nnlo_alphaS'               ,'ma_nnlo_alphaS',
     #'xpt_nnlo_FV'                   ,'ma_nnlo_FV',
-    'xpt_nnlo_FV_alphaS_a4'                   #,'xpt_nnlo_FV_a4',
+    'xpt_nnlo_FV_alphaS'                   #,'xpt_nnlo_FV_a4',
     #'xpt_nnlo_FV_alphaS'            ,'xpt_nnlo_FV_alphaS_logSq',
     #'xpt_nnlo_FV_alphaS_a4'            ,'xpt_nnlo_FV_alphaS_a4_logSq',
     ]
@@ -171,7 +171,7 @@ phys_point = dict()
 #phys_point['meta'] = gv.gvar(547.862,0.017) #PDG
 # http://pdg.lbl.gov/2015/reviews/rpp2015-rev-pseudoscalar-meson-decay-cons.pdf
 phys_point['Fpi'] = gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2)) #PDG fpi+ eq(16)
-phys_point['FK']  = gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2)) #PDG fK++ eq(16)
+phys_point['FK']  = gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2)) #PDG fK+ eq(16)
 # FLAG values for "pure" QCD point
 phys_point['mpi'] = gv.gvar(134.8, 0.3) #FLAG 2017 (16)
 phys_point['mk']  = gv.gvar(494.2 , 0.3) #FLAG 2017 (16)
