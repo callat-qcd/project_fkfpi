@@ -77,7 +77,7 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
     elif choice['semi-nnlo_corrections'] == 'nnlo-logSq_ct':
         p_dict['order']['include_log'] = False
         p_dict['order']['include_log2'] = True
-        p_dict['order']['include_sunset'] = False
+        p_dict['order']['include_sunset'] = True
         p_dict['use_bijnens_central_value'] = False
 
     elif choice['semi-nnlo_corrections'] == 'nnlo-ct':
