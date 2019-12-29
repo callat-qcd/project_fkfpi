@@ -28,6 +28,7 @@ class model_average(object):
         output_dict['include_log2'] = False
         output_dict['include_sunset'] = False
         output_dict['include_latt_n3lo'] = False
+        output_dict['use_bijnens_central_value'] = False
 
         if '_FV' in name:
             output_dict['include_FV'] = True
@@ -41,6 +42,32 @@ class model_average(object):
             output_dict['include_sunset'] = True
         if '_a4' in name:
             output_dict['include_latt_n3lo'] = True
+        if '_bijnens' in name:
+            output_dict['use_bijnens_central_value'] = True
+
+        if (output_dict['include_log'] == True
+                and output_dict['include_log2'] == True
+                and output_dict['include_sunset'] == True
+                and output_dict['use_bijnens_central_value'] == True):
+            output_dict['semi-nnlo_corrections'] = 'nnlo-full_bijnens'
+
+        if (output_dict['include_log'] == True
+                and output_dict['include_log2'] == True
+                and output_dict['include_sunset'] == True
+                and output_dict['use_bijnens_central_value'] == False):
+            output_dict['semi-nnlo_corrections'] = 'nnlo-full'
+
+        if (output_dict['include_log'] == False
+                and output_dict['include_log2'] == True
+                and output_dict['include_sunset'] == True
+                and output_dict['use_bijnens_central_value'] == False):
+            output_dict['semi-nnlo_corrections'] = 'nnlo-logSq_ct'
+
+        if (output_dict['include_log'] == False
+                and output_dict['include_log2'] == False
+                and output_dict['include_sunset'] == False
+                and output_dict['use_bijnens_central_value'] == False):
+            output_dict['semi-nnlo_corrections'] = 'nnlo-ct'
 
         return output_dict
 
@@ -194,6 +221,9 @@ class model_average(object):
             fitfcn = fk_fpi_model(datatag='xpt-ratio', fit_type='xpt-ratio', order=order, F2=model_info['F2']).fitfcn
 
         return fitfcn(p=p, fit_data=data)
+
+    def get_model_names(self):
+        return sorted(list(self.fit_results))
 
     def plot_comparison(self, param=None, other_results=None, title=None, xlabel=None,
                         show_model_avg=True):
@@ -518,12 +548,18 @@ class model_average(object):
         plt.close()
         return fig
 
-    def plot_histogram(self, param, title=None, xlabel=None):
+    def plot_histogram(self, param=None, title=None, xlabel=None, vary_choice=None):
 
+        if param is None:
+            param = 'FK/Fpi_pm'
         if title is None:
             title = ""
         if xlabel is None:
-            xlabel = self._param_keys_dict(param)
+            xlabel = self._param_keys_dict(param)+' (varying '+vary_choice+')'
+        if vary_choice is None:
+            choices = []
+        else:
+            choices = np.unique([self._get_model_info_from_name(model)[vary_choice] for model in self.get_model_names()])
 
         param_avg = self.average(param=param)
         pm = lambda g, k : g.mean + k *g.sdev
@@ -531,10 +567,10 @@ class model_average(object):
 
 
         colors = ['salmon', 'darkorange', 'mediumaquamarine', 'orchid', 'silver']
-        for j, F2 in enumerate(['All', 'FKFK', 'FKFpi', 'FpiFpi']):
+        for j, choice in enumerate(np.append(['All'], choices)):
 
             # read Bayes Factors
-            logGBF_list = [self.fit_results[model]['logGBF'] for model in self.fit_results.keys()]
+            logGBF_list = [self.fit_results[model]['logGBF'] for model in self.get_model_names()]
 
             # initiate a bunch of parameters
             y = 0
@@ -563,9 +599,9 @@ class model_average(object):
             #x = np.linspace(min_x, max_x, 2000)
 
 
-            for model in self.fit_results.keys():
+            for model in self.get_model_names():
                 model_info = self._get_model_info_from_name(model)
-                if self.fit_results[model][param] is not np.nan and (model_info['F2'] == F2 or F2=='All'):
+                if self.fit_results[model][param] is not np.nan and (str(model_info[vary_choice]) == choice or choice=='All'):
                     r = gv.gvar(self.fit_results[model][param])
                     y_dict[model] = r
 
@@ -609,8 +645,9 @@ class model_average(object):
 
             fig = plt.figure('result histogram')#,figsize=fig_size2)
             ax = plt.axes()
-            ax.fill_between(x=x,y1=ysum,facecolor=colors[j], edgecolor='black',alpha=0.4,label=self._param_keys_dict(F2))
-            if F2 == 'All':
+            ax.fill_between(x=x,y1=ysum,facecolor=colors[j], edgecolor='black',alpha=0.4,label=self._param_keys_dict(choice))
+            ax.plot(x, ysum, color=colors[j], alpha=1.0)
+            if choice == 'All':
                 # get 95% confidence
                 lidx95 = abs(cdf-0.025).argmin()
                 uidx95 = abs(cdf-0.975).argmin()

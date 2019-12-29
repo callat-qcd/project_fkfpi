@@ -348,10 +348,6 @@ class bootstrapper(object):
                     output[key] = gv.gvar(0, gv.sdev(temp_prior[key]))
             else:
                 print('Missing key when saving prior!', key)
-
-
-
-
         return output
 
     def extrapolate_to_ensemble(self, abbr):

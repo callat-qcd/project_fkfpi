@@ -33,7 +33,7 @@ p_dict = {
            u'a12m400',  u'a15m135XL', u'a15m220', u'a15m310', u'a15m350', 'a15m400'], # u'a15m130'
 
     'save_results' : True,
-    'replace_fits' : False,
+    'replace_fits' : True,
 }
 
 choices = {
