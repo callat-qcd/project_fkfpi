@@ -198,8 +198,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
 
     def fitfcn(self, p, fit_data=None, debug=None):
-        if debug is not None:
-            self.debug = debug
+        if debug is None:
+            debug = self.debug
 
         if fit_data is not None:
             for key in fit_data.keys():
@@ -243,9 +243,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         for key in self.order['exclude']:
             del(p[key])
 
-        if self.debug:
+        if debug:
             print('nnlo', output - temp)
-            print('p', p)
+            #print('p', p)
 
         return output
 
@@ -401,7 +401,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             - (3.0/8.0) *sf.fcn_I_m(meta, L, mu, order_vol) / F2)
             + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
         )
-
         return output
 
 

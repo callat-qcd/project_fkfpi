@@ -33,6 +33,7 @@ p_dict = {
            u'a12m400',  u'a15m135XL', u'a15m220', u'a15m310', u'a15m350', 'a15m400'], # u'a15m130'
 
     'save_results' : True,
+    'replace_fits' : False,
 }
 
 choices = {
@@ -109,10 +110,12 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
         fit_type=p_dict['fit_type'], abbrs=p_dict['abbrs'], bias_correct=p_dict['bias_correct']
     )
 
-    print(bootstrapper)
+    if p_dict['replace_fits'] or not (bootstrapper.get_name() in data_loader.get_models()):
 
-    # Save results
-    data_loader.save_fit_info(bootstrapper.get_fit_info())
+        print(bootstrapper)
+
+        # Save results
+        data_loader.save_fit_info(bootstrapper.get_fit_info())
 
 
     t1 = time.time()
