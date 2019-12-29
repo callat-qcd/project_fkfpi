@@ -446,6 +446,7 @@ class bootstrapper(object):
             'chi2/df' : self.get_fit().chi2 / self.get_fit().dof,
             'Q' : self.get_fit().Q,
             'vol' : self.order['vol'],
+            'phys_point' : self.get_phys_point_data(),
             'prior' : {},
             'posterior' : {},
         }

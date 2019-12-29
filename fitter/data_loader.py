@@ -13,14 +13,28 @@ class data_loader(object):
     def __init__(self):
         self.project_path = os.path.normpath(os.path.join(os.path.realpath(__file__), os.pardir, os.pardir))
         self.file_h5 = os.path.normpath(self.project_path+'/FK_Fpi_data.h5')
+        self.models = None
+        self.fit_info = None
 
     def _pickle_fit_parameters(self, fit_info):
         name = fit_info['name']
         filename = self.project_path+'/pickles/'+name+'.p'
 
-        output = {}
+        output = {
+            'FK/Fpi' : fit_info['FK/Fpi'],
+            'delta_su2' : fit_info['delta_su2'],
+            'logGBF' : gv.gvar(fit_info['logGBF']),
+            'chi2/df' : gv.gvar(fit_info['chi2/df']),
+            'Q' : gv.gvar(fit_info['Q']),
+        }
+
         for key in fit_info['prior'].keys():
+            output['prior:'+key] = fit_info['prior'][key]
+
             output[key] = [fit_info['prior'][key], fit_info['posterior'][key]]
+
+        for key in fit_info['posterior'].keys():
+            output['posterior:'+key] = fit_info['posterior'][key]
 
         gv.dump(output, filename)
         return None
@@ -54,35 +68,53 @@ class data_loader(object):
 
     def get_fit_info(self, filename=None):
         if filename is None:
-            filepath = os.path.normpath(self.project_path + '/results/fit_results.csv')
+            if self.fit_info is None:
+                fit_info = {}
+                for name in self.get_models():
+                    fit_info_model = self._unpickle_fit_parameters(name)
+
+                    fit_info[name] = {}
+                    fit_info[name]['name'] = name
+                    fit_info[name]['FK/Fpi'] = fit_info_model['FK/Fpi']
+                    fit_info[name]['delta_su2'] = fit_info_model['delta_su2']
+                    fit_info[name]['logGBF'] = fit_info_model['logGBF'].mean
+                    fit_info[name]['chi2/df'] = fit_info_model['chi2/df'].mean
+                    fit_info[name]['Q'] = fit_info_model['Q'].mean
+                    fit_info[name]['prior'] = {}
+                    fit_info[name]['posterior'] = {}
+
+                    for key in fit_info_model.keys():
+                        if key.startswith('prior'):
+                            fit_info[name]['prior'][key.split(':')[-1]] = fit_info_model[key]
+                        elif key.startswith('posterior'):
+                            fit_info[name]['posterior'][key.split(':')[-1]] = fit_info_model[key]
+
+                self.fit_info = fit_info
+
+            return self.fit_info
+
+        # Alternatively, read info from csv file.
+        # Used for getting fit results from other collabs
         else:
             filepath = os.path.normpath(self.project_path + '/results/'+filename)
 
+            df_fit = pd.read_csv(filepath, header=0)
+            cols = df_fit.columns.values
+
+            models = df_fit['name'].values
+            output_dict = OrderedDict()
+            for name in sorted(models):
+                index = np.argwhere(df_fit['name'].values == name)
+
+                output_dict[name] = {}
+                for key in cols:
+                    if key in df_fit.keys():
+                        output_dict[name][key] = (df_fit[key].values[index]).item()
+
+            return output_dict
+
         if not os.path.isfile(filepath):
             return None
-
-
-        df_fit = pd.read_csv(filepath, header=0)
-        cols = df_fit.columns.values
-        #cols = ['fit', 'logGBF', 'chi2/df', 'Q', 'vol corr', 'latt corr']
-        #cols = np.intersect1d(cols, df_fit.columns.values)
-
-        fit_types = df_fit['name'].values
-        output_dict = OrderedDict()
-        for name in sorted(fit_types):
-            index = np.argwhere(df_fit['name'].values == name)
-
-            output_dict[name] = {}
-            for key in cols:
-                if key in df_fit.keys():
-                    output_dict[name][key] = (df_fit[key].values[index]).item()
-
-            fit_params = self._unpickle_fit_parameters(name)
-            if fit_params is not None:
-                output_dict[name]['prior'] = {key : fit_params[key][0] for key in fit_params.keys()}
-                output_dict[name]['posterior'] = {key : fit_params[key][1] for key in fit_params.keys()}
-
-        return output_dict
 
     def get_prior(self, fit_type, order, F2,
                   include_log, include_log2, include_sunset,
@@ -124,13 +156,15 @@ class data_loader(object):
 
         return prior
 
-    def get_variable_names(self):
-        names = []
-        with h5py.File(self.file_h5, "r") as f:
-            for ensemble in f.keys():
-                for key in f[ensemble].keys():
-                    names.append(key)
-        return sorted(np.unique([names]))
+    def get_models(self):
+        if self.models is None:
+            models = []
+            for file in os.listdir(self.project_path+'/pickles/'):
+                if(file.endswith('.p')):
+                    models.append(file.split('.')[0])
+            self.models = models
+        return self.models
+
 
     # pickle correlated prior/posterior,
     # save rest to csv file
