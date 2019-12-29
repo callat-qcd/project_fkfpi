@@ -1,6 +1,7 @@
 import os
 import itertools
 import pandas as pd
+import numpy as np
 
 # Get all proper model names
 p_dict = {
@@ -10,6 +11,7 @@ p_dict = {
 }
 
 choices = {
+    'fit' : ['nnlo'],
     'fit_type' : ['ma', 'ma-ratio', 'xpt', 'xpt-ratio'],
     'F2' : ['FKFK', 'FKFpi', 'FpiFpi'],
     'vol' : [0, 10],
@@ -22,10 +24,14 @@ choices = {
     'include_latt_n3lo' : [False, True],
 }
 
-list_of_models = []
+list_of_models = [] # models included in average
 # Get all enumerations of these choices
 for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*choices.values())):
 
+    p_dict = {}
+    p_dict['order'] = {}
+
+    p_dict['order']['fit'] = choice['fit']
     p_dict['fit_type'] = choice['fit_type']
     p_dict['F2'] = choice['F2']
 
@@ -76,11 +82,39 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
 
     list_of_models.append(name)
 
-# Get all model names in csv file
-#project_path = os.path.normpath(os.path.join(os.path.realpath(__file__), os.pardir, os.pardir))
-project_path = './../'
+
+# Now we prune unused models
+# First prune ./results/ folder
+project_path = os.path.normpath(os.path.join(os.path.realpath(__file__), os.pardir, os.pardir))
 filepath = project_path +'/results/fit_results.csv'
-df_fit = pd.read_csv(filepath, header=0)
+df_fit = pd.read_csv(filepath, index_col=0, header=0)
 
 # Gets all models not in list_of_models
-list(set(df_fit['name']) - set(list_of_models))
+prune_list = list(set(df_fit['name']) - set(list_of_models))
+indices = [np.argwhere(df_fit['name'].values == model_to_prune).item() for model_to_prune in prune_list]
+df_fit = df_fit.drop(indices)
+
+# Reset indices, save results
+df_fit = df_fit.reset_index(drop=True)
+df_fit.to_csv(filepath)
+
+####
+# Next prune ./pickles/ folder
+for file in os.listdir(project_path+'/pickles/'):
+    if file.endswith('.p'):
+        if not file.split('.')[0] in list_of_models:
+            os.remove(project_path+'/pickles/'+file)
+
+###
+# Finally prune ./priors/ folder
+for fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
+    filepath = project_path +'/priors/'+ fit_type +'.csv'
+    df_prior = pd.read_csv(filepath, index_col=0)
+
+    # Gets all models not in list_of_models
+    prune_list = list(set(df_prior['name']) - set(list_of_models))
+    indices = [np.argwhere(df_prior['name'].values == model_to_prune).item() for model_to_prune in prune_list]
+    df_prior = df_prior.drop(indices)
+
+    df_prior = df_prior.reset_index(drop=True)
+    df_prior.to_csv(filepath)
