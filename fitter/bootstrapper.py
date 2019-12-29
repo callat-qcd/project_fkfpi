@@ -518,8 +518,8 @@ class bootstrapper(object):
             'mss' : gv.gvar('688.5(2.2)'), # Taken from arxiv/1303.1670
 
             'a2DI' : 0,
-            'Fpi' : gv.gvar(130.2/np.sqrt(2), 1.7/np.sqrt(2)), #gv.gvar('91.9(3.5)'),
-            'FK' : gv.gvar(155.6/np.sqrt(2), 0.4/np.sqrt(2)), #gv.gvar('110.38(64)'),
+            'Fpi' : gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2)), # PDG
+            'FK' : gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2)), # PDG
             'w0' : self.w0,
 
             'FK/Fpi_pm' : gv.gvar('1.1932(19)'), # FLAG, SU(2) isospin corrected value (arxiv/1902.08191, eqn 80)

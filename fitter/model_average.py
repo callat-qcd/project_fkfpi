@@ -51,7 +51,6 @@ class model_average(object):
         return self.fit_results[name]['prior']
 
     def _get_phys_point_data(self, name=None):
-
         phys_point_data = {
             'a/w0' : 0,
             'a' : 0,
@@ -62,8 +61,8 @@ class model_average(object):
             'mk' : gv.gvar('494.2(3)'), # '495.6479(92)'
 
             'a2DI' : 0,
-            'Fpi' : gv.gvar(130.2/np.sqrt(2), 1.7/np.sqrt(2)), #gv.gvar('91.9(3.5)'),
-            'FK' : gv.gvar(155.6/np.sqrt(2), 0.4/np.sqrt(2)), #gv.gvar('110.38(64)'),
+            'Fpi' : gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2)), # PDG
+            'FK' : gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2)), # PDG
             'w0' : gv.gvar('0.175(10)'),
 
             'FK/Fpi_pm' : gv.gvar('1.1932(19)'), # FLAG, SU(2) isospin corrected value (arxiv/1902.08191, eqn 80)
