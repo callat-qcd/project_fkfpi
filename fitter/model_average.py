@@ -222,7 +222,7 @@ class model_average(object):
         labels = np.array([])
         for results in results_array:
             plt.axhline(y-0.5, ls='--')
-            for name in results.keys():
+            for name in sorted(results.keys()):
                 if param in results[name].keys():
 
                     # Add band for FLAG
@@ -302,7 +302,7 @@ class model_average(object):
         y=0
         labels = np.array([])
         for results in [self.fit_results]:
-            for name in results.keys():
+            for name in sorted(results.keys()):
                 model_info = self._get_model_info_from_name(name)
                 if model_info['base'] == 'ma':
                     color = colors[0]
@@ -351,7 +351,7 @@ class model_average(object):
         y=0
         labels = np.array([])
         for results in [self.fit_results]:
-            for name in results.keys():
+            for name in sorted(results.keys()):
                 model_info = self._get_model_info_from_name(name)
                 if model_info['base'] == 'ma':
                     color = colors[0]
@@ -395,7 +395,7 @@ class model_average(object):
         y=0
         labels = np.array([])
         for results in [self.fit_results]:
-            for name in results.keys():
+            for name in sorted(results.keys()):
                 model_info = self._get_model_info_from_name(name)
                 if model_info['base'] == 'ma':
                     color = colors[0]

@@ -28,7 +28,7 @@ p_dict = {
            u'a12m220',  u'a12m220S', u'a12m220L', u'a12m310', u'a12m350',
            u'a12m400',  u'a15m135XL', u'a15m220', u'a15m310', u'a15m350', 'a15m400'], # u'a15m130'
 
-    'save_results' : True,
+    'save_results' : False, # If fast_sunset = True, this should be set to False
 }
 
 choices = {
