@@ -18,14 +18,15 @@ for j in range(10): # Sometimes this needs to be loaded twice...
     matplotlib.rcParams['figure.figsize'] = [10, 10]
 
 data_loader = dl.data_loader()
-fit_results = data_loader.get_fit_info('fit_results.csv')
+fit_results = data_loader.get_fit_info()
 other_results = data_loader.get_fit_info('other_results.csv')
 
 model_average = md.model_average(fit_results)
 
-
-fig = model_average.plot_histogram('FK/Fpi')
-data_loader.save_plots(fig, output_filename='histogram_fit')
+# Make histograms
+for vary_choice in ['base', 'F2', 'include_alpha_s', 'include_latt_n3lo', 'include_FV', 'semi-nnlo_corrections']:
+    fig = model_average.plot_histogram('FK/Fpi', vary_choice=vary_choice)
+    data_loader.save_plots(fig, output_filename='histogram_fit_'+vary_choice)
 
 fig = model_average.plot_histogram('delta_su2')
 data_loader.save_plots(fig, output_filename='histogram_delta_su2')

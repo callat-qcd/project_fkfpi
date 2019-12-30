@@ -2,6 +2,7 @@ import lsqfit
 import numpy as np
 import gvar as gv
 import time
+import matplotlib.cm
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import sys
@@ -548,34 +549,34 @@ class model_average(object):
         plt.close()
         return fig
 
-    def plot_histogram(self, param=None, title=None, xlabel=None, vary_choice=None):
-
+    # See self._get_model_info_from_name for possible values for 'vary_choice'
+    def plot_histogram(self, param=None, title=None, xlabel=None, vary_choice='F2'):
+        if xlabel is None:
+            xlabel = self._param_keys_dict(param)+' (choose: '+vary_choice+')'
         if param is None:
             param = 'FK/Fpi_pm'
         if title is None:
             title = ""
-        if xlabel is None:
-            xlabel = self._param_keys_dict(param)+' (varying '+vary_choice+')'
-        if vary_choice is None:
-            choices = []
-        else:
-            choices = np.unique([self._get_model_info_from_name(model)[vary_choice] for model in self.get_model_names()])
 
         param_avg = self.average(param=param)
         pm = lambda g, k : g.mean + k *g.sdev
         x = np.linspace(pm(param_avg, -4), pm(param_avg, +4), 2000)
 
-        cmap = matplotlib.cm.get_cmap('gist_rainbow')
-        colors = [cmap(c) for c in np.linspace(0, 1, len(choices)+1)]
-
         # Determine ordering
         # Have larger contributions behind smaller contributions
+        choices = np.unique([self._get_model_info_from_name(model)[vary_choice] for model in self.get_model_names()])
         temp_dict = {choice : 0 for choice in choices}
         for model in self.get_model_names():
             model_info = self._get_model_info_from_name(model)
             temp_dict[model_info[vary_choice]] += np.exp(self.fit_results[model]['logGBF'])
+            choices = sorted(temp_dict, key=temp_dict.get, reverse=True)
 
-        choices = sorted(temp_dict, key=temp_dict.get, reverse=True)
+        # Set colors
+        #cmap = matplotlib.cm.get_cmap('gist_rainbow')
+        #colors =  ['whitesmoke']
+        #colors.extend([cmap(c) for c in np.linspace(0, 1, len(choices)+1)])
+        #colors = ['whitesmoke', 'salmon', 'palegreen', 'lightskyblue', 'plum']
+        colors = ['whitesmoke', 'crimson', 'springgreen', 'deepskyblue', 'magenta']
 
         for j, choice in enumerate(np.append(['All'], choices)):
 
@@ -645,11 +646,11 @@ class model_average(object):
             ax = plt.axes()
 
             for a in ydict.keys():
-                ax.plot(x,ydict[a], color=colors[j], alpha=0.75)
+                ax.plot(x,ydict[a], color=colors[j], alpha=1.0, ls='dotted')
 
 
             ax.fill_between(x=x,y1=ysum,facecolor=colors[j], edgecolor='black',alpha=0.4,label=self._param_keys_dict(choice))
-            ax.plot(x, ysum, color='k', alpha=1.0) #colors[j]
+            ax.plot(x, ysum, color='k', alpha=1.0)
             if choice == 'All':
                 # get 95% confidence
                 lidx95 = abs(cdf-0.025).argmin()
