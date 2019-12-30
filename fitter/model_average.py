@@ -563,10 +563,20 @@ class model_average(object):
 
         param_avg = self.average(param=param)
         pm = lambda g, k : g.mean + k *g.sdev
-        x = np.linspace(pm(param_avg, -5), pm(param_avg, +5), 2000)
+        x = np.linspace(pm(param_avg, -4), pm(param_avg, +4), 2000)
 
+        cmap = matplotlib.cm.get_cmap('gist_rainbow')
+        colors = [cmap(c) for c in np.linspace(0, 1, len(choices)+1)]
 
-        colors = ['salmon', 'darkorange', 'mediumaquamarine', 'orchid', 'silver']
+        # Determine ordering
+        # Have larger contributions behind smaller contributions
+        temp_dict = {choice : 0 for choice in choices}
+        for model in self.get_model_names():
+            model_info = self._get_model_info_from_name(model)
+            temp_dict[model_info[vary_choice]] += np.exp(self.fit_results[model]['logGBF'])
+
+        choices = sorted(temp_dict, key=temp_dict.get, reverse=True)
+
         for j, choice in enumerate(np.append(['All'], choices)):
 
             # read Bayes Factors
@@ -588,16 +598,6 @@ class model_average(object):
             # c. dist. fcn.
             cdf = 0
             cdfdict = dict()
-
-
-            # for plotting
-            #temp_array = np.array([self.fit_results[model][param] for model in self.fit_results.keys()])
-            #temp_array = gv.gvar(temp_array[temp_array != 'nan'])
-            #pm_arr = lambda arr, k : gv.mean(temp_array) + k *gv.sdev(temp_array)
-            #min_x = np.min(pm_arr(temp_array, -2))
-            #max_x = np.max(pm_arr(temp_array, 2))
-            #x = np.linspace(min_x, max_x, 2000)
-
 
             for model in self.get_model_names():
                 model_info = self._get_model_info_from_name(model)
@@ -640,13 +640,16 @@ class model_average(object):
             ydict = plot_params['pdfdict']
             cdf = plot_params['cdf']
 
-            # '-','--','-.',':'
-            # #ec5d57 #70bf41 #51a7f9
 
             fig = plt.figure('result histogram')#,figsize=fig_size2)
             ax = plt.axes()
+
+            for a in ydict.keys():
+                ax.plot(x,ydict[a], color=colors[j], alpha=0.75)
+
+
             ax.fill_between(x=x,y1=ysum,facecolor=colors[j], edgecolor='black',alpha=0.4,label=self._param_keys_dict(choice))
-            ax.plot(x, ysum, color=colors[j], alpha=1.0)
+            ax.plot(x, ysum, color='k', alpha=1.0) #colors[j]
             if choice == 'All':
                 # get 95% confidence
                 lidx95 = abs(cdf-0.025).argmin()
@@ -664,8 +667,7 @@ class model_average(object):
 
                 ax.errorbar(x=x,y=ysum,ls='-',color='black',lw=lw)
 
-            for a in ydict.keys():
-                ax.plot(x,ydict[a], color=colors[j])
+
 
             leg = ax.legend(fontsize=fs_l, edgecolor='k',fancybox=False)
             ax.set_ylim(bottom=0)
