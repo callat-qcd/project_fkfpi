@@ -14,7 +14,6 @@ class data_loader(object):
         self.project_path = os.path.normpath(os.path.join(os.path.realpath(__file__), os.pardir, os.pardir))
         self.file_h5 = os.path.normpath(self.project_path+'/FK_Fpi_data.h5')
         self.models = None
-        self.fit_info = None
 
     def _pickle_fit_parameters(self, fit_info, output_name=None):
         model = fit_info['name']
@@ -69,31 +68,27 @@ class data_loader(object):
         return data
 
     def get_fit_info(self, output_name):
-        if output_name is None:
-            if self.fit_info is None:
-                fit_info = {}
-                for model in self.get_models():
-                    fit_info_model = self._unpickle_fit_parameters(model, output_name)
+        if os.path.exists(self.project_path +'/pickles/'+ output_name):
+            fit_info = {}
+            for model in self.get_models(output_name):
+                fit_info_model = self._unpickle_fit_parameters(model=model, output_name=output_name)
+                fit_info[model] = {}
+                fit_info[model]['name'] = model
+                fit_info[model]['FK/Fpi'] = fit_info_model['FK/Fpi']
+                fit_info[model]['delta_su2'] = fit_info_model['delta_su2']
+                fit_info[model]['logGBF'] = fit_info_model['logGBF'].mean
+                fit_info[model]['chi2/df'] = fit_info_model['chi2/df'].mean
+                fit_info[model]['Q'] = fit_info_model['Q'].mean
+                fit_info[model]['prior'] = {}
+                fit_info[model]['posterior'] = {}
 
-                    fit_info[model] = {}
-                    fit_info[model]['name'] = model
-                    fit_info[model]['FK/Fpi'] = fit_info_model['FK/Fpi']
-                    fit_info[model]['delta_su2'] = fit_info_model['delta_su2']
-                    fit_info[model]['logGBF'] = fit_info_model['logGBF'].mean
-                    fit_info[model]['chi2/df'] = fit_info_model['chi2/df'].mean
-                    fit_info[model]['Q'] = fit_info_model['Q'].mean
-                    fit_info[model]['prior'] = {}
-                    fit_info[model]['posterior'] = {}
+                for key in fit_info_model.keys():
+                    if key.startswith('prior'):
+                        fit_info[model]['prior'][key.split(':')[-1]] = fit_info_model[key]
+                    elif key.startswith('posterior'):
+                        fit_info[model]['posterior'][key.split(':')[-1]] = fit_info_model[key]
 
-                    for key in fit_info_model.keys():
-                        if key.startswith('prior'):
-                            fit_info[model]['prior'][key.split(':')[-1]] = fit_info_model[key]
-                        elif key.startswith('posterior'):
-                            fit_info[model]['posterior'][key.split(':')[-1]] = fit_info_model[key]
-
-                self.fit_info = fit_info
-
-            return self.fit_info
+            return fit_info
 
         # Alternatively, read info from csv file.
         # Used for getting fit results from other collabs
@@ -158,10 +153,10 @@ class data_loader(object):
 
         return prior
 
-    def get_models(self):
+    def get_models(self, output_name):
         if self.models is None:
             models = []
-            for file in os.listdir(self.project_path+'/pickles/'):
+            for file in os.listdir(self.project_path +'/pickles/'+ output_name):
                 if(file.endswith('.p')):
                     models.append(file.split('.')[0])
             self.models = models

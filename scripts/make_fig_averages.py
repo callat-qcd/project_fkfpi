@@ -17,33 +17,39 @@ from fitter import model_average as md
 for j in range(10): # Sometimes this needs to be loaded twice...
     matplotlib.rcParams['figure.figsize'] = [10, 10]
 
-data_loader = dl.data_loader()
-fit_results = data_loader.get_fit_info()
-other_results = data_loader.get_fit_info('other_results.csv')
+# Promp for output
+if len(sys.argv) > 1:
+    output_name = sys.argv[1]
+else:
+    output_name = input('Specify result to average: ')
 
+data_loader = dl.data_loader()
+
+fit_results = data_loader.get_fit_info(output_name)
+other_results = data_loader.get_fit_info('other_collabs')
 model_average = md.model_average(fit_results)
 
 # Make histograms
 for vary_choice in ['base', 'F2', 'include_alpha_s', 'include_latt_n3lo', 'include_FV', 'semi-nnlo_corrections']:
     fig = model_average.plot_histogram('FK/Fpi', vary_choice=vary_choice)
-    data_loader.save_plots(fig, output_filename='histogram_fit_'+vary_choice)
+    data_loader.save_plots(fig, output_filename=output_name+'/histogram_fit_'+vary_choice)
 
 fig = model_average.plot_histogram('delta_su2')
-data_loader.save_plots(fig, output_filename='histogram_delta_su2')
+data_loader.save_plots(fig, output_filename=output_name+'/histogram_delta_su2')
 
 
 fig = model_average.plot_comparison(other_results=other_results, param='FK/Fpi_pm')
-data_loader.save_plots(fig, output_filename='comparison_fits')
+data_loader.save_plots(fig, output_filename=output_name+'/comparison_fits')
 
 fig = model_average.plot_comparison(other_results=other_results, param='delta_su2')
-data_loader.save_plots(fig, output_filename='comparison_delta_su2')
+data_loader.save_plots(fig, output_filename=output_name+'/comparison_delta_su2')
 
 
 fig = model_average.plot_fits('a')
-data_loader.save_plots(fig, output_filename='all_fits_vs_latt_spacing')
+data_loader.save_plots(fig, output_filename=output_name+'/all_fits_vs_latt_spacing')
 
 fig = model_average.plot_fits('mpi')
-data_loader.save_plots(fig, output_filename='all_fits_vs_mpi')
+data_loader.save_plots(fig, output_filename=output_name+'/all_fits_vs_mpi')
 
 fig = model_average.plot_fits('volume')
-data_loader.save_plots(fig, output_filename='all_fits_vs_volume')
+data_loader.save_plots(fig, output_filename=output_name+'/all_fits_vs_volume')
