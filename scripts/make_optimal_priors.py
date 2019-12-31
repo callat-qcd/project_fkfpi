@@ -29,6 +29,8 @@ p_dict = {
            u'a12m400',  u'a15m135XL', u'a15m220', u'a15m310', u'a15m350', 'a15m400'], # u'a15m130'
 
     'save_results' : False, # If fast_sunset = True, this should be set to False
+    'save_pickles' : False,
+    'output_name' : 'optimized_priors',
 }
 
 choices = {
@@ -105,7 +107,8 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
         data_loader.save_prior(new_prior, bootstrapper.get_name())
 
         if p_dict['save_results']:
-            data_loader.save_fit_info(bootstrapper.get_fit_info())
+            data_loader.save_fit_info(bootstrapper.get_fit_info(),
+                                      output_name=p_dict['output_name'], save_pickles=p_dict['save_pickles'])
 
     t1 = time.time()
 

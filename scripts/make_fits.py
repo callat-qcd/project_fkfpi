@@ -33,6 +33,8 @@ p_dict = {
                u'a12m400',  u'a15m135XL', u'a15m220', u'a15m310', u'a15m350', 'a15m400'], # u'a15m130'
 
     'save_results' : True,
+    'save_pickles' : False,
+    'output_name' : 'default_priors',
     'replace_fits' : True,
 }
 
@@ -96,12 +98,13 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
 
     # Get prior
     prior = None
-    prior = data_loader.get_prior(fit_type=p_dict['fit_type'], order=p_dict['order']['fit'], F2=p_dict['F2'],
-                  include_log=p_dict['order']['include_log'], include_log2=p_dict['order']['include_log2'],
-                  include_sunset=p_dict['order']['include_sunset'], include_alpha_s=p_dict['order']['include_alpha_s'],
-                  include_latt_n3lo=p_dict['order']['include_latt_n3lo'], include_FV=(p_dict['order']['vol'] > 6),
-                  use_bijnens_central_value=p_dict['use_bijnens_central_value']
-             )
+    if p_dict['use_prior']:
+        prior = data_loader.get_prior(fit_type=p_dict['fit_type'], order=p_dict['order']['fit'], F2=p_dict['F2'],
+                      include_log=p_dict['order']['include_log'], include_log2=p_dict['order']['include_log2'],
+                      include_sunset=p_dict['order']['include_sunset'], include_alpha_s=p_dict['order']['include_alpha_s'],
+                      include_latt_n3lo=p_dict['order']['include_latt_n3lo'], include_FV=(p_dict['order']['vol'] > 6),
+                      use_bijnens_central_value=p_dict['use_bijnens_central_value']
+                 )
 
     # Make bootstrapper
     bootstrapper = bs.bootstrapper(
@@ -115,7 +118,8 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
         print(bootstrapper)
 
         # Save results
-        data_loader.save_fit_info(bootstrapper.get_fit_info())
+        data_loader.save_fit_info(bootstrapper.get_fit_info(),
+                                  output_name=p_dict['output_name'], save_pickles=p_dict['save_pickles'])
 
 
     t1 = time.time()

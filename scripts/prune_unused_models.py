@@ -22,6 +22,7 @@ choices = {
 
     # nnnlo corrections
     'include_latt_n3lo' : [False, True],
+    'output_name' : 'optimized_priors',
 }
 
 list_of_models = [] # models included in average
@@ -86,7 +87,7 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
 # Now we prune unused models
 # First prune ./results/ folder
 project_path = os.path.normpath(os.path.join(os.path.realpath(__file__), os.pardir, os.pardir))
-filepath = project_path +'/results/fit_results.csv'
+filepath = project_path +'/results/'+ output_name +'.csv'
 df_fit = pd.read_csv(filepath, index_col=0, header=0)
 
 # Gets all models not in list_of_models
@@ -100,10 +101,10 @@ df_fit.to_csv(filepath)
 
 ####
 # Next prune ./pickles/ folder
-for file in os.listdir(project_path+'/pickles/'):
+for file in os.listdir(project_path +'/pickles/'+ output_name):
     if file.endswith('.p'):
         if not file.split('.')[0] in list_of_models:
-            os.remove(project_path+'/pickles/'+file)
+            os.remove(project_path+'/pickles/'+ output_name +'/'+ file)
 
 ###
 # Finally prune ./priors/ folder
