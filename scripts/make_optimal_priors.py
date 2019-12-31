@@ -30,8 +30,13 @@ p_dict = {
 
     'save_results' : False, # If fast_sunset = True, this should be set to False
     'save_pickles' : False,
-    'output_name' : 'optimized_priors',
 }
+
+if p_dict['save_results']:
+    if len(sys.argv) > 1:
+        p_dict['output_name'] = sys.argv[1]
+    else:
+        p_dict['output_name'] = input('Name for fit collection: ')
 
 choices = {
     'fit_type' : ['ma', 'ma-ratio', 'xpt', 'xpt-ratio'],
