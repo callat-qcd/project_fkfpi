@@ -637,6 +637,7 @@ I haven't noticed a visible difference in using one versus the other.
 \section{Fit Results}
 Here we present the results for each of the fits.
 
+
 \begin{figure}[H]
 	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/comparison_fits.pdf}
 	\caption{Extrapolations of $F^\pm_K/F^\pm_\pi$ to the physical point for the various models, with the FLAG average overlaid.}
@@ -672,17 +673,6 @@ Here we present the results for each of the fits.
 	\caption{Plotting $F^\pm_K/F^\pm_\pi$ as a function of the volume correction (varying $L$), fixing the other parameters at the physical point. Every model in the analysis is included in this graphic, but the amount of transparency allotted to a given model is inversely proportional to the Bayes factor of that model. Therefore models that contribute more heavily are more opaque than models that contribute negligibly, the latter of which might be invisible on the plot.}
 \end{figure}
 
-%\csvautotabular[respect all]{"./../results/fit"_"results".csv}
-%\begin{tabular}{|l|c|}%\hline%
-%	\sisetup{round-mode=places, round-precision=3}
-%	fit & logGBF \\ \hline\hline
-%	\csvreader[head to column names]%
-%	{"./../results/fit_results".csv}{}%
-%	{\\ \fit & \num{\logGBF}}%
-%	\\\hline
-%\end{tabular}
-
-
 
 \appendix
 \section{Physical Point Values}
@@ -705,6 +695,475 @@ The physical point values are given in Table \ref{table:phys_point_values}. The 
 \caption{Values used when extrapolating to the physical point; $F_K^\pm/F_\pi^\pm$ is taken from FLAG (and is not used for the extrapolation).}
 \label{table:phys_point_values}
 \end{table}
+
+\newpage
+\section{Results of each model}
+\begin{ruledtabular} \centering
+	\begin{tabular}{ l c c c c}
+		Model & $F_K/F_\pi$ & logGBF & $\chi_\nu$ & $Q$ \\ \midrule[0.5pt]
+		\midrule[0.5pt] 
+		ma-ratio\_FKFK\_nnlo & 1.1836(23) & 49.06 & 2.46 & 0.00 \\ 
+		ma-ratio\_FKFK\_nnlo\_FV & 1.1769(29) & 52.85 & 1.87 & 0.02 \\ 
+		ma-ratio\_FKFK\_nnlo\_a4 & 1.1939(24) & 51.41 & 2.14 & 0.01 \\ 
+		ma-ratio\_FKFK\_nnlo\_a4\_FV & 1.1949(32) & 54.15 & 1.72 & 0.04 \\ 
+		ma-ratio\_FKFK\_nnlo\_alphaS & 1.1850(29) & 49.17 & 2.45 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFK\_nnlo\_alphaS\_FV & 1.1769(29) & 52.85 & 1.87 & 0.02 \\ 
+		ma-ratio\_FKFK\_nnlo\_alphaS\_a4 & 1.1850(29) & 49.17 & 2.45 & 0.00 \\ 
+		ma-ratio\_FKFK\_nnlo\_alphaS\_a4\_FV & 1.1949(32) & 54.15 & 1.72 & 0.04 \\ 
+		ma-ratio\_FKFK\_nnlo\_logSq\_sunset & 1.1745(29) & 48.25 & 2.46 & 0.00 \\ 
+		ma-ratio\_FKFK\_nnlo\_logSq\_sunset\_FV & 1.1751(29) & 50.91 & 2.11 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFK\_nnlo\_logSq\_sunset\_a4 & 1.1932(42) & 49.63 & 2.24 & 0.00 \\ 
+		ma-ratio\_FKFK\_nnlo\_logSq\_sunset\_a4\_FV & 1.1941(45) & 52.60 & 1.83 & 0.02 \\ 
+		ma-ratio\_FKFK\_nnlo\_logSq\_sunset\_alphaS & 1.1745(29) & 48.25 & 2.46 & 0.00 \\ 
+		ma-ratio\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1751(29) & 50.91 & 2.11 & 0.01 \\ 
+		ma-ratio\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.1917(49) & 48.95 & 2.30 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.1940(46) & 52.60 & 1.83 & 0.02 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset & 1.1779(37) & 50.18 & 2.06 & 0.01 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_FV & 1.1786(37) & 52.93 & 1.71 & 0.04 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1761(34) & 52.72 & 1.76 & 0.03 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_a4 & 1.1778(37) & 50.18 & 2.06 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1786(38) & 52.91 & 1.71 & 0.04 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1761(34) & 52.72 & 1.76 & 0.03 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1757(33) & 50.11 & 2.09 & 0.01 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1777(37) & 50.19 & 2.06 & 0.01 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1784(38) & 52.93 & 1.71 & 0.04 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1758(35) & 52.72 & 1.76 & 0.03 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1777(38) & 50.19 & 2.06 & 0.01 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1785(38) & 52.92 & 1.71 & 0.04 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1758(35) & 52.72 & 1.76 & 0.03 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1752(36) & 50.10 & 2.09 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1754(34) & 50.11 & 2.09 & 0.01 \\ 
+		ma-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1757(33) & 50.11 & 2.09 & 0.01 \\ 
+		ma-ratio\_FKFpi\_nnlo & 1.1684(24) & 30.26 & 4.69 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_FV & 1.1687(24) & 32.18 & 4.44 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_a4 & 1.232(12) & 39.16 & 2.24 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFpi\_nnlo\_a4\_FV & 1.230(11) & 40.58 & 2.11 & 0.01 \\ 
+		ma-ratio\_FKFpi\_nnlo\_alphaS & 1.1684(24) & 30.26 & 4.69 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_alphaS\_FV & 1.1687(24) & 32.18 & 4.44 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_alphaS\_a4 & 1.230(12) & 39.05 & 2.24 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_alphaS\_a4\_FV & 1.227(12) & 40.46 & 2.12 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFpi\_nnlo\_logSq\_sunset & 1.1674(23) & 26.29 & 5.19 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_logSq\_sunset\_FV & 1.1677(24) & 28.25 & 4.94 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_logSq\_sunset\_a4 & 1.237(12) & 36.67 & 2.33 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_logSq\_sunset\_a4\_FV & 1.235(12) & 38.99 & 2.20 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_logSq\_sunset\_alphaS & 1.1674(23) & 26.29 & 5.19 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1677(24) & 28.25 & 4.94 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.234(12) & 36.70 & 2.34 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.232(12) & 38.79 & 2.21 & 0.00 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset & 1.1842(33) & 52.52 & 1.96 & 0.01 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_FV & 1.1851(33) & 56.24 & 1.47 & 0.10 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1841(31) & 56.61 & 1.47 & 0.10 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4 & 1.1842(33) & 52.52 & 1.96 & 0.01 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1851(33) & 56.24 & 1.48 & 0.10 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1841(31) & 56.61 & 1.47 & 0.10 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1835(31) & 52.94 & 1.95 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1842(33) & 52.52 & 1.95 & 0.01 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1851(33) & 56.24 & 1.47 & 0.10 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1841(31) & 56.61 & 1.47 & 0.10 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1842(33) & 52.52 & 1.96 & 0.01 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1851(33) & 56.24 & 1.47 & 0.10 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1841(31) & 56.61 & 1.47 & 0.10 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1835(31) & 52.94 & 1.95 & 0.01 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1835(31) & 52.94 & 1.95 & 0.01 \\ 
+		ma-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1835(31) & 52.94 & 1.95 & 0.01 \\ 
+		ma-ratio\_FpiFpi\_nnlo & 1.1886(33) & 50.51 & 2.17 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FpiFpi\_nnlo\_FV & 1.1879(33) & 54.97 & 1.70 & 0.04 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_a4 & 1.1887(34) & 50.52 & 2.16 & 0.00 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_a4\_FV & 1.1966(57) & 55.27 & 1.52 & 0.08 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_alphaS & 1.1893(36) & 50.52 & 2.16 & 0.00 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_alphaS\_FV & 1.1882(33) & 54.97 & 1.70 & 0.04 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FpiFpi\_nnlo\_alphaS\_a4 & 1.1894(36) & 50.53 & 2.16 & 0.00 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_alphaS\_a4\_FV & 1.1966(57) & 55.27 & 1.52 & 0.08 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_logSq\_sunset & 1.1900(25) & 49.92 & 2.25 & 0.00 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_FV & 1.1896(25) & 52.74 & 1.89 & 0.02 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_a4 & 1.2011(21) & 51.98 & 1.99 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_a4\_FV & 1.2004(23) & 55.08 & 1.58 & 0.07 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS & 1.1916(32) & 50.00 & 2.24 & 0.00 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1912(31) & 52.88 & 1.87 & 0.02 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.2010(38) & 51.73 & 1.96 & 0.01 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.1999(24) & 54.84 & 1.67 & 0.05 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset & 1.1868(38) & 51.15 & 2.14 & 0.01 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_FV & 1.1882(39) & 55.90 & 1.54 & 0.08 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1879(38) & 56.33 & 1.54 & 0.08 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4 & 1.1868(38) & 51.15 & 2.15 & 0.00 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1882(39) & 55.90 & 1.54 & 0.08 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1879(38) & 56.33 & 1.54 & 0.08 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1868(38) & 51.51 & 2.15 & 0.00 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1868(38) & 51.15 & 2.14 & 0.01 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1882(39) & 55.90 & 1.54 & 0.08 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1879(38) & 56.33 & 1.54 & 0.08 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1868(38) & 51.15 & 2.15 & 0.00 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1882(39) & 55.90 & 1.54 & 0.08 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1879(38) & 56.33 & 1.54 & 0.08 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1868(38) & 51.51 & 2.15 & 0.00 \\ 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1868(38) & 51.51 & 2.15 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1868(38) & 51.51 & 2.15 & 0.00 \\ 
+		ma\_FKFK\_nnlo & 1.1800(20) & 57.52 & 2.09 & 0.01 \\ 
+		ma\_FKFK\_nnlo\_FV & 1.1802(19) & 60.37 & 1.76 & 0.03 \\ 
+		ma\_FKFK\_nnlo\_a4 & 1.1809(17) & 57.96 & 2.03 & 0.01 \\ 
+		ma\_FKFK\_nnlo\_a4\_FV & 1.1804(17) & 60.52 & 1.74 & 0.03 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFK\_nnlo\_alphaS & 1.1801(19) & 57.53 & 2.09 & 0.01 \\ 
+		ma\_FKFK\_nnlo\_alphaS\_FV & 1.1802(19) & 60.37 & 1.76 & 0.03 \\ 
+		ma\_FKFK\_nnlo\_alphaS\_a4 & 1.1809(17) & 57.96 & 2.03 & 0.01 \\ 
+		ma\_FKFK\_nnlo\_alphaS\_a4\_FV & 1.1804(17) & 60.52 & 1.74 & 0.03 \\ 
+		ma\_FKFK\_nnlo\_logSq\_sunset & 1.1787(22) & 55.92 & 2.23 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFK\_nnlo\_logSq\_sunset\_FV & 1.1782(21) & 58.03 & 1.99 & 0.01 \\ 
+		ma\_FKFK\_nnlo\_logSq\_sunset\_a4 & 1.1794(17) & 56.33 & 2.20 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_logSq\_sunset\_a4\_FV & 1.1782(21) & 58.03 & 1.99 & 0.01 \\ 
+		ma\_FKFK\_nnlo\_logSq\_sunset\_alphaS & 1.1787(22) & 55.92 & 2.23 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1782(21) & 58.03 & 1.99 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.1788(21) & 55.94 & 2.23 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.1784(20) & 58.02 & 2.00 & 0.01 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset & 1.1803(20) & 53.10 & 2.53 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_FV & 1.1793(20) & 55.70 & 2.22 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1782(17) & 48.39 & 3.14 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_a4 & 1.1802(20) & 53.24 & 2.52 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1793(20) & 55.77 & 2.21 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1774(21) & 57.19 & 1.95 & 0.01 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1792(17) & 44.81 & 3.57 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1803(20) & 53.00 & 2.55 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1793(20) & 55.78 & 2.21 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1782(17) & 48.39 & 3.14 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1802(20) & 53.36 & 2.50 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1793(20) & 55.99 & 2.19 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1782(17) & 48.52 & 3.12 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1792(17) & 45.05 & 3.55 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1793(17) & 44.88 & 3.57 & 0.00 \\ 
+		ma\_FKFK\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1790(17) & 46.17 & 3.42 & 0.00 \\ 
+		ma\_FKFpi\_nnlo & 1.1903(21) & 54.84 & 2.51 & 0.00 \\ 
+		ma\_FKFpi\_nnlo\_FV & 1.1891(20) & 61.18 & 1.67 & 0.05 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFpi\_nnlo\_a4 & 1.1903(21) & 54.84 & 2.51 & 0.00 \\ 
+		ma\_FKFpi\_nnlo\_a4\_FV & 1.1891(20) & 61.18 & 1.67 & 0.04 \\ 
+		ma\_FKFpi\_nnlo\_alphaS & 1.1903(21) & 54.84 & 2.51 & 0.00 \\ 
+		ma\_FKFpi\_nnlo\_alphaS\_FV & 1.1891(20) & 61.18 & 1.67 & 0.05 \\ 
+		ma\_FKFpi\_nnlo\_alphaS\_a4 & 1.1887(16) & 55.17 & 2.14 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFpi\_nnlo\_alphaS\_a4\_FV & 1.1891(20) & 61.18 & 1.67 & 0.05 \\ 
+		ma\_FKFpi\_nnlo\_logSq\_sunset & 1.1887(21) & 56.20 & 2.31 & 0.00 \\ 
+		ma\_FKFpi\_nnlo\_logSq\_sunset\_FV & 1.1879(20) & 62.09 & 1.58 & 0.07 \\ 
+		ma\_FKFpi\_nnlo\_logSq\_sunset\_a4 & 1.1887(20) & 56.24 & 2.27 & 0.00 \\ 
+		ma\_FKFpi\_nnlo\_logSq\_sunset\_a4\_FV & 1.1879(20) & 62.09 & 1.58 & 0.07 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFpi\_nnlo\_logSq\_sunset\_alphaS & 1.1886(21) & 56.21 & 2.30 & 0.00 \\ 
+		ma\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1879(19) & 61.62 & 1.57 & 0.07 \\ 
+		ma\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.1888(20) & 56.26 & 2.28 & 0.00 \\ 
+		ma\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.1879(20) & 62.09 & 1.58 & 0.07 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset & 1.1851(26) & 55.18 & 2.12 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_FV & 1.1880(19) & 60.27 & 1.63 & 0.05 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1879(19) & 61.47 & 1.56 & 0.07 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4 & 1.1851(26) & 55.18 & 2.12 & 0.01 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1879(20) & 60.26 & 1.62 & 0.06 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1877(19) & 61.48 & 1.55 & 0.07 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1864(20) & 56.61 & 1.99 & 0.01 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1853(25) & 55.20 & 2.12 & 0.01 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1880(19) & 60.27 & 1.63 & 0.05 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1879(19) & 61.47 & 1.56 & 0.07 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1853(26) & 55.20 & 2.12 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1880(19) & 60.27 & 1.63 & 0.05 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1876(19) & 61.48 & 1.54 & 0.08 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1864(20) & 56.61 & 1.99 & 0.01 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1859(24) & 56.12 & 2.10 & 0.01 \\ 
+		ma\_FKFpi\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1858(24) & 56.11 & 2.10 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma\_FpiFpi\_nnlo & 1.1880(28) & 54.44 & 2.22 & 0.00 \\ 
+		ma\_FpiFpi\_nnlo\_FV & 1.1895(29) & 60.41 & 1.58 & 0.07 \\ 
+		ma\_FpiFpi\_nnlo\_a4 & 1.1905(22) & 55.66 & 2.00 & 0.01 \\ 
+		ma\_FpiFpi\_nnlo\_a4\_FV & 1.1911(23) & 61.05 & 1.43 & 0.12 \\ 
+		ma\_FpiFpi\_nnlo\_alphaS & 1.1885(28) & 54.47 & 2.22 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma\_FpiFpi\_nnlo\_alphaS\_FV & 1.1898(28) & 60.43 & 1.58 & 0.07 \\ 
+		ma\_FpiFpi\_nnlo\_alphaS\_a4 & 1.1905(22) & 55.66 & 2.00 & 0.01 \\ 
+		ma\_FpiFpi\_nnlo\_alphaS\_a4\_FV & 1.1911(23) & 61.05 & 1.43 & 0.12 \\ 
+		ma\_FpiFpi\_nnlo\_logSq\_sunset & 1.1873(28) & 55.20 & 2.17 & 0.00 \\ 
+		ma\_FpiFpi\_nnlo\_logSq\_sunset\_FV & 1.1886(29) & 60.53 & 1.59 & 0.06 \\ 
+		\midrule[0.5pt] 
+		ma\_FpiFpi\_nnlo\_logSq\_sunset\_a4 & 1.1898(23) & 56.24 & 1.96 & 0.01 \\ 
+		ma\_FpiFpi\_nnlo\_logSq\_sunset\_a4\_FV & 1.1887(29) & 60.53 & 1.60 & 0.06 \\ 
+		ma\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS & 1.1878(28) & 55.22 & 2.16 & 0.00 \\ 
+		ma\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1890(29) & 60.54 & 1.60 & 0.06 \\ 
+		ma\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.1878(28) & 55.23 & 2.17 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.1904(24) & 61.06 & 1.46 & 0.10 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset & 1.1861(31) & 54.01 & 2.15 & 0.00 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_FV & 1.1884(32) & 59.05 & 1.60 & 0.06 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1888(32) & 59.77 & 1.58 & 0.07 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4 & 1.1862(31) & 54.01 & 2.16 & 0.00 \\ 
+		\midrule[0.5pt] 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1884(32) & 59.05 & 1.60 & 0.06 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1889(32) & 59.78 & 1.58 & 0.07 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1865(31) & 54.67 & 2.14 & 0.01 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1867(31) & 54.05 & 2.16 & 0.00 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1887(32) & 59.06 & 1.60 & 0.06 \\ 
+		\midrule[0.5pt] 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1891(32) & 59.78 & 1.58 & 0.07 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1867(31) & 54.05 & 2.16 & 0.00 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1887(32) & 59.06 & 1.59 & 0.06 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1891(32) & 59.79 & 1.57 & 0.07 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1892(26) & 55.75 & 1.97 & 0.01 \\ 
+		\midrule[0.5pt] 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1869(31) & 54.70 & 2.13 & 0.01 \\ 
+		ma\_FpiFpi\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1864(31) & 54.67 & 2.13 & 0.01 \\ 
+		xpt-ratio\_FKFK\_nnlo & 1.1706(20) & 54.48 & 1.96 & 0.01 \\ 
+		xpt-ratio\_FKFK\_nnlo\_FV & 1.1730(19) & 58.72 & 1.48 & 0.10 \\ 
+		xpt-ratio\_FKFK\_nnlo\_a4 & 1.1706(20) & 54.48 & 1.96 & 0.01 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFK\_nnlo\_a4\_FV & 1.1730(19) & 58.72 & 1.48 & 0.10 \\ 
+		xpt-ratio\_FKFK\_nnlo\_alphaS & 1.1700(23) & 54.39 & 1.97 & 0.01 \\ 
+		xpt-ratio\_FKFK\_nnlo\_alphaS\_FV & 1.1724(23) & 58.60 & 1.49 & 0.09 \\ 
+		xpt-ratio\_FKFK\_nnlo\_alphaS\_a4 & 1.1793(49) & 55.88 & 1.53 & 0.08 \\ 
+		xpt-ratio\_FKFK\_nnlo\_alphaS\_a4\_FV & 1.1840(51) & 61.42 & 0.86 & 0.62 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFK\_nnlo\_logSq\_sunset & 1.1696(18) & 52.93 & 2.30 & 0.00 \\ 
+		xpt-ratio\_FKFK\_nnlo\_logSq\_sunset\_FV & 1.1716(17) & 57.69 & 1.80 & 0.03 \\ 
+		xpt-ratio\_FKFK\_nnlo\_logSq\_sunset\_a4 & 1.1696(18) & 52.93 & 2.30 & 0.00 \\ 
+		xpt-ratio\_FKFK\_nnlo\_logSq\_sunset\_a4\_FV & 1.1716(17) & 57.57 & 1.83 & 0.02 \\ 
+		xpt-ratio\_FKFK\_nnlo\_logSq\_sunset\_alphaS & 1.1691(20) & 52.84 & 2.31 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1711(20) & 57.59 & 1.81 & 0.02 \\ 
+		xpt-ratio\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.1691(20) & 52.85 & 2.31 & 0.00 \\ 
+		xpt-ratio\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.1711(20) & 57.48 & 1.82 & 0.02 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset & 1.1724(29) & 55.45 & 1.48 & 0.10 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_FV & 1.1585(22) & -41.66 & 13.59 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1717(30) & 57.89 & 1.20 & 0.26 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_a4 & 1.1740(39) & 55.47 & 1.44 & 0.11 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1584(25) & -44.20 & 13.90 & 0.00 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1716(20) & 54.51 & 1.87 & 0.02 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1702(30) & 54.04 & 1.71 & 0.04 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1713(33) & 55.40 & 1.49 & 0.09 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1740(35) & 60.02 & 0.86 & 0.61 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1706(35) & 57.83 & 1.20 & 0.26 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1714(34) & 55.40 & 1.48 & 0.10 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1741(35) & 60.02 & 0.86 & 0.61 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1707(35) & 57.83 & 1.20 & 0.26 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1691(34) & 54.00 & 1.71 & 0.04 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1691(34) & 54.00 & 1.71 & 0.04 \\ 
+		xpt-ratio\_FKFK\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1701(30) & 54.04 & 1.71 & 0.04 \\ 
+		xpt-ratio\_FKFpi\_nnlo & 1.1644(22) & 25.59 & 5.21 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFpi\_nnlo\_FV & 1.1652(23) & 28.54 & 4.83 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_a4 & 1.1644(22) & 25.59 & 5.21 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_a4\_FV & 1.1922(70) & 30.73 & 3.79 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_alphaS & 1.1640(23) & 25.53 & 5.21 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_alphaS\_FV & 1.1648(23) & 28.48 & 4.84 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFpi\_nnlo\_alphaS\_a4 & 1.1640(23) & 25.53 & 5.21 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_alphaS\_a4\_FV & 1.1649(24) & 28.48 & 4.84 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_logSq\_sunset & 1.1634(22) & 21.72 & 5.68 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_logSq\_sunset\_FV & 1.1643(22) & 24.65 & 5.31 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_logSq\_sunset\_a4 & 1.1635(23) & 21.72 & 5.68 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFpi\_nnlo\_logSq\_sunset\_a4\_FV & 1.1644(23) & 24.65 & 5.30 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_logSq\_sunset\_alphaS & 1.1630(22) & 21.67 & 5.69 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1639(23) & 24.58 & 5.31 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.1632(23) & 21.66 & 5.68 & 0.00 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.1639(23) & 24.58 & 5.31 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset & 1.1776(26) & 57.70 & 1.39 & 0.14 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_FV & 1.1807(27) & 63.25 & 0.63 & 0.86 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1792(26) & 62.93 & 0.78 & 0.71 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4 & 1.1780(29) & 57.67 & 1.38 & 0.14 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1788(23) & 61.81 & 0.87 & 0.60 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1799(29) & 62.94 & 0.77 & 0.73 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1766(25) & 57.88 & 1.47 & 0.10 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1767(30) & 57.66 & 1.39 & 0.14 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1797(32) & 63.18 & 0.64 & 0.86 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1783(31) & 62.86 & 0.78 & 0.70 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1767(30) & 57.66 & 1.39 & 0.14 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1797(32) & 63.18 & 0.64 & 0.85 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1783(31) & 62.86 & 0.78 & 0.70 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1757(29) & 57.83 & 1.47 & 0.10 \\ 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1757(28) & 57.83 & 1.47 & 0.10 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FKFpi\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1766(25) & 57.88 & 1.47 & 0.10 \\ 
+		xpt-ratio\_FpiFpi\_nnlo & 1.1794(25) & 55.80 & 1.70 & 0.04 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_FV & 1.1821(27) & 60.20 & 1.12 & 0.33 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_a4 & 1.1891(49) & 56.73 & 1.35 & 0.16 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_a4\_FV & 1.1966(53) & 62.61 & 0.54 & 0.93 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FpiFpi\_nnlo\_alphaS & 1.1788(28) & 55.69 & 1.71 & 0.04 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_alphaS\_FV & 1.1815(31) & 60.07 & 1.13 & 0.32 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_alphaS\_a4 & 1.1877(53) & 56.67 & 1.35 & 0.16 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_alphaS\_a4\_FV & 1.1947(60) & 62.53 & 0.56 & 0.92 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_logSq\_sunset & 1.1772(23) & 53.04 & 2.05 & 0.01 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_FV & 1.1802(26) & 56.88 & 1.48 & 0.10 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_a4 & 1.1908(51) & 55.33 & 1.47 & 0.10 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_a4\_FV & 1.1804(26) & 56.91 & 1.47 & 0.10 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS & 1.1767(25) & 52.93 & 2.06 & 0.01 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1797(30) & 56.74 & 1.49 & 0.09 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.1767(25) & 52.93 & 2.06 & 0.01 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.1786(24) & 55.92 & 1.75 & 0.03 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset & 1.1823(33) & 57.23 & 1.43 & 0.12 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_FV & 1.1860(35) & 63.12 & 0.68 & 0.82 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1851(35) & 63.05 & 0.79 & 0.70 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4 & 1.1824(33) & 57.23 & 1.43 & 0.12 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1861(36) & 63.12 & 0.68 & 0.82 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1851(35) & 63.05 & 0.79 & 0.70 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1816(33) & 57.47 & 1.51 & 0.09 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1815(36) & 57.19 & 1.44 & 0.11 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1850(39) & 63.05 & 0.69 & 0.81 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1841(38) & 62.98 & 0.80 & 0.69 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1816(36) & 57.18 & 1.43 & 0.12 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1850(39) & 63.05 & 0.69 & 0.81 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1822(32) & 60.95 & 1.18 & 0.28 \\ 
+		\midrule[0.5pt] 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1808(35) & 57.42 & 1.51 & 0.08 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1808(35) & 57.42 & 1.52 & 0.08 \\ 
+		xpt-ratio\_FpiFpi\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1816(33) & 57.47 & 1.51 & 0.09 \\ 
+		xpt\_FKFK\_nnlo & 1.1775(19) & 56.04 & 2.30 & 0.00 \\ 
+		xpt\_FKFK\_nnlo\_FV & 1.1783(21) & 63.66 & 1.28 & 0.20 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFK\_nnlo\_a4 & 1.1882(45) & 58.03 & 1.82 & 0.02 \\ 
+		xpt\_FKFK\_nnlo\_a4\_FV & 1.1885(45) & 65.55 & 0.88 & 0.59 \\ 
+		xpt\_FKFK\_nnlo\_alphaS & 1.1768(24) & 55.93 & 2.31 & 0.00 \\ 
+		xpt\_FKFK\_nnlo\_alphaS\_FV & 1.1774(27) & 63.56 & 1.29 & 0.19 \\ 
+		xpt\_FKFK\_nnlo\_alphaS\_a4 & 1.1865(53) & 57.97 & 1.82 & 0.02 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFK\_nnlo\_alphaS\_a4\_FV & 1.1867(53) & 65.51 & 0.88 & 0.60 \\ 
+		xpt\_FKFK\_nnlo\_logSq\_sunset & 1.1757(19) & 57.82 & 2.06 & 0.01 \\ 
+		xpt\_FKFK\_nnlo\_logSq\_sunset\_FV & 1.1770(24) & 63.72 & 1.20 & 0.26 \\ 
+		xpt\_FKFK\_nnlo\_logSq\_sunset\_a4 & 1.1758(19) & 57.83 & 2.06 & 0.01 \\ 
+		xpt\_FKFK\_nnlo\_logSq\_sunset\_a4\_FV & 1.1771(24) & 63.73 & 1.20 & 0.26 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFK\_nnlo\_logSq\_sunset\_alphaS & 1.1750(24) & 57.72 & 2.07 & 0.01 \\ 
+		xpt\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1760(30) & 63.63 & 1.21 & 0.25 \\ 
+		xpt\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.1750(24) & 57.72 & 2.07 & 0.01 \\ 
+		xpt\_FKFK\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.1761(30) & 63.63 & 1.20 & 0.26 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset & 1.1748(22) & 57.12 & 2.09 & 0.01 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_FV & 1.1773(25) & 62.42 & 1.30 & 0.18 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1770(25) & 62.72 & 1.22 & 0.24 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_a4 & 1.1748(22) & 57.13 & 2.09 & 0.01 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1773(25) & 62.43 & 1.30 & 0.18 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1771(25) & 62.73 & 1.22 & 0.24 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1739(19) & 57.70 & 2.08 & 0.01 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1741(26) & 57.01 & 2.10 & 0.01 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1764(30) & 62.32 & 1.31 & 0.18 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1761(30) & 62.62 & 1.23 & 0.23 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1741(26) & 57.02 & 2.10 & 0.01 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1764(30) & 62.32 & 1.32 & 0.17 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1761(30) & 62.62 & 1.23 & 0.24 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1732(23) & 57.60 & 2.09 & 0.01 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1732(23) & 57.60 & 2.09 & 0.01 \\ 
+		xpt\_FKFK\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1739(19) & 57.69 & 2.09 & 0.01 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFpi\_nnlo & 1.1837(20) & 39.46 & 4.17 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_FV & 1.1865(21) & 55.14 & 2.29 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_a4 & 1.2024(52) & 45.41 & 2.97 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_a4\_FV & 1.2007(49) & 58.79 & 1.44 & 0.11 \\ 
+		xpt\_FKFpi\_nnlo\_alphaS & 1.1831(24) & 39.33 & 4.18 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFpi\_nnlo\_alphaS\_FV & 1.1857(28) & 55.00 & 2.30 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_alphaS\_a4 & 1.1997(65) & 45.40 & 2.97 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_alphaS\_a4\_FV & 1.1984(61) & 58.76 & 1.44 & 0.11 \\ 
+		xpt\_FKFpi\_nnlo\_logSq\_sunset & 1.1828(20) & 45.59 & 3.45 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_logSq\_sunset\_FV & 1.1858(22) & 59.75 & 1.77 & 0.03 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFpi\_nnlo\_logSq\_sunset\_a4 & 1.1985(49) & 49.63 & 2.46 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_logSq\_sunset\_a4\_FV & 1.1858(22) & 59.75 & 1.77 & 0.03 \\ 
+		xpt\_FKFpi\_nnlo\_logSq\_sunset\_alphaS & 1.1822(25) & 45.46 & 3.45 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1851(29) & 59.62 & 1.79 & 0.03 \\ 
+		xpt\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.1963(60) & 49.94 & 2.49 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFpi\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.1851(29) & 59.62 & 1.79 & 0.03 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset & 1.1792(22) & 51.17 & 2.63 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_FV & 1.1828(23) & 60.42 & 1.50 & 0.09 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1830(23) & 61.41 & 1.44 & 0.11 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4 & 1.1792(22) & 51.18 & 2.63 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1946(46) & 63.31 & 0.89 & 0.58 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1831(23) & 61.41 & 1.45 & 0.11 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1793(22) & 51.99 & 2.57 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1786(26) & 51.04 & 2.65 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1821(29) & 60.27 & 1.52 & 0.08 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1824(29) & 61.25 & 1.45 & 0.11 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1925(59) & 55.60 & 1.79 & 0.03 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1821(29) & 60.27 & 1.52 & 0.08 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1824(29) & 61.25 & 1.46 & 0.10 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1788(25) & 51.85 & 2.59 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1788(25) & 51.85 & 2.59 & 0.00 \\ 
+		xpt\_FKFpi\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1793(22) & 51.99 & 2.58 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo & 1.1840(25) & 42.52 & 3.79 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo\_FV & 1.1893(27) & 57.54 & 2.11 & 0.01 \\ 
+		xpt\_FpiFpi\_nnlo\_a4 & 1.2051(56) & 49.19 & 2.41 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt\_FpiFpi\_nnlo\_a4\_FV & 1.2038(49) & 61.37 & 1.18 & 0.27 \\ 
+		xpt\_FpiFpi\_nnlo\_alphaS & 1.1834(29) & 42.40 & 3.81 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo\_alphaS\_FV & 1.1885(33) & 57.41 & 2.12 & 0.01 \\ 
+		xpt\_FpiFpi\_nnlo\_alphaS\_a4 & 1.2020(71) & 49.17 & 2.41 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo\_alphaS\_a4\_FV & 1.2013(62) & 61.35 & 1.18 & 0.27 \\ 
+		\midrule[0.5pt] 
+		xpt\_FpiFpi\_nnlo\_logSq\_sunset & 1.1845(25) & 47.24 & 3.30 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo\_logSq\_sunset\_FV & 1.1897(29) & 61.54 & 1.73 & 0.04 \\ 
+		xpt\_FpiFpi\_nnlo\_logSq\_sunset\_a4 & 1.1846(25) & 47.24 & 3.30 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo\_logSq\_sunset\_a4\_FV & 1.1897(29) & 61.54 & 1.73 & 0.04 \\ 
+		xpt\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS & 1.1839(29) & 47.12 & 3.31 & 0.00 \\ 
+		\midrule[0.5pt] 
+		xpt\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_FV & 1.1888(35) & 61.42 & 1.74 & 0.03 \\ 
+		xpt\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_a4 & 1.1994(66) & 51.94 & 2.20 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo\_logSq\_sunset\_alphaS\_a4\_FV & 1.1888(35) & 61.42 & 1.74 & 0.03 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset & 1.1824(25) & 49.78 & 2.79 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_FV & 1.1872(28) & 59.81 & 1.63 & 0.05 \\ 
+		\midrule[0.5pt] 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_FV\_bijnens & 1.1873(27) & 60.39 & 1.62 & 0.05 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4 & 1.1824(25) & 49.78 & 2.79 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV & 1.1994(46) & 62.05 & 0.92 & 0.55 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_FV\_bijnens & 1.1998(47) & 63.93 & 0.88 & 0.60 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_a4\_bijnens & 1.1986(49) & 55.38 & 1.78 & 0.03 \\ 
+		\midrule[0.5pt] 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS & 1.1818(29) & 49.65 & 2.80 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV & 1.1866(33) & 59.66 & 1.64 & 0.05 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_FV\_bijnens & 1.1867(33) & 60.23 & 1.64 & 0.05 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4 & 1.1966(63) & 54.65 & 1.82 & 0.02 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV & 1.1979(59) & 63.04 & 0.91 & 0.56 \\ 
+		\midrule[0.5pt] 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_FV\_bijnens & 1.1867(33) & 60.23 & 1.64 & 0.05 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_a4\_bijnens & 1.1815(29) & 49.94 & 2.81 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_alphaS\_bijnens & 1.1816(29) & 49.94 & 2.82 & 0.00 \\ 
+		xpt\_FpiFpi\_nnlo\_log\_logSq\_sunset\_bijnens & 1.1821(25) & 50.08 & 2.80 & 0.00 \\ 
+	\end{tabular}
+\end{ruledtabular}
 
 \section{Comparison with Experiment}
 The CKM matrix element $|V_{ud}|$ has been determined to an accuracy better than 0.03 \% using super-allowed nuclear beta-decays. 
