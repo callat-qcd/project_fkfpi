@@ -639,41 +639,179 @@ Here we present the results for each of the fits.
 
 
 \begin{figure}[H]
-	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/comparison_fits.pdf}
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/comparison_fits.pdf}
 	\caption{Extrapolations of $F^\pm_K/F^\pm_\pi$ to the physical point for the various models, with the FLAG average overlaid.}
 \end{figure}
 
 \begin{figure}[H]
-	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/comparison_delta_su2.pdf}
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/comparison_delta_su2.pdf}
 	\caption{Extrapolations of $\delta_{\text{SU(2)}}$ to the physical point for the various models.}
 \end{figure}
 
 \begin{figure}[H]
-	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/histogram_fit.pdf}
-	\caption{Distribution of $F^\pm_K/F^\pm_\pi$, weighed by Bayes factor.}
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_base.pdf}
+	\caption{Distribution of $F_K/F_\pi$, weighed by Bayes factor using optimized priors.}
 \end{figure}
 
 \begin{figure}[H]
-	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/histogram_delta_su2.pdf}
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_delta_su2.pdf}
 	\caption{Distribution of $\delta_{\text{SU(2)}}$, weighed by Bayes factor.}
 \end{figure}
 
 \begin{figure}[H]
-	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/all_fits_vs_latt_spacing.pdf}
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/all_fits_vs_latt_spacing.pdf}
 	\caption{Plotting $F^\pm_K/F^\pm_\pi$ as a function of lattice spacing, fixing the other parameters at the physical point. Every model in the analysis is included in this graphic, but the amount of transparency allotted to a given model is inversely proportional to the Bayes factor of that model. Therefore models that contribute more heavily are more opaque than models that contribute negligibly, the latter of which might be invisible on the plot.}
 \end{figure}
 
 \begin{figure}[H]
-	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/all_fits_vs_mpi.pdf}
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/all_fits_vs_mpi.pdf}
 	\caption{Plotting $F^\pm_K/F^\pm_\pi$ as a function of $m_\pi$, fixing the other parameters at the physical point.. Every model in the analysis is included in this graphic, but the amount of transparency allotted to a given model is inversely proportional to the Bayes factor of that model. Therefore models that contribute more heavily are more opaque than models that contribute negligibly, the latter of which might be invisible on the plot.}
 \end{figure}
 
 \begin{figure}[H]
-	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/all_fits_vs_volume.pdf}
+	\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/all_fits_vs_volume.pdf}
 	\caption{Plotting $F^\pm_K/F^\pm_\pi$ as a function of the volume correction (varying $L$), fixing the other parameters at the physical point. Every model in the analysis is included in this graphic, but the amount of transparency allotted to a given model is inversely proportional to the Bayes factor of that model. Therefore models that contribute more heavily are more opaque than models that contribute negligibly, the latter of which might be invisible on the plot.}
 \end{figure}
 
 
+
+
+
+
+
+\subsection{Comparison of fit choices}
+
+% Different binnings of FK/Fpi
+
+% Optimized priors
+\begin{figure*}[t!]
+	\centering
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_base.pdf}
+		\caption{Binning by choice of base model}
+	\end{subfigure}%
+	~ 
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_F2.pdf}
+		\caption{Binning by choice of $F^2$}
+	\end{subfigure}
+	
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_include_alpha_s.pdf}
+		\caption{Binning by choice to include $\alpha_S$ corrections}
+	\end{subfigure}%
+	~ 
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_include_FV.pdf}
+		\caption{Binning by choice to include finite volume corrections}
+	\end{subfigure}
+	
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_include_latt_n3lo.pdf}
+		\caption{Binning by choice to include n3lo $a^4$ term}
+	\end{subfigure}%
+	~ 
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_semi-nnlo_corrections.pdf}
+		\caption{Binning by choice of semi-nnlo corrections}
+	\end{subfigure}
+	
+	\caption{Optimized priors}
+\end{figure*}
+
+
+% Default priors
+\begin{figure*}[t!]
+	\centering
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors/histogram_fit_base.pdf}
+		\caption{Binning by choice of base model}
+	\end{subfigure}%
+	~ 
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors/histogram_fit_F2.pdf}
+		\caption{Binning by choice of $F^2$}
+	\end{subfigure}
+	
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors/histogram_fit_include_alpha_s.pdf}
+		\caption{Binning by choice to include $\alpha_S$ corrections}
+	\end{subfigure}%
+	~ 
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors/histogram_fit_include_FV.pdf}
+		\caption{Binning by choice to include finite volume corrections}
+	\end{subfigure}
+	
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors/histogram_fit_include_latt_n3lo.pdf}
+		\caption{Binning by choice to include n3lo $a^4$ term}
+	\end{subfigure}%
+	~ 
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors/histogram_fit_semi-nnlo_corrections.pdf}
+		\caption{Binning by choice of semi-nnlo corrections}
+	\end{subfigure}
+	
+	\caption{Default priors}
+\end{figure*}
+
+% Optimized priors
+\begin{figure*}[t!]
+	\centering
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors_no_a15/histogram_fit_base.pdf}
+		\caption{Binning by choice of base model}
+	\end{subfigure}%
+	~ 
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors_no_a15/histogram_fit_F2.pdf}
+		\caption{Binning by choice of $F^2$}
+	\end{subfigure}
+	
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors_no_a15/histogram_fit_include_alpha_s.pdf}
+		\caption{Binning by choice to include $\alpha_S$ corrections}
+	\end{subfigure}%
+	~ 
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors_no_a15/histogram_fit_include_FV.pdf}
+		\caption{Binning by choice to include finite volume corrections}
+	\end{subfigure}
+	
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors_no_a15/histogram_fit_include_latt_n3lo.pdf}
+		\caption{Binning by choice to include n3lo $a^4$ term}
+	\end{subfigure}%
+	~ 
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/default_priors_no_a15/histogram_fit_semi-nnlo_corrections.pdf}
+		\caption{Binning by choice of semi-nnlo corrections}
+	\end{subfigure}
+	
+	\caption{Default priors, excluding \texttt{a15} ensembles}
+	\end{figure*}
+
+\newpage
+\newpage
 \appendix
 \section{Physical Point Values}
 The physical point values are given in Table \ref{table:phys_point_values}. The pion and kaon masses are taken from \cite{Berkowitz:2017opd} while the mass for the $\eta^\prime = (ss)$ meson is taken from \cite{Dowdall:2013rya}; however, we could have just as readily taken $m_{ss}^2 = 2 m_K^2 - m_\pi^2$ evaluated at the physical point (see Fig \ref{fig:mss}).
@@ -695,6 +833,7 @@ The physical point values are given in Table \ref{table:phys_point_values}. The 
 \caption{Values used when extrapolating to the physical point; $F_K^\pm/F_\pi^\pm$ is taken from FLAG (and is not used for the extrapolation).}
 \label{table:phys_point_values}
 \end{table}
+
 
 \newpage
 \section{Results of each model}
