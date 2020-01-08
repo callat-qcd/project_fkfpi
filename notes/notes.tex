@@ -90,7 +90,7 @@ In general, our fits are of the form
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO}
 \end{equation}
 where the $n_V$ denotes to which order we fit the finite volume effects.
-\subsection{Special Functions}
+\subsection{Special Functions} \label{section:finite_volume}
 For reference later in these notes, we now list the following special functions in our fits which encapsulate the finite volume dependence. The values for the $c_n$'s are given in Table \ref{tab:cN_weights}.
 \begin{align}
 \mathcal{I}(m) &= \frac{m^2}{(4\pi)^2} \log \left( \frac{m^2}{\mu^2} \right)
@@ -163,7 +163,7 @@ We can plot the splitting over flavors and pion masses, and see how well this LO
 
 
 
-\subsection{Models}
+\subsection{Models} \label{section:base_models}
 In the following descriptions of the models, we make use of the definitions
 \begin{equation}
 \epsilon_\pi^2 = \frac{m_\pi^2}{\Lambda_\chi^2} \qquad
@@ -276,7 +276,7 @@ A less refined variant of this equation is given in (17) of \cite{Berkowitz:2017
 
 \subsection{Corrections}
 
-\subsubsection{NNLO \& NNNLO counterterms}
+\subsubsection{NNLO \& NNNLO counterterms} \label{section:nnlo_corrections}
 The NNLO and NNNLO counterterms are formed by taking powers of $\epsilon^2_\xi$ ($\xi = K, \pi, a$), along with $(\epsilon_K^2 - \epsilon_\pi^2)$ (which ensures $F_K / F_\pi$ tends to 1 in the chiral limit), to the desired order. For NNLO, we take one power of $\epsilon^2_\xi$ and one power of $(\epsilon_K^2 - \epsilon_\pi^2)$.
 \begin{equation}
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} = \bigg[
@@ -317,7 +317,7 @@ For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^
 
 Notice that the lattice spacing and $am_\xi$ ($\xi \in \{\pi, K, \eta\}$) corrections are included in these counterterms. For example, the term $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$ accounts for the lowest order lattice spacing correction. Further note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of terms at that order.
 
-\subsubsection{Renormalization scale dependence}
+\subsubsection{Renormalization scale dependence} \label{section:renormalization}
 In our analysis, we have three choices for the chiral symmetry breaking scale:
 \begin{equation}
 \Lambda_\chi  = 4 \pi \{ F_\pi, \sqrt{F_\pi F_K}, F_K\} \, .
@@ -510,7 +510,7 @@ where $m^{(res)}_q$ is the residual mass of quark $q$ (which characterizes the b
 \section{The Weeds}
 The actual fit here is performed in lattice units, not physical units, which is possible since the ratio $F_K / F\pi$ is dimensionless.
 
-\subsection{Models}
+\subsection{Models} \label{section:models}
 Including all two-loop corrections, we can write our fit function as follows:
 \begin{align}
 \left(\frac{F_K}{F_\pi}\right)_\text{lattice} &=
@@ -681,37 +681,37 @@ Here we present the results for each of the fits.
 	\begin{subfigure}[t]{0.45\textwidth}
 		\centering
 		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_base.pdf}
-		\caption{Binning by choice of base model}
+		\caption{Binning by choice of base model (see \ref{section:base_models})}
 	\end{subfigure}%
 	~ 
 	\begin{subfigure}[t]{0.45\textwidth}
 		\centering
 		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_F2.pdf}
-		\caption{Binning by choice of $F^2$}
+		\caption{Binning by choice of $F^2$ (see \ref{section:renormalization})}
 	\end{subfigure}
 	
 	\begin{subfigure}[t]{0.45\textwidth}
 		\centering
 		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_include_alpha_s.pdf}
-		\caption{Binning by choice to include $\alpha_S$ corrections}
+		\caption{Binning by choice to include $\alpha_S$ corrections (see \ref{section:semi_nnlo})}
 	\end{subfigure}%
 	~ 
 	\begin{subfigure}[t]{0.45\textwidth}
 		\centering
 		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_include_FV.pdf}
-		\caption{Binning by choice to include finite volume corrections}
+		\caption{Binning by choice to include finite volume corrections (see \ref{section:finite_volume})}
 	\end{subfigure}
 	
 	\begin{subfigure}[t]{0.45\textwidth}
 		\centering
 		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_include_latt_n3lo.pdf}
-		\caption{Binning by choice to include n3lo $a^4$ term}
+		\caption{Binning by choice to include n3lo $a^4$ term (see \ref{section:nnlo_corrections})}
 	\end{subfigure}%
 	~ 
 	\begin{subfigure}[t]{0.45\textwidth}
 		\centering
 		\includegraphicsifexists[width=0.9\textwidth]{./../figs/generated/optimized_priors/histogram_fit_semi-nnlo_corrections.pdf}
-		\caption{Binning by choice of semi-nnlo corrections}
+		\caption{Binning by choice of semi-nnlo corrections (see \ref{section:models})}
 	\end{subfigure}
 	
 	\caption{Optimized priors}
