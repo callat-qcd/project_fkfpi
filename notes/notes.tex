@@ -826,6 +826,42 @@ The physical point values are given in Table \ref{table:phys_point_values}. The 
 \label{table:phys_point_values}
 \end{table}
 
+\section{Adapting a Fixed Renormalization Scheme to the Lattice}
+The appendix of \cite{Amoros:1999dp} gives $\chi$PT expressions for the pseudoscalar decay constants, which we repeat here. The expressions are written in the form
+\begin{equation}
+F_P = F_0 \left(1 + \delta F_P + \cdots \right) \, 
+\end{equation}
+where $F_0$ is the value of $F_\pi$ in the chiral limit. The NLO corrections to the decays are
+\begin{align}
+\delta F_\pi &= - l^0_\pi - \frac12 l^0_K + 4 \left[ 
+	\left( \epsilon^2_\pi + 2 \epsilon^2_K \right) \overline L_4 + 4 \epsilon^2_\pi  \overline L_5
+\right] \\
+\delta F_K &= - \frac38 l^0_\pi - \frac34  l^0_K - \frac38  l^0_eta \left[ 
+\left( \epsilon^2_\pi + 2 \epsilon^2_K \right) \overline L_4 + 4 \epsilon^2_K  \overline L_5
+\right]
+\end{align}
+where
+\begin{equation}
+\epsilon_P = \frac{m_P}{4 \pi F_\pi} \, , \qquad 
+l^0_P = \epsilon^2_P \log \left[\left( \frac{m_P}{\mu_0}\right)^2\right] \, , \qquad
+\overline L_i = (4\pi)^2 L_i \, .
+\end{equation}
+
+We stress the following points:
+\begin{enumerate}
+	\item The expansion parameter for $\chi$PT is given with respect to $F_\pi$, not $F_P$; ie,  $4 \pi F_\pi$ serves as a proxy for the chiral limit.
+	\item Here $\mu_0 = 4 \pi F_0$ is a \emph{fixed} renormalization scale.
+\end{enumerate}
+
+For the actual  lattice calculation we would prefer to avoid using a fixed renormalization scale, as a fixed renormalization scale would require scale setting. Instead, we use the lattice values of $F_\pi$ and $F_K$ as a proxy for $F_0$ and introduce an NNLO correction to $F_K/F_\pi$ (whose value varies by ensemble) that accounts for the fact that our renormalization scale is not fixed. 
+
+To understand how we can track this correction, we begin with the NLO expression for $F_K/F_\pi$.
+\begin{align}
+\frac{F_K}{F_\pi} &= \frac{1 + \delta F_K + \cdots}{1 + \delta F_\pi	 + \cdots} \nonumber \\
+&\approx 1 + \delta F_K - \delta F_\pi \nonumber \\
+&= 1 + \frac58 l^0_\pi - \frac14 l^0_K - \frac38 l^0_\eta +  4 \left( \epsilon^2_K - \epsilon^2_\pi 
+\right) \overline L_5
+\end{align}
 
 \newpage
 \section{Results of each model}
