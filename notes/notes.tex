@@ -135,8 +135,8 @@ d\mathcal{I}(m) &=
 
 \subsection{NLO chiral extrapolation formulae}
 
-In these expressions, the $\eta$ meson mass can be approximated with the $SU(3)$ Gell-Mann--Okubo formula
-\begin{equation}
+In these expressions, the $\eta$ meson mass can be approximated with the LO $SU(3)$ Gell-Mann--Okubo formula
+\begin{equation} \label{eqn:GMO_relation}
 m_\eta^2 = \frac{4}{3} m_K^2 - \frac{1}{3}m_\pi^2\, .
 \end{equation}
 The $X$ mass appearing in the MA formulae is
@@ -549,7 +549,7 @@ Our model average is performed under a Bayesian framework, following the procedu
 \begin{equation}
 P(Y|D) = \sum_k P(Y | M_k, D) P(M_k | D)
 \end{equation}
-Here $P(Y | M_k, D)$ is the distribution of $Y$ for a given model $M_k$ and dataset $D$, while $P(M_k | D)$ is the posterior distribution of $M_k$ given $D$. The latter can be written, in accordance to Bayes theorem, as 
+Here $P(Y | M_k, D)$ is the distribution of $Y$ for a given model $M_k$ and dataset $D$, while $P(M_k | D)$ is the posterior distribution of $M_k$ given $D$. The latter can be written, per Bayes theorem, as 
 \begin{equation}
 P(M_k | D) = \frac{P(D | M_k) P(M_k)}{\sum_l P(D | M_l) P(M_l)} \, .
 \end{equation}
@@ -557,13 +557,13 @@ We can be more explicit with what the latter is in the context of our fits. Firs
 \begin{equation}
 P(D | M_k) = \int \prod_j \text{d} \theta_j^{(k)} \,  P(D | \theta_j^{(k)}, M_k) P(\theta_j^{(k)} | M_k) \, .
 \end{equation}
-After marginalization, $P(D | M_k)$ is just a number. Specifically, it is the Bayes factor of $M_k$: $P(D | M_k) = \exp(\texttt{logGBF})_{M_k}$. Thus
+After marginalization, $P(D | M_k)$ is just a number. Specifically, it is the Bayes factor of $M_k$: $P(D | M_k) = \exp(\texttt{logGBF})_{M_k}$, where \texttt{logGBF} is the log of the Bayes factor as reported by \texttt{lsqfit}. Thus
 \begin{equation}
 P(M_k | D) = \frac{\exp(\texttt{logGBF})_{M_k}}{K \sum_l \exp(\texttt{logGBF})_{M_l}}
 \end{equation}
 with $K = 96$ the number of models included in our average.
 
-Now we can estimate the mean and variance of $Y$.
+Now we can estimate the expectation value and variance of $Y$.
 \begin{align}
 \text{E}[Y] &= \sum_k \text{E}[Y | M_k] \, P(M_k | D)  \\
 \text{Var}[Y] &= \sum_k \text{Var}[Y | M_k] P(M_k | D)
@@ -836,18 +836,17 @@ where $F_0$ is the value of $F_\pi$ in the chiral limit. The NLO corrections to 
 \delta F_\pi &= - l^0_\pi - \frac12 l^0_K + 4 \left[ 
 	\left( \epsilon^2_\pi + 2 \epsilon^2_K \right) \overline L_4 + 4 \epsilon^2_\pi  \overline L_5
 \right] \\
-\delta F_K &= - \frac38 l^0_\pi - \frac34  l^0_K - \frac38  l^0_eta \left[ 
+\delta F_K &= - \frac38 l^0_\pi - \frac34  l^0_K - \frac38  l^0_\eta \left[ 
 \left( \epsilon^2_\pi + 2 \epsilon^2_K \right) \overline L_4 + 4 \epsilon^2_K  \overline L_5
 \right]
 \end{align}
 where
 \begin{equation}
 \epsilon_P = \frac{m_P}{4 \pi F_\pi} \, , \qquad 
-l^0_P = \epsilon^2_P \log \left[\left( \frac{m_P}{\mu_0}\right)^2\right] \, , \qquad
+l^{P^\prime}_P = \epsilon^2_P \log \left[\left( \frac{m_P}{\mu_{P^\prime}}\right)^2\right] \, , \qquad
 \overline L_i = (4\pi)^2 L_i \, .
 \end{equation}
-
-We stress the following points:
+In this case, $l^0_P$ corresponds to the choice $\mu=\mu_0$. We stress the following points:
 \begin{enumerate}
 	\item The expansion parameter for $\chi$PT is given with respect to $F_\pi$, not $F_P$; ie,  $4 \pi F_\pi$ serves as a proxy for the chiral limit.
 	\item Here $\mu_0 = 4 \pi F_0$ is a \emph{fixed} renormalization scale.
@@ -862,6 +861,35 @@ To understand how we can track this correction, we begin with the NLO expression
 &= 1 + \frac58 l^0_\pi - \frac14 l^0_K - \frac38 l^0_\eta +  4 \left( \epsilon^2_K - \epsilon^2_\pi 
 \right) \overline L_5
 \end{align}
+Notice that the log  parts can be rewritten as
+\begin{align}
+l^0_P &= \epsilon_P^2 \log \left[ \left(\frac{m_P}{\mu_{P^\prime}}\frac{\mu_{P^\prime}}{\mu_0}\right)^2 \right] \nonumber \\
+&= l^{P^\prime}_P + \epsilon_P^2 \log \left[ \left( \frac{\mu_{P^\prime}}{\mu_0} \right)^2 \right]
+\end{align}
+which allows us to rewrite the NLO expression for $F_K/F_\pi$ as
+\begin{align}
+\frac{F_K}{F_\pi}& =  \left(1 + \frac58 l^{P^\prime}_\pi - \frac14 l^{P^\prime}_K - \frac38 l^{P^\prime}_\eta +  4 \left( \epsilon^2_K - \epsilon^2_\pi 
+\right) \overline L_5 \right)
+- \frac 34 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right) \log \left[ \left( \frac{\mu_{P^\prime}}{\mu_0} \right)^2 \right] \nonumber \\
+&= \frac{F_K}{F_\pi} \Big\rvert_{\mu_0 \rightarrow \mu_{P^\prime}}
+- \frac 34 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right) \log \left[ \left( \frac{\mu_{P^\prime}}{\mu_0} \right)^2 \right] \, . 
+\end{align}
+The lattermost term is the renormalization scale correction (the $\epsilon^2$ terms have been simplified using the LO GMO relation \eqref{eqn:GMO_relation}). Available on our lattice are $F_K$ and $F_\pi$, which we use for the sliding renormalization scale. Since $\mu_{P^\prime}/\mu_0 = F_{P^\prime}/F_0 $, we have the following for the NNLO sliding renormalization scale corrections to the $\chi$PT  expression.
+\begin{align}
+- \frac 34 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right) \log \left[ \left( \frac{\mu_\pi}{\mu_0} \right)^2 \right] &\approx
+- \frac 32 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right)  2 \delta F_\pi \nonumber 
+&= \delta^\text{NNLO}_{\mu=\mu_\pi} \, \, \, \, \, \, \, \,
+\\
+  - \frac 34 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right)  \log \left[ \left( \frac{\mu_K}{\mu_0} \right)^2 \right] &\approx
+ - \frac 32 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right) 2 \delta F_K \nonumber 
+ &= \delta^\text{NNLO}_{\mu=\mu_K} \, \, \, \, \, \, \, \,
+ \\
+    - \frac 34 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right) \log \left[ \left( \frac{\mu_K}{\mu_0} \right) \left( \frac{\mu_\pi}{\mu_0} \right)\right] &\approx
+  - \frac 34 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right) \left( \delta F_K  + \delta F_\pi  \right) 
+  &= \delta^\text{NNLO}_{\mu^2=\mu_\pi \mu_K}
+\end{align} 
+
+
 
 \newpage
 \section{Results of each model}
