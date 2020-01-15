@@ -549,7 +549,7 @@ Our model average is performed under a Bayesian framework, following the procedu
 \begin{equation}
 P(Y|D) = \sum_k P(Y | M_k, D) P(M_k | D)
 \end{equation}
-Here $P(Y | M_k, D)$ is the distribution of $Y$ for a given model $M_k$ and dataset $D$, while $P(M_k | D)$ is the posterior distribution of $M_k$ given $D$. The latter can be written, per Bayes theorem, as 
+Here $P(Y | M_k, D)$ is the distribution of $Y$ for a given model $M_k$ and dataset $D$, while $P(M_k | D)$ is the posterior distribution of $M_k$ given $D$. The latter can be written, per Bayes' theorem, as 
 \begin{equation}
 P(M_k | D) = \frac{P(D | M_k) P(M_k)}{\sum_l P(D | M_l) P(M_l)} \, .
 \end{equation}
@@ -561,15 +561,21 @@ After marginalization, $P(D | M_k)$ is just a number. Specifically, it is the Ba
 \begin{equation}
 P(M_k | D) = \frac{\exp(\texttt{logGBF})_{M_k}}{K \sum_l \exp(\texttt{logGBF})_{M_l}}
 \end{equation}
-with $K = 96$ the number of models included in our average.
+with $K$ the number of models included in our average.
 
 Now we can estimate the expectation value and variance of $Y$.
 \begin{align}
 \text{E}[Y] &= \sum_k \text{E}[Y | M_k] \, P(M_k | D)  \\
-\text{Var}[Y] &= \sum_k \text{Var}[Y | M_k] P(M_k | D)
-+ \left( \sum_k \text{E}^2[Y | M_k] \, P(M_k | D)\right) 
-- \text{E}^2[Y | D] \nonumber
+\text{Var}[Y] &=
+\left[
+ \sum_k \text{Var}[Y | M_k] P(M_k | D)
+ \right]
++ \left[
+\left( \sum_k \text{E}^2[Y | M_k] \, P(M_k | D)\right) 
+- \text{E}^2[Y | D] 
+\right] \nonumber
 \end{align}
+The variance $V[Y]$ results from the total law of variance; the first term in brackets is known as the \emph{expected value of the process variance} (which we refer to as the \emph{model averaged variance}), while the latter is the \emph{variance of the hypothetical means} (the root of which we refer to as the \emph{model uncertainty}).
 
 \subsection{Selection of Prior} \label{Selection of Prior}
 
@@ -877,11 +883,11 @@ which allows us to rewrite the NLO expression for $F_K/F_\pi$ as
 The lattermost term is the renormalization scale correction (the $\epsilon^2$ terms have been simplified using the LO GMO relation \eqref{eqn:GMO_relation}). Available on our lattice are $F_K$ and $F_\pi$, which we use for the sliding renormalization scale. Since $\mu_{P^\prime}/\mu_0 = F_{P^\prime}/F_0 $, we have the following for the NNLO sliding renormalization scale corrections to the $\chi$PT  expression.
 \begin{align}
 - \frac 34 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right) \log \left[ \left( \frac{\mu_\pi}{\mu_0} \right)^2 \right] &\approx
-- \frac 32 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right)  2 \delta F_\pi \nonumber 
+- \frac 32 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right)  \delta F_\pi \nonumber 
 &= \delta^\text{NNLO}_{\mu=\mu_\pi} \, \, \, \, \, \, \, \,
 \\
   - \frac 34 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right)  \log \left[ \left( \frac{\mu_K}{\mu_0} \right)^2 \right] &\approx
- - \frac 32 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right) 2 \delta F_K \nonumber 
+ - \frac 32 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right) \delta F_K \nonumber 
  &= \delta^\text{NNLO}_{\mu=\mu_K} \, \, \, \, \, \, \, \,
  \\
     - \frac 34 \left( \epsilon_K^2 -  \epsilon_\pi^2 \right) \log \left[ \left( \frac{\mu_K}{\mu_0} \right) \left( \frac{\mu_\pi}{\mu_0} \right)\right] &\approx
