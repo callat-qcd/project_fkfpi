@@ -895,7 +895,27 @@ The lattermost term is the renormalization scale correction (the $\epsilon^2$ te
   &= \delta^\text{NNLO}_{\mu^2=\mu_\pi \mu_K}
 \end{align} 
 
-
+\section{\boldmath Correcting for Different Choices of $\Lambda_\chi$}
+In the previous section we considered three different choices for the sliding renormalization scale by using $F_K$, $F_\pi$ or the geometric average $\sqrt{F_K F_\pi}$. We consider the three cases instead of just a single case (say, $\mu = 4 \pi F_\pi$), as this allows us to systematically evaluate the choice of $\mu$ on our fits. Therefore, if we choose, eg,  $\mu=4\pi F_K$ for our renormalization scale, it seems sensible to also set $\Lambda_\chi = 4 \pi F_K$ for the chiral symmetry breaking scale. Continuing with the example, this amounts to the following modification of $\epsilon_P$.
+\begin{equation}
+\frac{m_P}{4 \pi F_\pi} \rightarrow \frac{m_P}{4 \pi F_K}
+\end{equation}
+The new choice for $\Lambda_\chi$ introduces differences at NNLO. 
+\begin{align}
+\frac{F_K}{F_\pi} &\approx 1 + \delta F_K - \delta F_\pi \nonumber \\
+&= 1 +\left[ \left(\delta F_K - \delta F_\pi \right) \big\rvert_{F^2_\pi \rightarrow F_K^2} \right]
+\left(   \frac{F_K}{F_\pi} \right)^2  \nonumber \\
+&\approx 1 +\left[ \left(\delta F_K - \delta F_\pi \right) \big\rvert_{F^2_\pi \rightarrow F_K^2} \right]
+ \left[  1 + \left(\delta F_K - \delta F_\pi \right)  \right]^2 \nonumber \\
+ &\approx \frac{F_K}{F_\pi} \Big\rvert_{F^2_\pi \rightarrow F_K^2} 
+ + 2 \left(\delta F_K - \delta F_\pi \right)^2
+\end{align}
+Therefore we correct for the differences by introducing a term $\delta^\text{NNLO}_{\Lambda_\chi}$. For $F_\pi = 0$, the correction is trivially 0 (as $\Lambda_\chi=4\pi F_\pi$ was assumed to be the cutoff). Adaption the above derivation to use the geometric average instead is straightforward. In summary, 
+\begin{align}
+\delta^\text{NNLO}_{\Lambda_\chi \rightarrow 4 \pi F_\pi} \, \, \, \, \, \, \, \, \, \, \,&= 0 \nonumber \\
+\delta^\text{NNLO}_{\Lambda_\chi \rightarrow 4 \pi F_K}    \, \, \, \, \, \,  \, \, \, \, &= 2 \left(\delta F_K - \delta F_\pi \right)^2 \nonumber \\
+\delta^\text{NNLO}_{\Lambda_\chi \rightarrow 4 \pi \sqrt{F_\pi F_K}} &=  \left(\delta F_K - \delta F_\pi \right) ^2 \, .
+\end{align}
 
 \newpage
 \section{Results of each model}
