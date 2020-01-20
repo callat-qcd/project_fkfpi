@@ -178,7 +178,7 @@ class model_average(object):
 
             return gv.gvar(expct_y, np.sqrt(var_y))
 
-        #
+        # Split statistics (unexplained var)/model selection (explained var)
         if split_unc:
             var_model = 0
             for model in nonempty_keys:
@@ -232,11 +232,11 @@ class model_average(object):
         if param is None:
             param = 'FK/Fpi_pm'
 
-
         if title is None:
             title = ""
         if xlabel is None:
             xlabel = self._param_keys_dict(param)
+
 
         colors = ['salmon', 'darkorange', 'mediumaquamarine', 'orchid', 'silver']
         markers = ['^', 'o', 'v', '*']
@@ -253,13 +253,22 @@ class model_average(object):
         for results in results_array:
             plt.axhline(y-0.5, ls='--')
             for name in sorted(results.keys()):
-                if param in results[name].keys():
+
+                param_value = None
+                if param in results[name]['posterior'].keys():
+                    param_value = gv.gvar(results[name]['posterior'][param])
+                elif param in results[name].keys():
+                    param_value = gv.gvar(results[name][param])
+                else:
+                    param_value = None
+
+                if param_value is not None:
 
                     # Add band for FLAG
                     if name in ['FLAG']:
                         color = 'palevioletred'
-                        x = gv.mean(gv.gvar(results[name][param]))
-                        xerr = gv.sdev(gv.gvar(results[name][param]))
+                        x = gv.mean(param_value)
+                        xerr = gv.sdev(param_value)
                         plt.axvspan(x-xerr, x+xerr, alpha=0.3, color=color, label='FLAG')
 
                         y = y + 1
@@ -288,9 +297,8 @@ class model_average(object):
                         else:
                             marker = markers[3]
 
-
-                        x = gv.mean(gv.gvar(results[name][param]))
-                        xerr = gv.sdev(gv.gvar(results[name][param]))
+                        x = gv.mean(param_value)
+                        xerr = gv.sdev(param_value)
 
                         plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
                                      marker=marker, capsize=0.0, mec='white', ms=10.0, alpha=0.6,
@@ -302,10 +310,13 @@ class model_average(object):
 
         # Show model average
         if show_model_avg:
-            avg = self.average(param)
-            pm = lambda g, k : gv.mean(g) + k*gv.sdev(g)
-            plt.axvspan(pm(avg, -1), pm(avg, +1), alpha=0.3, color='cornflowerblue', label='model avg')
-            plt.axvline(pm(avg, 0), ls='-.', color='m')
+            try:
+                avg = self.average(param)
+                pm = lambda g, k : gv.mean(g) + k*gv.sdev(g)
+                plt.axvspan(pm(avg, -1), pm(avg, +1), alpha=0.3, color='cornflowerblue', label='model avg')
+                plt.axvline(pm(avg, 0), ls='-.', color='m')
+            except:
+                pass
 
         # Get unique labels
         handles, labels = plt.gca().get_legend_handles_labels()
