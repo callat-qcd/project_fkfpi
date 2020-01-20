@@ -131,7 +131,7 @@ class bootstrapper(object):
             prior['A_p'] = gv.gvar('0.0(5.0)')
 
             # nnnlo terms
-            prior['A_aa'] = gv.gvar('0.0(5.0)')
+            prior['A_aa'] = gv.gvar('0.0(50.0)')
             prior['A_ak'] = gv.gvar('0.0(5.0)')
             prior['A_ap'] = gv.gvar('0.0(5.0)')
             prior['A_kk'] = gv.gvar('0.0(5.0)')
