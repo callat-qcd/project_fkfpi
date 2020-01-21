@@ -225,6 +225,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         if self.order['fit'] in ['nnlo', 'nnnlo']:
             output = output + self.fitfcn_nnlo_pure_ct(p)
+            output = output + self.fitfcn_nnlo_ratio(p)
             output = output + self.fitfcn_nnlo_renormalization_ct(p)
 
         # semi-nnlo corrections
@@ -473,6 +474,31 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output
 
+    def fitfcn_nnlo_ratio(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+        eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi
+
+        fcn_l = lambda x : x *np.log(x)
+
+        output = (
+            + (
+                + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
+                - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
+            ) *(
+                + 3./8 *fcn_l(eps2_pi) + 3./4 *fcn_l(eps2_k) + 3./8 *fcn_l(eps2_eta)
+                + 4 *(4*np.pi)**2 *(eps2_pi *p['L_4'] + eps2_k *(2 *p['L_4'] + p['L_5']))
+            )
+
+            - (
+                + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
+                - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
+            )**2
+        )
+
+        return output
+
     def fitfcn_nnlo_renormalization_ct(self, p):
         lam2_chi = p['lam2_chi']
         #eps2_a = (p['a/w0'])**2 / (4 *np.pi)
@@ -530,23 +556,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                     + eps2_k *(2 *p['L_4'])
                 )
             )
-
-        if self.fit_type in ['ma-ratio', 'xpt-ratio']:
-            output = output + (
-                (
-                    + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
-                    - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
-                ) *(
-                    + 3./8 *fcn_l(eps2_pi) + 3./4 *fcn_l(eps2_k) + 3./8 *fcn_l(eps2_eta)
-                    + 4 *(4*np.pi)**2 *(eps2_pi *p['L_4'] + eps2_k *(2 *p['L_4'] + p['L_5']))
-                )
-
-                + 1./2 *(
-                    + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
-                    - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
-                )**2
-            )
-
         if self.debug:
             print('mu fix', output)
         return output
