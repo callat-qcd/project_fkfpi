@@ -30,6 +30,7 @@ p_dict = {
 
     'save_results' : False, # If fast_sunset = True, this should be set to False
     'save_pickles' : False,
+    'replace_entries' : False,
 }
 
 if p_dict['save_results']:
@@ -103,7 +104,8 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
                       include_latt_n3lo=p_dict['order']['include_latt_n3lo'], include_FV=(p_dict['order']['vol'] > 6),
                       use_bijnens_central_value=p_dict['use_bijnens_central_value']
                  )
-    if temp_prior is None:
+
+    if temp_prior is None or p_dict['replace_entries']:
 
         # Make bootstrapper
         bootstrapper = bs.bootstrapper(fit_data, prior=None, **p_dict)
