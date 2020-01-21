@@ -255,10 +255,11 @@ class model_average(object):
             for name in sorted(results.keys()):
 
                 param_value = None
-                if param in results[name]['posterior'].keys():
-                    param_value = gv.gvar(results[name]['posterior'][param])
-                elif param in results[name].keys():
+
+                if param in results[name].keys():
                     param_value = gv.gvar(results[name][param])
+                elif param in results[name]['posterior'].keys():
+                    param_value = gv.gvar(results[name]['posterior'][param])
                 else:
                     param_value = None
 
