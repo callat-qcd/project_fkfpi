@@ -482,20 +482,23 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         fcn_l = lambda x : x *np.log(x)
 
-        output = (
-            + (
-                + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
-                - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
-            ) *(
-                + 3./8 *fcn_l(eps2_pi) + 3./4 *fcn_l(eps2_k) + 3./8 *fcn_l(eps2_eta)
-                + 4 *(4*np.pi)**2 *(eps2_pi *p['L_4'] + eps2_k *(2 *p['L_4'] + p['L_5']))
-            )
+        if self.fit_type in ['ma-ratio', 'xpt-ratio']:
+            output = (
+                + (
+                    + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
+                    - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
+                ) *(
+                    + 3./8 *fcn_l(eps2_pi) + 3./4 *fcn_l(eps2_k) + 3./8 *fcn_l(eps2_eta)
+                    + 4 *(4*np.pi)**2 *(eps2_pi *p['L_4'] + eps2_k *(2 *p['L_4'] + p['L_5']))
+                )
 
-            - (
-                + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
-                - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
-            )**2
-        )
+                - (
+                    + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
+                    - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
+                )**2
+            )
+        else:
+            output = 0
 
         return output
 
