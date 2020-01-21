@@ -84,7 +84,7 @@ That is, they are related to the expectation value for the respective pseudoscal
 
 In general, our fits are of the form
 \begin{equation}
-\left(\frac{F_K}{F_\pi}\right)_\text{lattice} = \left(\frac{F_K}{F_\pi}\right)_\text{model}^{(n_V)} +
+\left(\frac{F_K}{F_\pi}\right)_\text{lattice} = \left(\frac{F_K}{F_\pi}\right)_\text{base}^{(n_V)} +
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNLO} +
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{semi-NNLO} +
 \delta\left(\frac{F_K}{F_\pi}\right)_\text{NNNLO}
@@ -247,7 +247,7 @@ For these fits, we will do
 \left(\frac{F_K}{F_\pi}\right)_\text{$\chi$PT-ratio} = \frac{F_K^{\rm nlo}}{F_\pi^{\rm nlo}}
 \end{equation}
 where
-\begin{align}
+\begin{align} \label{eqn:delta_F_nlo}
 \frac{F_\pi^{\rm nlo}}{F_0} &= 1
 - \frac{\mathcal{I}(m_\pi)}{F^2}
 -\frac{1}{2}\frac{\mathcal{I}(m_K)}{F^2}
@@ -316,6 +316,31 @@ For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^
 \end{align}
 
 Notice that the lattice spacing and $am_\xi$ ($\xi \in \{\pi, K, \eta\}$) corrections are included in these counterterms. For example, the term $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$ accounts for the lowest order lattice spacing correction. Further note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of terms at that order.
+
+Finally, we note that of our four base models, we can divide them into two classes: either we expand $F_K/F_\pi$ to NLO (models \texttt{xpt} and \texttt{ma}), or we expand $F_K$ and $F_\pi$ to NLO individually then calculate their ratio (models \texttt{xpt-ratio} and \texttt{ma-ratio}). To NNLO, the difference is given by $\delta F_\pi^\text{nlo} \delta F_K^\text{nlo} -(\delta F_\pi^\text{nlo})^2$ as defined in \eqref{eqn:delta_F_nlo}.
+
+\begin{align}
+\delta\left(\frac{F_K}{F_\pi}\right)_\text{ratio} &= 
+\begin{cases}
+ \left[ 
+\frac 38\epsilon_\pi^2 \log \epsilon_\pi^2 + \frac 34 \epsilon_K^2  \log \epsilon_K^2  + \frac 38 \epsilon_\eta^2  \log \epsilon_\eta^2 
+- 4 (4 \pi)^2 \left(2 \epsilon_\pi^2 L_4  + \epsilon_K^2 \left(2  L_4 + L_5  \right)  \right)   
+\right] 
+\\   \qquad  \times
+ \left[ 
+\epsilon_\pi^2 \log \epsilon_\pi^2 + \frac 12 \epsilon_K^2  \log \epsilon_K^2
+- 4 (4 \pi)^2 \left( \epsilon_\pi^2 \left( L_4 + L_5  \right)  + 2 \epsilon_K^2 L_4\right)   
+\right]
+\\
+ \qquad - \left[ 
+\epsilon_\pi^2 \log \epsilon_\pi^2 + \frac 12 \epsilon_K^2  \log \epsilon_K^2
+- 4 (4 \pi)^2 \left( \epsilon_\pi^2 \left( L_4 + L_5  \right)  + 2 \epsilon_K^2 L_4\right)   
+\right]^2
+&  \text{for  \texttt{xpt-ratio} and \texttt{ma-ratio}} \\ \\
+ 0  
+ & \text{for  \texttt{xpt} and \texttt{ma}}
+\end{cases}
+\end{align}
 
 \subsubsection{Renormalization scale and chiral cutoff dependence} \label{section:renormalization}
 In our analysis, we have three choices for the chiral symmetry breaking  and renormalization scales:
@@ -515,9 +540,9 @@ The actual fit here is performed in lattice units, not physical units, which is 
 Including all two-loop corrections, we can write our fit function as follows:
 \begin{align}
 \left(\frac{F_K}{F_\pi}\right)_\text{lattice} &=
-\left(\frac{F_K}{F_\pi}\right)_\text{model}  + \delta \left(\frac{F_K}{F_\pi}\right)_\text{FV} 
+\left(\frac{F_K}{F_\pi}\right)_\text{base}  + \delta \left(\frac{F_K}{F_\pi}\right)_\text{FV} 
 && \text{NLO + F.V.} \\
-&+ \delta \left(\frac{F_K}{F_\pi}\right)_\text{NNLO}  + \delta \left(\frac{F_K}{F_\pi}\right)_{\Lambda=\mu = 4 \pi F^2} 
+&+ \delta \left(\frac{F_K}{F_\pi}\right)_\text{NNLO}  + \delta \left(\frac{F_K}{F_\pi}\right)_{\Lambda=\mu = 4 \pi F^2}  + \delta \left(\frac{F_K}{F_\pi}\right)_\text{ratio}
 && \text{NNLO} \nonumber \\
 &+ \delta\left(\frac{F_K}{F_\pi}\right)_{\alpha_S}
 + \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
@@ -529,8 +554,8 @@ Including all two-loop corrections, we can write our fit function as follows:
 However, since most of these corrections introduce at least one fitting parameter, it isn't necessarily advantageous to include all these corrections. Instead, we fit several models which are then averaged per section \ref{section:model_average}. To generate the different models, we use the following procedure:
 \begin{enumerate}
 	\item Choose a base model (\texttt{$\chi$PT}, \texttt{ma-ratio}, etc).
-	\item Choose a renormalization scale $\mu = 4 \pi F^2$.
-	\item Add the pure NNLO counterterm (including the lattice spacing term) and the renormalization scale, which is dependent on choice of $F^2$  and whether we are fitting the expanded ratio or not. That is, we add both NNLO corrections.
+	\item Choose a renormalization and cutoff scale $\Lambda_\chi = \mu = 4 \pi F^2$.
+	\item Add the pure NNLO counterterm (including the lattice spacing term) and the renormalization/cutoff correction, which is dependent on choice of $F^2$. If we are fitting an expanded ratio model, we include that correction too.
 	\item Choose whether to include the semi-NNLO lattice space correction (\texttt{alphaS}).
 	\item Choose whether to include the NNNLO lattice space correction.
 	\item Choose whether to including/excluding finite volume corrections.
@@ -844,7 +869,7 @@ where $F_0$ is the value of $F_\pi$ in the chiral limit. The NLO corrections to 
 \delta F_\pi &= - l^0_\pi - \frac12 l^0_K + 4 \left[ 
 	\left( \epsilon^2_\pi + 2 \epsilon^2_K \right) \overline L_4 + 4 \epsilon^2_\pi  \overline L_5
 \right] \\
-\delta F_K &= - \frac38 l^0_\pi - \frac34  l^0_K - \frac38  l^0_\eta \left[ 
+\delta F_K &= - \frac38 l^0_\pi - \frac34  l^0_K - \frac38  l^0_\eta + 4\left[ 
 \left( \epsilon^2_\pi + 2 \epsilon^2_K \right) \overline L_4 + 4 \epsilon^2_K  \overline L_5
 \right]
 \end{align}
