@@ -317,14 +317,14 @@ For NNNLO, we take two powers of $\epsilon^2_\xi$ and one power of $(\epsilon_K^
 
 Notice that the lattice spacing and $am_\xi$ ($\xi \in \{\pi, K, \eta\}$) corrections are included in these counterterms. For example, the term $\epsilon^2_a (\epsilon^2_K - \epsilon^2_\pi)$ accounts for the lowest order lattice spacing correction. Further note that our choice of action (Domain wall) means that the theory will automatically be $\mathcal{O}(a)$ improved~\cite{Berkowitz:2017opd}, hence the lack of terms at that order.
 
-\subsubsection{Renormalization scale dependence} \label{section:renormalization}
-In our analysis, we have three choices for the chiral symmetry breaking scale:
+\subsubsection{Renormalization scale and chiral cutoff dependence} \label{section:renormalization}
+In our analysis, we have three choices for the chiral symmetry breaking  and renormalization scales:
 \begin{equation}
-\Lambda_\chi  = 4 \pi \{ F_\pi, \sqrt{F_\pi F_K}, F_K\} \, .
+\Lambda_\chi  = 4 \pi \{ F_\pi, \sqrt{F_\pi F_K}, F_K\} =  \mu  \, .
 \end{equation}
 We make the agnostic choice of averaging the results of all three choices (see section \ref{section:model_average}). However, there's a nick in this approach: the choice of $F$ actually introduces errors at NNLO. We therefore introduce a counterterm to account for our choice of $F^2$:
 \begin{align}
-\delta\left(\frac{F_K}{F_\pi}\right)_{\mu = 4\pi F^2} &=
+\delta\left(\frac{F_K}{F_\pi}\right)_{\Lambda= \mu = 4\pi F^2} &=
 \begin{cases}
 \frac 32 \left( \epsilon^2_K - \epsilon_\pi^2 \right) \big[
 \log \epsilon_\pi^2 + \frac 12 \log \epsilon^2_K \\
@@ -349,6 +349,7 @@ where
 &=  \frac 58 \log \epsilon_\pi^2 - \frac 14 \log \epsilon_K^2 - \frac 38 \log \epsilon_\eta^2 
 + 4 (4 \pi)^2 \left(\epsilon_K^2 - \epsilon_\pi^2\right) L_5 \, . \nonumber
 \end{align}
+This counterterm is derived in appendices \ref{app:renormalization_scale} and \ref{app:chiral_scale}.
 
 \subsubsection{Semi-NNLO counterterms} \label{section:semi_nnlo}
 Finally, there are counterterms that lies between NNLO and NNNLO. These come in four varieties: 
@@ -516,7 +517,7 @@ Including all two-loop corrections, we can write our fit function as follows:
 \left(\frac{F_K}{F_\pi}\right)_\text{lattice} &=
 \left(\frac{F_K}{F_\pi}\right)_\text{model}  + \delta \left(\frac{F_K}{F_\pi}\right)_\text{FV} 
 && \text{NLO + F.V.} \\
-&+ \delta \left(\frac{F_K}{F_\pi}\right)_\text{NNLO}  + \delta \left(\frac{F_K}{F_\pi}\right)_{\mu = 4 \pi F^2} 
+&+ \delta \left(\frac{F_K}{F_\pi}\right)_\text{NNLO}  + \delta \left(\frac{F_K}{F_\pi}\right)_{\Lambda=\mu = 4 \pi F^2} 
 && \text{NNLO} \nonumber \\
 &+ \delta\left(\frac{F_K}{F_\pi}\right)_{\alpha_S}
 + \delta\left(\frac{F_K}{F_\pi}\right)_{\text{log-NNLO}}
@@ -832,7 +833,8 @@ The physical point values are given in Table \ref{table:phys_point_values}. The 
 \label{table:phys_point_values}
 \end{table}
 
-\section{Adapting a Fixed Renormalization Scheme to the Lattice}
+\section{Adapting a Fixed Renormalization Scheme to the Lattice} 
+\label{app:renormalization_scale}
 The appendix of \cite{Amoros:1999dp} gives $\chi$PT expressions for the pseudoscalar decay constants, which we repeat here. The expressions are written in the form
 \begin{equation}
 F_P = F_0 \left(1 + \delta F_P + \cdots \right) \, 
@@ -896,6 +898,7 @@ The lattermost term is the renormalization scale correction (the $\epsilon^2$ te
 \end{align} 
 
 \section{\boldmath Correcting for Different Choices of $\Lambda_\chi$}
+\label{app:chiral_scale}
 In the previous section we considered three different choices for the sliding renormalization scale by using $F_K$, $F_\pi$ or the geometric average $\sqrt{F_K F_\pi}$. We consider the three cases instead of just a single case (say, $\mu = 4 \pi F_\pi$) as this allows us to systematically evaluate the choice of $\mu$ on our fits. Similarly if we choose, eg,  $\mu=4\pi F_K$ for our renormalization scale, it seems sensible to also set $\Lambda_\chi = 4 \pi F_K$ for the chiral symmetry breaking scale. Continuing with the example, this amounts to the following modification of $\epsilon_P$.
 \begin{equation}
 \frac{m_P}{4 \pi F_\pi} \rightarrow \frac{m_P}{4 \pi F_K}
