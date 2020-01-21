@@ -64,7 +64,7 @@ class fitter(object):
         z0['chiral'] = 1.0
         z0['spacing_n2lo'] = 1.0
         if self.order['include_latt_n3lo']:
-            z0['spacing_n3lo'] = 1.0
+            z0['spacing_n3lo'] = 10.0 # We expect this to be larger
 
 
         # Might need to change minargs default values for empbayes_fit to converge:
