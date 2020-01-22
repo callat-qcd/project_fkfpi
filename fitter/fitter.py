@@ -38,7 +38,7 @@ class fitter(object):
             z['spacing_n3lo'] = np.abs(z['spacing_n3lo']) #np.max([np.abs(np.around(z['spacing_n3lo'], 2)), 0.01]) #
 
         # Helps with convergence (minimizer doesn't use extra digits -- bug in lsqfit?)
-        sig_fig = lambda x : np.around(x, -int(np.log10(x))+3) # Round to 3(ish) sig figs
+        sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3)) # Round to 3 sig figs
         for key in z:
             z[key] = np.max([z[key], 1e-5])
             z[key] = sig_fig(z[key])
