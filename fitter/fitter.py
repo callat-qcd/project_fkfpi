@@ -63,10 +63,10 @@ class fitter(object):
         #prior = self._make_prior()
 
         z0 = gv.BufferDict()
-        z0['chiral'] = 5.0
-        z0['spacing_n2lo'] = 5.0
+        z0['chiral'] = 1.0
+        z0['spacing_n2lo'] = 1.0
         if self.order['include_latt_n3lo']:
-            z0['spacing_n3lo'] = 50.0
+            z0['spacing_n3lo'] = 10.0
 
 
         # Might need to change minargs default values for empbayes_fit to converge:
