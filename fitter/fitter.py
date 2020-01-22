@@ -43,15 +43,15 @@ class fitter(object):
 
         for key in prior.keys():
             if key in ['A_p', 'A_k']:
-                prior[key] = gv.gvar(0, 1) *z['chiral']
+                prior[key] = gv.gvar(0, 5) *1. / z['chiral']
             if key in ['A_loga', 'A_a']:
-                prior[key] = gv.gvar(0, 1) *z['spacing_n2lo']
+                prior[key] = gv.gvar(0, 5) *1. / z['spacing_n2lo']
             if key in ['A_aa']:
-                prior[key] = gv.gvar(0, 1) *z['spacing_n3lo']
+                prior[key] = gv.gvar(0, 50) *1 / z['spacing_n3lo'] # We expect this to be larger
 
         self.counter['iters'] += 1
         fitfcn = self._make_models()[-1].fitfcn
-        print(self.counter['iters'], ' ', z)
+        print(self.counter['iters'], ' ', {key : 1. / z[key] for key in z.keys()})
 
         return dict(data=y_data, fcn=fitfcn, prior=prior)#, plausibility
 
@@ -64,7 +64,7 @@ class fitter(object):
         z0['chiral'] = 1.0
         z0['spacing_n2lo'] = 1.0
         if self.order['include_latt_n3lo']:
-            z0['spacing_n3lo'] = 10.0 # We expect this to be larger
+            z0['spacing_n3lo'] = 1.0
 
 
         # Might need to change minargs default values for empbayes_fit to converge:
