@@ -38,20 +38,22 @@ class fitter(object):
             z['spacing_n3lo'] = np.abs(z['spacing_n3lo']) #np.max([np.abs(np.around(z['spacing_n3lo'], 2)), 0.01]) #
 
         # Helps with convergence (minimizer doesn't use extra digits -- bug in lsqfit?)
+        sig_fig = lambda x : np.around(x, -int(np.log10(x))+3) # Round to 3(ish) sig figs
         for key in z:
-            z[key] = np.round(z[key], 8)
+            z[key] = np.max([z[key], 1e-5])
+            z[key] = sig_fig(z[key])
 
         for key in prior.keys():
             if key in ['A_p', 'A_k']:
-                prior[key] = gv.gvar(0, 5) *1. / z['chiral']
+                prior[key] = gv.gvar(0, 1) *z['chiral']
             if key in ['A_loga', 'A_a']:
-                prior[key] = gv.gvar(0, 5) *1. / z['spacing_n2lo']
+                prior[key] = gv.gvar(0, 1) *z['spacing_n2lo']
             if key in ['A_aa']:
-                prior[key] = gv.gvar(0, 50) *1 / z['spacing_n3lo'] # We expect this to be larger
+                prior[key] = gv.gvar(0, 1) *z['spacing_n3lo']
 
         self.counter['iters'] += 1
         fitfcn = self._make_models()[-1].fitfcn
-        print(self.counter['iters'], ' ', {key : 1. / z[key] for key in z.keys()})
+        print(self.counter['iters'], ' ', z)#{key : np.round(1. / z[key], 8) for key in z.keys()})
 
         return dict(data=y_data, fcn=fitfcn, prior=prior)#, plausibility
 
@@ -61,10 +63,10 @@ class fitter(object):
         #prior = self._make_prior()
 
         z0 = gv.BufferDict()
-        z0['chiral'] = 1.0
-        z0['spacing_n2lo'] = 1.0
+        z0['chiral'] = 5.0
+        z0['spacing_n2lo'] = 5.0
         if self.order['include_latt_n3lo']:
-            z0['spacing_n3lo'] = 1.0
+            z0['spacing_n3lo'] = 50.0
 
 
         # Might need to change minargs default values for empbayes_fit to converge:
