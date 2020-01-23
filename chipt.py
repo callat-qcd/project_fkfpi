@@ -56,16 +56,15 @@ class Fit(object):
         self.fv        = 'FV'     in self.switches['ansatz']['model']
         self.alphaS    = 'alphaS' in self.switches['ansatz']['model']
         self.logSq     = 'logSq'  in self.switches['ansatz']['model']
-        self.nnlo_full = not 'logSq' in self.switches['ansatz']['model']
+        self.ct        = 'ct'     in self.switches['ansatz']['model']
+        if self.logSq and self.ct:
+            sys.exit('Setting logSq and ct = True == nnlo_full: redundant, aborting')
+        self.nnlo_full = not any(md in self.switches['ansatz']['model'] for md in ['logSq','ct'])
         self.a4        = 'a4'     in self.switches['ansatz']['model']
         self.lec_nnlo  = ['L5','L4','k_4','p_4','s_4','saS_4']
         if self.nnlo_full:
             self.lec_nnlo += ['L1','L2','L3','L6','L7','L8']
         self.lec_nnnlo = ['s_6','sk_6','sp_6','kp_6','k_6','p_6']
-
-        #self.x_prune   = self.prune_x(self.x)
-        #self.y_prune   = self.prune_data(self.y)
-        #self.p_prune   = self.prune_priors(self.p)
 
         if self.eft   == 'xpt':
             self.fit_function = self.xpt
@@ -184,7 +183,7 @@ class Fit(object):
                 p[(e,'x2')] = p[(e,'e2')] + self.p_init[(e,'a2DI')] / Lchi**2
                 p[(e,'dju2')] = self.p_init[(e,'a2DI')] / Lchi**2
                 p[(e,'drs2')] = self.p_init[(e,'a2DI')] / Lchi**2
-            if self.order in ['nnlo','nnnlo']:
+            if self.order in ['nnlo','nnnlo'] or (self.order == 'nlo' and self.a4):
                 p[(e,'a2')]   = self.p_init[(e,'aw0')]**2 / (4 * pi)
         ''' Add LECs '''
         if self.order in ['nlo','nnlo','nnnlo']:
@@ -206,6 +205,8 @@ class Fit(object):
             # enable test of a**4 term without any other N3LO
             if self.a4 and self.order not in ['nnnlo']:
                 p['s_6'] = self.p_init['s_6']
+                #p['sk_6'] = self.p_init['sk_6']
+                #p['sp_6'] = self.p_init['sp_6']
         if self.order in ['nnnlo']:
             p['kp_6'] = self.p_init['kp_6']
             p['k_6']  = self.p_init['k_6']
@@ -213,6 +214,11 @@ class Fit(object):
             p['s_6']  = self.p_init['s_6']
             p['sk_6'] = self.p_init['sk_6']
             p['sp_6'] = self.p_init['sp_6']
+        if self.order == 'nlo' and self.a4:
+            p['s_4'] = self.p_init['s_4']
+            p['s_6'] = self.p_init['s_6']
+            if self.alphaS:
+                p['saS_4'] = self.p_init['saS_4']
 
         return p
 
@@ -242,7 +248,7 @@ class Fit(object):
 
             x_par['dju2'] = p[(e,'dju2')]
             x_par['drs2'] = p[(e,'drs2')]
-        if self.order in ['nnlo','nnnlo']:
+        if self.order in ['nnlo','nnnlo'] or (self.order == 'nlo' and self.a4):
             x_par['a2']   = p[(e,'a2')]
         if self.alphaS:
             x_par['alphaS'] = x[e]['alphaS']
@@ -361,7 +367,7 @@ class Fit(object):
         s_4 = lec['s_4']
         if self.alphaS:
             alphaS = x['alphaS']
-            saS_4 = lec['saS_4']
+            saS_4  = lec['saS_4']
 
         # nnlo result (r)
         r = 0.
@@ -377,26 +383,27 @@ class Fit(object):
         if self.switches['debug_nnlo_check']:
             tmp = (k2 - p2) * k2 * k_4 + (k2 - p2) * p2 * p_4
             print('\nct        = %f' %tmp)
-        # NNLO terms from 1711.11328, B. Ananthanarayan, Johan Bijnens, Samuel Friot, Shayan Ghosh
-        # logSq terms
-        if self.switches['debug_nnlo_check']: tmp = float(r)
-        r += lp * lp   * ( 11./24   * p2 *k2  -131./192 * p2 *p2)
-        r += lp * lk   * (-41./96   * p2 *k2  -3./32    * p2 *p2)
-        r += lp * le   * ( 13./24   * p2 *k2  +59./96   * p2 *p2)
-        r += lk * lk   * ( 17./36   * k2 *k2  +7./144   * p2 *k2)
-        r += lk * le   * (-163./144 * k2 *k2  -67./288  * p2 *k2 + 3./32   * p2 *p2)
-        r += le * le   * ( 241./288 * k2 *k2  -13./72   * p2 *k2 - 61./192 * p2 *p2)
-        if self.switches['debug_nnlo_check']:
-            print('logSq     = %f' %(r -tmp))
-        # FF(mpi**2 / mK**2) term
-        if self.switches['FF_approximate']:
-            r += k2**2 * FF_approximate(p2/k2)
+        if not self.ct:
+            # NNLO terms from 1711.11328, B. Ananthanarayan, Johan Bijnens, Samuel Friot, Shayan Ghosh
+            # logSq terms
+            if self.switches['debug_nnlo_check']: tmp = float(r)
+            r += lp * lp   * ( 11./24   * p2 *k2  -131./192 * p2 *p2)
+            r += lp * lk   * (-41./96   * p2 *k2  -3./32    * p2 *p2)
+            r += lp * le   * ( 13./24   * p2 *k2  +59./96   * p2 *p2)
+            r += lk * lk   * ( 17./36   * k2 *k2  +7./144   * p2 *k2)
+            r += lk * le   * (-163./144 * k2 *k2  -67./288  * p2 *k2 + 3./32   * p2 *p2)
+            r += le * le   * ( 241./288 * k2 *k2  -13./72   * p2 *k2 - 61./192 * p2 *p2)
             if self.switches['debug_nnlo_check']:
-                print('FF_approx = %f' %(k2**2 * FF_approximate(p2/k2)))
-        else:
-            r += k2**2 * FF(p2/k2)
-            if self.switches['debug_nnlo_check']:
-                print('FF        = %f' %(k2**2 * FF(p2/k2)))
+                print('logSq     = %f' %(r -tmp))
+            # FF(mpi**2 / mK**2) term
+            if self.switches['FF_approximate']:
+                r += k2**2 * FF_approximate(p2/k2)
+                if self.switches['debug_nnlo_check']:
+                    print('FF_approx = %f' %(k2**2 * FF_approximate(p2/k2)))
+            else:
+                r += k2**2 * FF(p2/k2)
+                if self.switches['debug_nnlo_check']:
+                    print('FF        = %f' %(k2**2 * FF(p2/k2)))
 
         if self.nnlo_full:
             # counter term pieces from Li
@@ -475,7 +482,7 @@ class Fit(object):
                 tmp = float(r)
             r += (p2*lp +0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4)) \
                 * (3./8*p2*lp +3./4*k2*lk +3./8*e2*le +4*(4*pi)**2 *(p2*L4 +k2*(2*L4+L5)))
-            r += 0.5*( p2*lp +0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4) )**2
+            r += -1.0*( p2*lp +0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4) )**2
             if self.switches['debug_nnlo_check']:
                 print('ratio fix = %f\n' %(r-tmp))
 
@@ -485,7 +492,9 @@ class Fit(object):
         k2 = x['k2']['esq']
         p2 = x['p2']['esq']
         a2 = x['a2']
-        r = (k2 - p2) * a2**2 * lec['s_6']
+        r  = (k2 - p2) * a2**2 * lec['s_6']
+        #r += (k2 - p2)    * k2 * a2 * lec['sk_6']
+        #r += (k2 - p2)    * p2 * a2 * lec['sp_6']
         if not self.a4:
             r += (k2 - p2)    * k2 * p2 * lec['kp_6']
             r += (k2 - p2)**2 * k2      * lec['k_6']
@@ -493,6 +502,16 @@ class Fit(object):
             r += (k2 - p2)    * k2 * a2 * lec['sk_6']
             r += (k2 - p2)    * p2 * a2 * lec['sp_6']
 
+        return r
+
+    def nlo_a4(self,x,lec):
+        k2 = x['k2']['esq']
+        p2 = x['p2']['esq']
+        a2 = x['a2']
+        r  = (k2 - p2) * a2 * lec['s_4']
+        r += (k2 - p2) * a2**2 * lec['s_6']
+        if self.alphaS:
+            r += (k2 - p2) * a2 * x['alphaS'] * lec['saS_4']
         return r
 
     def xpt(self,x,p):
@@ -504,8 +523,10 @@ class Fit(object):
             r[e] += -self.Fpi_xpt_nlo(x_par,lec)
             if self.order in ['nnlo','nnnlo']:
                 r[e] += self.fkfpi_nnlo(x_par,lec)
-            if self.order in ['nnnlo'] or self.a4:
+            if self.order in ['nnnlo'] or (self.a4 and self.order != 'nlo'):
                 r[e] += self.nnnlo(x_par,lec)
+            if self.order == 'nlo' and self.a4:
+                r[e] += self.nlo_a4(x_par,lec)
         return r
     def xpt_ratio(self,x,p):
         r = dict()
@@ -782,7 +803,7 @@ class Fit(object):
         dy = np.array([k.sdev for k in y_plot['a0']])
 
         ax.fill_between(x_plot, y-dy, y+dy,color='#b36ae2',alpha=0.4)
-        colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9'}
+        colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9', 'a06':'#00FFFF'}
         for a in ['a15','a12','a09']:
             y = np.array([k.mean for k in y_plot[a]])
             ax.plot(x_plot, y, color=colors[a])

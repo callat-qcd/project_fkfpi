@@ -4,56 +4,82 @@ import prior_width_study as pw
 
 switches = dict()
 switches['ensembles'] = [
-    'a15m400','a12m400','a09m400',
-    'a15m350','a12m350','a09m350',
-    'a15m310','a12m310','a09m310',
-    'a15m220','a12m220S','a12m220','a12m220L','a09m220',
-    'a12m130','a15m135XL']
+    'a15m400'  ,'a12m400' ,'a09m400',
+    'a15m350'  ,'a12m350' ,'a09m350',
+    'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
+    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
+    'a15m135XL','a12m130',]
 switches['ensembles_fit'] = [
-    'a15m400','a12m400','a09m400',
-    'a15m350','a12m350','a09m350',
-    'a15m310','a12m310','a09m310',
-    'a15m220','a12m220S','a12m220','a12m220L','a09m220',
-    'a12m130','a15m135XL'
+    'a15m400'  ,'a12m400' ,'a09m400',
+    'a15m350'  ,'a12m350' ,'a09m350',
+    'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
+    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
+    'a15m135XL','a12m130',
     ]
 #switches['ensembles_fit'] = [
-#    'a12m400','a09m400',
-#    'a12m350','a09m350',
-#    'a12m310','a09m310',
+#    'a12m400' ,'a09m400',
+#    'a12m350' ,'a09m350',
+#    'a12m310' ,'a09m310','a06m310L',
 #    'a12m220S','a12m220','a12m220L','a09m220',
 #    'a12m130'
+#    ]
+switches['ensembles_fit'] = [
+    #'a15m400'  ,'a12m400' ,'a09m400',
+    #'a15m350'  ,'a12m350' ,'a09m350',
+    #'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
+    'a15m310', 'a12m310' ,'a09m310','a06m310L',
+    #'a15m220'  ,'a12m220S', 'a12m220','a12m220L','a09m220',
+    #'a15m135XL','a12m130',
+    ]
+#switches['ensembles_fit'] = [
+#    'a09m400',
+#    'a09m350',
+#    'a09m310','a06m310L',
+#    'a09m220',
+#    ]
+#switches['ensembles_fit'] = [
+#    'a15m400','a09m400',
+#    'a15m350','a09m350',
+#    'a15m310','a09m310','a06m310L',
+#    'a15m220','a09m220',
+#    'a15m135XL'
 #    ]
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = [
     'xpt_nnlo'                      ,'ma_nnlo',
     'xpt_nnlo_alphaS'               ,'ma_nnlo_alphaS',
     'xpt_nnlo_logSq'                ,'ma_nnlo_logSq',
+    'xpt_nnlo_ct'                   ,'ma_nnlo_ct',
     'xpt_nnlo_alphaS_logSq'         ,'ma_nnlo_alphaS_logSq',
+    'xpt_nnlo_alphaS_ct'            ,'ma_nnlo_alphaS_ct',
     'xpt_nnlo_FV'                   ,'ma_nnlo_FV',
     'xpt_nnlo_FV_alphaS'            ,'ma_nnlo_FV_alphaS',
     'xpt_nnlo_FV_logSq'             ,'ma_nnlo_FV_logSq',
+    'xpt_nnlo_FV_ct'                ,'ma_nnlo_FV_ct',
     'xpt_nnlo_FV_alphaS_logSq'      ,'ma_nnlo_FV_alphaS_logSq',
+    'xpt_nnlo_FV_alphaS_ct'         ,'ma_nnlo_FV_alphaS_ct',
     'xpt-ratio_nnlo'                ,'ma-ratio_nnlo',
     'xpt-ratio_nnlo_alphaS'         ,'ma-ratio_nnlo_alphaS',
     'xpt-ratio_nnlo_logSq'          ,'ma-ratio_nnlo_logSq',
+    'xpt-ratio_nnlo_ct'             ,'ma-ratio_nnlo_ct',
     'xpt-ratio_nnlo_alphaS_logSq'   ,'ma-ratio_nnlo_alphaS_logSq',
+    'xpt-ratio_nnlo_alphaS_ct'      ,'ma-ratio_nnlo_alphaS_ct',
     'xpt-ratio_nnlo_FV'             ,'ma-ratio_nnlo_FV',
     'xpt-ratio_nnlo_FV_alphaS'      ,'ma-ratio_nnlo_FV_alphaS',
     'xpt-ratio_nnlo_FV_logSq'       ,'ma-ratio_nnlo_FV_logSq',
-    'xpt-ratio_nnlo_FV_alphaS_logSq','ma-ratio_nnlo_FV_alphaS_logSq'
+    'xpt-ratio_nnlo_FV_ct'          ,'ma-ratio_nnlo_FV_ct',
+    'xpt-ratio_nnlo_FV_alphaS_logSq','ma-ratio_nnlo_FV_alphaS_logSq',
+    'xpt-ratio_nnlo_FV_alphaS_ct'   ,'ma-ratio_nnlo_FV_alphaS_ct'
 ]
-switches['ansatz']['models'] = [
+#switches['ansatz']['models'] = [
     #'xpt_nnlo'                      ,'ma_nnlo',
     #'xpt_nnlo_alphaS'               ,'ma_nnlo_alphaS',
     #'xpt_nnlo_FV'                   ,'ma_nnlo_FV',
-    'xpt_nnlo_FV_alphaS'                   #,'xpt_nnlo_FV_a4',
+    #'xpt_nnlo_FV_alphaS'                   #,'xpt_nnlo_FV_a4',
     #'xpt_nnlo_FV_alphaS'            ,'xpt_nnlo_FV_alphaS_logSq',
     #'xpt_nnlo_FV_alphaS_a4'            ,'xpt_nnlo_FV_alphaS_a4_logSq',
-    ]
-#switches['ansatz']['models'] =  ['xpt_nnlo_FV']#,'xpt_nnlo_FV_logSq']
-#    'xpt_nnlo_FV_alphaS_logSq',
-#    'xpt_nnlo_FV_alphaS'
-#]
+    #]
+#switches['ansatz']['models'] =  ['xpt_nnlo_FV_ct']
 #switches['ansatz']['models'] = [
 #    'xpt_nnlo'                      ,'ma_nnlo',
 #    'xpt_nnlo_alphaS'               ,'ma_nnlo_alphaS',
@@ -72,7 +98,7 @@ switches['ansatz']['models'] = [
 #    'xpt-ratio_nnlo_FV_logSq'       ,'ma-ratio_nnlo_FV_logSq',
 #    'xpt-ratio_nnlo_FV_alphaS_logSq','ma-ratio_nnlo_FV_alphaS_logSq'
 #]
-#switches['ansatz']['models'] = ['ma_nnlo_FV']
+switches['ansatz']['models'] = ['xpt_nlo_FV_a4', 'xpt_nlo_FV_alphaS_a4']#xpt_nnlo_FV_a4']#,'xpt_nnlo_FV']#,'ma_nnlo_FV','ma_nnlo_FV_a4']
 #switches['ansatz']['models'] = [
 #    #'xpt_nnlo'                      ,'ma_nnlo',
 #    #'xpt_nnlo_alphaS'               ,'ma_nnlo_alphaS',
@@ -92,22 +118,22 @@ switches['ansatz']['models'] = [
 #    'xpt-ratio_nnlo_FV_alphaS_logSq','ma-ratio_nnlo_FV_alphaS_logSq'
 #]
 
-switches['ansatz']['a2dm']  = 'individual' # avg or individual
-switches['scales']          = ['PP']#,'PK','KK']
-#switches['scales']          = ['PP']
-#switches['scales']          = ['F0']
-switches['scale']           = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
-switches['do_analysis']     = True
+switches['ansatz']['a2dm'] = 'individual' # avg or individual
+switches['scales']         = ['PP']#,'PK','KK']
+switches['scale']          = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
+switches['do_analysis']    = True
+switches['save_fits']      = False
 # use optimized (True) or default (False) priors
-switches['optimized_priors']  = False
+switches['optimized_priors'] = False
 # set mean to boot0 vs add boot0 to bs list
 switches['bs_bias']         = True
 # use scipy instead of GSL?
 switches['scipy']           = False
 # fit options
-switches['print_fit']       = False
+switches['print_fit']       = True
 switches['report_fit']      = False
-switches['make_plots']      = False
+switches['make_plots']      = True
+switches['plot_raw_data']   = True
 switches['verbose']         = False
 # for tuning prior widths
 switches['nnlo_priors']     = False
@@ -119,12 +145,16 @@ switches['nlo_fv_report']   = False
 #switches['check_fit']       = False
 # DEBUGGING
 switches['debug']           = False
+switches['debug_x']         = True
 switches['debug_phys']      = False
 switches['debug_nlo_check'] = False
 switches['debug_nnlo_check']= False
+switches['debug_save_fit']  = False
 # testing NNLO function
 switches['check_fit']       = False # need a new name
 switches['FF_approximate']  = False
+
+switches['LECs'] = ['L1','L2','L3','L4','L5','L6','L7','L8','p_4','k_4','s_4','saS_4']
 
 priors = dict()
 priors['L5']   = gv.gvar(0, 0.005)

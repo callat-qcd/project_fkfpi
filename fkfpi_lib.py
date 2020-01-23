@@ -13,7 +13,7 @@ import seaborn as sns
 sns.set()
 sns.set_style("ticks")
 import yaml
-import chipt_awl as xpt
+import chipt as xpt
 
 def run_from_ipython():
     try:
@@ -21,6 +21,58 @@ def run_from_ipython():
         return True
     except NameError:
         return False
+
+def main():
+    import input_params as ip
+    print("python     version:", sys.version)
+    print("numpy      version:", np.__version__)
+    print("pandas     version:", pd.__version__)
+    print("matplotlib version:", matplotlib.__version__)
+    print("gvar       version:", gv.__version__)
+    print("lsqfit     version:", lsqfit.__version__)
+    print("yaml       version:", yaml.__version__)
+    print('')
+
+    if not os.path.exists('figures'):
+        os.makedirs('figures')
+    plt.ion()
+
+    # Load input params
+    switches   = ip.switches
+    priors     = ip.priors
+    phys_point = ip.phys_point
+    check_fit  = ip.check_fit
+
+    # check fit
+    if switches['check_fit']:
+        check_fit_function(switches,check_fit)
+        sys.exit()
+
+    # Load data
+    data    = h5.open_file('FK_Fpi_data.h5','r')
+    gv_data = format_h5_data(switches,data)
+    data.close()
+
+    if switches['do_analysis']:
+        fit_results = perform_analysis(switches,gv_data,priors,phys_point)
+        model_average(fit_results,switches,phys_point)
+
+    if switches['check_fit']:
+        fit_checker(switches,priors)
+
+    if switches['nnlo_priors']:
+        nnlo_prior_scan(switches,priors)
+
+    if switches['nlo_fv_report']:
+        nlo_report(switches,priors,FV=True)
+    if switches['nlo_report']:
+        nlo_report(switches,priors,FV=False)
+
+    plt.ioff()
+    if run_from_ipython():
+        plt.show(block=False)
+    else:
+        plt.show()
 
 ens_long = {
     'a15m400'  :'l1648f211b580m0217m065m838',
@@ -65,6 +117,7 @@ a_ens = {
     'a15':gv.gvar(0.1509,0.0013),
     'a12':gv.gvar(0.1206,0.0010),
     'a09':gv.gvar(0.0875,0.0008),
+    'a06':gv.gvar(0.0566,0.0005),
 }
 
 def format_h5_data(switches,data):
@@ -86,6 +139,16 @@ def format_h5_data(switches,data):
         if switches['debug']:
             fkfpi = data_dict['FK']/data_dict['Fpi']
             print('  FK/Fpi = %.5f +- %.5f' %(fkfpi.mean(),fkfpi.std()))
+        # HACK
+        if False:
+            if ens == 'a06m310L':
+                for f in ['FK','Fpi']:
+                    ff = data_dict[f]
+                    df = ff - ff.mean()
+                    df = df / 10
+                    ff = ff.mean() + df
+                    data_dict[f] = ff
+
         if switches['bs_bias']:
             data_bs = dict()
             for d in data_dict:
@@ -136,6 +199,14 @@ def format_h5_data(switches,data):
         a2di = data.get_node('/'+ens+'/a2DI').read()
         p[(ens,'a2DI')] = gv.gvar(a2di[0],a2di[1])
         x[ens]['alphaS'] = data.get_node('/'+ens+'/alpha_s').read()
+
+        if switches['debug_x']:
+            eps_pi = gvdata['mpi'] / 4 / np.pi / gvdata['Fpi']
+            eps_k  = gvdata['mk']  / 4 / np.pi / gvdata['Fpi']
+            eps_a  = p[(ens,'aw0')] / np.sqrt(4*np.pi)
+            fkfpi  = gvdata['FK']/gvdata['Fpi']
+            print('%9s: eps_pi = %s, eps_k = %s, eps_a = %s, FK/Fpi = %s' %(ens, eps_pi, eps_k, eps_a, fkfpi))
+
     return {'x':x, 'y':y, 'p':p}
 
 def pickle_fit(model,fit_result):
@@ -201,10 +272,10 @@ class PickledFit():
         self.p      = pickled_fit['p']
         self.prior  = pickled_fit['prior']
         self.y      = pickled_fit['data']
-        self.dof    = pickled_fit['stat']['dof']
-        self.chi2   = pickled_fit['stat']['chi2']
-        self.logGBF = pickled_fit['stat']['logGBF']
-        self.Q      = pickled_fit['stat']['Q']
+        self.dof    = pickled_fit['stat']['dof'].mean
+        self.chi2   = pickled_fit['stat']['chi2'].mean
+        self.logGBF = pickled_fit['stat']['logGBF'].mean
+        self.Q      = pickled_fit['stat']['Q'].mean
         self.cov    = gv.evalcov(self.p)
         self.corr   = gv.evalcorr(self.p)
 
@@ -241,23 +312,40 @@ def dsu2(FKpi,mpi,mk,F0):
         )
     return d
 
-def plot_data(ax,e,x,y):
-    colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9'}
+def plot_data(ax,e,x,y,offset=False, raw=False):
+    colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9', 'a06':'#00FFFF'}
     shapes = {'m400':'h', 'm350':'p', 'm310':'s', 'm220':'^', 'm130':'o', 'm135':'*'}
     labels = {
         'a15m400':'', 'a15m350':'', 'a15m310':'', 'a15m220':'','a15m135XL':'a15',
         'a12m400':'', 'a12m350':'', 'a12m310':'', 'a12m220':'', 'a12m130':'a12',
         'a12m220L':'', 'a12m220S':'',
         'a09m400':'', 'a09m350':'', 'a09m310':'', 'a09m220':'a09',
+        'a06m310L':'a06',
     }
+    dx_cont = {
+        'a15m400'  :0.0016, 'a12m400':0.0016,  'a09m400':0.0016,
+        'a15m350'  :0.0008, 'a12m350':00.0008,  'a09m350':00.0008,
+        'a15m310'  :0.,    'a12m310':0.,     'a09m310':0.,     'a06m310L':0.,
+        'a15m220'  :-0.0008, 'a12m220':-0.0008, 'a09m220':-0.0008,
+        'a15m135XL':-.0016, 'a12m130':-0.0016,
+        'a12m220L':-0.0012, 'a12m220S':-0.0004,
+    }
+    if offset=='cont':
+        dx = dx_cont[e]
+    else:
+        dx = 0
     c = colors[e.split('m')[0]]
     s = shapes['m'+e.split('m')[1][0:3]]
-    ax.errorbar(x=x.mean,y=y.mean,xerr=x.sdev,yerr=y.sdev,
-        marker=s,color=c,linestyle='None',label=labels[e])
+    if raw:
+        mfc = 'None'
+    else:
+        mfc = c
+    ax.errorbar(x=x.mean+dx,y=y.mean,xerr=x.sdev,yerr=y.sdev,
+        marker=s,color=c,mfc=mfc,linestyle='None',label=labels[e])
 
     return ax
 
-def perform_analysis(switches,priors,phys_point):
+def perform_analysis(switches,gv_data,priors,phys_point):
     fit_results = dict()
     for base_model in switches['ansatz']['models']:
         if switches['optimized_priors']:
@@ -276,74 +364,104 @@ def perform_analysis(switches,priors,phys_point):
             x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
             y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
             p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
-            for key in priors:
-                p_e[key] = priors[key]
+            do_fit = False
             if switches['optimized_priors']:
-                df = pd.DataFrame(prior_grid[model])
-                sp_max = df.stack().idxmax()
-                print('      setting prior widths:')
-                print('      (s_4, saS_4) = %s; (p_4, k_4) = %s' %(sp_max[0],sp_max[1]))
-                for key in ['s_4','saS_4']:
-                    if key in p_e:
-                        p_e[key] = gv.gvar(0,float(sp_max[0]))
-                for key in ['p_4','k_4']:
-                    if key in p_e:
-                        p_e[key] = gv.gvar(0,float(sp_max[1]))
+                p_fit = model+'_optimized_priors'
             else:
-                print('      using default prior widths')
-            d_e = dict()
-            d_e['x'] = x_e
-            d_e['y'] = y_e
-            d_e['p'] = p_e
-            fit_e = xpt.Fit(switches,xyp_init=d_e)
-            fit_e.fit_data()
-            fit_results[model] = fit_e
+                p_fit = model
+            if switches['save_fits']:
+                if os.path.exists('pickled_fits/'+p_fit+'.p'):
+                    pickeld_fit = read_fit(p_fit)
+                    fit_p = xpt.Fit(switches,xyp_init={'x':x_e,'y':y_e,'p':p_e})
+                    fit_p.fit = PickledFit(pickeld_fit)
+                    fit_results[model] = fit_p
+                else:
+                    do_fit = True
+            else:
+                do_fit = True
+            if do_fit or switches['debug_save_fit']:
+                for key in priors:
+                    p_e[key] = priors[key]
+                if switches['optimized_priors']:
+                    df = pd.DataFrame(prior_grid[model])
+                    sp_max = df.stack().idxmax()
+                    print('      setting prior widths:')
+                    print('      (s_4, saS_4) = %s; (p_4, k_4) = %s' %(sp_max[0],sp_max[1]))
+                    for key in ['s_4','saS_4']:
+                        if key in p_e:
+                            p_e[key] = gv.gvar(0,float(sp_max[0]))
+                    for key in ['p_4','k_4']:
+                        if key in p_e:
+                            p_e[key] = gv.gvar(0,float(sp_max[1]))
+                else:
+                    print('      using default prior widths')
+                d_e = dict()
+                d_e['x'] = x_e
+                d_e['y'] = y_e
+                d_e['p'] = p_e
+                fit_e = xpt.Fit(switches,xyp_init=d_e)
+                fit_e.fit_data()
+                fit_results[model] = fit_e
+                if switches['save_fits']:
+                    pickle_fit(p_fit,fit_e)
+                else:
+                    fit_p = fit_e
 
-            pickle_fit(model,fit_e)
-            print('reading fit')
-            disk_read = read_fit(model)
+            if switches['debug_save_fit'] and not do_fit:
+                print('live fit   : FK/Fpi = ',fit_e.report_phys_point(phys_point)['phys'])
+                print({k:fit_e.fit.prior[k] for k in switches['LECs'] if k in fit_e.fit.prior})
+                print('pickled fit: FK/Fpi = ',fit_p.report_phys_point(phys_point)['phys'])
+                print({k:fit_p.fit.prior[k] for k in switches['LECs'] if k in fit_p.fit.prior})
 
-            if switches['print_fit']:
+            if not do_fit:
+                fit_e = fit_p
+            print('FK/Fpi = ',fit_e.report_phys_point(phys_point)['phys'])
+            if switches['print_fit'] and do_fit:
                 print(fit_e.fit.format(maxline=True))
             if switches['debug_phys']:
                 fit_e.report_phys_point(phys_point)['phys']
 
-            print('DEBUG: error budget')
-            tmp = fit_e.report_phys_point(phys_point)['phys']
-            print('FK/Fpi = %s' %tmp)
+            # THIS PLOT NEEDS TO GO IN A FUNCTION
+            if switches['make_plots']:
+                if base_model in ['xpt_nnlo_FV','xpt_nnlo_FV_a4', 'xpt_nlo_FV_a4']:#, 'xpt_nnlo_FV_logSq', 'xpt-ratio_nnlo_FV', 'xpt-ratio_nnlo_FV_logSq']:
+                    ea_range = dict()
+                    ea_range['Lchi'] = phys_point['Lchi_'+FPK]
+                    ea_range['mpi']  = phys_point['mpi']
+                    ea_range['mk']   = phys_point['mk']
+                    ea_range['a']    = np.sqrt(np.arange(0,.16**2,.16**2/50))
+                    ea_range['w0']   = phys_point['w0']
 
-            test = dict()
-            test['x'] = {'phys':{k:np.inf for k in ['mpiL','mkL']}}
-            test['x'].update({'alphaS':0})
-            test['y'] = {'phys':phys_point['FKFPi_FLAG']}
-            test['p'] = disk_read['p']
-            test['p'][('phys','Lchi_PP')] = phys_point['Lchi_PP']
-            test['p'][('phys','mpi')]     = phys_point['mpi']
-            test['p'][('phys','mk')]      = phys_point['mk']
-            switches_test = dict(switches)
-            switches_test['ensembles'] = ['phys']
-            switches_test['ensembles_fit'] = ['phys']
-            test_reconstruct = xpt.Fit(switches_test,xyp_init=test)
-            test_reconstruct.fit = PickledFit(disk_read)
-            print('reconstruct = %s' %test_reconstruct.report_phys_point(phys_point)['phys'])
-            '''
-            Lchi_phys = phys_point['Lchi_'+FPK]
-            p_phys = dict()
-            p_phys[('phys','p2')] = phys_point['mpi']**2 / Lchi_phys**2
-            p_phys[('phys','k2')] = phys_point['mk']**2 / Lchi_phys**2
-            p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
-            print('stat',tmp.partialsdev(fit_e.fit.y))
-            for i in range(1,9):
-                print('L'+str(i), fit_e.fit.p['L'+str(i)], tmp.partialsdev(fit_e.fit.prior['L'+str(i)]))
-            for lec in ['p_4','k_4','s_4','saS_4','s_6']:
-                if lec in fit_e.fit.prior:
-                    print(lec, fit_e.fit.p[lec], tmp.partialsdev(fit_e.fit.prior[lec]))
-            print('phys point','e_piSq = %s, e_KSq = %s'
-                %(str(p_phys[('phys','p2')]),str(p_phys[('phys','k2')])), \
-                    tmp.partialsdev(p_phys[('phys','p2')],p_phys[('phys','k2')]))
-            '''
+                    fig_vs_ea = plt.figure('FKFpi_vs_ea_'+model)
+                    ax = plt.axes([.12, .12, .85, .85])
+                    #print(fit_e.fit.format(maxline=True))
+                    ax = fit_e.vs_ea(ea_range, ax)
+                    # add data
+                    y_shift = fit_e.shift_phys_mass(phys_point)
+                    for e in switches['ensembles_fit']:
+                        x = fit_e.fit.p[(e,'a2')]
+                        y = y_e[e] + y_shift[e]
+                        #print(e,y_e[e],y_shift[e])
+                        ax = plot_data(ax, e, x, y, offset='cont')
+                        if switches['plot_raw_data']:
+                            ax = plot_data(ax, e, x, y_e[e], raw=True)
+                    ax.legend(ncol=4)
+                    ax.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=16)
+                    ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
+                    ax.set_xlim(0,.065)
+                    if switches['plot_raw_data']:
+                        ax.set_ylim(1.09, 1.205)
+                    else:
+                        ax.set_ylim(1.135, 1.205)
+                    plt.savefig('figures/vs_epasq_'+model+'.pdf',transparent=True)
 
 
+    return fit_results
+
+def model_average(fit_results,switches,phys_point):
+    model_avg,model_var = bayes_model_avg(switches,fit_results,phys_point)
+    print('SU(2) correction',dsu2(model_avg,phys_point['mpi'],phys_point['mk'],phys_point['F0']))
+
+''' this is make plots and bma - needs own functions
             if switches['make_plots']:
                 if base_model in ['xpt_nnlo_FV','xpt_nnlo_FV_a4']:#, 'xpt_nnlo_FV_logSq', 'xpt-ratio_nnlo_FV', 'xpt-ratio_nnlo_FV_logSq']:
                     ea_range = dict()
@@ -391,21 +509,7 @@ def perform_analysis(switches,priors,phys_point):
                     ax.set_xlim(0,.1)
                     ax.set_ylim(1.05, 1.25)
                     plt.savefig('figures/vs_episq_'+model+'.pdf',transparent=True)
-    if not switches['debug']:
-        model_avg,model_var = bayes_model_avg(switches,fit_results,phys_point)
-        #dsu2(FKpi,mpi,mk,F0)
-        print('SU(2) correction',dsu2(model_avg,phys_point['mpi'],phys_point['mk'],phys_point['F0']))
-
-    '''
-    for base_model in switches['ansatz']['models']:
-        for FPK in switches['scales']:
-            model = base_model +'_'+FPK
-            if fit_results[model].
-            L5_rho  = fit_results[model].fit.p['L5']
-            L5_rho += 3./8 * 1/(4*np.pi)**2 * np.log(phys_point['Lchi']/770.)
-            print('%25s: L5(m_rho) = %s' %(model,L5_rho))
-    '''
-    return fit_results
+'''
 
 def bayes_model_avg(switches,results,phys_point):
     logGBF_list = []
@@ -456,7 +560,7 @@ def bayes_model_avg(switches,results,phys_point):
     print('-------------------------------------------------------------------')
     for i_m,model in enumerate(models):
         if results[model].fit.Q > 0.05:
-            print("%33s %.2f %.3f %s" %(model,results[model].fit.Q,w_list[i_m],r_list[i_m]))
+            print("%33s %.2f %.3f %s %f %f" %(model,results[model].fit.Q,w_list[i_m],r_list[i_m],r_list[i_m].mean,r_list[i_m].sdev))
         else:
             if w_list[i_m] > 0.05:
                 print("%33s %.2f %.3f %s" %(model,results[model].fit.Q,w_list[i_m],'NEGLECTED'))
@@ -851,53 +955,4 @@ def check_fit_function(switches,check_point):
 
 
 if __name__ == "__main__":
-    import input_params as ip
-    print("python     version:", sys.version)
-    #print("pandas version:", pd.__version__)
-    print("numpy      version:", np.__version__)
-    print("pandas     version:", pd.__version__)
-    print("matplotlib version:", matplotlib.__version__)
-    print("gvar       version:", gv.__version__)
-    print("lsqfit     version:", lsqfit.__version__)
-    print("yaml       version:", yaml.__version__)
-    print('')
-
-    if not os.path.exists('figures'):
-        os.makedirs('figures')
-    plt.ion()
-
-    # Load input params
-    switches   = ip.switches
-    priors     = ip.priors
-    phys_point = ip.phys_point
-    check_fit  = ip.check_fit
-
-    # check fit
-    if switches['check_fit']:
-        check_fit_function(switches,check_fit)
-        sys.exit()
-
-    # Load data
-    data    = h5.open_file('FK_Fpi_data.h5','r')
-    gv_data = format_h5_data(switches,data)
-    data.close()
-
-    if switches['do_analysis']:
-        fit_results = perform_analysis(switches,priors,phys_point)
-
-    if switches['check_fit']:
-        fit_checker(switches,priors)
-
-    if switches['nnlo_priors']:
-        nnlo_prior_scan(switches,priors)
-
-    if switches['nlo_fv_report']:
-        nlo_report(switches,priors,FV=True)
-    if switches['nlo_report']:
-        nlo_report(switches,priors,FV=False)
-
-    plt.ioff()
-    if run_from_ipython():
-        plt.show(block=False)
-    else:
-        plt.show()
+    main()
