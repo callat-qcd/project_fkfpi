@@ -737,10 +737,15 @@ class bootstrapper(object):
 
         color_data = {abbr : self.plot_data[abbr]['a/w0'] *self.w0 for abbr in self.abbrs}
 
-        # Plot fit
-        #colors = ['black', 'purple', 'green', 'red']
-        colors = ['red', 'green', 'purple', 'black']
+        # Get lattice spacings used in fit
         lattice_spacings = np.unique(self._make_fit_data(0)['a/w0']) *self.w0
+
+        # Color lattice spacings
+        #colors = ['red', 'green', 'purple', 'black']
+        cmap = matplotlib.cm.get_cmap('rainbow_r')
+        colors = [cmap(j/len(lattice_spacings)) for j in range(len(lattice_spacings)+1)]
+
+        # Plot fit
         for j, a in enumerate(sorted(np.append([gv.gvar('0(0)')], lattice_spacings), reverse=True)):
 
             # Get the range of pion masses (in phys units)
@@ -766,13 +771,13 @@ class bootstrapper(object):
             y = self.fk_fpi_fit_fcn(fit_data=prepped_data)
 
             pm = lambda g, k : gv.mean(g) + k*gv.sdev(g)
-            plt.plot(pm(x, 0), pm(y, 0), '--', color=colors[j], label='$a=$%s (fm)'%(str(a)), rasterized=True)
-            plt.fill_between(pm(x, 0), pm(y, -1), pm(y, 1), alpha=0.40, color=colors[j], rasterized=True)
+            plt.plot(pm(x, 0), pm(y, 0), '--', color=colors[j%len(colors)], label='$a=$%s (fm)'%(str(a)), rasterized=True)
+            plt.fill_between(pm(x, 0), pm(y, -1), pm(y, 1), alpha=0.40, color=colors[j%len(colors)], rasterized=True)
 
         # Color by lattice spacing/length
         cmap = matplotlib.cm.get_cmap('rainbow')
-        min_max = lambda x : [np.min(x), np.max(x)]
-        minimum, maximum = min_max([gv.mean(color_data[abbr]) for abbr in self.abbrs])
+        minimum = 0
+        maximum = np.max([gv.mean(color_data[abbr]) for abbr in self.abbrs])
         norm = matplotlib.colors.Normalize(vmin=minimum, vmax=maximum)
 
         # Get scatter plot & color data
