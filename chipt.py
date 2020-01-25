@@ -482,7 +482,8 @@ class Fit(object):
                 tmp = float(r)
             r += (p2*lp +0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4)) \
                 * (3./8*p2*lp +3./4*k2*lk +3./8*e2*le +4*(4*pi)**2 *(p2*L4 +k2*(2*L4+L5)))
-            r += -1.0*( p2*lp +0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4) )**2
+            #r += -1.0*( p2*lp +0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4) )**2
+            r += 0.5*( p2*lp +0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4) )**2
             if self.switches['debug_nnlo_check']:
                 print('ratio fix = %f\n' %(r-tmp))
 
@@ -843,6 +844,13 @@ class Fit(object):
         y_plot = dict()
         y_plot['m135'] = []
         y_plot['m220'] = []
+        y_plot['a2']   = []
+        y_plot['a4']   = []
+        if 's_6' in p:
+            p_a2 = dict(p)
+            p_a4 = dict(p)
+            p_a2['s_6'] = gv.gvar(0,0)
+            p_a4['s_4'] = gv.gvar(0,0)
         p2 = ea_range['mpi']**2 / ea_range['Lchi']**2
         k2 = ea_range['mk']**2 / ea_range['Lchi']**2
         for a in ea_range['a']:
@@ -854,6 +862,19 @@ class Fit(object):
             p[(a,'a2')] = (a / ea_range['w0'])**2 / 4 / pi
             x_plot.append(p[(a,'a2')])
             y_plot['m135'].append(self.fit_function(x,p)[a])
+            if 's_6' in p:
+                p_a2[(a,'p2')] = p2
+                p_a2[(a,'k2')] = k2
+                p_a2[(a,'e2')] = 4./3*k2 - 1./3*p2
+                p_a2[(a,'a2')] = (a / ea_range['w0'])**2 / 4 / pi
+                p_a4[(a,'p2')] = p2
+                p_a4[(a,'k2')] = k2
+                p_a4[(a,'e2')] = 4./3*k2 - 1./3*p2
+                p_a4[(a,'a2')] = (a / ea_range['w0'])**2 / 4 / pi
+                # subtract a**4 to get c + a**2
+                y_plot['a4'].append(y_plot['m135'][-1] - self.fit_function(x,p_a4)[a] + y_plot['m135'][0])
+                # subtract a**2 to get c + a**4
+                y_plot['a2'].append(y_plot['m135'][-1] - self.fit_function(x,p_a2)[a] + y_plot['m135'][0])
             p2 = 220**2 / ea_range['Lchi']**2
             p[(a,'p2')] = p2
             p[(a,'e2')] = 4./3*k2 - 1./3*p2
@@ -862,7 +883,15 @@ class Fit(object):
         y  = np.array([k.mean for k in y_plot['m135']])
         dy = np.array([k.sdev for k in y_plot['m135']])
 
-        ax.fill_between(x_plot, y-dy, y+dy, color='#ec5d57', alpha=0.4)
+        ax.fill_between(x_plot, y-dy, y+dy, color='#b36ae2', alpha=0.4)
+        if 's_6' in p:
+            y_a2  = np.array([k.mean for k in y_plot['a2']])
+            dy_a2 = np.array([k.sdev for k in y_plot['a2']])
+            y_a4  = np.array([k.mean for k in y_plot['a4']])
+            dy_a4 = np.array([k.sdev for k in y_plot['a4']])
+            ax.fill_between(x_plot, y_a2-dy_a2, y_a2+dy_a2, color='k', alpha=0.4)
+            ax.fill_between(x_plot, y_a4-dy_a4, y_a4+dy_a4, color='k', alpha=0.4)
+
         #y  = np.array([k.mean for k in y_plot['m220']])
         #ax.plot(x_plot, y, color='g')
 

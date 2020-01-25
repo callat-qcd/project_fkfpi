@@ -53,6 +53,41 @@ def main():
     gv_data = format_h5_data(switches,data)
     data.close()
 
+    if switches['simple_fit']:
+        import simple_fit as sf
+        d_e = dict()
+        d_e['x'] = {k:gv_data['x'][k] for k in switches['ensembles']}
+        d_e['y'] = {k:gv_data['y'][k] for k in switches['ensembles']}
+        d_e['p'] = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+        for f_model in ['simple','simple_su3']:
+            print('\n=================================================================')
+            print(f_model)
+            print('=================================================================')
+            switches['ansatz']['model'] = f_model
+            fit = sf.SimpleFit(switches,xyp=d_e)
+            fit.fit_data()
+            print(fit.fit.format(maxline=True))
+
+            ea_range = dict()
+            ea_range['Lchi'] = phys_point['Lchi_'+switches['scale']]
+            ea_range['mpi']  = phys_point['mpi']
+            ea_range['mk']   = phys_point['mk']
+            ea_range['a']    = np.sqrt(np.arange(0,.16**2,.16**2/50))
+            ea_range['w0']   = phys_point['w0']
+            fig_vs_ea = plt.figure('FKFpi_vs_ea_'+f_model)
+            ax = plt.axes([.12, .12, .85, .85])
+            ax = fit.plot_fit(ea_range,ax)
+            ax = fit.plot_data(ax)
+
+            ax.legend()
+            ax.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=16)
+            ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
+            ax.set_xlim(0,.065)
+            ax.set_ylim(1.09, 1.13)
+
+            plt.savefig('figures/FKFpi_vs_ea_'+f_model+'.pdf',transparent=True)
+
+
     if switches['do_analysis']:
         fit_results = perform_analysis(switches,gv_data,priors,phys_point)
         model_average(fit_results,switches,phys_point)
@@ -321,7 +356,7 @@ def plot_data(ax,e,x,y,offset=False, raw=False):
         'a12m220L':'', 'a12m220S':'',
         'a09m400':'', 'a09m350':'', 'a09m310':'', 'a09m220':'a09',
         'a06m310L':'a06',
-    }
+        }
     dx_cont = {
         'a15m400'  :0.0016, 'a12m400':0.0016,  'a09m400':0.0016,
         'a15m350'  :0.0008, 'a12m350':00.0008,  'a09m350':00.0008,
@@ -423,7 +458,7 @@ def perform_analysis(switches,gv_data,priors,phys_point):
 
             # THIS PLOT NEEDS TO GO IN A FUNCTION
             if switches['make_plots']:
-                if base_model in ['xpt_nnlo_FV','xpt_nnlo_FV_a4', 'xpt_nlo_FV_a4']:#, 'xpt_nnlo_FV_logSq', 'xpt-ratio_nnlo_FV', 'xpt-ratio_nnlo_FV_logSq']:
+                if base_model in ['xpt_nnlo_FV','xpt_nnlo_FV_a4', 'xpt_nlo_FV_a4']:
                     ea_range = dict()
                     ea_range['Lchi'] = phys_point['Lchi_'+FPK]
                     ea_range['mpi']  = phys_point['mpi']

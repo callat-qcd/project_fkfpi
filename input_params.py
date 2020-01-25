@@ -23,14 +23,14 @@ switches['ensembles_fit'] = [
 #    'a12m220S','a12m220','a12m220L','a09m220',
 #    'a12m130'
 #    ]
-switches['ensembles_fit'] = [
+#switches['ensembles_fit'] = [
     #'a15m400'  ,'a12m400' ,'a09m400',
     #'a15m350'  ,'a12m350' ,'a09m350',
     #'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
-    'a15m310', 'a12m310' ,'a09m310','a06m310L',
+    #'a15m310', 'a12m310' ,'a09m310','a06m310L',
     #'a15m220'  ,'a12m220S', 'a12m220','a12m220L','a09m220',
     #'a15m135XL','a12m130',
-    ]
+#    ]
 #switches['ensembles_fit'] = [
 #    'a09m400',
 #    'a09m350',
@@ -98,7 +98,7 @@ switches['ansatz']['models'] = [
 #    'xpt-ratio_nnlo_FV_logSq'       ,'ma-ratio_nnlo_FV_logSq',
 #    'xpt-ratio_nnlo_FV_alphaS_logSq','ma-ratio_nnlo_FV_alphaS_logSq'
 #]
-switches['ansatz']['models'] = ['xpt_nlo_FV_a4', 'xpt_nlo_FV_alphaS_a4']#xpt_nnlo_FV_a4']#,'xpt_nnlo_FV']#,'ma_nnlo_FV','ma_nnlo_FV_a4']
+switches['ansatz']['models'] = ['xpt_nnlo_FV_a4']
 #switches['ansatz']['models'] = [
 #    #'xpt_nnlo'                      ,'ma_nnlo',
 #    #'xpt_nnlo_alphaS'               ,'ma_nnlo_alphaS',
@@ -119,7 +119,7 @@ switches['ansatz']['models'] = ['xpt_nlo_FV_a4', 'xpt_nlo_FV_alphaS_a4']#xpt_nnl
 #]
 
 switches['ansatz']['a2dm'] = 'individual' # avg or individual
-switches['scales']         = ['PP']#,'PK','KK']
+switches['scales']         = ['PK']#,'PK','KK']
 switches['scale']          = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
 switches['do_analysis']    = True
 switches['save_fits']      = False
@@ -142,6 +142,7 @@ switches['refine_prior']    = True
 # fit checks
 switches['nlo_report']      = False
 switches['nlo_fv_report']   = False
+switches['simple_fit']      = False
 #switches['check_fit']       = False
 # DEBUGGING
 switches['debug']           = False
@@ -170,6 +171,7 @@ priors['L8']   = gv.gvar( 0.000294,0.000294)
 ''' default values '''
 n2lo_width = 5.
 priors['s_4']   = gv.gvar(0.0, n2lo_width)
+priors['s_4']   = gv.gvar(0.0, 1000)
 priors['k_4']   = gv.gvar(0.0, n2lo_width)
 priors['p_4']   = gv.gvar(0.0, n2lo_width)
 priors['saS_4'] = gv.gvar(0.0, n2lo_width)
@@ -179,7 +181,7 @@ priors['k_4']   = gv.gvar(2.2, 4)
 priors['p_4']   = gv.gvar(7.9, 10)
 
 
-n3lo_width = 5.
+n3lo_width = 1000.
 priors['kp_6']  = gv.gvar(0.0, n3lo_width)
 priors['k_6']   = gv.gvar(0.0, n3lo_width)
 priors['p_6']   = gv.gvar(0.0, n3lo_width)
