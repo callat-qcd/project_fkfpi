@@ -91,6 +91,8 @@ def main():
     if switches['do_analysis']:
         fit_results = perform_analysis(switches,gv_data,priors,phys_point)
         model_average(fit_results,switches,phys_point)
+        if switches['make_plots']:
+            plot_continuum(fit_results, switches, phys_point)
 
     if switches['check_fit']:
         fit_checker(switches,priors)
@@ -456,41 +458,46 @@ def perform_analysis(switches,gv_data,priors,phys_point):
             if switches['debug_phys']:
                 fit_e.report_phys_point(phys_point)['phys']
 
-            # THIS PLOT NEEDS TO GO IN A FUNCTION
-            if switches['make_plots']:
-                if base_model in ['xpt_nnlo_FV','xpt_nnlo_FV_a4', 'xpt_nlo_FV_a4']:
-                    ea_range = dict()
-                    ea_range['Lchi'] = phys_point['Lchi_'+FPK]
-                    ea_range['mpi']  = phys_point['mpi']
-                    ea_range['mk']   = phys_point['mk']
-                    ea_range['a']    = np.sqrt(np.arange(0,.16**2,.16**2/50))
-                    ea_range['w0']   = phys_point['w0']
-
-                    fig_vs_ea = plt.figure('FKFpi_vs_ea_'+model)
-                    ax = plt.axes([.12, .12, .85, .85])
-                    #print(fit_e.fit.format(maxline=True))
-                    ax = fit_e.vs_ea(ea_range, ax)
-                    # add data
-                    y_shift = fit_e.shift_phys_mass(phys_point)
-                    for e in switches['ensembles_fit']:
-                        x = fit_e.fit.p[(e,'a2')]
-                        y = y_e[e] + y_shift[e]
-                        #print(e,y_e[e],y_shift[e])
-                        ax = plot_data(ax, e, x, y, offset='cont')
-                        if switches['plot_raw_data']:
-                            ax = plot_data(ax, e, x, y_e[e], raw=True)
-                    ax.legend(ncol=4)
-                    ax.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=16)
-                    ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
-                    ax.set_xlim(0,.065)
-                    if switches['plot_raw_data']:
-                        ax.set_ylim(1.09, 1.205)
-                    else:
-                        ax.set_ylim(1.135, 1.205)
-                    plt.savefig('figures/vs_epasq_'+model+'.pdf',transparent=True)
-
-
     return fit_results
+
+def plot_continuum(fit_results,switches,phys_point):
+    for base_model in switches['ansatz']['models']:
+        for FPK in switches['scales']:
+            model = base_model +'_'+FPK
+            switches['scale'] = FPK
+            switches['ansatz']['model'] = model
+            if base_model in ['xpt_nnlo_FV','xpt_nnlo_FV_a4', 'xpt_nlo_FV_a4']:
+                fit = fit_results[model]
+                ea_range = dict()
+                ea_range['Lchi'] = phys_point['Lchi_'+FPK]
+                ea_range['mpi']  = phys_point['mpi']
+                ea_range['mk']   = phys_point['mk']
+                ea_range['a']    = np.sqrt(np.arange(0,.16**2,.16**2/50))
+                ea_range['w0']   = phys_point['w0']
+
+                fig_vs_ea = plt.figure('FKFpi_vs_ea_'+model)
+                ax = plt.axes([.12, .12, .85, .85])
+                #print(fit_e.fit.format(maxline=True))
+                ax = fit.vs_ea(ea_range, ax)
+                # add data
+                y_shift = fit.shift_phys_mass(phys_point)
+                for e in switches['ensembles_fit']:
+                    x = fit.fit.p[(e,'a2')]
+                    y = fit.y[e] + y_shift[e]
+                    #print(e,y_e[e],y_shift[e])
+                    ax = plot_data(ax, e, x, y, offset='cont')
+                    if switches['plot_raw_data']:
+                        ax = plot_data(ax, e, x, fit.y[e], raw=True)
+                ax.legend(ncol=4)
+                ax.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=16)
+                ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
+                ax.set_xlim(0,.065)
+                if switches['plot_raw_data']:
+                    ax.set_ylim(1.09, 1.205)
+                else:
+                    ax.set_ylim(1.135, 1.205)
+                plt.savefig('figures/vs_epasq_'+model+'.pdf',transparent=True)
+
 
 def model_average(fit_results,switches,phys_point):
     model_avg,model_var = bayes_model_avg(switches,fit_results,phys_point)

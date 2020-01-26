@@ -146,7 +146,7 @@ switches['simple_fit']      = False
 #switches['check_fit']       = False
 # DEBUGGING
 switches['debug']           = False
-switches['debug_x']         = True
+switches['debug_x']         = False
 switches['debug_phys']      = False
 switches['debug_nlo_check'] = False
 switches['debug_nnlo_check']= False
