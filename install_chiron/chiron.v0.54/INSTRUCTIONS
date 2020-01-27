@@ -1,0 +1,38 @@
+INSTRUCTIONS is included with the CHIRON ChPT at two loops program collection
+Copyright (C) 2014 Johan Bijnens, v1.0
+CHIRON is licenced under the GNU GPL version 2, see COPYING for details.
+Please respect the Guidelines, see GUIDELINES for details.
+
+
+
+This is the program collection CHIRON of programs for Chiral perturbation
+theory at two loops.
+
+It includes a set of numerical utility programs put together in a library
+called libjbnumlib.a and a number of functions needed for mesonic ChPT at
+two loop level. Have a look at the various include files to see what is
+inside. The included LaTeX documentation is normally far behind.
+The filelist.txt should give some niformation on what is included as well.
+
+When you have unpacked chironxxx.tar.gz you should have a directory
+called chironxxx in the place where you unpacked.
+The subdirectories are: include src test testoutputs
+
+From the Makefile:
+
+produce the jbnumlib library using
+"make libjbnumlib.a"
+and the chiron library using
+"make libchiron.a"
+
+a number of example and testing programs are include in the subdirectory test
+these can normally be produced by using
+"make a.out.yyyyy"
+and then running with ./a.out
+
+yyyyy stands for sunsetintegrals in the case of testsunsetintegrals.cc
+and similarly for the others
+
+Programs should work with any up-to-date C++ compiler but have only been
+tested with g++ under Linux, the same goes for the Makefile
+

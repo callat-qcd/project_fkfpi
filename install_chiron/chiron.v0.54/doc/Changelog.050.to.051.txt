@@ -1,0 +1,100 @@
+Changes compared to v0.50:
+Note dates are in yymmdd format (Swedish and ISO standard)
+
+141203:
+in Makefile: added -L./lib in compiling the test versions
+in src/finitevolumeoneloopintegrals.cc;
+      "src/besselonesum.cc" -> "besselonesum.cc"
+    (Sergiy Ivashin pointed out that the setup of v0.50 might not work
+     everywhere)
+
+141217
+added the sunset integrals for the partially quenched results:
+quenchedsunsetintegrals.h
+quenchedsunsetintegrals.cc 
+testquenchedsunsetintegrals.cc 
+testquenchedsunsetintegrals.dat
+comparequenchedsunsetfortran.dat
+
+141218
+manual started, jbnumlib part finished:
+manual.tex
+
+141219
+changed with lomass and quarkmass added as classes for inputs affects:
+inputs.cc
+inputs.h 
+testinputs.cc
+testinputs.dat
+
+141222
+quarkmassnf added as possible inputs:
+inputsnf.cc
+inputsnf.h
+testinputsnf.cc
+testinputsnf.dat
+Linf: the Li for nf flavours, includes L11 so partially quenched two-flavour
+is possible:
+Linf.h
+Linf.cc
+testLinf.cc
+testLinf.dat
+Ki: the Ki for nf flavours, uses Linf:
+Ki.h
+Ki.cc
+testKi.cc
+testKi.dat
+
+150107
+A number of real and complex integration routines added and included in manual:
+jbdgauss2.cc
+jbdquad15.cc
+jbdquad21.cc
+jbdcauch2.cc
+jbdsing15.cc
+jbdsing21.cc
+jbwgauss2.cc
+jbwquad15.cc
+jbwquad21.cc
+testing real integration routines:
+testintegralsreal.cc
+testintegralsreal.dat
+testintegralsrealsingular.cc
+testintegralsrealsingular.dat
+testing complex integration routines:
+testintegralscomplex.cc
+testintegralscomplex.dat
+A macro WINTEGRAL has been defined in oneloopintegrals.cc to allow for
+an easy change of complex integration routines, also from the compile lines
+Macros DINTEGRAL,SINTEGRAL have been defined in sunsetintegrals.cc to allow for
+an easy change of real integration routines with and without singularity,
+also from the compile lines
+
+150109
+Things defined in inputs.h and Li.h added to the manual
+
+150119
+Things defined in Ci.h added to manual
+
+150120
+Tadpoles order epsilon added
+oneloopintegrals.cc
+oneloopintegrals.h
+Tadpoles added to manual
+Bubble integrals added to manual
+
+150121
+Sunsetintegrals added to manual
+added the macro DINTEGRAL for the real integration routine also to
+quenchedsunsetintegrals.cc
+(Partially) quenched sunsetintegrals added to manual.
+
+150122
+added the macro DINTEGRAL for the real integration routine also to
+finitevolumeoneloopintegrals.cc
+
+150123
+Finite volume tadpoles added to manual
+Finite volume sunsets added to manual
+Masses, deacy constants and vevs added to manual
+Masses and decay constants at finite volume added to manual

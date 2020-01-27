@@ -1,0 +1,43 @@
+printed are obtained values and relative difference with exact result
+int_0^4 sqrt(x) dx
+accuracy asked 1e-14 number of times evaluated 300000
+5.33333333333333 0 via jbdgauss in 9 sec
+5.33333333333333 0 via jbdgauss2 in 3.02 sec
+5.33333333333333 0 via jbdquad15 in 1.92 sec
+5.33333333333333 0 via jbdquad21 in 2.47 sec
+int_0^pi (1+sin(10x)) dx
+accuracy asked 1e-14 number of times evaluated 1000000
+3.14159265358979 2.22044604925031e-16 via jbdgauss in 2.41 sec
+3.14159265358979 2.22044604925031e-16 via jbdgauss2 in 2.41 sec
+3.14159265358979 0 via jbdquad15 in 1.82 sec
+3.14159265358979 -3.33066907387547e-16 via jbdquad21 in 2.42 sec
+int_0^1(1-5x^4)dx
+accuracy asked 1e-15 number of times evaluated 10000000
+-2.77555756156289e-17 via jbdgauss in 0.59 sec
+-2.77555756156289e-17 via jbdgauss2 in 0.58 sec
+5.55111512312578e-17 via jbdquad15 in 0.42 sec
+-7.63278329429795e-17 via jbdquad21 in 0.57 sec
+int_0^1 (1-sqrt(x)) dx
+accuracy asked 1e-14 number of times evaluated 300000
+0.333333333333332 -2.66453525910038e-15 via jbdgauss in 7.59 sec
+0.333333333333332 -2.66453525910038e-15 via jbdgauss2 in 2.89 sec
+0.333333333333333 -1.55431223447522e-15 via jbdquad15 in 1.71 sec
+0.333333333333333 -1.55431223447522e-15 via jbdquad21 in 2.31 sec
+int_0^1 (1/sqrt(1-x^2)) dx
+accuracy asked 1e-07 number of times evaluated 100000
+1.57079622631644 -6.3966571595131e-08 via jbdgauss in 2.08 sec
+1.57079622631644 -6.3966571595131e-08 via jbdgauss2 in 2.06 sec
+1.57079626513904 -3.92513362923452e-08 via jbdquad15 in 1.33 sec
+1.57079626508557 -3.92853780617486e-08 via jbdquad21 in 1.81 sec
+int_0^1 (x/sqrt(1-x^2)) dx
+accuracy asked 1e-07 number of times evaluated 100000
+0.999999899521544 -1.00478455999919e-07 via jbdgauss in 2.08 sec
+0.999999899521544 -1.00478455999919e-07 via jbdgauss2 in 2.08 sec
+0.999999938344145 -6.16558554211721e-08 via jbdquad15 in 1.33 sec
+0.999999938290672 -6.17093284249748e-08 via jbdquad21 in 1.8 sec
+int_0^1 log(x) dx
+accuracy asked 1e-10 number of times evaluated 100000
+-0.999999999965264 3.47359918606571e-11 via jbdgauss in 9.84 sec
+-0.999999999965419 3.45807826818145e-11 via jbdgauss2 in 3.55 sec
+-0.999999999987389 1.26112453813221e-11 via jbdquad15 in 2.33 sec
+-0.999999999987282 1.27178267916861e-11 via jbdquad21 in 3.2 sec
