@@ -1,0 +1,27 @@
+Python binding of chiron functions
+==================================
+
+
+Requires:
+
+	1) pybind11	--	header-only library, i.e. if not yet available
+ 				just download and put somewhere
+	2) chiron	--	both static libraries (libchiron.a and
+				libjbnumlib.a) are required
+
+		Before building those libraries, in Chiron's Makefile, make
+		the following changes:
+
+			a) add `-fPIC' to CFLAGS
+			b) remove `$(INCLUDECHIRON)' in the line starting with
+			   `ar r libchiron.a' building libchiron.a
+			c) remove `include/jbnumlib.h' in the line starting with
+			   `ar r libjbnumlib.a' building libjbnumlib.a
+
+
+Building python module:
+
+	-) In build.sh, adjust the paths to PYBIND and CHIRON
+	-) Execute build.sh
+	-) This should create a chiron.xxxxx.so file, which can be imported
+		in Python

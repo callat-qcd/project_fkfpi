@@ -1,0 +1,149 @@
+// filelist.txt is part of the 
+// CHIRON ChPT at two loops program collection
+// Copyright (C) 2014-2015 Johan Bijnens, v1.01
+// CHIRON is licenced under the GNU GPL version 2 or later,
+// see COPYING for details.
+// Please respect the Guidelines, see GUIDELINES for details.
+
+Files included and what they are part of:
+
+COPYING           the GPL v2 main text
+GUIDELINES        a plea to get cited in case of use
+INSTRUCTIONS      instructions on how to install
+Makefile          does the actual work
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+documentation in doc:
+chiron.v0.50.tex
+manual.tex
+filelist.txt        list of files
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+include files in include:
+jbnumlib.h
+
+inputs.h
+inputsnf.h
+Li.h
+Linf.h
+Ci.h
+oneloopintegrals.h
+sunsetintegrals.h
+quenchedsunsetintegrals.h
+massdecayvev.h
+massdecayvevlo.h
+massdecayvevV.h
+massdecayvevloV.h
+massdecayvevPQ.h
+massdecayvevPQV.h
+massdecayvevnf.h
+massdecayvevnfPQ.h
+massdecayvevnfV.h
+massdecayvevnfPQV.h
+getfpimeta.h
+finitevolumeoneloopintegrals.h
+finitevolumesunsetintegrals.h
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+source files in src:
+
+part of jbnumlib:
+jbdli2.cc           Li2 function
+jbdbesik.cc         modified Bessel functions
+jbdtheta30.cc       theta function
+jbdtheta30m1.cc
+jbdtheta32.cc       
+jbdtheta34.cc       
+jbdtheta3.cc        theta functions with u
+jbderivutheta3.cc
+jbderiv2utheta3.cc
+jbdtheta2d0.cc      two-dimensional theta function
+jbdtheta2d0m1.cc
+jbdtheta2d02.cc
+jbdgauss.cc         real integration routine
+jbdgauss2.cc
+jbdquad15.cc
+jbdquad21.cc
+jbdcauch.cc         real integration with a singularity
+jbdcauch2.cc
+jbdsing15.cc
+jbdsing21.cc
+jbwgauss.cc         complex integration routine
+jbwgauss2.cc
+jbwquad15
+jbwquad21
+jbdadmul.cc         higher dimensional real integration routine
+
+Chiron:
+inputs.cc
+inputsnf.cc
+Li.cc
+Linf.cc
+Ci.cc
+oneloopintegrals.cc
+sunsetintegrals.cc 
+quenchedsunsetintegrals.cc
+massdecayvev.cc
+massdecayvevlo.cc
+massdecayvevPQ.cc
+getfpimeta.cc
+finitevolumeoneloopintegrals.cc
+besselonesum.cc
+besseltwosum.cc
+finitevolumesunsetintegrals.cc
+massdecayvevV.cc
+massdecayvevloV.cc
+massdecayvevPQV.cc
+massdecayvevnf.cc
+massdecayvevnfPQ.cc
+massdecayvevnfV.cc
+massdecayvevnfPQV.cc
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+examples and testing files in test:
+testintegralsreal.cc
+testintegralsrealsingular.cc
+testintegralscomplex.cc
+testinputs.cc
+testinputsnf.cc
+testLi.cc
+testLinf.cc
+testCi.cc
+testoneloopintegrals.cc
+testsunsetintegrals.cc
+testquenchedsunsetintegrals.cc
+comparequenchedsunsetfortran.dat    earlier FORTRAN results, used by previous
+LiCiBE14.dat                 LiCi from the main fit in arXiv:1405.6488
+testmassdecayvev.cc
+testmassdecayvevlo.cc
+testmassdecayvevPQ.cc
+testgetfpimeta.cc
+testfinitevolumeoneloopintegrals.cc
+testfinitevolumesunsetintegrals.cc
+testmassdecayvevV.cc
+testmassdecayvevloV.cc
+testmassdecayvevPQV.cc
+testmassdecayvevnf.cc
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ouputs of the example and testing files in testoutputs:
+testintegralsreal.dat
+testintegralsrealsingular.dat
+testintegralscomplex.dat
+testinputs.dat
+testLi.dat
+testLinf.dat
+testCi.dat
+testoneloopintegrals.dat
+testsunsetintegrals.dat
+testedquenchedsunsetintegrals.dat
+testmassdecayvev.dat
+testmassdecayvevlo.dat
+testmassdecayvevPQ.dat
+testgetfpimeta.dat
+testfinitevolumeoneloopintegrals.dat
+testfinitevolumesunsetintegrals.dat
+testmassdecayvevV.dat
+testmassdecayvevloV.dat
+testmassdecayvevPQV.dat
+testmassdecayvevnf.dat

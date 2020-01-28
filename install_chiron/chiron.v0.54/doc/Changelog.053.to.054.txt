@@ -1,0 +1,47 @@
+Changes from v0.53 to 0.54
+
+150825
+Some small errors in manual corrected
+class lomassnf added to inputsnf,
+implemented and testprogram written plus added to manual
+manual.tex
+inputsnf.h
+inputsnf.cc
+testinputsnf.cc
+testinputsnf.dat
+
+150826
+added getnf to classes Linf and Ki (plus manual)
+
+150827
+added qquploV and qqstrangeloV
+massdecayvevloV.h
+massdecayvevloV.cc
+
+150826-150831
+SUN QCDlike: masses, decay constants, vev 
+SON QCDlike: masses, decay constants, vev 
+SPN QCDlike: masses, decay constants, vev 
+massdecayvevnf.h
+massdecayvevnf.cc
+massdecayvevnfV.h
+massdecayvevnfV.cc
+massdecayvevnfPQ.h
+massdecayvevnfPQ.cc
+massdecayvevnfPQV.h
+massdecayvevnfPQV.cc
+
+150831
+vevloV to manual and in testmassdecayvevloV
+QCDlike all cases to manual
+
+150901
+QCD like SUN/SON/SPN prepare testprogram
+testmassdecayvevnf.cc
+
+To be done:
+
+
+QCD like add publication (manual and files)
+
+

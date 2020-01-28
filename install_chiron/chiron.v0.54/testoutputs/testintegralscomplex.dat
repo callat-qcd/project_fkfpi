@@ -1,0 +1,19 @@
+printed are obtained values and relative difference with exact result
+int_0^alpha exp(beta*x) dx
+accuracy asked 1e-15 number of times evaluated 10000
+(0.039984006397441,0.000799680127948821) (-2.22e-16,2.44e-17) via jbwgauss in 2.61 sec
+(0.039984006397441,0.000799680127948821) (-2.22e-16,2.44e-17) via jbwgauss2 in 1.01 sec
+(0.039984006397441,0.00079968012794882) (4.44e-16,-5.42e-18) via jbwquad15 in 0.95 sec
+(0.039984006397441,0.000799680127948828) (2.22e-16,1.95e-16) via jbwquad21 in 0.57 sec
+int_beta^alpha sqrt(x) dx
+accuracy asked 1e-15 number of times evaluated 100000
+(9.83981505135953,95.8855570165883) (-1.11e-16,-2.57e-16) via jbwgauss in 1.79 sec
+(9.83981505135953,95.8855570165883) (-1.11e-16,-2.57e-16) via jbwgauss2 in 1.29 sec
+(9.83981505135953,95.8855570165883) (-3.33e-16,-2.93e-16) via jbwquad15 in 1.28 sec
+(9.83981505135953,95.8855570165883) (-1.11e-16,-2.57e-16) via jbwquad21 in 1.15 sec
+int_0^alpha sqrt(x) dx
+accuracy asked 1e-15 number of times evaluated 10000
+(7.33977338781739,12.5647233707914) (-2.22e-16,-5.27e-17) via jbwgauss in 2.15 sec
+(7.3397733878174,12.5647233707914) (-2.22e-16,-5.27e-17) via jbwgauss2 in 0.53 sec
+(7.33977338781739,12.5647233707914) (-2.22e-16,0) via jbwquad15 in 0.4 sec
+(7.33977338781739,12.5647233707914) (-2.22e-16,0) via jbwquad21 in 0.46 sec

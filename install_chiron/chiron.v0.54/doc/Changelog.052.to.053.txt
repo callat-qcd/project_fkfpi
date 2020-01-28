@@ -1,0 +1,52 @@
+Changes from v0.52 to 0.53
+
+150226
+implemented jbdtheta3,jbderivutheta3 and jbderiv2utheta3 in jbnumlib
+added to manual as well
+
+added B22bV,B23bV,CbV,C22bV,C23bV,DbV,D22bV,D23bV tadpoles
+via both Bessel and theta functions
+finitevolumeoneloopintegrals.h
+finitevolumeoneloopintegrals.cc
+testfinitevolumeoneloopintegrals.cc
+testfinitevolumeoneloopintegrals.dat
+
+150428
+added BbV(m1,m2) to finite volume tadpoles
+PQ masses and decay constants three sea quark flavours
+massdecayvevPQV.h
+massdecayvevPQV.cc
+testmassdecayvevPQV.cc
+
+150430
+small bug discovered and corrected in bessel function finite volume integrals
+for the derivative case, case 25 in hhvrHbdinternal in
+finitevolumesunsetintegrals.cc
+
+150505
+finite volume masses and decay constants in terms of lowest order added
+massdecayvevloV.h
+massdecayvevloV.cc
+
+150506
+some internal renaming in quenchedsunsetintegrals.cc to avoid conflicts
+with the same names in sunsetintegrals.cc
+hbard1
+hbard2
+hbardat
+hbarddat
+extra q added at the end of the names
+
+150618
+finite volume lowest order to the manual
+
+150623
+PQ finite volume to the manual and some typos corrected
+finite volume lowest order testoutputs and testprogram
+testmassdecayvevloV.cc
+testmassdecayvevloV.dat
+
+To be done:
+PQ finitevolume add publication
+
+

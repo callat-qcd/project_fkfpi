@@ -1,0 +1,25 @@
+printed are obtained values and relative difference with exact result
+int_0^3 1/(1-x^2) dx
+accuracy asked 1e-13 number of times evaluated 1000000
+0.346573590279962 -3.10862446895044e-14 via jbdcauch in 1.85 sec
+0.346573590279962 -3.10862446895044e-14 via jbdcauch2 in 1.58 sec
+0.346573590279993 5.77315972805081e-14 via jbdsing15 in 0.93 sec
+0.346573590279948 -7.061018436616e-14 via jbdsing21 in 0.41 sec
+int_0^3 x/(1-x^2) dx
+accuracy asked 1e-13 number of times evaluated 1000000
+-1.03972077083993 1.04360964314765e-14 via jbdcauch in 1.48 sec
+-1.03972077083993 1.04360964314765e-14 via jbdcauch2 in 1.49 sec
+-1.0397207708399 -1.92068583260152e-14 via jbdsing15 in 0.87 sec
+-1.03972077083994 2.35367281220533e-14 via jbdsing21 in 0.41 sec
+int_0^1 sqrt(x)/(x-0.3) dx
+accuracy asked 1e-13 number of times evaluated 100000
+1.32616760486413 -8.32667268468867e-15 via jbdcauch in 2.81 sec
+1.32616760486413 -8.32667268468867e-15 via jbdcauch2 in 2.8 sec
+1.32616760486414 -1.22124532708767e-15 via jbdsing15 in 1.67 sec
+1.32616760486414 -1.66533453693773e-15 via jbdsing21 in 2.19 sec
+int_0^1 2x^2/(x^2-0.3) dx
+accuracy asked 1e-13 number of times evaluated 5000000
+1.32616760486418 3.44169137633799e-14 via jbdcauch in 2.68 sec
+1.32616760486418 3.44169137633799e-14 via jbdcauch2 in 3.17 sec
+1.32616760486418 3.24185123190546e-14 via jbdsing15 in 1.95 sec
+1.32616760486422 6.15063555642337e-14 via jbdsing21 in 2.63 sec

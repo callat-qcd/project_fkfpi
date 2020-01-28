@@ -1,0 +1,61 @@
+Changes from v0.51 to 0.52
+
+150127
+Finite volume sunsetintegrals for partially quenched added
+finitevolumesunsetintegrals.cc
+finitevolumesunsetintegrals.h
+manual.tex
+small bug in testfinitevolumeintegrals.cc found and corrected plus bits added
+testfinitevolumesunsetintegrals.cc
+testfinitevolumesunsetintegrals.dat
+Makefile now has 'make doc' to produce doc/manual.pdf from doc/manual.tex 
+
+150205
+masses, decay-constants and vevs in terms of lowest order added and put in
+manual
+massdecayvevlo.h
+massdecayvevlo.cc
+testmassdecayvevlo.cc
+testmassdecayvevlo.dat
+manual.tex
+
+started on adding partially quenched
+mass 1 valence mass, 1 sea mass, 3 sea quarks added
+massdecayvevPQ.cc
+massdecayvevPQ.h
+
+150209
+mass 1 valence mass, 2 sea mass, 3 sea quarks added
+mass 2 valence mass, 1 sea mass, 3 sea quarks added
+massdecayvevPQ.cc
+massdecayvevPQ.h
+
+150210
+mass 2 valence mass, 2 sea mass, 3 sea quarks added
+massdecayvevPQ.cc
+massdecayvevPQ.h
+
+150210
+mass 1 valence mass, 3 sea mass, 3 sea quarks added
+mass 2 valence mass, 3 sea mass, 3 sea quarks added
+massdecayvevPQ.cc
+massdecayvevPQ.h
+
+150216
+decay 1 valence mass, 1 sea mass, 3 sea quarks added
+decay 2 valence mass, 1 sea mass, 3 sea quarks added
+decay 1 valence mass, 2 sea mass, 3 sea quarks added
+decay 2 valence mass, 2 sea mass, 3 sea quarks added
+decay 1 valence mass, 3 sea mass, 3 sea quarks added
+decay 2 valence mass, 3 sea mass, 3 sea quarks added
+massdecayvevPQ.cc
+massdecayvevPQ.h
+testmassdecayvevPQ.cc
+testmassdecayvevPQ.dat
+
+150217
+inputsnf Linf Ki to manual
+masses and decay constants PQ nf=3 to manual
+
+To be done:
+
