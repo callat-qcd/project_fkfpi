@@ -730,36 +730,63 @@ class bootstrapper(object):
         return fig
 
 
-    def plot_fit_vs_eps2pi(self):
+    # fit vs param (eg, param = 'mpi' or 'a')
+    def plot_fit(self, param):
 
         # used to convert to phys units
         hbar_c = 197.32698045930
+        if param == 'mpi':
+            phys_params = ['mk']
+            xlabel = '$\epsilon_\pi^2$'
+        elif param == 'mk':
+            phys_params = ['mpi']
+            xlabel = '$\epsilon_K^2$'
+        elif param == 'a':
+            phys_params = ['mpi', 'mk']
+            xlabel = '$\epsilon_a^2$'
+        else:
+            return None
 
+        # Data for plot
         plot_data = {}
-        plot_data[0] = {abbr : ((self.plot_data[abbr]['mpi'] *hbar_c / (self.plot_data[abbr]['a/w0'] *self.w0))**2 /self.get_phys_point_data('lam2_chi'))
-                          for abbr in self.abbrs}
-        plot_data[1] = {abbr : self.shift_fk_fpi_for_phys_mk(abbr, self.plot_data) for abbr in self.abbrs}
 
+        # Convert to eps^2
+        if param in ['mpi', 'mk']:
+            plot_data['x'] = {abbr : ((self.plot_data[abbr][param] *hbar_c
+                                       / (self.plot_data[abbr]['a/w0'] *self.w0))**2
+                                       /self.get_phys_point_data('lam2_chi'))
+                              for abbr in self.abbrs}
+        elif param in ['a']:
+            plot_data['x'] = {abbr : (self.plot_data[abbr]['a/w0'] / (4 *np.pi))**2 for abbr in self.abbrs}
+
+        plot_data['y'] = self.shift_fk_fpi_for_phys_params(phys_params=phys_params)
         color_data = {abbr : self.plot_data[abbr]['a/w0'] *self.w0 for abbr in self.abbrs}
 
         # Get lattice spacings used in fit
         lattice_spacings = np.unique(self._make_fit_data(0)['a/w0']) *self.w0
 
         # Color lattice spacings
-        #colors = ['red', 'green', 'purple', 'black']
         cmap = matplotlib.cm.get_cmap('rainbow_r')
         colors = [cmap(j/len(lattice_spacings)) for j in range(len(lattice_spacings)+1)]
 
         # Plot fit
         for j, a in enumerate(sorted(np.append([gv.gvar('0(0)')], lattice_spacings), reverse=True)):
 
-            # Get the range of pion masses (in phys units)
-            minimum = np.nanmin([np.nanmin(
-                np.sqrt([plot_data[0][abbr] *self.get_phys_point_data('lam2_chi') for abbr in self.abbrs])
-            ) for abbr in self.abbrs])
-            maximum = np.nanmax([np.nanmax(
-                np.sqrt([plot_data[0][abbr] *self.get_phys_point_data('lam2_chi')  for abbr in self.abbrs])
-            ) for abbr in self.abbrs])
+            # Get the range of m^2 (in phys units)
+            if param in ['mpi', 'mk']:
+                minimum = np.nanmin([np.nanmin(
+                    np.sqrt([plot_data['x'][abbr] *self.get_phys_point_data('lam2_chi') for abbr in self.abbrs])
+                ) for abbr in self.abbrs])
+                maximum = np.nanmax([np.nanmax(
+                    np.sqrt([plot_data['x'][abbr] *self.get_phys_point_data('lam2_chi')  for abbr in self.abbrs])
+                ) for abbr in self.abbrs])
+            # Get the range of a^2
+            elif param in ['a']:
+                minimum = 0
+                maximum = np.nanmax([np.nanmax(
+                    np.sqrt([plot_data['x'][abbr] *(4 *np.pi)**2 for abbr in self.abbrs])
+                ) for abbr in self.abbrs])
+
             minimum = gv.mean(minimum)
             maximum = gv.mean(maximum)
             delta = maximum - minimum
@@ -768,11 +795,18 @@ class bootstrapper(object):
 
             # Get phys point data, substituting x-data and current 'a' in loop
             prepped_data = self.get_phys_point_data()
-            prepped_data['mpi'] = x
             prepped_data['a/w0'] = a/self.w0
+            if param in ['mpi', 'mk']:
+                prepped_data[param] = x
+            elif param in ['a']:
+                prepped_data['a/w0'] = x
 
-            # Covert m_pi -> (eps_pi)^2
-            x = x**2/self.get_phys_point_data('lam2_chi')
+            # Covert m -> eps^2
+            if param in ['mpi', 'mk']:
+                x = x**2 / self.get_phys_point_data('lam2_chi')
+            elif param in ['a']:
+                x = x**2 / (4 *np.pi)**2
+
             y = self.fk_fpi_fit_fcn(fit_data=prepped_data)
 
             pm = lambda g, k : gv.mean(g) + k*gv.sdev(g)
@@ -791,8 +825,8 @@ class bootstrapper(object):
         y = np.zeros(length * len(self.abbrs))
         z = np.zeros(length * len(self.abbrs))
         for j, abbr in enumerate(self.abbrs):
-            x[j*length:(j+1)*length] = gv.mean(plot_data[0][abbr])
-            y[j*length:(j+1)*length] = gv.mean(plot_data[1][abbr])
+            x[j*length:(j+1)*length] = gv.mean(plot_data['x'][abbr])
+            y[j*length:(j+1)*length] = gv.mean(plot_data['y'][abbr])
             z[j*length:(j+1)*length] = gv.mean(color_data[abbr])
 
         # Plot data
@@ -800,7 +834,7 @@ class bootstrapper(object):
                          cmap=cmap, rasterized=True, marker="o", alpha=10.0/self.plot_bs_N, edgecolor='black')
 
         # Plot FLAG result
-        x_phys = self.get_phys_point_data('mpi')**2 / self.get_phys_point_data('lam2_chi')
+        x_phys = self.get_phys_point_data(param)**2 / self.get_phys_point_data('lam2_chi')
         plt.axvline(gv.mean(x_phys), label='Phys point')
         y_phys = self.get_phys_point_data('FK/Fpi')
 
@@ -812,7 +846,7 @@ class bootstrapper(object):
         # Plot labels
         plt.legend()
         plt.grid()
-        plt.xlabel('$\epsilon_\pi^2$', fontsize = 24)
+        plt.xlabel(xlabel, fontsize = 24)
         plt.ylabel('$F_K/F_\pi$', fontsize = 24)
 
         # Format colorbar
@@ -824,13 +858,13 @@ class bootstrapper(object):
         # Set xlim, ylim -- only works if xy_parameters[i] is a vector, not a scalar
         min_max = lambda x : [np.min(x), np.max(x)]
         try:
-            xmin, xmax = min_max(np.concatenate([gv.mean(plot_data[0][abbr]) for abbr in self.abbrs]))
-            ymin, ymax = min_max(np.concatenate([gv.mean(plot_data[1][abbr]) for abbr in self.abbrs]))
+            xmin, xmax = min_max(np.concatenate([gv.mean(plot_data['x'][abbr]) for abbr in self.abbrs]))
+            ymin, ymax = min_max(np.concatenate([gv.mean(plot_data['y'][abbr]) for abbr in self.abbrs]))
             xdelta = xmax - xmin
             ydelta = ymax - ymin
             plt.xlim(xmin-0.05*xdelta, xmax+0.05*xdelta) #xmin-0.05*xdelta
             #plt.ylim(ymin-0.05*ydelta, ymax+0.05*ydelta)
-            plt.ylim(1.04, 1.20)
+            #plt.ylim(1.04, 1.20)
         except ValueError:
             pass
 
@@ -966,22 +1000,36 @@ class bootstrapper(object):
         plt.close()
         return fig
 
-    def shift_fk_fpi_for_phys_mk(self, abbr, data, use_ratio=False):
-        pi = np.pi
-        hbar_c = 197.327
+    # phys_params is a list: eg, ['mk'] or ['mk', 'mpi']
+    def shift_fk_fpi_for_phys_params(self, phys_params, use_ratio=False):
+        hbar_c = 197.32698045930 # MeV-fm
         lam2_chi = self.get_phys_point_data('lam2_chi')
 
-        fkfpi_ens = data[abbr]['FK'] / data[abbr]['Fpi']
-        fkfpi_fit_ens = self.extrapolate_to_ensemble(abbr)
+        shifted_fkfpi = {}
+        for abbr in self.abbrs:
 
-        temp_data = self.get_phys_point_data()
-        temp_data['mpi'] = data[abbr]['mpi'] *hbar_c / (data[abbr]['a/w0'] *self.w0)
-        temp_data['a/w0'] = data[abbr]['a/w0']
-        fkfpi_fit_phys_vary_mpi = self.fk_fpi_fit_fcn(fit_data=temp_data)
+            fkfpi_ens = self.plot_data[abbr]['FK'] / self.plot_data[abbr]['Fpi']
+            fkfpi_fit_ens = self.extrapolate_to_ensemble(abbr)
 
-        if use_ratio:
-            shifted_fkfpi = fkfpi_ens *(fkfpi_fit_phys_vary_mpi / fkfpi_fit_ens)
-        else:
-            shifted_fkfpi = fkfpi_ens + fkfpi_fit_phys_vary_mpi - fkfpi_fit_ens
+            temp_data = {}
+            for param in list(self.plot_data[abbr]):
+                # Covert to phys units
+                if param in ['FK', 'Fpi', 'mpi', 'mk']:
+                    temp_data[param] = (self.plot_data[abbr][param] *hbar_c
+                                        / (self.plot_data[abbr]['a/w0'] *self.w0))
+                else:
+                    temp_data[param] = self.plot_data[abbr][param]
+
+            for param in phys_params:
+                temp_data[param] = self.get_phys_point_data(param)
+
+            temp_data['lam2_chi'] = self.get_phys_point_data('lam2_chi')
+
+            fkfpi_fit_phys = self.fk_fpi_fit_fcn(fit_data=temp_data)
+
+            if use_ratio:
+                shifted_fkfpi[abbr] = fkfpi_ens *(fkfpi_fit_phys / fkfpi_fit_ens)
+            else:
+                shifted_fkfpi[abbr] = fkfpi_ens + fkfpi_fit_phys - fkfpi_fit_ens
 
         return shifted_fkfpi
