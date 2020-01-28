@@ -189,7 +189,7 @@ class bootstrapper(object):
                     'a09' : gv.gvar('0.0873(11)')*1.00,
                 }
                 F0 = 131.5 / np.sqrt(2)
-                hbar_c = 197.327
+                hbar_c = 197.32698045930
                 gv_data[abbr]['lam2_chi'] = (4 * np.pi *latt_spacing[abbr[:3]] *F0 / hbar_c)**2
                 plot_data[abbr]['lam2_chi'] = (4 * np.pi *latt_spacing[abbr[:3]] *F0 / hbar_c)**2
 
@@ -385,6 +385,11 @@ class bootstrapper(object):
             fit_parameters = self.get_fit_parameters().copy()
         if fit_type is None:
             fit_type = self.fit_type
+
+        if fit_type in ['ma', 'xpt']:
+            fit_type = 'xpt'
+        elif fit_type in ['ma-ratio', 'xpt-ratio']:
+            fit_type = 'xpt-ratio'
 
         model = fitter(order=self.order, fit_type=fit_type, F2=self.F2, fast_sunset=self.fast_sunset)._make_models()[0]
         return model.fitfcn(p=fit_parameters, fit_data=fit_data, debug=debug)
@@ -728,7 +733,7 @@ class bootstrapper(object):
     def plot_fit_vs_eps2pi(self):
 
         # used to convert to phys units
-        hbar_c = 197.327
+        hbar_c = 197.32698045930
 
         plot_data = {}
         plot_data[0] = {abbr : ((self.plot_data[abbr]['mpi'] *hbar_c / (self.plot_data[abbr]['a/w0'] *self.w0))**2 /self.get_phys_point_data('lam2_chi'))
@@ -870,7 +875,7 @@ class bootstrapper(object):
                         xfcn=None, xlabel=None, yfcn=None, ylabel=None):
 
         # used to convert to phys units
-        hbar_c = 197.327
+        hbar_c = 197.32698045930
 
         if xlabel is None:
             xlabel = self._fmt_key_as_latex(xy_parameters[0])
