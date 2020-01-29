@@ -15,7 +15,7 @@ class data_loader(object):
         self.file_h5 = os.path.normpath(self.project_path+'/FK_Fpi_data.h5')
         self.models = None
 
-    def _pickle_fit_parameters(self, fit_info, output_name=None):
+    def _pickle_fit_parameters(self, fit_info, output_name):
         model = fit_info['name']
         filename = self.project_path+'/pickles/'+ output_name +'/'+ model +'.p'
         if not os.path.exists(self.project_path +'/pickles/'+ output_name):
@@ -171,7 +171,7 @@ class data_loader(object):
         if output_name is None:
             output_name = 'fit_results'
         if save_pickles:
-            self._pickle_fit_parameters(fit_info)
+            self._pickle_fit_parameters(fit_info, output_name)
 
         if not os.path.exists(self.project_path + '/results/'):
             os.makedirs(self.project_path + '/results/')
