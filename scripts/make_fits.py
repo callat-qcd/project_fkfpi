@@ -27,13 +27,13 @@ p_dict = {
     'bias_correct' : True,
     'include_su2_isospin_corrrection' : False,
 
-    'use_prior' : True,
+    'use_prior' : False,
     'abbrs' : [u'a06m310L', u'a09m220', u'a09m310', u'a09m350', u'a09m400', u'a12m130',
                u'a12m220',  u'a12m220S', u'a12m220L', u'a12m310', u'a12m350',
                u'a12m400',  u'a15m135XL', u'a15m220', u'a15m310', u'a15m350', 'a15m400'], # u'a15m130'
 
     'save_results' : True,
-    'save_pickles' : True,
+    'save_pickles' : False,
     'replace_fits' : True,
 }
 

@@ -122,13 +122,13 @@ class bootstrapper(object):
             prior['L_5'] = gv.gvar('0.0(0.005)')
 
             # Lattice spacing terms
-            prior['A_a'] = gv.gvar('0.0(5.0)')
-            prior['A_loga'] = gv.gvar('0.0(5.0)')
-            prior['A_aa'] = gv.gvar('0.0(50.0)')
+            prior['A_a'] = gv.gvar('0.0(500.0)')#gv.gvar('0.0(5.0)')
+            prior['A_loga'] = gv.gvar('0.0(500.0)')#gv.gvar('0.0(5.0)')
+            prior['A_aa'] = gv.gvar('0.0(50000.0)')#gv.gvar('0.0(50.0)')
 
             # nnlo terms
-            prior['A_k'] = gv.gvar('0.0(5.0)')
-            prior['A_p'] = gv.gvar('0.0(5.0)')
+            prior['A_k'] = gv.gvar('0.0(5.0)')#gv.gvar('0.0(5.0)')
+            prior['A_p'] = gv.gvar('0.0(50.0)')#gv.gvar('0.0(5.0)')
 
             # nnnlo terms
             prior['A_ak'] = gv.gvar('0.0(5.0)')
