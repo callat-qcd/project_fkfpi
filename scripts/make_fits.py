@@ -101,6 +101,7 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
     # Load data
     data_loader = dl.data_loader()
     fit_data = data_loader.get_fit_data()
+    phys_point_data = data_loader.get_phys_point_data()
 
     # Get prior
     prior = None
@@ -114,7 +115,7 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
 
     # Make bootstrapper
     bootstrapper = bs.bootstrapper(
-        fit_data, prior=prior, order=p_dict['order'], F2=p_dict['F2'],
+        fit_data, phys_point_data, prior=prior, order=p_dict['order'], F2=p_dict['F2'],
         include_su2_isospin_corrrection=p_dict['include_su2_isospin_corrrection'], use_bijnens_central_value=p_dict['use_bijnens_central_value'],
         fit_type=p_dict['fit_type'], abbrs=p_dict['abbrs'], bias_correct=p_dict['bias_correct']
     )

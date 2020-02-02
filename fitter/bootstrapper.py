@@ -16,9 +16,7 @@ import special_functions as sf
 
 class bootstrapper(object):
 
-    def __init__(self, fit_data, prior=None, **kwargs):
-        w0 = gv.gvar('0.175(10)') # Still needs to be determined, but something like this
-        self.w0 = w0
+    def __init__(self, fit_data, phys_point_data, prior=None, **kwargs):
 
         # Default values
         order = None
@@ -30,7 +28,6 @@ class bootstrapper(object):
         plot_bs_N = 100
         fast_sunset = False
         F2 = 'FpiFpi'
-        self.F2 = F2 # Set this now so get_phys_point_data('lam2_chi') works
 
         # Overwrite defaults using kwargs
         if 'fit_type' in kwargs:
@@ -61,6 +58,16 @@ class bootstrapper(object):
 
         if 'fast_sunset' in kwargs:
             fast_sunset = kwargs['fast_sunset']
+
+        # Get lam_chi^2=renorm_scale^2 depending on choice of F^2
+        if F2 == 'FKFpi':
+            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_kpi']
+        elif F2 == 'FpiFpi':
+            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_pipi']
+        elif F2 == 'FKFK':
+            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_kk']
+        elif F2 == 'F0F0':
+            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_00']
 
         # Add default values to order dict
         order_temp = {
@@ -94,11 +101,11 @@ class bootstrapper(object):
 
             # F2 is F^2 in this context; but F0, F1 are F_0, F_1
             if F2 == 'FpiFpi':
-                F1 = self.get_phys_point_data('Fpi')
+                F1 = phys_point_data['Fpi']
             elif F2 == 'FKFpi':
-                F1 = np.sqrt(self.get_phys_point_data('FK') *self.get_phys_point_data('Fpi'))
+                F1 = np.sqrt(phys_point_data['FK'] *phys_point_data['Fpi'])
             elif F2 == 'FKFK':
-                F1 = self.get_phys_point_data('Fpi')
+                F1 = phys_point_data['Fpi']
 
             F0 = 80 # MeV
             L_mu1 = gv.mean(L_mu0 - gamma/(4 *np.pi)**2 *np.log(F1/F0))
@@ -195,6 +202,8 @@ class bootstrapper(object):
 
 
         # Set object values
+        self.w0 = phys_point_data['w0']
+        self.phys_point_data = phys_point_data
         self.include_su2_isospin_corrrection = include_su2_isospin_corrrection
         self.use_bijnens_central_value = use_bijnens_central_value
         self.bs_N = 1
@@ -204,10 +213,12 @@ class bootstrapper(object):
         self.fit_data = gv_data
         self.plot_data = plot_data
         self.prior = prior
+        self.posterior = None
         self.order = order
         self.fits = None
         self.fit_type = fit_type
         self.fast_sunset = fast_sunset
+
 
     def __str__(self):
         bs_fit_parameters = self.get_bootstrapped_fit_parameters()
@@ -469,7 +480,7 @@ class bootstrapper(object):
     # Returns dictionary with keys fit parameters, entries gvar results
     def get_fit_parameters(self, parameter=None):
         # If fitting only the central values
-        if self.bs_N == 1:
+        if self.posterior is None:
             if self.fits is None:
                 self.bootstrap_fits()
 
@@ -477,14 +488,12 @@ class bootstrapper(object):
             keys2 = list(self.get_fit().p.keys())
             parameters = np.intersect1d(keys1, keys2)
 
-            fit_parameters = {parameter : self.get_fit().p[parameter] for parameter in parameters}
-        else:
-            fit_parameters = gv.dataset.avg_data(self.get_bootstrapped_fit_parameters(), bstrap=True)
+            self.posterior = {parameter : self.get_fit().p[parameter] for parameter in parameters}
 
         if parameter is not None:
-            return fit_parameters[parameter]
+            return self.posterior[parameter]
         else:
-            return fit_parameters
+            return self.posterior
 
     def get_name(self):
         name = self.fit_type +'_'+ self.F2+'_'+self.order['fit']
@@ -507,60 +516,13 @@ class bootstrapper(object):
 
     # need to convert to/from lattice units
     def get_phys_point_data(self, parameter=None):
-        phys_point_data = {
-            'a/w0' : 0,
-            'a' : 0,
-            'L' : np.infty,
-            'alpha_s' : 0, # Not sure, but not important since it comes with a^2
-
-            'mpi' : gv.gvar('134.8(3)'), # '138.05638(37)'
-            'mk' : gv.gvar('494.2(3)'), # '495.6479(92)'
-            'mss' : gv.gvar('688.5(2.2)'), # Taken from arxiv/1303.1670
-
-            'a2DI' : 0,
-            'Fpi' : gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2)), # PDG
-            'FK' : gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2)), # PDG
-            'w0' : self.w0,
-
-            'FK/Fpi_pm' : gv.gvar('1.1932(19)'), # FLAG, SU(2) isospin corrected value (arxiv/1902.08191, eqn 80)
-        }
-
-
-        # Or get mss, mrs with Gell-Mann-Oakes-Renner relations: arxiv/0505265 (3.45)
-        mpi = phys_point_data['mpi']
-        mk = phys_point_data['mk']
-        phys_point_data['mss'] = np.sqrt(2 *(mk)**2 - (mpi)**2) *1.000000001 # prevents division by 0
-
-        # ma pion
-        phys_point_data['mju'] = phys_point_data['mpi']
-
-        # ma kaon
-        phys_point_data['mru'] = phys_point_data['mk']
-        phys_point_data['mjs'] = phys_point_data['mk']
-
-        # ma eta_s
-        phys_point_data['mrs'] = phys_point_data['mss']
-
-        FK = phys_point_data['FK']
-        Fpi = phys_point_data['Fpi']
-        if self.F2 == 'FKFpi':
-            phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *Fpi
-        elif self.F2 == 'FpiFpi':
-            phys_point_data['lam2_chi'] = (4*np.pi)**2 *Fpi *Fpi
-        elif self.F2 == 'FKFK':
-            phys_point_data['lam2_chi'] = (4*np.pi)**2 *FK *FK
-        elif self.F2 == 'F0F0':
-            phys_point_data['lam2_chi'] = (4*np.pi)**2 *(gv.gvar('131.5(0.1)') / np.sqrt(2))**2
-
         if parameter is None:
-            return phys_point_data
+            return self.phys_point_data
         elif parameter == 'FK/Fpi':
             # Physical point without su(2) isospin correction
-            return phys_point_data['FK/Fpi_pm'] / np.sqrt(1 + self.get_delta_su2_correction())
+            return self.phys_point_data['FK/Fpi_pm'] / np.sqrt(1 + self.get_delta_su2_correction())
         else:
-            return phys_point_data[parameter]
-
-
+            return self.phys_point_data[parameter]
 
     def make_plots(self, show_error_ellipses=False, show_bootstrap_histograms=False):
         figs = [self.plot_fit_info()]

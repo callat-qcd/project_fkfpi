@@ -96,6 +96,7 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
     # Load data
     data_loader = dl.data_loader()
     fit_data = data_loader.get_fit_data()
+    phys_point_data = data_loader.get_phys_point_data()
 
     # See if a prior has been generated; if not, create one
     temp_prior = data_loader.get_prior(fit_type=p_dict['fit_type'], order=p_dict['order']['fit'], F2=p_dict['F2'],
@@ -108,14 +109,17 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
     if temp_prior is None or p_dict['replace_entries']:
 
         # Make bootstrapper
-        bootstrapper = bs.bootstrapper(fit_data, prior=None, **p_dict)
+        bootstrapper = bs.bootstrapper(fit_data, phys_point_data, prior=temp_prior, **p_dict)
 
         new_prior = bootstrapper.create_prior_from_fit()
         data_loader.save_prior(new_prior, bootstrapper.get_name())
 
         if p_dict['save_results']:
-            data_loader.save_fit_info(bootstrapper.get_fit_info(),
-                                      output_name=p_dict['output_name'], save_pickles=p_dict['save_pickles'])
+            data_loader.save_fit_info(
+                bootstrapper.get_fit_info(),
+                output_name=p_dict['output_name'],
+                save_pickles=p_dict['save_pickles']
+            )
 
     t1 = time.time()
 

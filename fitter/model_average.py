@@ -191,11 +191,15 @@ class model_average(object):
 
             return [expct_y, np.sqrt(var_model), np.sqrt(var_selection)]
 
-    def fitfcn(self, name, data, p=None):
-        model_info = self._get_model_info_from_name(name)
+    def extrapolate_to_phys_point(self, model):
+        data = self._get_phys_point_data(model)
+        return self.fitfcn(model, data)
+
+    def fitfcn(self, model, data, p=None):
+        model_info = self._get_model_info_from_name(model)
 
         if p is None:
-            p = self._get_fit_parameters(name)
+            p = self._get_fit_parameters(model)
 
         order = {
             'fit' : model_info['order'],
