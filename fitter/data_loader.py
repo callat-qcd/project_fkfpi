@@ -40,8 +40,7 @@ class data_loader(object):
         for key in fit_info['phys_point'].keys():
             print(key)
             # gvar can't handle integers -- entries not in correlation matrix
-            if key not in ['a/w0', 'a', 'L', 'alpha_s', 'a2DI']:
-                output['phys_point:'+key] = fit_info['phys_point'][key]
+            output['phys_point:'+key] = fit_info['phys_point'][key]
 
         gv.dump(output, filename)
         return None
@@ -97,10 +96,6 @@ class data_loader(object):
                     elif key.startswith('phys_point'):
                         fit_info[model]['phys_point'][key.split(':')[-1]] = fit_info_model[key]
 
-                for key in ['a/w0', 'a', 'L', 'alpha_s', 'a2DI']:
-                    fit_info[model]['phys_point'][key] = self.get_phys_point_data(key)
-
-
             return fit_info
 
         # Alternatively, read info from csv file.
@@ -129,16 +124,16 @@ class data_loader(object):
 
     def get_phys_point_data(self, parameter=None):
         phys_point_data = {
-            'a/w0' : 0,
-            'a' : 0,
-            'L' : np.infty,
-            'alpha_s' : 0, # Not sure, but not important since it comes with a^2
+            'a/w0' : gv.gvar(0),
+            'a' : gv.gvar(0),
+            'L' : gv.gvar(np.infty),
+            'alpha_s' : gv.gvar(0), # Not sure, but not important since it comes with a^2
 
             'mpi' : gv.gvar('134.8(3)'), # '138.05638(37)'
             'mk' : gv.gvar('494.2(3)'), # '495.6479(92)'
             'mss' : gv.gvar('688.5(2.2)'), # Taken from arxiv/1303.1670
 
-            'a2DI' : 0,
+            'a2DI' : gv.gvar(0),
             'Fpi' : gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2)), # PDG
             'FK' : gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2)), # PDG
             'w0' : gv.gvar('0.175(10)'),
@@ -168,7 +163,7 @@ class data_loader(object):
         phys_point_data['lam2_chi_pipi'] = (4*np.pi)**2 *Fpi *Fpi
         phys_point_data['lam2_chi_kk'] = (4*np.pi)**2 *FK *FK
         phys_point_data['lam2_chi_00'] = (4*np.pi)**2 *(gv.gvar('131.5(0.1)') / np.sqrt(2))**2
-        
+
         if parameter is None:
             return phys_point_data
         else:
