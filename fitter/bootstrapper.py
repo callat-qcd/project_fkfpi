@@ -441,6 +441,43 @@ class bootstrapper(object):
         )
         return delta
 
+    def get_error_budget(self, print_budget=False):
+        output = {}
+
+        fit_info = self.get_fit_info()
+        fk_fpi = fit_info['FK/Fpi']
+
+        inputs = {}
+        inputs.update(fit_info['prior'])
+        output['disc'] = fk_fpi.partialsdev([fit_info['prior'][key]
+                                             for key in ['A_a', 'A_aa', 'A_loga'] if key in fit_info['prior']])
+        output['chiral'] = fk_fpi.partialsdev([fit_info['prior'][key]
+                                               for key in (set(fit_info['prior']) - set(['A_a', 'A_aa', 'A_loga']))])
+
+        phys_point = {}
+        phys_point['mpi'] = fit_info['phys_point']['mpi']
+        phys_point['mk'] = fit_info['phys_point']['mk']
+        phys_point['lam2_chi'] = fit_info['phys_point']['lam2_chi']
+        inputs.update(phys_point)
+        output['pp_input'] = fk_fpi.partialsdev(phys_point)
+
+
+        # Since the input data is correlated,
+        # we only need to use a single variable as a proxy
+        # for all of the variables; we use 'lam2_chi'
+        prior = self.get_fit().prior
+        input_data = {}
+        input_data['input_data'] = prior['lam2_chi']
+        inputs.update(input_data)
+        output['stat'] = fk_fpi.partialsdev(input_data)
+
+
+        if print_budget:
+            print('FK/Fpi =', fit_info['FK/Fpi'], '\n')
+            print(gv.fmt_errorbudget(outputs={'FK/Fpi' : fk_fpi}, inputs=inputs, percent=False, ndecimal=5, verify=True))
+
+        return output
+
     def get_fit(self):
         if self.fits is None:
             self.bootstrap_fits()
