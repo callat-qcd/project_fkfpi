@@ -884,7 +884,7 @@ class Fit(object):
         dy = np.array([k.sdev for k in y_plot['m135']])
 
         ax.fill_between(x_plot, y-dy, y+dy, color='#b36ae2', alpha=0.4)
-        if 's_6' in p:
+        if 's_6' in p and False:
             y_a2  = np.array([k.mean for k in y_plot['a2']])
             dy_a2 = np.array([k.sdev for k in y_plot['a2']])
             y_a4  = np.array([k.mean for k in y_plot['a4']])

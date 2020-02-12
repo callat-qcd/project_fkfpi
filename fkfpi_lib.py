@@ -177,12 +177,12 @@ def format_h5_data(switches,data):
             fkfpi = data_dict['FK']/data_dict['Fpi']
             print('  FK/Fpi = %.5f +- %.5f' %(fkfpi.mean(),fkfpi.std()))
         # HACK
-        if False:
+        if True:
             if ens == 'a06m310L':
                 for f in ['FK','Fpi']:
                     ff = data_dict[f]
                     df = ff - ff.mean()
-                    df = df / 10
+                    df = df / 3
                     ff = ff.mean() + df
                     data_dict[f] = ff
 
@@ -353,10 +353,10 @@ def plot_data(ax,e,x,y,offset=False, raw=False):
     colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9', 'a06':'#00FFFF'}
     shapes = {'m400':'h', 'm350':'p', 'm310':'s', 'm220':'^', 'm130':'o', 'm135':'*'}
     labels = {
-        'a15m400':'', 'a15m350':'', 'a15m310':'', 'a15m220':'','a15m135XL':'a15',
-        'a12m400':'', 'a12m350':'', 'a12m310':'', 'a12m220':'', 'a12m130':'a12',
+        'a15m400':'', 'a15m350':'', 'a15m310':'a15', 'a15m220':'','a15m135XL':'',
+        'a12m400':'', 'a12m350':'', 'a12m310':'a12', 'a12m220':'', 'a12m130':'',
         'a12m220L':'', 'a12m220S':'',
-        'a09m400':'', 'a09m350':'', 'a09m310':'', 'a09m220':'a09',
+        'a09m400':'', 'a09m350':'', 'a09m310':'a09', 'a09m220':'',
         'a06m310L':'a06',
         }
     dx_cont = {
@@ -382,9 +382,70 @@ def plot_data(ax,e,x,y,offset=False, raw=False):
 
     return ax
 
+def checkIfDuplicates_1(listOfElems):
+    ''' Check if given list contains any duplicates '''
+    if len(listOfElems) == len(set(listOfElems)):
+        return False
+    else:
+        return True
+
+def sys_models(switches):
+    def check_model(sys_val,models,nnlo=False,nnnlo=False):
+        for model in models:
+            new_model = model+sys_val
+            if nnlo:
+                if (sys_val not in model) and (new_model not in models):
+                    if nnnlo:
+                        if 'nnlo' in model and 'nnnlo' not in model:
+                            models.append(new_model)
+                    else:
+                        if 'nnlo' in model:
+                            models.append(new_model)
+            else:
+                if (sys_val not in model) and (new_model not in models):
+                    models.append(new_model)
+        #return models
+    models = switches['ansatz']['models'].copy()
+    #print(len(models),'models')
+    if switches['sys']['FV']:
+        check_model('_FV',models)
+    if switches['sys']['alphaS']:
+        check_model('_alphaS',models,nnlo=True)
+    if switches['sys']['nnlo_ct']:
+        check_model('_ct',models,nnlo=True)
+    if switches['sys']['logSq']:
+        check_model('_logSq',models,nnlo=True)
+    if switches['sys']['a4']:
+        check_model('_a4',models,nnlo=True,nnnlo=True)
+    if switches['sys']['ratio']:
+        for model in models:
+            model_ratio = model.replace('xpt','xpt-ratio').replace('ma','ma-ratio')
+            if '-ratio' not in model and model_ratio not in models:
+                models.append(model_ratio)
+    models_FPK = []
+    for model in models:
+        if switches['sys']['Lam_chi']:
+            for FPK in switches['scales']:
+                models_FPK.append(model+'_'+FPK)
+        else:
+            models_FPK.append(model+'_'+switches['scale'])
+    if switches['debug_models']:
+        for model in models_FPK:
+            print(model)
+    print(len(models_FPK),'models')
+    print('Duplicate models?',checkIfDuplicates_1(models_FPK))
+    return models_FPK
+
 def perform_analysis(switches,gv_data,priors,phys_point):
     fit_results = dict()
-    for base_model in switches['ansatz']['models']:
+    print('\nSetting up all models')
+    models = sys_models(switches)
+    switches['ansatz']['models'] = models
+    for model in models:
+        FPK = model.split('_')[-1]
+        switches['scale'] = FPK
+        switches['ansatz']['model'] = model
+
         if switches['optimized_priors']:
             if not os.path.exists('data/saved_prior_search.yaml'):
                 print('ERROR: you asked for optimized priors but')
@@ -393,110 +454,109 @@ def perform_analysis(switches,gv_data,priors,phys_point):
                 sys.exit()
             with open('data/saved_prior_search.yaml','r') as fin:
                 prior_grid = yaml.safe_load(fin.read())
-        for FPK in switches['scales']:
-            model = base_model +'_'+FPK
-            switches['scale'] = FPK
-            switches['ansatz']['model'] = model
-            print('EFT: ',model)
-            x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
-            y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
-            p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
-            do_fit = False
-            if switches['optimized_priors']:
-                p_fit = model+'_optimized_priors'
-            else:
-                p_fit = model
-            if switches['save_fits']:
-                if os.path.exists('pickled_fits/'+p_fit+'.p'):
-                    pickeld_fit = read_fit(p_fit)
-                    fit_p = xpt.Fit(switches,xyp_init={'x':x_e,'y':y_e,'p':p_e})
-                    fit_p.fit = PickledFit(pickeld_fit)
-                    fit_results[model] = fit_p
-                else:
-                    do_fit = True
+
+        print('EFT: ',model)
+        x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+        y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+        p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+        do_fit = False
+        if switches['optimized_priors']:
+            p_fit = model+'_optimized_priors'
+        else:
+            p_fit = model
+        if switches['save_fits']:
+            if os.path.exists('pickled_fits/'+p_fit+'.p'):
+                pickeld_fit = read_fit(p_fit)
+                fit_p = xpt.Fit(switches,xyp_init={'x':x_e,'y':y_e,'p':p_e})
+                fit_p.fit = PickledFit(pickeld_fit)
+                fit_results[model] = fit_p
             else:
                 do_fit = True
-            if do_fit or switches['debug_save_fit']:
-                for key in priors:
-                    p_e[key] = priors[key]
-                if switches['optimized_priors']:
-                    df = pd.DataFrame(prior_grid[model])
-                    sp_max = df.stack().idxmax()
-                    print('      setting prior widths:')
-                    print('      (s_4, saS_4) = %s; (p_4, k_4) = %s' %(sp_max[0],sp_max[1]))
-                    for key in ['s_4','saS_4']:
-                        if key in p_e:
-                            p_e[key] = gv.gvar(0,float(sp_max[0]))
-                    for key in ['p_4','k_4']:
-                        if key in p_e:
-                            p_e[key] = gv.gvar(0,float(sp_max[1]))
-                else:
-                    print('      using default prior widths')
-                d_e = dict()
-                d_e['x'] = x_e
-                d_e['y'] = y_e
-                d_e['p'] = p_e
-                fit_e = xpt.Fit(switches,xyp_init=d_e)
-                fit_e.fit_data()
-                fit_results[model] = fit_e
-                if switches['save_fits']:
-                    pickle_fit(p_fit,fit_e)
-                else:
-                    fit_p = fit_e
+        else:
+            do_fit = True
+        if do_fit or switches['debug_save_fit']:
+            for key in priors:
+                p_e[key] = priors[key]
+            if switches['optimized_priors']:
+                df = pd.DataFrame(prior_grid[model])
+                sp_max = df.stack().idxmax()
+                print('      setting prior widths:')
+                print('      (s_4, saS_4) = %s; (p_4, k_4) = %s' %(sp_max[0],sp_max[1]))
+                for key in ['s_4','saS_4']:
+                    if key in p_e:
+                        p_e[key] = gv.gvar(0,float(sp_max[0]))
+                for key in ['p_4','k_4']:
+                    if key in p_e:
+                        p_e[key] = gv.gvar(0,float(sp_max[1]))
+            else:
+                print('      using default prior widths')
+            d_e = dict()
+            d_e['x'] = x_e
+            d_e['y'] = y_e
+            d_e['p'] = p_e
+            fit_e = xpt.Fit(switches,xyp_init=d_e)
+            fit_e.fit_data()
+            fit_results[model] = fit_e
+            if switches['save_fits']:
+                pickle_fit(p_fit,fit_e)
+            else:
+                fit_p = fit_e
 
-            if switches['debug_save_fit'] and not do_fit:
-                print('live fit   : FK/Fpi = ',fit_e.report_phys_point(phys_point)['phys'])
-                print({k:fit_e.fit.prior[k] for k in switches['LECs'] if k in fit_e.fit.prior})
-                print('pickled fit: FK/Fpi = ',fit_p.report_phys_point(phys_point)['phys'])
-                print({k:fit_p.fit.prior[k] for k in switches['LECs'] if k in fit_p.fit.prior})
+        if switches['debug_save_fit'] and not do_fit:
+            print('live fit   : FK/Fpi = ',fit_e.report_phys_point(phys_point)['phys'])
+            print({k:fit_e.fit.prior[k] for k in switches['LECs'] if k in fit_e.fit.prior})
+            print('pickled fit: FK/Fpi = ',fit_p.report_phys_point(phys_point)['phys'])
+            print({k:fit_p.fit.prior[k] for k in switches['LECs'] if k in fit_p.fit.prior})
 
-            if not do_fit:
-                fit_e = fit_p
-            print('FK/Fpi = ',fit_e.report_phys_point(phys_point)['phys'])
-            if switches['print_fit'] and do_fit:
-                print(fit_e.fit.format(maxline=True))
-            if switches['debug_phys']:
-                fit_e.report_phys_point(phys_point)['phys']
+        if not do_fit:
+            fit_e = fit_p
+        print('FK/Fpi = ',fit_e.report_phys_point(phys_point)['phys'])
+        if switches['print_fit'] and do_fit:
+            print(fit_e.fit.format(maxline=True))
+        if switches['debug_phys']:
+            fit_e.report_phys_point(phys_point)['phys']
 
     return fit_results
 
 def plot_continuum(fit_results,switches,phys_point):
-    for base_model in switches['ansatz']['models']:
-        for FPK in switches['scales']:
-            model = base_model +'_'+FPK
-            switches['scale'] = FPK
-            switches['ansatz']['model'] = model
-            if base_model in ['xpt_nnlo_FV','xpt_nnlo_FV_a4', 'xpt_nlo_FV_a4']:
-                fit = fit_results[model]
-                ea_range = dict()
-                ea_range['Lchi'] = phys_point['Lchi_'+FPK]
-                ea_range['mpi']  = phys_point['mpi']
-                ea_range['mk']   = phys_point['mk']
-                ea_range['a']    = np.sqrt(np.arange(0,.16**2,.16**2/50))
-                ea_range['w0']   = phys_point['w0']
+    for model in switches['ansatz']['models']:
+        FPK = model.split('_')[-1]
+        base_model = model.strip('_'+FPK)
+        switches['scale'] = FPK
+        switches['ansatz']['model'] = model
+        if model in ['xpt_nnlo_FV','xpt_nnlo_FV_a4', 'xpt_nlo_FV_a4']:
+            fit = fit_results[model]
+            ea_range = dict()
+            ea_range['Lchi'] = phys_point['Lchi_'+FPK]
+            ea_range['mpi']  = phys_point['mpi']
+            ea_range['mk']   = phys_point['mk']
+            ea_range['a']    = np.sqrt(np.arange(0,.16**2,.16**2/50))
+            ea_range['w0']   = phys_point['w0']
 
-                fig_vs_ea = plt.figure('FKFpi_vs_ea_'+model)
-                ax = plt.axes([.12, .12, .85, .85])
-                #print(fit_e.fit.format(maxline=True))
-                ax = fit.vs_ea(ea_range, ax)
-                # add data
-                y_shift = fit.shift_phys_mass(phys_point)
-                for e in switches['ensembles_fit']:
-                    x = fit.fit.p[(e,'a2')]
-                    y = fit.y[e] + y_shift[e]
-                    #print(e,y_e[e],y_shift[e])
-                    ax = plot_data(ax, e, x, y, offset='cont')
-                    if switches['plot_raw_data']:
-                        ax = plot_data(ax, e, x, fit.y[e], raw=True)
-                ax.legend(ncol=4)
-                ax.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=16)
-                ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
-                ax.set_xlim(0,.065)
+            fig_vs_ea = plt.figure('FKFpi_vs_ea_'+model)
+            ax = plt.axes([.12, .12, .85, .85])
+            #print(fit_e.fit.format(maxline=True))
+            ax = fit.vs_ea(ea_range, ax)
+            # add data
+            y_shift = fit.shift_phys_mass(phys_point)
+            for e in switches['ensembles_fit']:
+                x = fit.fit.p[(e,'a2')]
+                y = fit.y[e] + y_shift[e]
+                #print(e,y_e[e],y_shift[e])
+                ax = plot_data(ax, e, x, y, offset='cont')
                 if switches['plot_raw_data']:
-                    ax.set_ylim(1.09, 1.205)
-                else:
-                    ax.set_ylim(1.135, 1.205)
-                plt.savefig('figures/vs_epasq_'+model+'.pdf',transparent=True)
+                    ax = plot_data(ax, e, x, fit.y[e], raw=True)
+            handles, labels = ax.get_legend_handles_labels()
+            labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
+            ax.legend(handles, labels, ncol=4)
+            ax.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=16)
+            ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
+            ax.set_xlim(0,.065)
+            if switches['plot_raw_data']:
+                ax.set_ylim(1.09, 1.205)
+            else:
+                ax.set_ylim(1.135, 1.205)
+            plt.savefig('figures/vs_epasq_'+model+'.pdf',transparent=True)
 
 
 def model_average(fit_results,switches,phys_point):
@@ -564,7 +624,7 @@ def bayes_model_avg(switches,results,phys_point):
     pdf_pp      = 0
     pdf_pk      = 0
     pdf_kk      = 0
-    x = np.arange(1.15,1.2101,.0001)
+    x = np.arange(1.15,1.2301,.0001)
     for model in results:
         logGBF_list.append(results[model].fit.logGBF)
         FPK=model.split('_')[-1]
@@ -642,7 +702,7 @@ def bayes_model_avg(switches,results,phys_point):
     ax.fill_between(x=x,y1=pdf_kk,color='b',alpha=0.6,label=r'$F^2 \rightarrow F_K^2$')
     ax.fill_between(x=x,y1=pdf_pk,color='g',alpha=0.6,label=r'$F^2 \rightarrow F_\pi F_K$')
     ax.fill_between(x=x,y1=pdf_pp,color='r',alpha=0.6,label=r'$F^2 \rightarrow F_\pi^2$')
-    ax.set_xlim([1.1575,1.2075])
+    ax.set_xlim([1.1675,1.2275])
     ax.set_ylim(ymin=0)
     ax.set_xlabel(r'$F_K / F_\pi$',fontsize=16)
     ax.legend()
@@ -711,116 +771,115 @@ def bma(switches,result,isospin):
     return error, plot_params
 
 def nnlo_prior_scan(switches,priors):
-    for base_model in switches['ansatz']['models']:
-        for FPK in switches['scales']:
-            if os.path.exists('data/saved_prior_search.yaml'):
-                with open('data/saved_prior_search.yaml','r') as fin:
-                    prior_grid = yaml.safe_load(fin.read())
-                shutil.copyfile('data/saved_prior_search.yaml','data/saved_prior_search.yaml.bak')
-            else:
-                prior_grid = dict()
-            model = base_model +'_'+FPK
-            switches['scale'] = FPK
-            switches['ansatz']['model'] = model
-            print('Prior width study: ',model)
+    for model in switches['ansatz']['models']:
+        FPK = model.split('_')[-1]
+        if os.path.exists('data/saved_prior_search.yaml'):
+            with open('data/saved_prior_search.yaml','r') as fin:
+                prior_grid = yaml.safe_load(fin.read())
+            shutil.copyfile('data/saved_prior_search.yaml','data/saved_prior_search.yaml.bak')
+        else:
+            prior_grid = dict()
+        switches['scale'] = FPK
+        switches['ansatz']['model'] = model
+        print('Prior width study: ',model)
 
-            logGBF_array = []
+        logGBF_array = []
 
-            if model not in prior_grid:
-                prior_grid[model] = dict()
-            x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
-            y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
-            p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
-            for key in priors:
-                p_e[key] = priors[key]
-            d_e = dict()
-            d_e['x'] = x_e
-            d_e['y'] = y_e
+        if model not in prior_grid:
+            prior_grid[model] = dict()
+        x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
+        y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
+        p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+        for key in priors:
+            p_e[key] = priors[key]
+        d_e = dict()
+        d_e['x'] = x_e
+        d_e['y'] = y_e
 
-            if switches['prior_group']:
-                p_range = priors['p_range']
-                a_range = priors['a_range']
-                if switches['refine_prior'] and len(prior_grid[model]) > 0:
-                    df = pd.DataFrame(prior_grid[model])
-                    print('    maximum logGBF = %.4f' %(df.stack().max()))
-                    sp_max = df.stack().idxmax()
-                    print('    (s_4, p_4) = ', sp_max[0],sp_max[1])
-                    new_s = []
-                    sf = float("%.1f" %float(sp_max[0]))
-                    for i in np.arange(sf-0.5,sf+0.5,.1):
-                        ii = float("%.1f" %i)
-                        if ii not in a_range and ii > 0.:
-                            new_s.append(ii)
-                    new_s = np.array(new_s)
-                    a_range = np.concatenate((a_range,new_s))
-                    new_p = []
-                    pf = float(sp_max[1])
-                    for i in np.arange(pf-0.5,pf+0.5,.1):
-                        ii = float("%.1f" %i)
-                        if ii not in p_range and ii > 0.:
-                            new_p.append(ii)
-                    new_p = np.array(new_p)
-                    p_range = np.concatenate((p_range,new_p))
-                    print(a_range)
-                    print(p_range)
-                    #sys.exit()
-                z = np.zeros([len(a_range),len(p_range)])
-                tot = len(a_range) * len(p_range)
-                i_t = 0
-                for i_s,s4 in enumerate(a_range):
-                    s4_s = str(s4)
-                    if s4_s not in prior_grid[model]:
-                        prior_grid[model][s4_s] = dict()
-                    p_e['s_4']   = gv.gvar(0,s4)
-                    if 'alphaS' in model:
-                        p_e['saS_4'] = gv.gvar(0,s4)
-                    for i_p,p4 in enumerate(p_range):
-                        p4_s = str(p4)
-                        sys.stdout.write('%4d out of %d, s_4 = %s p_4 = %s\r' %(i_t,tot,s4_s,p4_s))
-                        sys.stdout.flush()
-                        if p4_s not in prior_grid[model][s4_s]:
-                            p_e['p_4'] = gv.gvar(0,p4)
-                            p_e['k_4'] = gv.gvar(0,p4)
-                            d_e['p'] = p_e
-                            fit_e = xpt.Fit(switches,xyp_init=d_e)
-                            fit_e.fit_data()
-                            tmp = [ p_e[k].sdev for k in ['p_4','s_4'] ]
-                            tmp.append(fit_e.fit.logGBF)
-                            logGBF_array.append(tmp)
-                            prior_grid[model][s4_s][p4_s] = float(fit_e.fit.logGBF)
-                            i_t += 1
-                            z[i_s,i_p] = fit_e.fit.logGBF
-                        else:
-                            tmp = [ p4, s4 ]
-                            tmp.append(prior_grid[model][s4_s][p4_s])
-                            logGBF_array.append(tmp)
-                            i_t += 1
-                            z[i_s,i_p] = prior_grid[model][s4_s][p4_s]
-            else:
-                print('individual prior width study not supported [yet]')
+        if switches['prior_group']:
+            p_range = priors['p_range']
+            a_range = priors['a_range']
+            if switches['refine_prior'] and len(prior_grid[model]) > 0:
+                df = pd.DataFrame(prior_grid[model])
+                print('    maximum logGBF = %.4f' %(df.stack().max()))
+                sp_max = df.stack().idxmax()
+                print('    (s_4, p_4) = ', sp_max[0],sp_max[1])
+                new_s = []
+                sf = float("%.1f" %float(sp_max[0]))
+                for i in np.arange(sf-0.5,sf+0.5,.1):
+                    ii = float("%.1f" %i)
+                    if ii not in a_range and ii > 0.:
+                        new_s.append(ii)
+                new_s = np.array(new_s)
+                a_range = np.concatenate((a_range,new_s))
+                new_p = []
+                pf = float(sp_max[1])
+                for i in np.arange(pf-0.5,pf+0.5,.1):
+                    ii = float("%.1f" %i)
+                    if ii not in p_range and ii > 0.:
+                        new_p.append(ii)
+                new_p = np.array(new_p)
+                p_range = np.concatenate((p_range,new_p))
+                print(a_range)
+                print(p_range)
+                #sys.exit()
+            z = np.zeros([len(a_range),len(p_range)])
+            tot = len(a_range) * len(p_range)
+            i_t = 0
+            for i_s,s4 in enumerate(a_range):
+                s4_s = str(s4)
+                if s4_s not in prior_grid[model]:
+                    prior_grid[model][s4_s] = dict()
+                p_e['s_4']   = gv.gvar(0,s4)
+                if 'alphaS' in model:
+                    p_e['saS_4'] = gv.gvar(0,s4)
+                for i_p,p4 in enumerate(p_range):
+                    p4_s = str(p4)
+                    sys.stdout.write('%4d out of %d, s_4 = %s p_4 = %s\r' %(i_t,tot,s4_s,p4_s))
+                    sys.stdout.flush()
+                    if p4_s not in prior_grid[model][s4_s]:
+                        p_e['p_4'] = gv.gvar(0,p4)
+                        p_e['k_4'] = gv.gvar(0,p4)
+                        d_e['p'] = p_e
+                        fit_e = xpt.Fit(switches,xyp_init=d_e)
+                        fit_e.fit_data()
+                        tmp = [ p_e[k].sdev for k in ['p_4','s_4'] ]
+                        tmp.append(fit_e.fit.logGBF)
+                        logGBF_array.append(tmp)
+                        prior_grid[model][s4_s][p4_s] = float(fit_e.fit.logGBF)
+                        i_t += 1
+                        z[i_s,i_p] = fit_e.fit.logGBF
+                    else:
+                        tmp = [ p4, s4 ]
+                        tmp.append(prior_grid[model][s4_s][p4_s])
+                        logGBF_array.append(tmp)
+                        i_t += 1
+                        z[i_s,i_p] = prior_grid[model][s4_s][p4_s]
+        else:
+            print('individual prior width study not supported [yet]')
 
-            df = pd.DataFrame(prior_grid[model])
-            print('    maximum logGBF', df.stack().max())
-            sp_max = df.stack().idxmax()
-            print('    (s_4, p_4) = ', sp_max[0],sp_max[1])
-            logGBF_array = np.array(logGBF_array)
-            logGBF_max = np.argmax(logGBF_array[:,-1])
-            print('optimal prior widths for %s' %model)
-            logGBF_optimal = logGBF_array[logGBF_max]
-            tmp = ''
-            for i_k,k in enumerate(['p_4','s_4']):
-                tmp += '%s = %.2f ' %(k,logGBF_optimal[i_k])
-            print(tmp,'logGBF = %.4f\n' %(logGBF_optimal[-1]))
+        df = pd.DataFrame(prior_grid[model])
+        print('    maximum logGBF', df.stack().max())
+        sp_max = df.stack().idxmax()
+        print('    (s_4, p_4) = ', sp_max[0],sp_max[1])
+        logGBF_array = np.array(logGBF_array)
+        logGBF_max = np.argmax(logGBF_array[:,-1])
+        print('optimal prior widths for %s' %model)
+        logGBF_optimal = logGBF_array[logGBF_max]
+        tmp = ''
+        for i_k,k in enumerate(['p_4','s_4']):
+            tmp += '%s = %.2f ' %(k,logGBF_optimal[i_k])
+        print(tmp,'logGBF = %.4f\n' %(logGBF_optimal[-1]))
 
-            lgbf = logGBF_array[:,-1]
-            w = np.exp(lgbf - logGBF_optimal[-1])
-            #w = w / w.sum()
-            logGBF_w = np.copy(logGBF_array)
-            logGBF_w[:,-1] = w
+        lgbf = logGBF_array[:,-1]
+        w = np.exp(lgbf - logGBF_optimal[-1])
+        #w = w / w.sum()
+        logGBF_w = np.copy(logGBF_array)
+        logGBF_w[:,-1] = w
 
-            prior_file = open('data/saved_prior_search.yaml', 'w')
-            yaml.dump(prior_grid, prior_file)
-            prior_file.close()
+        prior_file = open('data/saved_prior_search.yaml', 'w')
+        yaml.dump(prior_grid, prior_file)
+        prior_file.close()
 
 
     sys.exit()
