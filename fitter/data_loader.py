@@ -32,7 +32,7 @@ class data_loader(object):
         for key in fit_info['prior'].keys():
             output['prior:'+key] = fit_info['prior'][key]
 
-            output[key] = [fit_info['prior'][key], fit_info['posterior'][key]]
+            #output[key] = [fit_info['prior'][key], fit_info['posterior'][key]]
 
         for key in fit_info['posterior'].keys():
             output['posterior:'+key] = fit_info['posterior'][key]
