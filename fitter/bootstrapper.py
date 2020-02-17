@@ -9,10 +9,13 @@ import re
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 import os
 
-from .fitter import fitter
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+#from .fitter import fitter
+#sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import fitter.fitter as fit
+import fitter.special_functions as sf
+#sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 #import fitter
-import special_functions as sf
+#import special_functions as sf
 
 class bootstrapper(object):
 
@@ -275,14 +278,14 @@ class bootstrapper(object):
         prepped_data = self._make_fit_data(j)
         # Need to randomize prior in bayesian-bootstrap hybrid
         temp_prior = self._randomize_prior(self.prior, j)
-        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
+        temp_fitter = fit.fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
                         order=self.order, fit_type=self.fit_type, fast_sunset=self.fast_sunset)
         return temp_fitter.get_fit()
 
     def _make_empbayes_fit(self):
         prepped_data = self._make_fit_data(0)
         temp_prior = self._randomize_prior(self.prior, 0)
-        temp_fitter = fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
+        temp_fitter = fit.fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
                         order=self.order, fit_type=self.fit_type, fast_sunset=self.fast_sunset)
 
         empbayes_fit = temp_fitter.get_empbayes_fit()
@@ -402,7 +405,7 @@ class bootstrapper(object):
         elif fit_type in ['ma-ratio', 'xpt-ratio']:
             fit_type = 'xpt-ratio'
 
-        model = fitter(order=self.order, fit_type=fit_type, F2=self.F2, fast_sunset=self.fast_sunset)._make_models()[0]
+        model = fit.fitter(order=self.order, fit_type=fit_type, F2=self.F2, fast_sunset=self.fast_sunset)._make_models()[0]
         return model.fitfcn(p=fit_parameters, fit_data=fit_data, debug=debug)
 
     # Returns dictionary with keys fit parameters, entries bs results

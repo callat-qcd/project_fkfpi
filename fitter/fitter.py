@@ -4,8 +4,8 @@ import gvar as gv
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-import special_functions as sf
+#sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import fitter.special_functions as sf
 
 class fitter(object):
 

@@ -9,7 +9,7 @@ import sys
 import scipy.stats as stats
 from collections import OrderedDict
 
-from .fitter import fk_fpi_model
+import fitter.fk_fpi_model
 
 class model_average(object):
     def __init__(self, fit_results):
