@@ -158,6 +158,12 @@ class model_average(object):
             elif param in self._get_fit_posterior(model):
                 y[model] =  self._get_fit_posterior(model)[param]
 
+            elif param in self.fit_results[model]:
+                y[model] = self.fit_results[model][param]
+
+            else:
+                return None
+
 
         # Only get results that aren't None
         nonempty_keys = []
@@ -202,9 +208,6 @@ class model_average(object):
             var_selection -= (expct_y)**2
 
             return [expct_y, np.sqrt(var_model), np.sqrt(var_selection)]
-
-
-    average(model_average)
 
     def extrapolate_to_phys_point(self, model):
         data = self._get_phys_point_data(model)
