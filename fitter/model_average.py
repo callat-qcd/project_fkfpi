@@ -9,7 +9,7 @@ import sys
 import scipy.stats as stats
 from collections import OrderedDict
 
-import fitter.fk_fpi_model
+import fitter.fitter as fit
 
 class model_average(object):
     def __init__(self, fit_results):
@@ -72,13 +72,16 @@ class model_average(object):
 
         return output_dict
 
-    def _get_fit_parameters(self, name):
-        return self.fit_results[name]['posterior']
+    def _get_fit_extrapolation(self, model):
+        return self.fit_results[model]['FK/Fpi']
 
-    def _get_fit_prior(self, name):
-        return self.fit_results[name]['prior']
+    def _get_fit_posterior(self, model):
+        return self.fit_results[model]['posterior']
 
-    def _get_phys_point_data(self, name=None):
+    def _get_fit_prior(self, model):
+        return self.fit_results[model]['prior']
+
+    def _get_phys_point_data(self, model=None):
         phys_point_data = {
             'a/w0' : 0,
             'a' : 0,
@@ -96,8 +99,8 @@ class model_average(object):
             'FK/Fpi_pm' : gv.gvar('1.1932(19)'), # FLAG, SU(2) isospin corrected value (arxiv/1902.08191, eqn 80)
         }
 
-        if name is not None:
-            model_info = self._get_model_info_from_name(name)
+        if model is not None:
+            model_info = self._get_model_info_from_name(model)
 
             FK = phys_point_data['FK']
             Fpi = phys_point_data['Fpi']
@@ -142,18 +145,24 @@ class model_average(object):
         else:
             return param
 
-    def average(self, param=None, split_unc=None):
+    def average(self, param=None, split_unc=False, include_unc=True):
         if param is None:
             param = 'FK/Fpi'
 
-        if split_unc is None:
-            split_unc == False
+        y = {}
+        for model in self.get_model_names():
+
+            if param == 'FK/Fpi':
+                y[model] = self._get_fit_extrapolation(model)
+
+            elif param in self._get_fit_posterior(model):
+                y[model] =  self._get_fit_posterior(model)[param]
 
 
         # Only get results that aren't None
         nonempty_keys = []
-        for model in self.fit_results.keys():
-            if (self.fit_results[model][param] is not np.nan) and (self.fit_results[model][param] is not None):
+        for model in self.get_model_names():
+            if (y[model] is not np.nan) and (y[model]is not None):
                 nonempty_keys.append(model)
 
         # calculate P( M_k | D )
@@ -164,15 +173,18 @@ class model_average(object):
         # Get central value
         expct_y = 0
         for model in nonempty_keys:
-            expct_y += gv.mean(gv.gvar(self.fit_results[model][param])) *prob_Mk_given_D(model)
+            expct_y += gv.mean(gv.gvar(y[model])) *prob_Mk_given_D(model)
+
+        if not include_unc:
+            return expct_y
 
         # Get variance
         if not split_unc:
             var_y = 0
             for model in nonempty_keys:
-                var_y += gv.var(gv.gvar(self.fit_results[model][param])) *prob_Mk_given_D(model)
+                var_y += gv.var(gv.gvar(y[model])) *prob_Mk_given_D(model)
             for model in nonempty_keys:
-                var_y += (gv.mean(gv.gvar(self.fit_results[model][param])))**2 *prob_Mk_given_D(model)
+                var_y += (gv.mean(gv.gvar(y[model])))**2 *prob_Mk_given_D(model)
 
             var_y -= (expct_y)**2
 
@@ -182,14 +194,17 @@ class model_average(object):
         if split_unc:
             var_model = 0
             for model in nonempty_keys:
-                var_model += gv.var(gv.gvar(self.fit_results[model][param])) *prob_Mk_given_D(model)
+                var_model += gv.var(gv.gvar(y[model])) *prob_Mk_given_D(model)
 
             var_selection = 0
             for model in nonempty_keys:
-                var_selection += (gv.mean(gv.gvar(self.fit_results[model][param])))**2 *prob_Mk_given_D(model)
+                var_selection += (gv.mean(gv.gvar(y[model])))**2 *prob_Mk_given_D(model)
             var_selection -= (expct_y)**2
 
             return [expct_y, np.sqrt(var_model), np.sqrt(var_selection)]
+
+
+    average(model_average)
 
     def extrapolate_to_phys_point(self, model):
         data = self._get_phys_point_data(model)
@@ -199,7 +214,7 @@ class model_average(object):
         model_info = self._get_model_info_from_name(model)
 
         if p is None:
-            p = self._get_fit_parameters(model)
+            p = self._get_fit_posterior(model)
 
         order = {
             'fit' : model_info['order'],
@@ -221,9 +236,9 @@ class model_average(object):
             order['vol'] = 10
 
         if model_info['base'] in ['xpt', 'ma']:
-            fitfcn = fk_fpi_model(datatag='xpt', fit_type='xpt', order=order, F2=model_info['F2']).fitfcn
+            fitfcn = fit.fk_fpi_model(datatag='xpt', fit_type='xpt', order=order, F2=model_info['F2']).fitfcn
         elif model_info['base'] in ['xpt-ratio', 'ma-ratio']:
-            fitfcn = fk_fpi_model(datatag='xpt-ratio', fit_type='xpt-ratio', order=order, F2=model_info['F2']).fitfcn
+            fitfcn = fit.fk_fpi_model(datatag='xpt-ratio', fit_type='xpt-ratio', order=order, F2=model_info['F2']).fitfcn
 
         return fitfcn(p=p, fit_data=data)
 
