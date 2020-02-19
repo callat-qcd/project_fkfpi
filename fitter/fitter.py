@@ -33,9 +33,9 @@ class fitter(object):
             # Don't bother with negative values (meaningless)
         # But for some reason, these restrictions (other than the last) cause empbayes_fit not to converge
         z['chiral'] = np.abs(z['chiral']) #np.max([np.abs(np.around(z['chiral'], 2)), 0.01])
-        z['spacing_n2lo'] = np.abs(z['spacing_n2lo']) #np.max([np.abs(np.around(z['spacing_n2lo'], 2)), 0.01]) #
-        if self.order['include_latt_n3lo']:
-            z['spacing_n3lo'] = np.abs(z['spacing_n3lo']) #np.max([np.abs(np.around(z['spacing_n3lo'], 2)), 0.01]) #
+        #z['spacing_n2lo'] = np.abs(z['spacing_n2lo']) #np.max([np.abs(np.around(z['spacing_n2lo'], 2)), 0.01]) #
+        #if self.order['include_latt_n3lo']:
+        #    z['spacing_n3lo'] = np.abs(z['spacing_n3lo']) #np.max([np.abs(np.around(z['spacing_n3lo'], 2)), 0.01]) #
 
         # Helps with convergence (minimizer doesn't use extra digits -- bug in lsqfit?)
         sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3)) # Round to 3 sig figs
@@ -46,10 +46,10 @@ class fitter(object):
         for key in prior.keys():
             if key in ['A_p', 'A_k']:
                 prior[key] = gv.gvar(0, 1) *z['chiral']
-            if key in ['A_loga', 'A_a']:
-                prior[key] = gv.gvar(0, 1) *z['spacing_n2lo']
-            if key in ['A_aa']:
-                prior[key] = gv.gvar(0, 1) *z['spacing_n3lo']
+            #if key in ['A_loga', 'A_a']:
+            #    prior[key] = gv.gvar(0, 1) *z['spacing_n2lo']
+            #if key in ['A_aa']:
+            #    prior[key] = gv.gvar(0, 1) *z['spacing_n3lo']
 
         self.counter['iters'] += 1
         fitfcn = self._make_models()[-1].fitfcn
@@ -64,9 +64,9 @@ class fitter(object):
 
         z0 = gv.BufferDict()
         z0['chiral'] = 1.0
-        z0['spacing_n2lo'] = 1.0
-        if self.order['include_latt_n3lo']:
-            z0['spacing_n3lo'] = 10.0
+        #z0['spacing_n2lo'] = 1.0
+        #if self.order['include_latt_n3lo']:
+        #    z0['spacing_n3lo'] = 10.0
 
 
         # Might need to change minargs default values for empbayes_fit to converge:
