@@ -31,16 +31,17 @@ class data_loader(object):
 
         for key in fit_info['prior'].keys():
             output['prior:'+key] = fit_info['prior'][key]
-
             #output[key] = [fit_info['prior'][key], fit_info['posterior'][key]]
 
         for key in fit_info['posterior'].keys():
             output['posterior:'+key] = fit_info['posterior'][key]
 
         for key in fit_info['phys_point'].keys():
-            print(key)
             # gvar can't handle integers -- entries not in correlation matrix
             output['phys_point:'+key] = fit_info['phys_point'][key]
+
+        for key in fit_info['error_budget']:
+            output['error_budget:'+key] = gv.gvar(fit_info['error_budget'][key])
 
         gv.dump(output, filename)
         return None
@@ -87,6 +88,7 @@ class data_loader(object):
                 fit_info[model]['prior'] = {}
                 fit_info[model]['posterior'] = {}
                 fit_info[model]['phys_point'] = {}
+                fit_info[model]['error_budget'] = {}
 
                 for key in fit_info_model.keys():
                     if key.startswith('prior'):
@@ -95,6 +97,8 @@ class data_loader(object):
                         fit_info[model]['posterior'][key.split(':')[-1]] = fit_info_model[key]
                     elif key.startswith('phys_point'):
                         fit_info[model]['phys_point'][key.split(':')[-1]] = fit_info_model[key]
+                    elif key.startswith('error_budget'):
+                        fit_info[model]['error_budget'][key.split(':')[-1]] = fit_info_model[key].mean
 
             return fit_info
 

@@ -237,7 +237,7 @@ class bootstrapper(object):
         output = output + '   (delta_su2 = %s)' %(self.get_delta_su2_correction())
         output = output + "\n\n"
 
-        fit_parameters = self.get_fit_parameters()
+        fit_parameters = self.get_posterior()
         new_table = { key : [fit_parameters[key], prior[key]] for key in sorted(fit_parameters.keys())}
 
         output = output + gv.tabulate(new_table, ncol=2, headers=['Parameter', 'Result[0] / Prior[1]'])
@@ -396,7 +396,7 @@ class bootstrapper(object):
         if fit_data is None:
             fit_data = self.get_phys_point_data()
         if fit_parameters is None:
-            fit_parameters = self.get_fit_parameters().copy()
+            fit_parameters = self.get_posterior().copy()
         if fit_type is None:
             fit_type = self.fit_type
 
@@ -447,20 +447,24 @@ class bootstrapper(object):
     def get_error_budget(self, print_budget=False):
         output = {}
 
-        fit_info = self.get_fit_info()
-        fk_fpi = fit_info['FK/Fpi']
+        fk_fpi = self.extrapolate_to_phys_point()
+        prior = self.get_prior()
+        posterior = self.get_posterior()
+        phys_point_data = self.get_phys_point_data()
 
         inputs = {}
-        inputs.update(fit_info['prior'])
-        output['disc'] = fk_fpi.partialsdev([fit_info['prior'][key]
-                                             for key in ['A_a', 'A_aa', 'A_loga'] if key in fit_info['prior']])
-        output['chiral'] = fk_fpi.partialsdev([fit_info['prior'][key]
-                                               for key in (set(fit_info['prior']) - set(['A_a', 'A_aa', 'A_loga']))])
+        inputs.update(prior)
+        output['disc'] = fk_fpi.partialsdev(
+            [prior[key] for key in ['A_a', 'A_aa', 'A_loga'] if key in prior]
+        )
+        output['chiral'] = fk_fpi.partialsdev(
+            [prior[key] for key in (set(prior) - set(['A_a', 'A_aa', 'A_loga']))]
+        )
 
         phys_point = {}
-        phys_point['mpi'] = fit_info['phys_point']['mpi']
-        phys_point['mk'] = fit_info['phys_point']['mk']
-        phys_point['lam2_chi'] = fit_info['phys_point']['lam2_chi']
+        phys_point['mpi'] = phys_point_data['mpi']
+        phys_point['mk'] = phys_point_data['mk']
+        phys_point['lam2_chi'] = phys_point_data['lam2_chi']
         inputs.update(phys_point)
         output['pp_input'] = fk_fpi.partialsdev(phys_point)
 
@@ -468,15 +472,13 @@ class bootstrapper(object):
         # Since the input data is correlated,
         # we only need to use a single variable as a proxy
         # for all of the variables; we use 'lam2_chi'
-        prior = self.get_fit().prior
         input_data = {}
-        input_data['input_data'] = prior['lam2_chi']
+        input_data['input_data'] = self.get_prior('lam2_chi')
         inputs.update(input_data)
         output['stat'] = fk_fpi.partialsdev(input_data)
 
-
         if print_budget:
-            print('FK/Fpi =', fit_info['FK/Fpi'], '\n')
+            print('FK/Fpi =', fk_fpi, '\n')
             print(gv.fmt_errorbudget(outputs={'FK/Fpi' : fk_fpi}, inputs=inputs, percent=False, ndecimal=5, verify=True))
 
         return output
@@ -498,11 +500,12 @@ class bootstrapper(object):
             'phys_point' : self.get_phys_point_data(),
             'prior' : {},
             'posterior' : {},
+            'error_budget' : self.get_error_budget()
         }
 
         for key in self.get_fit_keys():
-            fit_info['prior'][key] = self.get_fit().prior[key]
-            fit_info['posterior'][key] = self.get_fit_parameters(key)
+            fit_info['prior'][key] = self.get_prior(key)
+            fit_info['posterior'][key] = self.get_posterior(key)
 
         return fit_info
 
@@ -518,7 +521,7 @@ class bootstrapper(object):
         return sorted(parameters)
 
     # Returns dictionary with keys fit parameters, entries gvar results
-    def get_fit_parameters(self, parameter=None):
+    def get_posterior(self, parameter=None):
         # If fitting only the central values
         if self.posterior is None:
             if self.fits is None:
@@ -563,6 +566,32 @@ class bootstrapper(object):
             return self.phys_point_data['FK/Fpi_pm'] / np.sqrt(1 + self.get_delta_su2_correction())
         else:
             return self.phys_point_data[parameter]
+
+    # Returns dictionary with keys fit parameters, entries gvar results
+    def get_posterior(self, parameter=None):
+        # If fitting only the central values
+        if self.posterior is None:
+            if self.fits is None:
+                self.bootstrap_fits()
+
+            keys1 = list(self.prior.keys())
+            keys2 = list(self.get_fit().p.keys())
+            parameters = np.intersect1d(keys1, keys2)
+
+            self.posterior = {parameter : self.get_fit().p[parameter] for parameter in parameters}
+
+        if parameter is not None:
+            return self.posterior[parameter]
+        else:
+            return self.posterior
+
+    def get_prior(self, key=None):
+        if key is None:
+            output = {key : self.get_fit().prior[key] for key in self.get_fit_keys()}
+            return output
+        if key is not None:
+            return self.get_fit().prior[key]
+
 
     def make_plots(self, show_error_ellipses=False, show_bootstrap_histograms=False):
         figs = [self.plot_fit_info()]
