@@ -10,9 +10,9 @@ import h5py
 import time
 
 sys.path.append("../")
-from fitter import data_loader as dl
-from fitter import misc as ms
-from fitter import model_average as md
+import fitter.model_average as md
+import fitter.misc as ms
+import fitter.data_loader as dl
 
 for j in range(10): # Sometimes this needs to be loaded twice...
     matplotlib.rcParams['figure.figsize'] = [10, 10]

@@ -2,6 +2,13 @@ import os
 import itertools
 import pandas as pd
 import numpy as np
+import sys
+
+# Get collection of fits to prune
+if len(sys.argv) > 1:
+    fit_collection_name = sys.argv[1]
+else:
+    fit_collection_name = input('Name for fit collection: ')
 
 # Get all proper model names
 p_dict = {
@@ -22,8 +29,9 @@ choices = {
 
     # nnnlo corrections
     'include_latt_n3lo' : [False, True],
-    'output_name' : 'optimized_priors',
 }
+
+
 
 list_of_models = [] # models included in average
 # Get all enumerations of these choices
@@ -87,7 +95,7 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
 # Now we prune unused models
 # First prune ./results/ folder
 project_path = os.path.normpath(os.path.join(os.path.realpath(__file__), os.pardir, os.pardir))
-filepath = project_path +'/results/'+ output_name +'.csv'
+filepath = project_path +'/results/'+ fit_collection_name +'.csv'
 df_fit = pd.read_csv(filepath, index_col=0, header=0)
 
 # Gets all models not in list_of_models
@@ -101,21 +109,21 @@ df_fit.to_csv(filepath)
 
 ####
 # Next prune ./pickles/ folder
-for file in os.listdir(project_path +'/pickles/'+ output_name):
+for file in os.listdir(project_path +'/pickles/'+ fit_collection_name):
     if file.endswith('.p'):
         if not file.split('.')[0] in list_of_models:
-            os.remove(project_path+'/pickles/'+ output_name +'/'+ file)
+            os.remove(project_path+'/pickles/'+ fit_collection_name +'/'+ file)
 
 ###
-# Finally prune ./priors/ folder
-for fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
-    filepath = project_path +'/priors/'+ fit_type +'.csv'
-    df_prior = pd.read_csv(filepath, index_col=0)
-
-    # Gets all models not in list_of_models
-    prune_list = list(set(df_prior['name']) - set(list_of_models))
-    indices = [np.argwhere(df_prior['name'].values == model_to_prune).item() for model_to_prune in prune_list]
-    df_prior = df_prior.drop(indices)
-
-    df_prior = df_prior.reset_index(drop=True)
-    df_prior.to_csv(filepath)
+# Finally prune ./priors/ folder -- never mind; no harm in keeping unused priors
+#for fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
+#    filepath = project_path +'/priors/'+ fit_type +'.csv'
+#    df_prior = pd.read_csv(filepath, index_col=0)
+#
+#    # Gets all models not in list_of_models
+#    prune_list = list(set(df_prior['name']) - set(list_of_models))
+#    indices = [np.argwhere(df_prior['name'].values == model_to_prune).item() for model_to_prune in prune_list]
+#    df_prior = df_prior.drop(indices)
+#
+#    df_prior = df_prior.reset_index(drop=True)
+#    df_prior.to_csv(filepath)
