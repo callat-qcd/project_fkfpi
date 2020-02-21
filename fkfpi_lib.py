@@ -90,7 +90,8 @@ def main():
 
     if switches['do_analysis']:
         fit_results = perform_analysis(switches,gv_data,priors,phys_point)
-        model_average(fit_results,switches,phys_point)
+        if switches['model_avg']:
+            model_average(fit_results,switches,phys_point)
         if switches['make_plots']:
             plot_continuum(fit_results, switches, phys_point)
 
@@ -163,6 +164,9 @@ def format_h5_data(switches,data):
     p = dict()
     if switches['bs_bias']:
         print('Shifting BS data to boot0')
+    if switches['print_lattice']:
+        lattice_fits = []
+        mixed_fits   = []
 
     for ens in switches['ensembles']:
         #print(ens)
@@ -173,6 +177,8 @@ def format_h5_data(switches,data):
             #print('  %s = %.5f +- %.5f' %(m,data_dict[m].mean(),data_dict[m].std()))
         for f in ['FK','Fpi']:
             data_dict[f] = data.get_node('/'+ens+'/'+f).read()
+        for m in ['mres_l','mres_s']:
+            data_dict[m] = data.get_node('/'+ens+'/'+m).read()
         if switches['debug']:
             fkfpi = data_dict['FK']/data_dict['Fpi']
             print('  FK/Fpi = %.5f +- %.5f' %(fkfpi.mean(),fkfpi.std()))
@@ -243,11 +249,32 @@ def format_h5_data(switches,data):
             eps_a  = p[(ens,'aw0')] / np.sqrt(4*np.pi)
             fkfpi  = gvdata['FK']/gvdata['Fpi']
             print('%9s: eps_pi = %s, eps_k = %s, eps_a = %s, FK/Fpi = %s' %(ens, eps_pi, eps_k, eps_a, fkfpi))
-
+        if switches['print_lattice']:
+            lattice_fits.append('%9s& %s& %s& %s& %s& %s& %s& %s\\\\' \
+                %(ens,gvdata['mres_l'],gvdata['mres_s'],gvdata['mpi'],gvdata['mk'],gvdata['Fpi'],gvdata['FK'],gvdata['FK']/gvdata['Fpi']))
+            dju = p[(ens,'aw0')]**(-2) * (gvdata['mju']**2 - gvdata['mpi']**2)
+            djs = p[(ens,'aw0')]**(-2) * (gvdata['mjs']**2 - gvdata['mk']**2)
+            dru = p[(ens,'aw0')]**(-2) * (gvdata['mru']**2 - gvdata['mk']**2)
+            drs = p[(ens,'aw0')]**(-2) * (gvdata['mrs']**2 - gvdata['mss']**2)
+            mixed_fits.append('%9s& %s& %s& %s& %s& %s& %s& %s& %s\\\\' \
+                %(ens,gvdata['mju'],gvdata['mjs'],gvdata['mru'],gvdata['mrs'],dju,djs,dru,drs))
+    if switches['print_lattice']:
+        print(r'ensemble& $am^{\rm res}_l$& $am^{\rm res}_s$& $am_\pi$& $am_K$& $aF_\pi$& $aF_K$& $F_K / F_\pi$\\')
+        for l in lattice_fits:
+            print(l)
+        print('')
+        print(r'ensemble& $am_{ju}$& $am_{js}$& $am_{ru}$& $am_{rs}$& $w_0^2(m_{ju}^2 -m_\pi^2)$& $w_0^2(m_{js}^2-m_K^2)$& $w_0^2(m_{ru}^2-m_K^2)$& $w_0^2(m_{rs}^2 -m_{ss}^2)$\\')
+        print(r'\hline')
+        for l in mixed_fits:
+            print(l)
+        data.close()
+        sys.exit()
     return {'x':x, 'y':y, 'p':p}
 
-def pickle_fit(model,fit_result):
+def pickle_fit(model,fit_result,phys_point):
     fit = gv.BufferDict()
+    fit['phys'] = fit_result.report_phys_point(phys_point)['phys']
+    #fit['phys_der'] = [gv.gvar(k) for k in fit['phys'].der]
     for k in fit_result.fit.prior:
         if type(k) is tuple:
             fit['prior_'+k[0]+'_'+k[1]] = fit_result.fit.prior[k]
@@ -276,6 +303,8 @@ def pickle_fit(model,fit_result):
 def read_fit(model):
     fit = gv.load('pickled_fits/'+model+'.p')
     fit_processed = dict()
+    fit_processed['phys']  = fit['phys']
+    #fit_processed['phys'].der = [k.mean for k in fit['phys_der']]
     fit_processed['prior'] = dict()
     fit_processed['p']     = dict()
     fit_processed['stat']  = dict()
@@ -286,7 +315,7 @@ def read_fit(model):
         if k in ['chi2','dof','logGBF','Q']:
             fit_processed['stat'][k] = fit[k]
         if 'p_' in k and 'prior' not in k:
-            if any(part in k for part in ['a09','a12','a15']):
+            if any(part in k for part in ['a06','a09','a12','a15']):
                 tmp,ens,kk = k.split('_')
                 fit_processed['p'][(ens,kk)] = fit[k]
             elif len(k.split('p_')) == 3:
@@ -296,7 +325,7 @@ def read_fit(model):
             else:
                 print('what to do?',k)
         if 'prior' in k:
-            if any(part in k for part in ['a09','a12','a15']):
+            if any(part in k for part in ['a06','a09','a12','a15']):
                 tmp,ens,kk = k.split('_')
                 fit_processed['prior'][(ens,kk)] = fit[k]
             else:
@@ -441,7 +470,7 @@ def perform_analysis(switches,gv_data,priors,phys_point):
     print('\nSetting up all models')
     models = sys_models(switches)
     switches['ansatz']['models'] = models
-    for model in models:
+    for i_m,model in enumerate(models):
         FPK = model.split('_')[-1]
         switches['scale'] = FPK
         switches['ansatz']['model'] = model
@@ -455,7 +484,7 @@ def perform_analysis(switches,gv_data,priors,phys_point):
             with open('data/saved_prior_search.yaml','r') as fin:
                 prior_grid = yaml.safe_load(fin.read())
 
-        print('EFT: ',model)
+        print('%3s of %3s, EFT: %s' %(i_m+1,len(models),model))
         x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
         y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
         p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
@@ -466,9 +495,10 @@ def perform_analysis(switches,gv_data,priors,phys_point):
             p_fit = model
         if switches['save_fits']:
             if os.path.exists('pickled_fits/'+p_fit+'.p'):
-                pickeld_fit = read_fit(p_fit)
+                pickled_fit = read_fit(p_fit)
                 fit_p = xpt.Fit(switches,xyp_init={'x':x_e,'y':y_e,'p':p_e})
-                fit_p.fit = PickledFit(pickeld_fit)
+                fit_p.fit = PickledFit(pickled_fit)
+                fit_p.phys = pickled_fit['phys']
                 fit_results[model] = fit_p
             else:
                 do_fit = True
@@ -498,15 +528,24 @@ def perform_analysis(switches,gv_data,priors,phys_point):
             fit_e.fit_data()
             fit_results[model] = fit_e
             if switches['save_fits']:
-                pickle_fit(p_fit,fit_e)
+                pickle_fit(p_fit,fit_e,phys_point)
             else:
                 fit_p = fit_e
 
         if switches['debug_save_fit'] and not do_fit:
             print('live fit   : FK/Fpi = ',fit_e.report_phys_point(phys_point)['phys'])
             print({k:fit_e.fit.prior[k] for k in switches['LECs'] if k in fit_e.fit.prior})
+            print('error breakdown: y, L5')
+            print(fit_e.report_phys_point(phys_point)['phys'].partialsdev(fit_e.fit.y))
+            print(fit_e.report_phys_point(phys_point)['phys'].partialsdev(fit_e.fit.prior['L5']))
+
             print('pickled fit: FK/Fpi = ',fit_p.report_phys_point(phys_point)['phys'])
             print({k:fit_p.fit.prior[k] for k in switches['LECs'] if k in fit_p.fit.prior})
+            print('error breakdown: y, L5')
+            #print(fit_p.fit.y)
+            #print(y_e)
+            print(fit_p.phys.partialsdev(fit_p.fit.y))
+            print(fit_p.phys.partialsdev(fit_p.fit.prior['L5']))
 
         if not do_fit:
             fit_e = fit_p
@@ -524,7 +563,7 @@ def plot_continuum(fit_results,switches,phys_point):
         base_model = model.strip('_'+FPK)
         switches['scale'] = FPK
         switches['ansatz']['model'] = model
-        if model in ['xpt_nnlo_FV','xpt_nnlo_FV_a4', 'xpt_nlo_FV_a4']:
+        if model in ['xpt_nnnlo_FV_a4_PP','xpt_nnlo_FV_a4_PP']:
             fit = fit_results[model]
             ea_range = dict()
             ea_range['Lchi'] = phys_point['Lchi_'+FPK]
@@ -553,9 +592,9 @@ def plot_continuum(fit_results,switches,phys_point):
             ax.set_ylabel(r'$F_K / F_\pi$',fontsize=16)
             ax.set_xlim(0,.065)
             if switches['plot_raw_data']:
-                ax.set_ylim(1.09, 1.205)
+                ax.set_ylim(1.09, 1.225)
             else:
-                ax.set_ylim(1.135, 1.205)
+                ax.set_ylim(1.135, 1.225)
             plt.savefig('figures/vs_epasq_'+model+'.pdf',transparent=True)
 
 

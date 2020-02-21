@@ -20,54 +20,56 @@ switches['ensembles_fit'] = [
 # FIT MODELS
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
-switches['ansatz']['models'] = ['xpt_nnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnlo_FV_a4']#,'xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
-switches['sys']['Lam_chi'] = True
-switches['sys']['FV']      = True
-switches['sys']['alphaS']  = False
-switches['sys']['nnlo_ct'] = False
-switches['sys']['logSq']   = False
-switches['sys']['a4']      = True
-switches['sys']['ratio']   = False
+switches['sys']['Lam_chi']   = False
+switches['sys']['FV']        = False
+switches['sys']['alphaS']    = False
+switches['sys']['nnlo_ct']   = False
+switches['sys']['logSq']     = False
+switches['sys']['a4']        = False
+switches['sys']['ratio']     = False
 
-switches['ansatz']['a2dm'] = 'individual' # avg or individual
-switches['scales']         = ['PP','PK','KK']#,'PK','KK']
-switches['scale']          = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
-switches['do_analysis']    = True
-switches['save_fits']      = False
+switches['ansatz']['a2dm']   = 'individual' # avg or individual
+switches['scales']           = ['PP','PK','KK']#,'PK','KK']
+switches['scale']            = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
+switches['do_analysis']      = True
+switches['save_fits']        = True
+switches['model_avg']        = True
 # use optimized (True) or default (False) priors
 switches['optimized_priors'] = False
 # set mean to boot0 vs add boot0 to bs list
-switches['bs_bias']         = True
+switches['bs_bias']          = True
 # use scipy instead of GSL?
-switches['scipy']           = False
+switches['scipy']            = False
 # fit options
-switches['print_fit']       = True
-switches['report_fit']      = False
-switches['make_plots']      = True
-switches['plot_raw_data']   = True
-switches['verbose']         = False
+switches['print_fit']        = True
+switches['report_fit']       = False
+switches['make_plots']       = False
+switches['plot_raw_data']    = False
+switches['verbose']          = False
 # for tuning prior widths
-switches['nnlo_priors']     = False
-switches['prior_group']     = True
-switches['refine_prior']    = True
+switches['nnlo_priors']      = False
+switches['prior_group']      = True
+switches['refine_prior']     = True
 # fit checks
-switches['nlo_report']      = False
-switches['nlo_fv_report']   = False
-switches['simple_fit']      = False
+switches['nlo_report']       = False
+switches['nlo_fv_report']    = False
+switches['simple_fit']       = False
 #switches['check_fit']       = False
 # DEBUGGING
-switches['debug']           = False
-switches['debug_x']         = False
-switches['debug_phys']      = False
-switches['debug_nlo_check'] = False
-switches['debug_nnlo_check']= False
-switches['debug_save_fit']  = False
-switches['debug_models']    = False
+switches['debug']            = False
+switches['debug_x']          = False
+switches['debug_phys']       = False
+switches['debug_nlo_check']  = False
+switches['debug_nnlo_check'] = False
+switches['debug_save_fit']   = True # also need 'save_fits' to work
+switches['debug_models']     = False
+switches['print_lattice']    = False # this will turn off all fitting - only reads data
 # testing NNLO function
-switches['check_fit']       = False # need a new name
-switches['FF_approximate']  = False
+switches['check_fit']        = False # need a new name
+switches['FF_approximate']   = False
 
 switches['LECs'] = ['L1','L2','L3','L4','L5','L6','L7','L8','p_4','k_4','s_4','saS_4']
 
@@ -85,23 +87,23 @@ priors['L8']   = gv.gvar( 0.000294,0.000294)
 ''' default values '''
 n2lo_width = 5.
 priors['s_4']   = gv.gvar(0.0, n2lo_width)
-priors['s_4']   = gv.gvar(0.0, 100)
+priors['s_4']   = gv.gvar(-10, 10)
 priors['k_4']   = gv.gvar(0.0, n2lo_width)
 priors['p_4']   = gv.gvar(0.0, n2lo_width)
-priors['saS_4'] = gv.gvar(0.0, n2lo_width)
+priors['saS_4'] = gv.gvar(0.0, 10)
 
 # Ananthanarayan et al, 1711.11328
 priors['k_4']   = gv.gvar(2.2, 4)
 priors['p_4']   = gv.gvar(7.9, 10)
 
 
-n3lo_width = 100.
+n3lo_width = 5.
 priors['kp_6']  = gv.gvar(0.0, n3lo_width)
 priors['k_6']   = gv.gvar(0.0, n3lo_width)
 priors['p_6']   = gv.gvar(0.0, n3lo_width)
-priors['s_6']   = gv.gvar(0.0, n3lo_width)
-priors['sk_6']  = gv.gvar(0.0, n3lo_width)
-priors['sp_6']  = gv.gvar(0.0, n3lo_width)
+priors['s_6']   = gv.gvar(100, 100)
+priors['sk_6']  = gv.gvar(0.0, 100)
+priors['sp_6']  = gv.gvar(0.0, 100)
 
 ''' load optimized priors  '''
 switches['nnlo_priors_model'] = pw.model

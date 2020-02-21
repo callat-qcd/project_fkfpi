@@ -657,6 +657,11 @@ class Fit(object):
                 if isinstance(k,str):
                     print(k,self.fit.p[k])
             print(FK_Fpi_phys['phys'],'\n')
+        #if self.switches['debug_save_fit']:
+            #print('error breakdown: y, L5')
+            #print(FK_Fpi_phys['phys'].partialsdev(p_phys[('phys','p2')]))
+            #print(FK_Fpi_phys['phys'].partialsdev(self.y))
+            #print(FK_Fpi_phys['phys'].partialsdev(self.p_init['L5']))
 
         # restore original self attributes
         for key,val in self_dict.items():
