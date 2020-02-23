@@ -506,7 +506,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_nnlo_renormalization_ct(self, p):
         lam2_chi = p['lam2_chi']
-        #eps2_a = (p['a/w0'])**2 / (4 *np.pi)
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
         eps2_eta = (4./3) *eps2_k  - (1./3) *eps2_pi

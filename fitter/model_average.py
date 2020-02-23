@@ -17,6 +17,30 @@ class model_average(object):
             fit_results[model]['FK/Fpi_pm'] = gv.gvar(fit_results[model]['FK/Fpi']) *np.sqrt(1 + gv.gvar(fit_results[model]['delta_su2']))
         self.fit_results = fit_results
 
+    def __str__(self):
+        output = 'FK/Fpi_pm = %s \t [FLAG: %s] \n' %(
+            self.average('FK/Fpi_pm'),
+            self._get_phys_point_data()['FK/Fpi_pm'])
+
+        output += '\n---\n'
+        fk_fpi = self.average('FK/Fpi', split_unc=True)
+        output += 'FK/Fpi      =  %s \n' %(gv.gvar(fk_fpi[0], np.sqrt(fk_fpi[1]**2 + fk_fpi[2]**2)))
+        output += 'delta_su(2) = %s \n' %(self.average('delta_su2'))
+
+        sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3))
+        output += '\n---\n'
+        output += 'Uncertainty: \n'
+        output += '   Unexplained: %s \n' %(sig_fig(fk_fpi[1]))
+        output += '   Explained:   %s \n' %(sig_fig(fk_fpi[2]))
+
+        error_budget = self.error_budget()
+        output += '\n---\n'
+        output += 'Error Budget: \n'
+        output += '   Chiral:      %s \n' %(sig_fig(error_budget['chiral']))
+        output += '   Phys Point:  %s \n' %(sig_fig(error_budget['pp_input']))
+        output += '   Statistical: %s \n' %(sig_fig(error_budget['stat']))
+
+        return output
 
     def _get_model_info_from_name(self, name):
         output_dict = {}
@@ -158,6 +182,10 @@ class model_average(object):
             elif param in self._get_fit_posterior(model):
                 y[model] =  self._get_fit_posterior(model)[param]
 
+            # Error budget
+            elif param.startswith('eb:'):
+                y[model] = self.fit_results[model]['error_budget'][param.split(':')[-1]]
+
             elif param in self.fit_results[model]:
                 y[model] = self.fit_results[model][param]
 
@@ -208,6 +236,13 @@ class model_average(object):
             var_selection -= (expct_y)**2
 
             return [expct_y, np.sqrt(var_model), np.sqrt(var_selection)]
+
+    def error_budget(self):
+        output = {}
+        for key in ['chiral', 'pp_input', 'stat']:
+            output[key] = self.average('eb:'+key, include_unc=False)
+
+        return output
 
     def extrapolate_to_phys_point(self, model):
         data = self._get_phys_point_data(model)
