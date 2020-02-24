@@ -12,7 +12,7 @@ switches['ensembles'] = [
 switches['ensembles_fit'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
-    'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
+    'a15m310'  ,'a12m310' ,'a09m310',#'a06m310L',
     'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
     'a15m135XL','a12m130',
     ]
@@ -20,7 +20,7 @@ switches['ensembles_fit'] = [
 # FIT MODELS
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
-switches['ansatz']['models'] = ['xpt_nnlo_FV_a4']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnlo_FV']#,'xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
 switches['sys']['Lam_chi']   = False
@@ -38,7 +38,7 @@ switches['do_analysis']      = True
 switches['save_fits']        = True
 switches['model_avg']        = True
 # use optimized (True) or default (False) priors
-switches['optimized_priors'] = False
+switches['optimized_priors'] = True
 # set mean to boot0 vs add boot0 to bs list
 switches['bs_bias']          = True
 # use scipy instead of GSL?

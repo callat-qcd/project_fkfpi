@@ -49,7 +49,7 @@ def main():
         sys.exit()
 
     # Load data
-    data    = h5.open_file('FK_Fpi_data.h5','r')
+    data    = h5.open_file('data/FK_Fpi_data.h5','r')
     gv_data = format_h5_data(switches,data)
     data.close()
 
@@ -94,7 +94,7 @@ def main():
             model_average(fit_results,switches,phys_point)
         if switches['make_plots']:
             for model in switches['ansatz']['models']:
-                if model in ['xpt_nnlo_FV_a4_PK','xpt_nnlo_FV_a4_PP']:
+                if model in ['xpt_nnlo_FV_a4_PK','xpt_nnlo_FV_a4_PP','xpt_nnlo_FV_PP']:
                     fit_results[model].vs_ea()
 
     if switches['check_fit']:
@@ -282,11 +282,11 @@ def set_priors(p_init,priors,optimized_priors=None):
         print('      setting prior widths:')
         print('      (s_4, saS_4) = %s; (p_4, k_4) = %s' %(sp_max[0],sp_max[1]))
         for key in ['s_4','saS_4']:
-            if key in p_e:
-                p_e[key] = gv.gvar(0,float(sp_max[0]))
+            if key in p_init:
+                p_init[key] = gv.gvar(0,float(sp_max[0]))
         for key in ['p_4','k_4']:
-            if key in p_e:
-                p_e[key] = gv.gvar(0,float(sp_max[1]))
+            if key in p_init:
+                p_init[key] = gv.gvar(0,float(sp_max[1]))
     else:
         print('      using default prior widths')
     return p_init
