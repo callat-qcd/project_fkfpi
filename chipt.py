@@ -5,6 +5,17 @@ import matplotlib.pyplot as plt
 import gvar as gv
 import lsqfit
 
+# Figure formatting
+fig_width = 6.75 # in inches, 2x as wide as APS column
+gr        = 1.618034333 # golden ratio
+fig_size  = (fig_width, fig_width / gr)
+plt_axes  = [0.14,0.14,0.855,0.855]
+fs_text   = 20 # font size of text
+fs_leg    = 16 # legend font size
+mrk_size  = '5' # marker size
+tick_size = 16 # tick size
+lw        = 1 # line width
+
 pi = np.pi
 # FF function defined in 1711.11328
 sys.path.append('py_chiron')
@@ -43,9 +54,9 @@ def FF_approximate(x):
     ff += (ai['a11']+ ai['a12']* np.log(x) + ai['a13']* np.log(x)**2) * x**4
     return ff
 
-
 class Fit(object):
-    def __init__(self,switches,xyp_init):
+    def __init__(self,switches,xyp_init,phys):
+        self.phys      = phys
         self.switches  = switches
         self.x         = xyp_init['x']
         self.y         = xyp_init['y']
@@ -515,10 +526,13 @@ class Fit(object):
             r += (k2 - p2) * a2 * x['alphaS'] * lec['saS_4']
         return r
 
-    def xpt(self,x,p):
+    def xpt(self,x,p,debug=False):
         r = dict()
         for e in x:
             x_par,lec = self.make_x_lec(x,p,e)
+            if debug:
+                print(e,x_par)
+                print(lec)
             r[e]  = 1.
             r[e] +=  self.FK_xpt_nlo(x_par,lec)
             r[e] += -self.Fpi_xpt_nlo(x_par,lec)
@@ -610,7 +624,7 @@ class Fit(object):
             fitter='gsl_multifit'
         self.fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=self.fit_function,fitter=fitter)
 
-    def report_phys_point(self,phys_point):
+    def report_phys_point(self,debug=False):
         # get copy of all self attributes
         self_dict = self.__dict__.copy()
         # set physical point
@@ -618,16 +632,19 @@ class Fit(object):
         x_phys['phys'] = {k:np.inf for k in ['mpiL','mkL']}
         x_phys['phys']['alphaS'] = 0.
 
+        if debug:
+            print('DEBUG: self.phys')
+            print(self.phys)
         y_phys = dict()
-        y_phys['phys'] = phys_point['FK'] / phys_point['Fpi']
-        y_phys['FLAG'] = phys_point['FKFPi_FLAG']
+        y_phys['phys'] = self.phys['FK'] / self.phys['Fpi']
+        y_phys['FLAG'] = self.phys['FKFPi_FLAG']
 
         p_phys = dict()
         for k in ['s_4','saS_4','s_6','sk_6','sp_6']:
             p_phys[k] = 0.
-        Lchi_phys = phys_point['Lchi_'+self.switches['scale']]
-        p_phys[('phys','p2')] = phys_point['mpi']**2 / Lchi_phys**2
-        p_phys[('phys','k2')] = phys_point['mk']**2  / Lchi_phys**2
+        Lchi_phys = self.phys['Lchi_'+self.switches['scale']]
+        p_phys[('phys','p2')] = self.phys['mpi']**2 / Lchi_phys**2
+        p_phys[('phys','k2')] = self.phys['mk']**2  / Lchi_phys**2
         p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
         p_phys[('phys','a2')] = 0.
         for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6','L1','L2','L3','L6','L7','L8']:
@@ -641,12 +658,13 @@ class Fit(object):
             self.fit_function = self.xpt
         self.fv = False
 
+        self.phys_extrap = self.fit_function(x_phys,p_phys)
         FK_Fpi_phys = self.fit_function(x_phys,p_phys)
         if self.switches['debug_phys']:
             print('DEBUG: SCALE', self.switches['scale'])
             print('DEBUG: Lchi =',Lchi_phys)
-            print('DEBUG: mpi =',phys_point['mpi'])
-            print('DEBUG: mK  =',phys_point['mk'])
+            print('DEBUG: mpi =',self.phys['mpi'])
+            print('DEBUG: mK  =',self.phys['mk'])
             for k in p_phys:
                 print('DEBUG:',k,p_phys[k])
         if self.switches['report_fit']:
@@ -824,7 +842,7 @@ class Fit(object):
 
         return ax
 
-    def vs_ea(self,ea_range, ax):
+    def vs_ea(self,raw_data=False):
         # get copy of all self attributes
         self_dict = self.__dict__.copy()
         # switch to continuum fit func
@@ -835,75 +853,130 @@ class Fit(object):
             self.eft          = 'xpt'
             self.fit_function = self.xpt
         self.fv = False
+
         # set x,y,p
         x = dict()
-        y_phys = dict()
         p = dict()
-        for k in self.fit.p:
-            if isinstance(k,str):
-                print(k,self.fit.p[k])
         for k in self.lec_nnlo + self.lec_nnnlo:
             if k in self.fit.p:
                 p[k] = self.fit.p[k]
+
         x_plot = []
-        y_plot = dict()
-        y_plot['m135'] = []
-        y_plot['m220'] = []
-        y_plot['a2']   = []
-        y_plot['a4']   = []
-        if 's_6' in p:
+        y_plot = dict() # we will make 1 or 3 different y_plots
+        y_plot['m135'] = [] # physical pion mass
+        if 's_6' in p: #
+            y_plot['a2']   = [] # the a**2 terms
+            y_plot['a4']   = [] # the a**4 terms
             p_a2 = dict(p)
             p_a4 = dict(p)
             p_a2['s_6'] = gv.gvar(0,0)
             p_a4['s_4'] = gv.gvar(0,0)
-        p2 = ea_range['mpi']**2 / ea_range['Lchi']**2
-        k2 = ea_range['mk']**2 / ea_range['Lchi']**2
-        for a in ea_range['a']:
+        p2 = self.phys['mpi']**2 / self.phys['Lchi_'+self.switches['scale']]**2
+        k2 = self.phys['mk']**2  / self.phys['Lchi_'+self.switches['scale']]**2
+        # make equal spaced a in a**2 range
+        a_range = np.sqrt(np.arange(0, .16**2, .16**2 / 50))
+        for a in a_range:
             x[a] = {k:np.inf for k in ['mpiL','mkL']}
-            p2 = ea_range['mpi']**2 / ea_range['Lchi']**2
             p[(a,'p2')] = p2
             p[(a,'k2')] = k2
             p[(a,'e2')] = 4./3*k2 - 1./3*p2
-            p[(a,'a2')] = (a / ea_range['w0'])**2 / 4 / pi
+            p[(a,'a2')] = (a / self.phys['w0'])**2 / 4 / pi
             x_plot.append(p[(a,'a2')])
             y_plot['m135'].append(self.fit_function(x,p)[a])
             if 's_6' in p:
                 p_a2[(a,'p2')] = p2
                 p_a2[(a,'k2')] = k2
                 p_a2[(a,'e2')] = 4./3*k2 - 1./3*p2
-                p_a2[(a,'a2')] = (a / ea_range['w0'])**2 / 4 / pi
+                p_a2[(a,'a2')] = (a / self.phys['w0'])**2 / 4 / pi
                 p_a4[(a,'p2')] = p2
                 p_a4[(a,'k2')] = k2
                 p_a4[(a,'e2')] = 4./3*k2 - 1./3*p2
-                p_a4[(a,'a2')] = (a / ea_range['w0'])**2 / 4 / pi
+                p_a4[(a,'a2')] = (a / self.phys['w0'])**2 / 4 / pi
                 # subtract a**4 to get c + a**2
-                y_plot['a4'].append(y_plot['m135'][-1] - self.fit_function(x,p_a4)[a] + y_plot['m135'][0])
+                y_plot['a2'].append(y_plot['m135'][-1] - self.fit_function(x,p_a4)[a] + y_plot['m135'][0])
                 # subtract a**2 to get c + a**4
-                y_plot['a2'].append(y_plot['m135'][-1] - self.fit_function(x,p_a2)[a] + y_plot['m135'][0])
-            p2 = 220**2 / ea_range['Lchi']**2
-            p[(a,'p2')] = p2
-            p[(a,'e2')] = 4./3*k2 - 1./3*p2
-            y_plot['m220'].append(self.fit_function(x,p)[a])
+                y_plot['a4'].append(y_plot['m135'][-1] - self.fit_function(x,p_a2)[a] + y_plot['m135'][0])
         x_plot = np.array(x_plot)
         y  = np.array([k.mean for k in y_plot['m135']])
         dy = np.array([k.sdev for k in y_plot['m135']])
 
-        ax.fill_between(x_plot, y-dy, y+dy, color='#b36ae2', alpha=0.4)
+        # continuum extrapolation figure
+        fig = plt.figure('FKFpi_vs_ea_'+self.model,figsize=fig_size)
+        self.ax_cont = plt.axes(plt_axes)
+        self.ax_cont.fill_between(x_plot, y-dy, y+dy, color='#b36ae2', alpha=0.4)
+        # plot data
+        self.plot_data('ea',offset='cont')
+        if self.switches['plot_raw_data']:
+            self.plot_data('ea', offset='cont', raw=True)
+        handles, labels = self.ax_cont.get_legend_handles_labels()
+        labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
+        self.ax_cont.legend(handles, labels, ncol=4, fontsize=fs_leg)
+        self.ax_cont.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=fs_text)
+        self.ax_cont.set_ylabel(r'$F_K / F_\pi$',fontsize=fs_text)
+        self.ax_cont.set_xlim(0,.065)
+        if self.switches['plot_raw_data']:
+            self.ax_cont.set_ylim(1.06, 1.225)
+        else:
+            self.ax_cont.set_ylim(1.135, 1.225)
+        if self.switches['save_figs']:
+            plt.savefig('figures/vs_epasq_'+self.switches['ansatz']['model']+'.pdf',transparent=True)
+
         if 's_6' in p and False:
             y_a2  = np.array([k.mean for k in y_plot['a2']])
             dy_a2 = np.array([k.sdev for k in y_plot['a2']])
             y_a4  = np.array([k.mean for k in y_plot['a4']])
             dy_a4 = np.array([k.sdev for k in y_plot['a4']])
-            ax.fill_between(x_plot, y_a2-dy_a2, y_a2+dy_a2, color='k', alpha=0.4)
-            ax.fill_between(x_plot, y_a4-dy_a4, y_a4+dy_a4, color='k', alpha=0.4)
-
-        #y  = np.array([k.mean for k in y_plot['m220']])
-        #ax.plot(x_plot, y, color='g')
+            self.ax_cont.fill_between(x_plot, y_a2-dy_a2, y_a2+dy_a2, color='k', alpha=0.4)
+            self.ax_cont.fill_between(x_plot, y_a4-dy_a4, y_a4+dy_a4, color='k', alpha=0.4)
 
         # restore original self attributes
         for key,val in self_dict.items():
             setattr(self, key, val)
-        return ax
+
+    def plot_data(self, p_type, offset=False, raw=False):
+        # p_type: ea  = continuum extrapolation
+        #         epi = pion mass extrapolation
+        colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9', 'a06':'#00FFFF'}
+        shapes = {'m400':'h', 'm350':'p', 'm310':'s', 'm220':'^', 'm130':'o', 'm135':'*'}
+        labels = {
+            'a15m400':'', 'a15m350':'', 'a15m310':'a15', 'a15m220':'','a15m135XL':'',
+            'a12m400':'', 'a12m350':'', 'a12m310':'a12', 'a12m220':'', 'a12m130':'',
+            'a12m220L':'', 'a12m220S':'',
+            'a09m400':'', 'a09m350':'', 'a09m310':'a09', 'a09m220':'',
+            'a06m310L':'a06',
+            }
+        dx_cont = {
+            'a15m400'  :0.0016, 'a12m400':0.0016, 'a09m400':0.0016,
+            'a15m350'  :0.0008, 'a12m350':0.0008, 'a09m350':0.0008,
+            'a15m310'  :0.,     'a12m310':0.,     'a09m310':0.,     'a06m310L':0.,
+            'a15m220'  :-0.0008,'a12m220':-0.0008,'a09m220':-0.0008,
+            'a15m135XL':-.0016, 'a12m130':-0.0016,
+            'a12m220L' :-0.0012,'a12m220S':-0.0004,
+        }
+
+        if p_type == 'ea':
+            y_shift = self.shift_phys_mass()
+        elif p_type == 'epi':
+            y_shift = {e:0 for e in self.switches['ensembles_fit']}
+
+        for e in self.switches['ensembles_fit']:
+            c = colors[e.split('m')[0]]
+            s = shapes['m'+e.split('m')[1][0:3]]
+            x = self.fit.p[(e,'a2')]
+            if raw:
+                y = self.fit.y[e]
+                mfc = 'None'
+                label = None
+            else:
+                y = self.fit.y[e] + y_shift[e]
+                mfc = c
+                label = labels[e]
+            if offset=='cont':
+                dx = dx_cont[e]
+            else:
+                dx = 0
+            self.ax_cont.errorbar(x=x.mean+dx, y=y.mean, xerr=x.sdev, yerr=y.sdev,
+                marker=s,color=c,mfc=mfc,linestyle='None',label=label)
 
     def shift_phys_epsK(self,phys_point):
         '''
@@ -978,7 +1051,7 @@ class Fit(object):
 
         return y_shift
 
-    def shift_phys_mass(self,phys_point):
+    def shift_phys_mass(self):
         '''
             Compute the shift in FK/FPi from the fit, to the point where
             m_K = m_K^phys
@@ -1010,13 +1083,14 @@ class Fit(object):
         print('correcting FK/Fpi data for plot')
         print('for model %s' %self.switches['ansatz']['model'])
         x = self.prune_x()
+        # turn FV corrections back on temporarily
+        self.fv = 'FV' in self.switches['ansatz']['model']
         PK = self.switches['scale']
+        p    = self.prune_priors()
+        for k in self.lec_nnlo + self.lec_nnnlo:
+            if k in self.fit.p:
+                p[k] = self.fit.p[k]
         for e in x:
-            Lchi = self.p_init[(e,'Lchi_'+PK)]
-            p    = self.prune_priors()
-            for k in self.lec_nnlo + self.lec_nnnlo:
-                if k in self.fit.p:
-                    p[k] = self.fit.p[k]
             y_shift[e] = -self.fit_function(x,p)[e]
         # switch to XPT + a**2 terms
         if 'ratio' in self.eft:
@@ -1038,11 +1112,12 @@ class Fit(object):
                 if k in self.fit.p:
                     p_tmp[k] = self.fit.p[k]
             Lchi = self.p_init[(e,'Lchi_'+PK)]
-            p_tmp[(e,'p2')] = phys_point['mpi']**2 / phys_point['Lchi_'+PK]**2
-            p_tmp[(e,'k2')] = phys_point['mk']**2 / phys_point['Lchi_'+PK]**2
+            p_tmp[(e,'p2')] = self.phys['mpi']**2 / self.phys['Lchi_'+PK]**2
+            p_tmp[(e,'k2')] = self.phys['mk']**2 / self.phys['Lchi_'+PK]**2
             p_tmp[(e,'e2')] = 4./3 *p_tmp[(e,'k2')] - 1./3 *p_tmp[(e,'p2')]
             p_tmp[(e,'a2')] = self.p_init[(e,'aw0')]**2 / (4 * pi)
             y_shift[e] += self.fit_function(x_tmp,p_tmp)[e]
+
             if self.switches['verbose']:
                 print("%9s %12s %12s" %(e, self.y[e], y_shift[e].mean))
 

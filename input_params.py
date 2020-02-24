@@ -46,7 +46,8 @@ switches['scipy']            = False
 # fit options
 switches['print_fit']        = True
 switches['report_fit']       = False
-switches['make_plots']       = False
+switches['make_plots']       = True
+switches['save_figs']        = True
 switches['plot_raw_data']    = False
 switches['verbose']          = False
 # for tuning prior widths
@@ -64,7 +65,7 @@ switches['debug_x']          = False
 switches['debug_phys']       = False
 switches['debug_nlo_check']  = False
 switches['debug_nnlo_check'] = False
-switches['debug_save_fit']   = True # also need 'save_fits' to work
+switches['debug_save_fit']   = False # also need 'save_fits' to work
 switches['debug_models']     = False
 switches['print_lattice']    = False # this will turn off all fitting - only reads data
 # testing NNLO function
@@ -87,16 +88,18 @@ priors['L8']   = gv.gvar( 0.000294,0.000294)
 ''' default values '''
 n2lo_width = 5.
 priors['s_4']   = gv.gvar(0.0, n2lo_width)
-priors['s_4']   = gv.gvar(-10, 10)
+#priors['s_4']   = gv.gvar(-10, 10)
+priors['s_4']   = gv.gvar(0, 100)
 priors['k_4']   = gv.gvar(0.0, n2lo_width)
 priors['p_4']   = gv.gvar(0.0, n2lo_width)
-priors['saS_4'] = gv.gvar(0.0, 10)
+#priors['saS_4'] = gv.gvar(0.0, 10)
+priors['saS_4'] = gv.gvar(0.0, n2lo_width)
 
 # Ananthanarayan et al, 1711.11328
 priors['k_4']   = gv.gvar(2.2, 4)
 priors['p_4']   = gv.gvar(7.9, 10)
 
-
+'''
 n3lo_width = 5.
 priors['kp_6']  = gv.gvar(0.0, n3lo_width)
 priors['k_6']   = gv.gvar(0.0, n3lo_width)
@@ -104,6 +107,16 @@ priors['p_6']   = gv.gvar(0.0, n3lo_width)
 priors['s_6']   = gv.gvar(100, 100)
 priors['sk_6']  = gv.gvar(0.0, 100)
 priors['sp_6']  = gv.gvar(0.0, 100)
+'''
+n3lo_width = 100.
+priors['kp_6']  = gv.gvar(0.0, n3lo_width)
+priors['k_6']   = gv.gvar(0.0, n3lo_width)
+priors['p_6']   = gv.gvar(0.0, n3lo_width)
+priors['s_6']   = gv.gvar(0.0, n3lo_width)
+priors['sk_6']  = gv.gvar(0.0, n3lo_width)
+priors['sp_6']  = gv.gvar(0.0, n3lo_width)
+
+
 
 ''' load optimized priors  '''
 switches['nnlo_priors_model'] = pw.model

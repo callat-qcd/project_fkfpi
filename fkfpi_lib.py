@@ -93,7 +93,9 @@ def main():
         if switches['model_avg']:
             model_average(fit_results,switches,phys_point)
         if switches['make_plots']:
-            plot_continuum(fit_results, switches, phys_point)
+            for model in switches['ansatz']['models']:
+                if model in ['xpt_nnlo_FV_a4_PK','xpt_nnlo_FV_a4_PP']:
+                    fit_results[model].vs_ea()
 
     if switches['check_fit']:
         fit_checker(switches,priors)
@@ -168,8 +170,9 @@ def format_h5_data(switches,data):
         lattice_fits = []
         mixed_fits   = []
 
+    print('%9s FK/Fpi' %'ensemble')
+    print('-----------------------------------------------------------------')
     for ens in switches['ensembles']:
-        #print(ens)
         x[ens] = dict()
         data_dict = dict()
         for m in ['mpi','mk','mss','mju','mjs','mrs','mru']:
@@ -188,7 +191,7 @@ def format_h5_data(switches,data):
                 for f in ['FK','Fpi']:
                     ff = data_dict[f]
                     df = ff - ff.mean()
-                    df = df / 3
+                    df = df / 2
                     ff = ff.mean() + df
                     data_dict[f] = ff
 
@@ -273,7 +276,7 @@ def format_h5_data(switches,data):
 
 def pickle_fit(model,fit_result,phys_point):
     fit = gv.BufferDict()
-    fit['phys'] = fit_result.report_phys_point(phys_point)['phys']
+    fit['phys_extrap'] = fit_result.report_phys_point()['phys']
     #fit['phys_der'] = [gv.gvar(k) for k in fit['phys'].der]
     for k in fit_result.fit.prior:
         if type(k) is tuple:
@@ -298,12 +301,12 @@ def pickle_fit(model,fit_result,phys_point):
 
     if not os.path.exists('pickled_fits'):
         os.makedirs('pickled_fits')
-    gv.dump(fit,'pickled_fits/'+model+'.p')
+    gv.dump(fit,'pickled_fits/'+model+'.p', add_dependencies=True)
 
 def read_fit(model):
     fit = gv.load('pickled_fits/'+model+'.p')
     fit_processed = dict()
-    fit_processed['phys']  = fit['phys']
+    fit_processed['phys_extrap'] = fit['phys_extrap']
     #fit_processed['phys'].der = [k.mean for k in fit['phys_der']]
     fit_processed['prior'] = dict()
     fit_processed['p']     = dict()
@@ -342,8 +345,8 @@ class PickledFit():
         self.chi2   = pickled_fit['stat']['chi2'].mean
         self.logGBF = pickled_fit['stat']['logGBF'].mean
         self.Q      = pickled_fit['stat']['Q'].mean
-        self.cov    = gv.evalcov(self.p)
-        self.corr   = gv.evalcorr(self.p)
+        #self.cov    = gv.evalcov(self.p)
+        #self.corr   = gv.evalcorr(self.p)
 
 def fkfpi_phys(x_phys,fit):
     # use metaSq = 4/3 mK**2 - 1/3 mpi**2
@@ -351,7 +354,7 @@ def fkfpi_phys(x_phys,fit):
     #meta = np.sqrt(4./3 * x_phys['mka']**2 -1./3 * x_phys['mpi']**2)
     #fkp = fkfpi_nlo(mpi=x_phys['mpi'],mka=x_phys['mka'],\
     #    meta=meta,Lchi=x_phys['Lchi'],L5=fit.p['L5'])
-    Fitc = xpt.Fit(switches={'ansatz':{'type':'xpt'}})
+    Fitc = xpt.Fit(switches={'ansatz':{'type':'xpt'}},phys=phys_point)
     for k in fit.p:
         if k in x_phys:
             pass
@@ -377,39 +380,6 @@ def dsu2(FKpi,mpi,mk,F0):
         + 2. * (mk**2 -mpi**2 -mpi**2*np.log(mk**2/mpi**2)) / (6*(4*np.pi)**2*F0**2)
         )
     return d
-
-def plot_data(ax,e,x,y,offset=False, raw=False):
-    colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9', 'a06':'#00FFFF'}
-    shapes = {'m400':'h', 'm350':'p', 'm310':'s', 'm220':'^', 'm130':'o', 'm135':'*'}
-    labels = {
-        'a15m400':'', 'a15m350':'', 'a15m310':'a15', 'a15m220':'','a15m135XL':'',
-        'a12m400':'', 'a12m350':'', 'a12m310':'a12', 'a12m220':'', 'a12m130':'',
-        'a12m220L':'', 'a12m220S':'',
-        'a09m400':'', 'a09m350':'', 'a09m310':'a09', 'a09m220':'',
-        'a06m310L':'a06',
-        }
-    dx_cont = {
-        'a15m400'  :0.0016, 'a12m400':0.0016,  'a09m400':0.0016,
-        'a15m350'  :0.0008, 'a12m350':00.0008,  'a09m350':00.0008,
-        'a15m310'  :0.,    'a12m310':0.,     'a09m310':0.,     'a06m310L':0.,
-        'a15m220'  :-0.0008, 'a12m220':-0.0008, 'a09m220':-0.0008,
-        'a15m135XL':-.0016, 'a12m130':-0.0016,
-        'a12m220L':-0.0012, 'a12m220S':-0.0004,
-    }
-    if offset=='cont':
-        dx = dx_cont[e]
-    else:
-        dx = 0
-    c = colors[e.split('m')[0]]
-    s = shapes['m'+e.split('m')[1][0:3]]
-    if raw:
-        mfc = 'None'
-    else:
-        mfc = c
-    ax.errorbar(x=x.mean+dx,y=y.mean,xerr=x.sdev,yerr=y.sdev,
-        marker=s,color=c,mfc=mfc,linestyle='None',label=labels[e])
-
-    return ax
 
 def checkIfDuplicates_1(listOfElems):
     ''' Check if given list contains any duplicates '''
@@ -496,9 +466,9 @@ def perform_analysis(switches,gv_data,priors,phys_point):
         if switches['save_fits']:
             if os.path.exists('pickled_fits/'+p_fit+'.p'):
                 pickled_fit = read_fit(p_fit)
-                fit_p = xpt.Fit(switches,xyp_init={'x':x_e,'y':y_e,'p':p_e})
+                fit_p = xpt.Fit(switches,xyp_init={'x':x_e,'y':y_e,'p':p_e},phys=phys_point)
                 fit_p.fit = PickledFit(pickled_fit)
-                fit_p.phys = pickled_fit['phys']
+                fit_p.phys_extrap = pickled_fit['phys_extrap']
                 fit_results[model] = fit_p
             else:
                 do_fit = True
@@ -524,7 +494,7 @@ def perform_analysis(switches,gv_data,priors,phys_point):
             d_e['x'] = x_e
             d_e['y'] = y_e
             d_e['p'] = p_e
-            fit_e = xpt.Fit(switches,xyp_init=d_e)
+            fit_e = xpt.Fit(switches,xyp_init=d_e,phys=phys_point)
             fit_e.fit_data()
             fit_results[model] = fit_e
             if switches['save_fits']:
@@ -533,27 +503,36 @@ def perform_analysis(switches,gv_data,priors,phys_point):
                 fit_p = fit_e
 
         if switches['debug_save_fit'] and not do_fit:
-            print('live fit   : FK/Fpi = ',fit_e.report_phys_point(phys_point)['phys'])
-            print({k:fit_e.fit.prior[k] for k in switches['LECs'] if k in fit_e.fit.prior})
-            print('error breakdown: y, L5')
-            print(fit_e.report_phys_point(phys_point)['phys'].partialsdev(fit_e.fit.y))
-            print(fit_e.report_phys_point(phys_point)['phys'].partialsdev(fit_e.fit.prior['L5']))
+            print('=================================================================')
+            print('Comparing Live fit to Pickled Fit')
+            print('=================================================================')
+            print('live fit   : FK/Fpi             = ',fit_e.report_phys_point()['phys'])
+            print('error breakdown: y, L_i')
+            print(fit_e.report_phys_point()['phys'].partialsdev(fit_e.fit.y))
+            fit_priors = dict()
+            for k in fit_e.lec_nnlo + fit_e.lec_nnnlo:
+                if k in fit_e.fit.prior:
+                    fit_priors[k] = fit_e.fit.prior[k]
+            print(fit_e.report_phys_point()['phys'].partialsdev(fit_priors))
 
-            print('pickled fit: FK/Fpi = ',fit_p.report_phys_point(phys_point)['phys'])
-            print({k:fit_p.fit.prior[k] for k in switches['LECs'] if k in fit_p.fit.prior})
-            print('error breakdown: y, L5')
-            #print(fit_p.fit.y)
-            #print(y_e)
-            print(fit_p.phys.partialsdev(fit_p.fit.y))
-            print(fit_p.phys.partialsdev(fit_p.fit.prior['L5']))
+            print('pickled fit: FK/Fpi.report_phys = ',fit_p.report_phys_point()['phys'])
+            print('pickled fit: FK/Fpi.saved_fit   = ',fit_p.phys_extrap)
+            print('error breakdown: y, L_i')
+            print(fit_p.report_phys_point()['phys'].partialsdev(fit_p.fit.y))
+            fit_priors = dict()
+            for k in fit_p.lec_nnlo + fit_p.lec_nnnlo:
+                if k in fit_p.fit.prior:
+                    fit_priors[k] = fit_p.fit.prior[k]
+            print(fit_p.report_phys_point()['phys'].partialsdev(fit_priors))
+            print('=================================================================')
 
         if not do_fit:
             fit_e = fit_p
-        print('FK/Fpi = ',fit_e.report_phys_point(phys_point)['phys'])
+        print('FK/Fpi = ',fit_e.report_phys_point()['phys'])
         if switches['print_fit'] and do_fit:
             print(fit_e.fit.format(maxline=True))
         if switches['debug_phys']:
-            fit_e.report_phys_point(phys_point)['phys']
+            fit_e.report_phys_point()['phys']
 
     return fit_results
 
@@ -563,7 +542,7 @@ def plot_continuum(fit_results,switches,phys_point):
         base_model = model.strip('_'+FPK)
         switches['scale'] = FPK
         switches['ansatz']['model'] = model
-        if model in ['xpt_nnnlo_FV_a4_PP','xpt_nnlo_FV_a4_PP']:
+        if model in ['xpt_nnnlo_FV_a4_PK','xpt_nnlo_FV_a4_PK']:
             fit = fit_results[model]
             ea_range = dict()
             ea_range['Lchi'] = phys_point['Lchi_'+FPK]
@@ -668,7 +647,7 @@ def bayes_model_avg(switches,results,phys_point):
         logGBF_list.append(results[model].fit.logGBF)
         FPK=model.split('_')[-1]
         results[model].switches['scale'] = FPK
-        r_list.append(results[model].report_phys_point(phys_point)['phys'])
+        r_list.append(results[model].report_phys_point()['phys'])
         if switches['debug']:
             print('\nDEBUG:',model,results[model].switches['scale'])
     print('\nAll Models')
@@ -880,7 +859,7 @@ def nnlo_prior_scan(switches,priors):
                         p_e['p_4'] = gv.gvar(0,p4)
                         p_e['k_4'] = gv.gvar(0,p4)
                         d_e['p'] = p_e
-                        fit_e = xpt.Fit(switches,xyp_init=d_e)
+                        fit_e = xpt.Fit(switches,xyp_init=d_e,phys=phys_point)
                         fit_e.fit_data()
                         tmp = [ p_e[k].sdev for k in ['p_4','s_4'] ]
                         tmp.append(fit_e.fit.logGBF)
@@ -970,7 +949,7 @@ def nlo_report(switches,priors,FV=True):
             d_e['x'] = x_e
             d_e['y'] = y_e
             d_e['p'] = p_e
-            fit_e = xpt.Fit(switches,xyp_init=d_e)
+            fit_e = xpt.Fit(switches,xyp_init=d_e,phys=phys_point)
             fit_e.fit_data()
             model_result[e] = fit_e
         fit_results[model] = model_result
@@ -1035,7 +1014,7 @@ def fit_checker(switches,priors):
         d_e['x'] = x_e
         d_e['y'] = y_e
         d_e['p'] = p_e
-        fit_e = xpt.Fit(switches,xyp_init=d_e)
+        fit_e = xpt.Fit(switches,xyp_init=d_e,phys=phys_point)
         fit_e.fit_data()
         fit_results[model] = fit_e
         if switches['print_fit']:
@@ -1084,13 +1063,13 @@ def check_fit_function(switches,check_point):
         d_e['p'] = p_check
         #print('debug p',d_e['p'])
 
-        fit_check = xpt.Fit(switches,xyp_init=d_e)
+        fit_check = xpt.Fit(switches,xyp_init=d_e,phys=phys_point)
         fit_check.check_fit_function(check_point)
 
         # ratio
         model = 'xpt-ratio_nnlo_'+FPK
         switches['ansatz']['model'] = model
-        fit_check = xpt.Fit(switches,xyp_init=d_e)
+        fit_check = xpt.Fit(switches,xyp_init=d_e,phys=phys_point)
         fit_check.check_fit_function(check_point)
 
 
