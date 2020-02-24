@@ -177,7 +177,6 @@ def format_h5_data(switches,data):
         data_dict = dict()
         for m in ['mpi','mk','mss','mju','mjs','mrs','mru']:
             data_dict[m] = data.get_node('/'+ens+'/'+m).read()
-            #print('  %s = %.5f +- %.5f' %(m,data_dict[m].mean(),data_dict[m].std()))
         for f in ['FK','Fpi']:
             data_dict[f] = data.get_node('/'+ens+'/'+f).read()
         for m in ['mres_l','mres_s']:
@@ -273,6 +272,24 @@ def format_h5_data(switches,data):
         data.close()
         sys.exit()
     return {'x':x, 'y':y, 'p':p}
+
+def set_priors(p_init,priors,optimized_priors=None):
+    for k in priors:
+        p_init[k] = priors[k]
+    if optimized_priors != None:
+        df = pd.DataFrame(optimized_priors)
+        sp_max = df.stack().idxmax()
+        print('      setting prior widths:')
+        print('      (s_4, saS_4) = %s; (p_4, k_4) = %s' %(sp_max[0],sp_max[1]))
+        for key in ['s_4','saS_4']:
+            if key in p_e:
+                p_e[key] = gv.gvar(0,float(sp_max[0]))
+        for key in ['p_4','k_4']:
+            if key in p_e:
+                p_e[key] = gv.gvar(0,float(sp_max[1]))
+    else:
+        print('      using default prior widths')
+    return p_init
 
 def pickle_fit(model,fit_result,phys_point):
     fit = gv.BufferDict()
@@ -457,7 +474,13 @@ def perform_analysis(switches,gv_data,priors,phys_point):
         print('%3s of %3s, EFT: %s' %(i_m+1,len(models),model))
         x_e = {k:gv_data['x'][k] for k in switches['ensembles']}
         y_e = {k:gv_data['y'][k] for k in switches['ensembles']}
-        p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in switches['ensembles']}
+        p_e = {k: gv_data['p'][k] for k in gv_data['p'] if k[0] in
+        switches['ensembles']}
+        if switches['optimized_priors']:
+            p_e = set_priors(p_e,priors,prior_grid[model])
+        else:
+            p_e = set_priors(p_e,priors)
+
         do_fit = False
         if switches['optimized_priors']:
             p_fit = model+'_optimized_priors'
@@ -465,16 +488,19 @@ def perform_analysis(switches,gv_data,priors,phys_point):
             p_fit = model
         if switches['save_fits']:
             if os.path.exists('pickled_fits/'+p_fit+'.p'):
+                print('reading pickled_fits/'+p_fit+'.p')
                 pickled_fit = read_fit(p_fit)
                 fit_p = xpt.Fit(switches,xyp_init={'x':x_e,'y':y_e,'p':p_e},phys=phys_point)
                 fit_p.fit = PickledFit(pickled_fit)
-                fit_p.phys_extrap = pickled_fit['phys_extrap']
+                fit_p.report_phys_point()
                 fit_results[model] = fit_p
+
             else:
                 do_fit = True
         else:
             do_fit = True
         if do_fit or switches['debug_save_fit']:
+            '''
             for key in priors:
                 p_e[key] = priors[key]
             if switches['optimized_priors']:
@@ -490,6 +516,7 @@ def perform_analysis(switches,gv_data,priors,phys_point):
                         p_e[key] = gv.gvar(0,float(sp_max[1]))
             else:
                 print('      using default prior widths')
+            '''
             d_e = dict()
             d_e['x'] = x_e
             d_e['y'] = y_e
