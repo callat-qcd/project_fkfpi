@@ -35,6 +35,7 @@ p_dict = {
     'save_results' : True,
     'save_pickles' : True,
     'replace_fits' : True,
+    'make_plots' : False
 }
 
 if p_dict['save_results']:
@@ -127,6 +128,14 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
         # Save results
         data_loader.save_fit_info(fit_manager.get_fit_info(),
                                   output_name=p_dict['output_name'], save_pickles=p_dict['save_pickles'])
+
+    if p_dict['make_plots']:
+        data_loader.save_plots(
+            fit_manager.make_plots(
+                show_error_ellipses=p_dict['show_error_ellipses'],
+                show_bootstrap_histograms=p_dict['show_bs_histograms']),
+            output_filename='fits/'+name
+        )
 
 
     t1 = time.time()
