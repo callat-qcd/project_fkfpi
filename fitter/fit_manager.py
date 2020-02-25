@@ -17,7 +17,7 @@ import fitter.special_functions as sf
 #import fitter
 #import special_functions as sf
 
-class bootstrapper(object):
+class fit_manager(object):
 
     def __init__(self, fit_data, phys_point_data, prior=None, **kwargs):
 

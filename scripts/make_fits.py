@@ -11,10 +11,10 @@ import time
 import itertools
 
 sys.path.append("../")
-from fitter import data_loader as dl
-from fitter import bootstrapper as bs
-from fitter import fitter as fit
-from fitter import special_functions as sf
+import fitter.data_loader as dl
+import fitter.fit_manager as fm
+import fitter.fitter as fit
+import fitter.special_functions as sf
 
 for j in range(10): # Sometimes this needs to be loaded twice...
     matplotlib.rcParams['figure.figsize'] = [10, 10]
@@ -45,13 +45,13 @@ if p_dict['save_results']:
 
 
 choices = {
-    'fit_type' : ['ma', 'ma-ratio', 'xpt', 'xpt-ratio'],
-    'F2' : ['FKFK', 'FKFpi', 'FpiFpi'],
-    'vol' : [0, 10],
+    'fit_type' : ['xpt'], #['ma', 'ma-ratio', 'xpt', 'xpt-ratio'],
+    'F2' : ['FpiFpi'], #['FKFK', 'FKFpi', 'FpiFpi'],
+    'vol' : [10], #[0, 10],
 
     # semi-nnlo corrections
-    'include_alpha_s' : [False, True],
-    'semi-nnlo_corrections' : ['nnlo-full_bijnens', 'nnlo-full', 'nnlo-logSq_ct', 'nnlo-ct'],
+    'include_alpha_s' : [False, True], #[False, True],
+    'semi-nnlo_corrections' : ['nnlo-full_bijnens'], #['nnlo-full_bijnens', 'nnlo-full', 'nnlo-logSq_ct', 'nnlo-ct'],
 
     # nnnlo corrections
     'include_latt_n3lo' : [False, True],
@@ -113,19 +113,19 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
                       use_bijnens_central_value=p_dict['use_bijnens_central_value']
                  )
 
-    # Make bootstrapper
-    bootstrapper = bs.bootstrapper(
+    # Make fit_manager
+    fit_manager = fm.fit_manager(
         fit_data, phys_point_data, prior=prior, order=p_dict['order'], F2=p_dict['F2'],
         include_su2_isospin_corrrection=p_dict['include_su2_isospin_corrrection'], use_bijnens_central_value=p_dict['use_bijnens_central_value'],
         fit_type=p_dict['fit_type'], abbrs=p_dict['abbrs'], bias_correct=p_dict['bias_correct']
     )
 
-    if p_dict['replace_fits'] or not (bootstrapper.get_name() in data_loader.get_models()):
+    if p_dict['replace_fits'] or not (fit_manager.get_name() in data_loader.get_models()):
 
-        print(bootstrapper)
+        print(fit_manager)
 
         # Save results
-        data_loader.save_fit_info(bootstrapper.get_fit_info(),
+        data_loader.save_fit_info(fit_manager.get_fit_info(),
                                   output_name=p_dict['output_name'], save_pickles=p_dict['save_pickles'])
 
 

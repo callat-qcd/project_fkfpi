@@ -11,8 +11,8 @@ import time
 import itertools
 
 sys.path.append("../")
-from fitter import data_loader as dl
-from fitter import bootstrapper as bs
+import fitter.data_loader as dl
+import fitter.fit_manager as fm
 
 
 p_dict = {
@@ -108,15 +108,15 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
 
     if temp_prior is None or p_dict['replace_entries']:
 
-        # Make bootstrapper
-        bootstrapper = bs.bootstrapper(fit_data, phys_point_data, prior=temp_prior, **p_dict)
+        # Make fit_manager
+        fit_manager = fm.fit_manager(fit_data, phys_point_data, prior=temp_prior, **p_dict)
 
-        new_prior = bootstrapper.create_prior_from_fit()
-        data_loader.save_prior(new_prior, bootstrapper.get_name())
+        new_prior = fit_manager.create_prior_from_fit()
+        data_loader.save_prior(new_prior, fit_manager.get_name())
 
         if p_dict['save_results']:
             data_loader.save_fit_info(
-                bootstrapper.get_fit_info(),
+                fit_manager.get_fit_info(),
                 output_name=p_dict['output_name'],
                 save_pickles=p_dict['save_pickles']
             )
