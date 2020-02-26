@@ -156,7 +156,14 @@ class fitter(object):
             newprior['A_p'] = prior['A_p']
             newprior['A_a'] = prior['A_a']
 
-        if order['include_latt_n3lo']:
+        if order['fit'] in ['nnnlo']:
+            newprior['A_aa'] = prior['A_aa']
+            newprior['A_ak'] = prior['A_ak']
+            newprior['A_ap'] = prior['A_ap']
+            newprior['A_kk'] = prior['A_kk']
+            newprior['A_kp'] = prior['A_kp']
+            newprior['A_pp'] = prior['A_pp']
+        elif order['include_latt_n3lo']:
             newprior['A_aa'] = prior['A_aa']
 
         for key in self.order['exclude']:
@@ -210,7 +217,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         for key in self.order['exclude']:
             p[key] = 0
 
-        # NLO fits
+        # nlo fits
         if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
             # mixed-action/xpt fits
             if self.fit_type == 'ma-ratio':
@@ -225,6 +232,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if debug:
             temp = output
 
+        # n2lo corrections
         if self.order['fit'] in ['nnlo', 'nnnlo']:
             output = output + self.fitfcn_nnlo_pure_ct(p)
             output = output + self.fitfcn_nnlo_ratio(p)
@@ -240,7 +248,11 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         if self.order['include_alpha_s']:
             output = output + self.fitfcn_seminnlo_alpha_s_ct(p)
 
-        if self.order['include_latt_n3lo']:
+
+        # n3lo corrections
+        if self.order['fit'] in ['nnnlo']:
+            output = output + self.fitfcn_nnnlo_pure_ct(p)
+        elif self.order['include_latt_n3lo']:
             output = output + self.fitfcn_nnnlo_latt_spacing_ct(p)
 
         for key in self.order['exclude']:
@@ -376,6 +388,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         )
 
         return FK_nlo_per_F0 / Fpi_nlo_per_F0
+
+
+    def fitfcn_nlo_polynomial(self, p):
+        return None
 
 
     def fitfcn_nlo_xpt(self, p):
@@ -635,6 +651,29 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         output = (
             + (eps2_a)**2 *p['A_aa']
+        ) *(eps2_k - eps2_pi)
+
+        return output
+
+    def fitfcn_nnnlo_pure_ct(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+
+        output = (
+            + eps2_a *(
+                + eps2_a  *p['A_aa']
+                + eps2_k  *p['A_ak']
+                + eps2_pi *p['A_ap']
+            )
+            + eps2_k *(
+                + eps2_k  *p['A_kk']
+                + eps2_pi *p['A_kp']
+            )
+            + eps2_pi *(
+                + eps2_pi *p['A_pp']
+            )
         ) *(eps2_k - eps2_pi)
 
         return output

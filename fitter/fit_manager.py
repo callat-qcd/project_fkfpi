@@ -137,15 +137,15 @@ class fit_manager(object):
             prior['A_aa'] = gv.gvar('0.0(1000.0)')#gv.gvar('0.0(50.0)')
 
             # nnlo terms
-            prior['A_k'] = gv.gvar('0.0(5.0)')#gv.gvar('0.0(5.0)')
-            prior['A_p'] = gv.gvar('0.0(5.0)')#gv.gvar('0.0(5.0)')
+            prior['A_k'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(5.0)')
+            prior['A_p'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(5.0)')
 
             # nnnlo terms
-            prior['A_ak'] = gv.gvar('0.0(5.0)')
-            prior['A_ap'] = gv.gvar('0.0(5.0)')
-            prior['A_kk'] = gv.gvar('0.0(5.0)')
-            prior['A_kp'] = gv.gvar('0.0(5.0)')
-            prior['A_pp'] = gv.gvar('0.0(5.0)')
+            prior['A_ak'] = gv.gvar('0.0(100.0)')
+            prior['A_ap'] = gv.gvar('0.0(100.0)')
+            prior['A_kk'] = gv.gvar('0.0(100.0)')
+            prior['A_kp'] = gv.gvar('0.0(100.0)')
+            prior['A_pp'] = gv.gvar('0.0(100.0)')
 
         # Convert bootstrapped data into gvar data
         bias_corrector = lambda arr : arr[1:] + (arr[0] - np.mean(arr[1:]))
