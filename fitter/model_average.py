@@ -190,7 +190,7 @@ class model_average(object):
                 y[model] = self.fit_results[model][param]
 
             else:
-                return None
+                y[model] = None
 
 
         # Only get results that aren't None
@@ -671,8 +671,22 @@ class model_average(object):
 
             for model in self.get_model_names():
                 model_info = self._get_model_info_from_name(model)
-                if self.fit_results[model][param] is not np.nan and (str(model_info[vary_choice]) == choice or choice=='All'):
-                    r = gv.gvar(self.fit_results[model][param])
+
+                r = np.nan
+                if param == 'FK/Fpi':
+                    r = self._get_fit_extrapolation(model)
+
+                elif param in self._get_fit_posterior(model):
+                    r =  self._get_fit_posterior(model)[param]
+
+                elif param in self.fit_results[model]:
+                    r = self.fit_results[model][param]
+
+                else:
+                    r = np.nan
+
+                if r is not np.nan and r is not None and (str(model_info[vary_choice]) == choice or choice=='All'):
+                    #r = gv.gvar(self.fit_results[model][param])
                     y_dict[model] = r
 
                     w = 1/sum(np.exp(np.array(logGBF_list)-self.fit_results[model]['logGBF']))
