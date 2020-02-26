@@ -139,8 +139,12 @@ class fitter(object):
             newprior['A_loga'] = prior['A_loga']
 
         # Fit parameters, depending on fit type
-        newprior['L_4'] = prior['L_4']
-        newprior['L_5'] = prior['L_5']
+        if self.fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
+            newprior['L_4'] = prior['L_4']
+            newprior['L_5'] = prior['L_5']
+        elif self.fit_type in ['poly']:
+            newprior['A_c'] = prior['A_c']
+
 
         if order['include_log']:
             newprior['L_1'] = prior['L_1']
@@ -228,6 +232,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 output = self.fitfcn_nlo_xpt_ratio(p)
             elif self.fit_type == 'xpt':
                 output = self.fitfcn_nlo_xpt(p)
+            elif self.fit_type == 'poly':
+                output = self.fitfcn_nlo_polynomial(p)
 
         if debug:
             temp = output
@@ -235,8 +241,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         # n2lo corrections
         if self.order['fit'] in ['nnlo', 'nnnlo']:
             output = output + self.fitfcn_nnlo_pure_ct(p)
-            output = output + self.fitfcn_nnlo_ratio(p)
-            output = output + self.fitfcn_nnlo_renormalization_ct(p)
+            if self.fit_type is not 'poly':
+                output = output + self.fitfcn_nnlo_ratio(p)
+                output = output + self.fitfcn_nnlo_renormalization_ct(p)
 
         # semi-nnlo corrections
         if self.order['include_log']:
@@ -391,7 +398,12 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
 
     def fitfcn_nlo_polynomial(self, p):
-        return None
+        lam2_chi = p['lam2_chi']
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+
+        output = (eps2_k - eps2_pi) *p['A_c']
+        return output
 
 
     def fitfcn_nlo_xpt(self, p):

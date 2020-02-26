@@ -131,6 +131,9 @@ class fit_manager(object):
             prior['L_4'] = gv.gvar('0.0(0.005)')
             prior['L_5'] = gv.gvar('0.0(0.005)')
 
+            # nlo polynomial
+            prior['A_c'] = gv.gvar('0.0(0.05)')
+
             # Lattice spacing terms
             prior['A_a'] = gv.gvar('0.0(100.0)')#gv.gvar('0.0(5.0)')
             prior['A_loga'] = gv.gvar('0.0(100.0)')#gv.gvar('0.0(5.0)')
