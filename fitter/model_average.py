@@ -34,11 +34,12 @@ class model_average(object):
         output += '   Explained:   %s \n' %(sig_fig(fk_fpi[2]))
 
         error_budget = self.error_budget()
-        output += '\n---\n'
-        output += 'Error Budget: \n'
-        output += '   Chiral:      %s \n' %(sig_fig(error_budget['chiral']))
-        output += '   Phys Point:  %s \n' %(sig_fig(error_budget['pp_input']))
-        output += '   Statistical: %s \n' %(sig_fig(error_budget['stat']))
+        if error_budget['chiral'] is not None:
+            output += '\n---\n'
+            output += 'Error Budget: \n'
+            output += '   Chiral:      %s \n' %(sig_fig(error_budget['chiral']))
+            output += '   Phys Point:  %s \n' %(sig_fig(error_budget['pp_input']))
+            output += '   Statistical: %s \n' %(sig_fig(error_budget['stat']))
 
         return output
 
@@ -100,10 +101,16 @@ class model_average(object):
         return self.fit_results[model]['FK/Fpi']
 
     def _get_fit_posterior(self, model):
-        return self.fit_results[model]['posterior']
+        if 'posterior' in self.fit_results[model]:
+            return self.fit_results[model]['posterior']
+        else:
+            return None
 
     def _get_fit_prior(self, model):
-        return self.fit_results[model]['prior']
+        if 'prior' in self.fit_results[model]:
+            return self.fit_results[model]['prior']
+        else:
+            return None
 
     def _get_phys_point_data(self, model=None):
         phys_point_data = {
@@ -179,11 +186,11 @@ class model_average(object):
             if param == 'FK/Fpi':
                 y[model] = self._get_fit_extrapolation(model)
 
-            elif param in self._get_fit_posterior(model):
+            elif self._get_fit_posterior(model) is not None and param in self._get_fit_posterior(model):
                 y[model] =  self._get_fit_posterior(model)[param]
 
             # Error budget
-            elif param.startswith('eb:'):
+            elif param.startswith('eb:') and 'error_budget' in self.fit_results[model]:
                 y[model] = self.fit_results[model]['error_budget'][param.split(':')[-1]]
 
             elif param in self.fit_results[model]:
@@ -198,6 +205,9 @@ class model_average(object):
         for model in self.get_model_names():
             if (y[model] is not np.nan) and (y[model]is not None):
                 nonempty_keys.append(model)
+
+        if nonempty_keys == []:
+            return None
 
         # calculate P( M_k | D )
         prob_Mk_given_D = lambda model_k : (
@@ -538,6 +548,16 @@ class model_average(object):
 
     # parameter = 'a', 'mpi', 'volume'
     def plot_fits(self, parameter):
+
+        # Check that posterior contains covarianace matrix
+        temp_model_name = list(self.get_model_names())[0]
+        temp_po = self._get_fit_posterior(temp_model_name)
+        temp_p = self._get_fit_prior(temp_model_name)
+
+        if (temp_p is None) or (temp_po is None) or (gv.uncorrelated(temp_po['A_a'], temp_p['A_a'])):
+            print('Correlations between gvar variables lost! Fit plots will be inaccurate.')
+            return None
+
         colors = ['darkorange', 'mediumaquamarine', 'orchid', 'skyblue', 'silver']
         #colors = ['cyan', 'magenta', 'yellow', 'black', 'silver']
 
@@ -676,11 +696,11 @@ class model_average(object):
                 if param == 'FK/Fpi':
                     r = self._get_fit_extrapolation(model)
 
-                elif param in self._get_fit_posterior(model):
+                elif (self._get_fit_posterior(model) is not None) and (param in self._get_fit_posterior(model)):
                     r =  self._get_fit_posterior(model)[param]
 
                 elif param in self.fit_results[model]:
-                    r = self.fit_results[model][param]
+                    r = gv.gvar(self.fit_results[model][param])
 
                 else:
                     r = np.nan
