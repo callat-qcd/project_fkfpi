@@ -315,7 +315,7 @@ class model_average(object):
 
                 if param in results[name].keys():
                     param_value = gv.gvar(results[name][param])
-                elif param in results[name]['posterior'].keys():
+                elif 'posterior' in results[name] and param in results[name]['posterior'].keys():
                     param_value = gv.gvar(results[name]['posterior'][param])
                 else:
                     param_value = None
