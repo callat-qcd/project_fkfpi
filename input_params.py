@@ -12,15 +12,22 @@ switches['ensembles'] = [
 switches['ensembles_fit'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
-    'a15m310'  ,'a12m310' ,'a09m310',#'a06m310L',
+    'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
     'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
     'a15m135XL','a12m130',
     ]
+#switches['ensembles_fit'] = [
+#    'a12m400' ,'a09m400',
+#    'a12m350' ,'a09m350',
+#    'a12m310' ,'a09m310','a06m310L',
+#    'a12m220S','a12m220','a12m220L','a09m220',
+#    'a12m130',
+#    ]
 
 # FIT MODELS
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
-switches['ansatz']['models'] = ['xpt_nnlo_FV']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnlo_FV_a4']#,'xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
 switches['sys']['Lam_chi']   = False
@@ -35,10 +42,10 @@ switches['ansatz']['a2dm']   = 'individual' # avg or individual
 switches['scales']           = ['PP','PK','KK']#,'PK','KK']
 switches['scale']            = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
 switches['do_analysis']      = True
-switches['save_fits']        = True
+switches['save_fits']        = False
 switches['model_avg']        = True
 # use optimized (True) or default (False) priors
-switches['optimized_priors'] = True
+switches['optimized_priors'] = False
 # set mean to boot0 vs add boot0 to bs list
 switches['bs_bias']          = True
 # use scipy instead of GSL?
@@ -50,6 +57,8 @@ switches['make_plots']       = True
 switches['save_figs']        = True
 switches['plot_raw_data']    = False
 switches['verbose']          = False
+switches['milc_compare']     = False
+switches['plot_asq_converg'] = True
 # for tuning prior widths
 switches['nnlo_priors']      = False
 switches['prior_group']      = True
@@ -87,13 +96,13 @@ priors['L8']   = gv.gvar( 0.000294,0.000294)
 
 ''' default values '''
 n2lo_width = 5.
-priors['s_4']   = gv.gvar(0.0, n2lo_width)
-#priors['s_4']   = gv.gvar(-10, 10)
+#priors['s_4']   = gv.gvar(0.0, n2lo_width)
 priors['s_4']   = gv.gvar(0, 100)
+#priors['s_4']   = gv.gvar(0, 100)
 priors['k_4']   = gv.gvar(0.0, n2lo_width)
 priors['p_4']   = gv.gvar(0.0, n2lo_width)
-#priors['saS_4'] = gv.gvar(0.0, 10)
-priors['saS_4'] = gv.gvar(0.0, n2lo_width)
+priors['saS_4'] = gv.gvar(0.0, 100)
+#priors['saS_4'] = gv.gvar(0.0, n2lo_width)
 
 # Ananthanarayan et al, 1711.11328
 priors['k_4']   = gv.gvar(2.2, 4)
@@ -136,6 +145,7 @@ phys_point['FK']  = gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2)) #PDG fK+ eq(16)
 # FLAG values for "pure" QCD point
 phys_point['mpi'] = gv.gvar(134.8, 0.3) #FLAG 2017 (16)
 phys_point['mk']  = gv.gvar(494.2 , 0.3) #FLAG 2017 (16)
+phys_point['mk']  = gv.gvar(485 , 0.3) #FLAG 2017 (16)
 
 phys_point['F0']  = gv.gvar(80,20) #FLAG use of F0 in SU(2) correction for FK/Fpi
 #if switches['scale'] == 'PK':
@@ -151,10 +161,10 @@ phys_point['w0']  = 0.1714
 phys_point['FKFPi_FLAG'] = gv.gvar(1.1932, 0.0019)
 
 check_fit = dict()
-check_fit['mpi'] = 135.0
-check_fit['mk']  = 495.5
-check_fit['Fpi'] = 92.2
-check_fit['FK']  = 110.5
+check_fit['mpi'] =  135.0
+check_fit['mk']  =  495.5
+check_fit['Fpi'] =  92.2
+check_fit['FK']  =  110.5
 check_fit['L1']  =  0.000372
 check_fit['L2']  =  0.000493
 check_fit['L3']  = -0.003070

@@ -9,6 +9,7 @@ import lsqfit
 fig_width = 6.75 # in inches, 2x as wide as APS column
 gr        = 1.618034333 # golden ratio
 fig_size  = (fig_width, fig_width / gr)
+fig_size2 = (fig_width, fig_width * 1.6)
 plt_axes  = [0.14,0.14,0.855,0.855]
 fs_text   = 20 # font size of text
 fs_leg    = 16 # legend font size
@@ -893,15 +894,19 @@ class Fit(object):
                 p_a4[(a,'e2')] = 4./3*k2 - 1./3*p2
                 p_a4[(a,'a2')] = (a / self.phys['w0'])**2 / 4 / pi
                 # subtract a**4 to get c + a**2
-                y_plot['a2'].append(y_plot['m135'][-1] - self.fit_function(x,p_a4)[a] + y_plot['m135'][0])
+                y_plot['a2'].append(y_plot['m135'][-1] - self.fit_function(x,p_a4)[a])
                 # subtract a**2 to get c + a**4
-                y_plot['a4'].append(y_plot['m135'][-1] - self.fit_function(x,p_a2)[a] + y_plot['m135'][0])
+                y_plot['a4'].append(y_plot['m135'][-1] - self.fit_function(x,p_a2)[a])
         x_plot = np.array(x_plot)
         y  = np.array([k.mean for k in y_plot['m135']])
         dy = np.array([k.sdev for k in y_plot['m135']])
 
         # continuum extrapolation figure
-        fig = plt.figure('FKFpi_vs_ea_'+self.model,figsize=fig_size)
+        if self.switches['milc_compare']:
+            figsize = fig_size2
+        else:
+            figsize = fig_size
+        fig = plt.figure('FKFpi_vs_ea_'+self.model,figsize=figsize)
         self.ax_cont = plt.axes(plt_axes)
         self.ax_cont.fill_between(x_plot, y-dy, y+dy, color='#b36ae2', alpha=0.4)
         # plot data
@@ -915,20 +920,37 @@ class Fit(object):
         self.ax_cont.set_ylabel(r'$F_K / F_\pi$',fontsize=fs_text)
         self.ax_cont.set_xlim(0,.065)
         if self.switches['plot_raw_data']:
-            self.ax_cont.set_ylim(1.06, 1.225)
+            self.ax_cont.set_ylim(1.06, 1.228)
         else:
-            self.ax_cont.set_ylim(1.135, 1.225)
+            self.ax_cont.set_ylim(1.14, 1.228)
         if self.switches['save_figs']:
             plt.savefig('figures/vs_epasq_'+self.switches['ansatz']['model']+'.pdf',transparent=True)
 
-        if 's_6' in p and False:
-            y_a2  = np.array([k.mean for k in y_plot['a2']])
-            dy_a2 = np.array([k.sdev for k in y_plot['a2']])
-            y_a4  = np.array([k.mean for k in y_plot['a4']])
-            dy_a4 = np.array([k.sdev for k in y_plot['a4']])
-            self.ax_cont.fill_between(x_plot, y_a2-dy_a2, y_a2+dy_a2, color='k', alpha=0.4)
-            self.ax_cont.fill_between(x_plot, y_a4-dy_a4, y_a4+dy_a4, color='k', alpha=0.4)
-
+        if 's_6' in p and self.switches['plot_asq_converg']:
+            y_plot['a2'] = np.array(y_plot['a2'])
+            y_plot['a4'] = np.array(y_plot['a4'])
+            a2_vs_a0 = y_plot['a2'] / y_plot['m135'][0]
+            a4_vs_a2 = y_plot['a4'] / y_plot['m135'][0]
+            fig = plt.figure('FKFpi_asq_convergence_'+self.model,figsize=fig_size)
+            self.ax_convergence = plt.axes(plt_axes)
+            # N2LO disco
+            y_tmp  = np.array([k.mean for k in a2_vs_a0])
+            dy_tmp = np.array([k.sdev for k in a2_vs_a0])
+            self.ax_convergence.fill_between(x_plot, y_tmp-dy_tmp, y_tmp+dy_tmp, color='k', alpha=0.2, label=r'N$^2$LO $a^2$ corrections')
+            # N3LO disco
+            #y_tmp  = np.array([k.mean for k in a4_vs_a2])
+            #dy_tmp = np.array([k.sdev for k in a4_vs_a2])
+            #self.ax_convergence.fill_between(x_plot, y_tmp-dy_tmp, y_tmp+dy_tmp, color='r', alpha=0.5, label=r'N$^3$LO $a^2 + a^4$ corrections')
+            # N2LO + N3LO
+            y_tmp  = np.array([k.mean for k in a2_vs_a0 + a4_vs_a2])
+            dy_tmp = np.array([k.sdev for k in a2_vs_a0 + a4_vs_a2])
+            self.ax_convergence.fill_between(x_plot, y_tmp-dy_tmp, y_tmp+dy_tmp, color='#b36ae2', alpha=0.4, label=r'N$^2$LO + N$^3$LO')
+            self.ax_convergence.legend()
+            self.ax_convergence.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=fs_text)
+            self.ax_convergence.set_ylabel(r'ratio N$^n$LO / continuum',fontsize=fs_text)
+            self.ax_convergence.set_xlim(0,.065)
+            if self.switches['save_figs']:
+                plt.savefig('figures/asq_convergence_'+self.switches['ansatz']['model']+'.pdf',transparent=True)
         # restore original self attributes
         for key,val in self_dict.items():
             setattr(self, key, val)

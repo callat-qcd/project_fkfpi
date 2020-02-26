@@ -294,7 +294,6 @@ def set_priors(p_init,priors,optimized_priors=None):
 def pickle_fit(model,fit_result,phys_point):
     fit = gv.BufferDict()
     fit['phys_extrap'] = fit_result.report_phys_point()['phys']
-    #fit['phys_der'] = [gv.gvar(k) for k in fit['phys'].der]
     for k in fit_result.fit.prior:
         if type(k) is tuple:
             fit['prior_'+k[0]+'_'+k[1]] = fit_result.fit.prior[k]
@@ -306,15 +305,13 @@ def pickle_fit(model,fit_result,phys_point):
         else:
             fit['p_'+k] = fit_result.fit.p[k]
     # we can't save the fit.cov easily, as it is an np.array
-    # but, we can reconstruct this cov after reading in all the fit.p values
+    # but, they can be reconstructed after reading in all the fit.p values
     fit['chi2']   = gv.gvar(fit_result.fit.chi2)
     fit['dof']    = gv.gvar(fit_result.fit.dof)
     fit['logGBF'] = gv.gvar(fit_result.fit.logGBF)
     fit['Q']      = gv.gvar(fit_result.fit.Q)
     for k in fit_result.fit.y:
         fit['data_'+k] = fit_result.fit.y[k]
-    #for k in fit:
-    #    print(k,type(k),fit[k],type(fit[k]))
 
     if not os.path.exists('pickled_fits'):
         os.makedirs('pickled_fits')
@@ -324,7 +321,6 @@ def read_fit(model):
     fit = gv.load('pickled_fits/'+model+'.p')
     fit_processed = dict()
     fit_processed['phys_extrap'] = fit['phys_extrap']
-    #fit_processed['phys'].der = [k.mean for k in fit['phys_der']]
     fit_processed['prior'] = dict()
     fit_processed['p']     = dict()
     fit_processed['stat']  = dict()
@@ -362,8 +358,8 @@ class PickledFit():
         self.chi2   = pickled_fit['stat']['chi2'].mean
         self.logGBF = pickled_fit['stat']['logGBF'].mean
         self.Q      = pickled_fit['stat']['Q'].mean
-        #self.cov    = gv.evalcov(self.p)
-        #self.corr   = gv.evalcorr(self.p)
+        self.cov    = gv.evalcov(self.p)
+        self.corr   = gv.evalcorr(self.p)
 
 def fkfpi_phys(x_phys,fit):
     # use metaSq = 4/3 mK**2 - 1/3 mpi**2
@@ -556,6 +552,7 @@ def perform_analysis(switches,gv_data,priors,phys_point):
         if not do_fit:
             fit_e = fit_p
         print('FK/Fpi = ',fit_e.report_phys_point()['phys'])
+        print('do fit',do_fit)
         if switches['print_fit'] and do_fit:
             print(fit_e.fit.format(maxline=True))
         if switches['debug_phys']:
@@ -678,7 +675,7 @@ def bayes_model_avg(switches,results,phys_point):
         if switches['debug']:
             print('\nDEBUG:',model,results[model].switches['scale'])
     print('\nAll Models')
-    print("%33s %5s %8s %s" %('model','Q','w','FK/Fpi'))
+    print("%33s %5s %8s %8s %s" %('model','Q','logGBF','w','FK/Fpi'))
     print('-------------------------------------------------------------------')
     for i_m,model in enumerate(results):
         models.append(model)
@@ -686,7 +683,7 @@ def bayes_model_avg(switches,results,phys_point):
         w = np.exp(logGBF_list[i_m])
         w = w / np.sum(np.exp(np.array(logGBF_list)))
         w_list.append(w)
-        print("%33s %.3f %.2e %s" %(model,results[model].fit.Q,w,r))
+        print("%33s %.3f %.3f %.2e %s" %(model,results[model].fit.Q,results[model].fit.logGBF,w,r))
         FKFpi += gv.gvar(w*r.mean, np.sqrt(w)*r.sdev)
         p = stats.norm.pdf(x,r.mean,r.sdev)
         pdf += w * p
@@ -703,11 +700,11 @@ def bayes_model_avg(switches,results,phys_point):
     model_var = np.sum(w_list * np.array([ r.mean**2 for r in r_list])) - FKFpi.mean**2
 
     print('\nModels with Q > 0.05')
-    print("%33s %4s %5s %s" %('model','Q','w','FK/Fpi'))
+    print("%33s %5s %6s %5s %s" %('model','Q','logGBF','w','FK/Fpi'))
     print('-------------------------------------------------------------------')
     for i_m,model in enumerate(models):
         if results[model].fit.Q > 0.05:
-            print("%33s %.2f %.3f %s %f %f" %(model,results[model].fit.Q,w_list[i_m],r_list[i_m],r_list[i_m].mean,r_list[i_m].sdev))
+            print("%33s %.3f %.3f %.3f %s %f %f" %(model,results[model].fit.Q,results[model].fit.logGBF,w_list[i_m],r_list[i_m],r_list[i_m].mean,r_list[i_m].sdev))
         else:
             if w_list[i_m] > 0.05:
                 print("%33s %.2f %.3f %s" %(model,results[model].fit.Q,w_list[i_m],'NEGLECTED'))
