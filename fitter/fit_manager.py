@@ -224,7 +224,6 @@ class fit_manager(object):
 
 
     def __str__(self):
-        bs_fit_parameters = self.get_bootstrapped_fit_parameters()
         prior = self.prior
         output = "\nModel: %s" %(self.get_name())
         output = output + "\n\nFitting to %s \n" %(self.order['fit'])
@@ -382,7 +381,7 @@ class fit_manager(object):
         if include_su2_isospin_corrrection is None:
             include_su2_isospin_corrrection = self.include_su2_isospin_corrrection
 
-        output = self.fk_fpi_fit_fcn(fit_data=self.get_phys_point_data())
+        output = self.fk_fpi_fit_fcn(fit_data=self.get_phys_point_data().copy())
         if include_su2_isospin_corrrection:
             output *= np.sqrt(1 + self.get_delta_su2_correction()) # include SU(2) isospin breaking correction
 
@@ -394,7 +393,7 @@ class fit_manager(object):
 
     def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None, fit_type=None, debug=None):
         if fit_data is None:
-            fit_data = self.get_phys_point_data()
+            fit_data = self.get_phys_point_data().copy()
         if fit_parameters is None:
             fit_parameters = self.get_posterior().copy()
         if fit_type is None:
@@ -407,27 +406,6 @@ class fit_manager(object):
 
         model = fit.fitter(order=self.order, fit_type=fit_type, F2=self.F2, fast_sunset=self.fast_sunset)._make_models()[0]
         return model.fitfcn(p=fit_parameters, fit_data=fit_data, debug=debug)
-
-    # Returns dictionary with keys fit parameters, entries bs results
-    def get_bootstrapped_fit_parameters(self):
-
-        # Get all fit parameters
-        keys1 = self.prior.keys()
-        keys2 = self.get_fit().p.keys()
-        parameters = np.intersect1d(keys1, keys2)
-
-        # Make dictionary
-        temp_fit = self.get_fit()
-        bs_fit_parameters = {parameter : np.array([gv.mean(temp_fit.p[parameter])]).flatten() for parameter in parameters}
-
-        # Populate it with bs fits
-        for j in range(1, self.bs_N):
-            temp_fit = self.fits[j]
-            for parameter in parameters:
-                bs_fit_parameters[parameter] = np.vstack((bs_fit_parameters[parameter],
-                                                        np.array([gv.mean(temp_fit.p[parameter])]).flatten()))
-
-        return bs_fit_parameters
 
     def get_delta_su2_correction(self):
         lam2_chi = (4 *np.pi *gv.gvar('80(20)'))**2 #lam2_chi = self.get_phys_point_data('lam2_chi')
@@ -593,11 +571,11 @@ class fit_manager(object):
             return self.get_fit().prior[key]
 
 
-    def make_plots(self, show_error_ellipses=False, show_bootstrap_histograms=False):
+    def make_plots(self, show_error_ellipses=False):
         figs = [self.plot_fit_info()]
         figs.append(self.plot_fit_bar_graph())
 
-        figs.append(self.plot_fit_vs_eps2pi())
+        figs.append(self.plot_fit('mpi'))
         #squared = lambda x : x**2
         #figs.append(self.plot_parameters(xy_parameters=['mpi', 'FK/Fpi'],
         #            xlabel='$F_\pi$ (MeV)', color_parameter='a'))
@@ -608,35 +586,29 @@ class fit_manager(object):
         #figs.append(self.plot_parameters(xy_parameters=['mk', 'FK/Fpi'],
         #            xfcn=squared, xlabel='$m_K^2$ (MeV)$^2$', color_parameter='a'))
 
-        if show_bootstrap_histograms:
-            # Make histograms
-            fit_keys = self.get_fit_keys()
-            for key in fit_keys:
-                figs.append(self.plot_parameter_histogram(key))
-
         if show_error_ellipses:
             # Make error ellipses
             # Casts indixes of fit_keys as an upper-triangular matrix,
             # thereby allowing us to get all the 2-combinations
             # of the set of fit_keys
-            fit_keys = self.get_bootstrapped_fit_parameters().keys()
+            fit_keys = list(self.get_posterior())
             rs,cs = np.triu_indices(len(fit_keys),1)
             for (i, j) in zip(rs, cs):
                 figs.append(self.plot_error_ellipsis([fit_keys[i], fit_keys[j]]))
 
         return figs
 
-    # Takes an array (eg, ['l_ju', 'l_pi'])
-    def plot_error_ellipsis(self, fit_keys):
-        x = self.get_bootstrapped_fit_parameters()[fit_keys[0]]
-        y = self.get_bootstrapped_fit_parameters()[fit_keys[1]]
+    # Takes keys from posterior (eg, 'L_5' and 'L_4')
+    def plot_error_ellipsis(self, x_key, y_key):
+        x = self.get_posterior(x_key)
+        y = self.get_posterior(y_key)
 
 
         fig, ax = plt.subplots()
 
-        corr = '{0:.3g}'.format(np.corrcoef(x, y)[0,1])
-        std_x = '{0:.3g}'.format(np.std(x))
-        std_y = '{0:.3g}'.format(np.std(y))
+        corr = '{0:.3g}'.format(gv.evalcorr([x, y])[0,1])
+        std_x = '{0:.3g}'.format(gv.sdev(x))
+        std_y = '{0:.3g}'.format(gv.sdev(y))
         text = ('$R_{x, y}=$ %s\n $\sigma_x =$ %s\n $\sigma_y =$ %s'
                 % (corr,std_x,std_y))
 
@@ -647,20 +619,20 @@ class fit_manager(object):
         ax.text(0.05, 0.95, text, transform=ax.transAxes, fontsize=14,
                 verticalalignment='top', bbox=props)
 
-        C = np.cov([x, y])
+        C = gv.evalcov([x, y])
         eVe, eVa = np.linalg.eig(C)
         for e, v in zip(eVe, eVa.T):
-            plt.plot([np.mean(x)-1*np.sqrt(e)*v[0], 1*np.sqrt(e)*v[0] + np.mean(x)],
-                     [np.mean(y)-1*np.sqrt(e)*v[1], 1*np.sqrt(e)*v[1] + np.mean(y)],
+            plt.plot([gv.mean(x)-1*np.sqrt(e)*v[0], 1*np.sqrt(e)*v[0] + gv.mean(x)],
+                     [gv.mean(y)-1*np.sqrt(e)*v[1], 1*np.sqrt(e)*v[1] + gv.mean(y)],
                      'k-', lw=2)
 
         #plt.scatter(x-np.mean(x), y-np.mean(y), rasterized=True, marker=".", alpha=100.0/self.bs_N)
-        plt.scatter(x, y, rasterized=True, marker=".", alpha=100.0/self.bs_N)
+        #plt.scatter(x, y, rasterized=True, marker=".", alpha=100.0/self.bs_N)
 
         plt.grid()
         plt.gca().set_aspect('equal', adjustable='datalim')
-        plt.xlabel(self._fmt_key_as_latex(fit_keys[0]), fontsize = 24)
-        plt.ylabel(self._fmt_key_as_latex(fit_keys[1]), fontsize = 24)
+        plt.xlabel(self._fmt_key_as_latex(x_key), fontsize = 24)
+        plt.ylabel(self._fmt_key_as_latex(y_key), fontsize = 24)
 
         fig = plt.gcf()
         plt.close()
@@ -825,7 +797,7 @@ class fit_manager(object):
             x = np.linspace(np.max((minimum - 0.05*delta, 0)), maximum + 0.05*delta)
 
             # Get phys point data, substituting x-data and current 'a' in loop
-            prepped_data = self.get_phys_point_data()
+            prepped_data = self.get_phys_point_data().copy()
             prepped_data['a/w0'] = a/self.w0
             if param in ['mpi', 'mk']:
                 prepped_data[param] = x
@@ -898,38 +870,6 @@ class fit_manager(object):
             #plt.ylim(1.04, 1.20)
         except ValueError:
             pass
-
-        fig = plt.gcf()
-        plt.close()
-
-        return fig
-
-    def plot_parameter_histogram(self, parameter):
-        data = self.get_bootstrapped_fit_parameters()[parameter]
-        fig, ax = plt.subplots()
-        n, bins, patches = plt.hist(data, self.bs_N/10, normed=True, facecolor='green', alpha=0.75)
-
-        mu = np.mean(data)
-        sigma = np.std(data)
-
-        # Overlay a gaussian
-        y = matplotlib.mlab.normpdf(bins, mu, sigma)
-        l = plt.plot(bins, y, 'r--', linewidth=1)
-
-        plt.title("BS dist", fontsize=30)
-        plt.xlabel("$p = $"+self._fmt_key_as_latex(parameter), fontsize=24)
-        plt.ylabel('Frequency', fontsize=24)
-        plt.grid(True)
-
-        text = ('$\overline{p} (s_{\overline{p}}) = $ %s \n Prior: %s'
-                % (gv.gvar(mu, sigma), self.prior[parameter]))
-
-        # these are matplotlib.patch.Patch properties
-        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-
-        # place a text box in upper left in axes coords
-        ax.text(0.05, 0.95, text, transform=ax.transAxes, fontsize=14,
-                verticalalignment='top', bbox=props)
 
         fig = plt.gcf()
         plt.close()
