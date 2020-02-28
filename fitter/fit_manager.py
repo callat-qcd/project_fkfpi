@@ -225,6 +225,34 @@ class fit_manager(object):
         self.fit_type = fit_type
         self.fast_sunset = fast_sunset
 
+    @property
+    def fit(self):
+        if self.fits is None:
+            self.bootstrap_fits()
+        return self.fits[0]
+
+    @property
+    def fit_info(self):
+        fit_info = {
+            'name' : self.get_name(),
+            'FK/Fpi' : self.extrapolate_to_phys_point(),
+            'delta_su2' : self.get_delta_su2_correction(),
+            'logGBF' : self.get_fit().logGBF,
+            'chi2/df' : self.get_fit().chi2 / self.get_fit().dof,
+            'Q' : self.get_fit().Q,
+            'vol' : self.order['vol'],
+            'phys_point' : self.get_phys_point_data(),
+            'prior' : {},
+            'posterior' : {},
+            'error_budget' : self.get_error_budget()
+        }
+
+        for key in self.get_fit_keys():
+            fit_info['prior'][key] = self.get_prior(key)
+            fit_info['posterior'][key] = self.get_posterior(key)
+
+        return fit_info
+
 
     def __str__(self):
         prior = self.prior
