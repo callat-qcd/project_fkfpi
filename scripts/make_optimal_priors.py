@@ -21,7 +21,6 @@ p_dict = {
         'exclude' : [], # put LECs here
     },
     'bias_correct' : True,
-    'include_su2_isospin_corrrection' : False,
     'fast_sunset' : True,
 
     'abbrs' : [u'a06m310L', u'a09m220', u'a09m310', u'a09m350', u'a09m400', u'a12m130',
@@ -112,11 +111,11 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
         fit_manager = fm.fit_manager(fit_data, phys_point_data, prior=temp_prior, **p_dict)
 
         new_prior = fit_manager.create_prior_from_fit()
-        data_loader.save_prior(new_prior, fit_manager.get_name())
+        data_loader.save_prior(new_prior, fit_manager.name)
 
         if p_dict['save_results']:
             data_loader.save_fit_info(
-                fit_manager.get_fit_info(),
+                fit_manager.fit_info,
                 output_name=p_dict['output_name'],
                 save_pickles=p_dict['save_pickles']
             )

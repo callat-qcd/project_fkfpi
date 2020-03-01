@@ -25,7 +25,6 @@ p_dict = {
         'exclude' : [], # put LECs here
     },
     'bias_correct' : True,
-    'include_su2_isospin_corrrection' : False,
 
     'use_prior' : True,
     'abbrs' : [u'a06m310L', u'a09m220', u'a09m310', u'a09m350', u'a09m400', u'a12m130',
@@ -121,12 +120,12 @@ for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*cho
         fit_type=p_dict['fit_type'], abbrs=p_dict['abbrs'], bias_correct=p_dict['bias_correct']
     )
 
-    if p_dict['replace_fits'] or not (fit_manager.get_name() in data_loader.get_models()):
+    if p_dict['replace_fits'] or not (fit_manager.name in data_loader.get_model_names()):
 
         print(fit_manager)
 
         # Save results
-        data_loader.save_fit_info(fit_manager.get_fit_info(),
+        data_loader.save_fit_info(fit_manager.fit_info,
                                   output_name=p_dict['output_name'], save_pickles=p_dict['save_pickles'])
 
     if p_dict['make_plots']:

@@ -73,10 +73,10 @@ class data_loader(object):
                         data[ensemble][key] = dset[()]
         return data
 
-    def get_fit_info(self, output_name):
+    def get_fit_results(self, output_name):
         if os.path.exists(self.project_path +'/pickles/'+ output_name):
             fit_info = {}
-            for model in self.get_models(output_name):
+            for model in self.get_model_names(output_name):
                 fit_info_model = self._unpickle_fit_parameters(model=model, output_name=output_name)
                 fit_info[model] = {}
                 fit_info[model]['name'] = model
@@ -213,7 +213,7 @@ class data_loader(object):
 
         return prior
 
-    def get_models(self, output_name):
+    def get_model_names(self, output_name):
         if self.models is None:
             models = []
             for file in os.listdir(self.project_path +'/pickles/'+ output_name):

@@ -25,8 +25,8 @@ else:
 
 data_loader = dl.data_loader()
 
-fit_results = data_loader.get_fit_info(output_name)
-other_results = data_loader.get_fit_info('other_collabs')
+fit_results = data_loader.get_fit_results(output_name)
+other_results = data_loader.get_fit_results('other_collabs')
 model_average = md.model_average(fit_results)
 
 # Make histograms
