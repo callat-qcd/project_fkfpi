@@ -25,7 +25,6 @@ class fit_manager(object):
         order = None
         fit_type = 'xpt'
         abbrs = fit_data.keys()
-        include_su2_isospin_corrrection = False
         use_bijnens_central_value = True
         bias_correct = True
         plot_bs_N = 100
@@ -38,9 +37,6 @@ class fit_manager(object):
 
         if 'abbrs' in kwargs:
             abbrs = kwargs['abbrs']
-
-        if 'include_su2_isospin_corrrection' in kwargs:
-            include_su2_isospin_corrrection = kwargs['include_su2_isospin_corrrection']
 
         if 'use_bijnens_central_value' in kwargs:
             use_bijnens_central_value = kwargs['use_bijnens_central_value']
@@ -132,7 +128,7 @@ class fit_manager(object):
             prior['L_5'] = gv.gvar('0.0(0.005)')
 
             # nlo polynomial
-            prior['A_c'] = gv.gvar('0.0(0.05)')
+            prior['A_c'] = gv.gvar('0.0(1.0)')
 
             # Lattice spacing terms
             prior['A_a'] = gv.gvar('0.0(100.0)')#gv.gvar('0.0(5.0)')
@@ -209,8 +205,7 @@ class fit_manager(object):
 
         # Set object values
         self.w0 = phys_point_data['w0']
-        self.phys_point_data = phys_point_data
-        self.include_su2_isospin_corrrection = include_su2_isospin_corrrection
+
         self.use_bijnens_central_value = use_bijnens_central_value
         self.bs_N = 1
         self.F2 = F2
@@ -218,65 +213,226 @@ class fit_manager(object):
         self.abbrs = sorted(abbrs)
         self.fit_data = gv_data
         self.plot_data = plot_data
-        self.prior = prior
-        self.posterior = None
         self.order = order
-        self.fits = None
         self.fit_type = fit_type
         self.fast_sunset = fast_sunset
 
+        self._input_prior = prior
+        self._fit = None
+        self._phys_point_data = phys_point_data
+        #self._error_budget = None
+        #self._posterior = None
+        #self._prior = None
+
+    @property
+    def delta_su2(self):
+        lam2_chi = (4 *np.pi *gv.gvar('80(20)'))**2 #Defn of lam2_chi for delta_su2 calc per FLAG 2019
+        eps2_pi = (self._get_phys_point_data('mpi'))**2 / lam2_chi
+        eps2_k = (self._get_phys_point_data('mk'))**2 / lam2_chi
+        fkfpi = self.fk_fpi
+
+        R = gv.gvar('35.7(2.6)') # From FLAG
+        eps_su2 = np.sqrt(3)/(4.0 *R)
+
+        delta = np.sqrt(3) *eps_su2 *(
+            - (4.0/3.0) *(fkfpi - 1)
+            + (2.0/6.0) *(eps2_k - eps2_pi - eps2_pi *np.log(eps2_k/eps2_pi))
+        )
+        return delta
+
+    @property
+    def error_budget(self):
+        return self._get_error_budget()
+
+    def _get_error_budget(self, verbose=False, **kwargs):
+        output = {}
+
+        fk_fpi = self.fk_fpi
+        prior = self.prior
+        posterior = self.posterior
+        phys_point_data = self.phys_point_data
+
+        inputs = {}
+        inputs.update(prior)
+        output['disc'] = fk_fpi.partialsdev(
+            [prior[key] for key in ['A_a', 'A_aa', 'A_loga'] if key in prior]
+        )
+        output['chiral'] = fk_fpi.partialsdev(
+            [prior[key] for key in (set(prior) - set(['A_a', 'A_aa', 'A_loga']))]
+        )
+
+        phys_point = {}
+        phys_point['phys:mpi'] = phys_point_data['mpi']
+        phys_point['phys:mk'] = phys_point_data['mk']
+        phys_point['phys:lam2_chi'] = phys_point_data['lam2_chi']
+        inputs.update(phys_point)
+        output['pp_input'] = fk_fpi.partialsdev(phys_point)
+
+
+        # Since the input data is correlated,
+        # we only need to use a single variable as a proxy
+        # for all of the variables; we use 'lam2_chi'
+        input_data = {}
+        input_data['stat'] = self._get_prior('lam2_chi')
+        inputs.update(input_data)
+        output['stat'] = fk_fpi.partialsdev(input_data)
+
+        if verbose:
+            # default kwargs
+            if kwargs is None:
+                kwargs = {}
+            kwargs.setdefault('percent', True)
+            kwargs.setdefault('ndecimal', 5)
+            kwargs.setdefault('verify', True)
+
+
+            return gv.fmt_errorbudget(outputs={'FK/Fpi' : fk_fpi}, inputs=inputs, **kwargs)
+        else:
+            return output
+
+
     @property
     def fit(self):
-        if self.fits is None:
-            self.bootstrap_fits()
-        return self.fits[0]
+        if self._fit is None:
+            print("Making fit...")
+
+            start_time = time.time()
+            temp_fit = self._make_fit()
+            end_time = time.time()
+
+            self._fit = temp_fit
+            print("Time (s): ",  end_time - start_time)
+
+        return self._fit
 
     @property
     def fit_info(self):
         fit_info = {
-            'name' : self.get_name(),
-            'FK/Fpi' : self.extrapolate_to_phys_point(),
-            'delta_su2' : self.get_delta_su2_correction(),
-            'logGBF' : self.get_fit().logGBF,
-            'chi2/df' : self.get_fit().chi2 / self.get_fit().dof,
-            'Q' : self.get_fit().Q,
+            'name' : self.model,
+            'FK/Fpi' : self.fk_fpi,
+            'delta_su2' : self.delta_su2,
+            'logGBF' : self.fit.logGBF,
+            'chi2/df' : self.fit.chi2 / self.fit.dof,
+            'Q' : self.fit.Q,
             'vol' : self.order['vol'],
-            'phys_point' : self.get_phys_point_data(),
-            'prior' : {},
-            'posterior' : {},
-            'error_budget' : self.get_error_budget()
+            'phys_point' : self.phys_point_data,
+            'error_budget' : self.get_error_budget(),
+            'prior' : self.prior,
+            'posterior' : self.posterior,
         }
-
-        for key in self.get_fit_keys():
-            fit_info['prior'][key] = self.get_prior(key)
-            fit_info['posterior'][key] = self.get_posterior(key)
 
         return fit_info
 
+    # Returns names of LECs in prior/posterior
+    @property
+    def fit_keys(self):
+        keys1 = list(self._input_prior.keys())
+        keys2 = list(self.fit.p.keys())
+        parameters = np.intersect1d(keys1, keys2)
+        return parameters
 
-    def __str__(self):
-        prior = self.prior
-        output = "\nModel: %s" %(self.get_name())
-        output = output + "\n\nFitting to %s \n" %(self.order['fit'])
-        #output = output + " with lattice corrections O(%s) \n" %(self.order['latt_spacing'])
-        output = output + " with volume corrections O(%s) \n" %(self.order['vol'])
-        output = output + "Fitted/[FLAG] values at physical point (including SU(2) isospin corrections: %s):\n" %(self.include_su2_isospin_corrrection)
-        output = output + '\nF_K / F_pi = %s [%s]'%(
-                            self.extrapolate_to_phys_point(),
-                            self.get_phys_point_data('FK/Fpi'))
-        output = output + '   (delta_su2 = %s)' %(self.get_delta_su2_correction())
-        output = output + "\n\n"
+    @property
+    def fk_fpi(self):
+        return self._extrapolate_to_phys_point()
 
-        fit_parameters = self.get_posterior()
-        new_table = { key : [fit_parameters[key], prior[key]] for key in sorted(fit_parameters.keys())}
-
-        output = output + gv.tabulate(new_table, ncol=2, headers=['Parameter', 'Result[0] / Prior[1]'])
-
-        output = output + '\n---\nboot0 fit results:\n'
-        output = output + self.get_fit().format(pstyle=None)
+    def _extrapolate_to_phys_point(self, include_su2_isospin_corrrection=False):
+        output = self.fk_fpi_fit_fcn(fit_data=self.phys_point_data.copy())
+        if include_su2_isospin_corrrection:
+            output *= np.sqrt(1 + self.delta_su2) # include SU(2) isospin breaking correction
 
         return output
 
+    @property
+    def model(self):
+        name = self.fit_type +'_'+ self.F2+'_'+self.order['fit']
+        if self.order['include_log']:
+            name = name + '_log'
+        if self.order['include_log2']:
+            name = name + '_logSq'
+        if self.order['include_sunset']:
+            name = name + '_sunset'
+        if self.order['include_alpha_s']:
+            name = name + '_alphaS'
+        if self.order['include_latt_n3lo']:
+            name = name + '_a4'
+        if self.order['vol'] > 6:
+            name = name + '_FV'
+        if self.use_bijnens_central_value:
+            name = name + '_bijnens'
+        return name
+
+    @property
+    def phys_point_data(self):
+        return self._get_phys_point_data()
+
+    # need to convert to/from lattice units
+    def _get_phys_point_data(self, parameter=None):
+        if parameter is None:
+            return self._phys_point_data
+        elif parameter == 'FK/Fpi':
+            # Physical point without su(2) isospin correction
+            return self._phys_point_data['FK/Fpi_pm'] / np.sqrt(1 + self.delta_su2)
+        else:
+            return self._phys_point_data[parameter]
+
+    @property
+    def posterior(self):
+        return self._get_posterior()
+
+    # Returns dictionary with keys fit parameters, entries gvar results
+    def _get_posterior(self, param=None):
+        if param is None:
+            #if self._posterior is None:
+            #    self._posterior = {param : self.fit.p[param] for param in self.fit_keys}
+            #return self._posterior
+            return {param : self.fit.p[param] for param in self.fit_keys}
+        elif param == 'all':
+            return self.fit.p
+        else:
+            return self.fit.p[param]
+
+    @property
+    def prior(self):
+        return self._get_prior()
+
+    def _get_prior(self, param=None):
+        if param is None:
+            #if self._prior is None:
+            #    self._prior = {param : self.fit.prior[param] for param in self.fit_keys}
+            #return self._prior
+            return {param : self.fit.prior[param] for param in self.fit_keys}
+        elif param == 'all':
+            return self.fit.prior
+        else:
+            return self.fit.prior[param]
+
+    def __str__(self):
+        output = "\nModel: %s\n" %(self.model)
+        output = output + "\nFitted/[FLAG] values at physical point:"
+        output = output + '\n\tF_K / F_pi = %s [%s]'%(
+                            self.fk_fpi,
+                            self._get_phys_point_data('FK/Fpi'))
+        output = output + '\t(delta_su2 = %s)' %(self.delta_su2)
+        output = output + "\n\n"
+
+
+        output += 'Parameters:\n'
+        my_str = self.fit.format(pstyle='m')
+        for item in my_str.split('\n'):
+            for key in self.fit_keys:
+                re = key+' '
+                if re in item:
+                    output += item + '\n'
+
+        output += '\n'
+        output += self.fit.format(pstyle=None)
+
+        sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3)) # Round to 3 sig figs
+        output += '\nError Budget (relative error):\n'
+        for key in self.error_budget:
+            output += "\t%s: %s" %(key, sig_fig(self.error_budget[key]/self.fk_fpi.mean))
+
+        return output
 
     def _fmt_key_as_latex(self, key):
         convert = {
@@ -304,25 +460,26 @@ class fit_manager(object):
         else:
             return key
 
-    def _make_fit(self, j):
-        prepped_data = self._make_fit_data(j)
+
+    def _make_fit(self):
+        prepped_data = self._make_fit_data()
         # Need to randomize prior in bayesian-bootstrap hybrid
-        temp_prior = self._randomize_prior(self.prior, j)
+        temp_prior = self._input_prior
         temp_fitter = fit.fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
                         order=self.order, fit_type=self.fit_type, fast_sunset=self.fast_sunset)
         return temp_fitter.get_fit()
 
     def _make_empbayes_fit(self):
-        prepped_data = self._make_fit_data(0)
-        temp_prior = self._randomize_prior(self.prior, 0)
+        prepped_data = self._make_fit_data()
+        temp_prior = self._input_prior
         temp_fitter = fit.fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
                         order=self.order, fit_type=self.fit_type, fast_sunset=self.fast_sunset)
 
         empbayes_fit = temp_fitter.get_empbayes_fit()
-        self.fits = [empbayes_fit]
+        self._fit = empbayes_fit
         return empbayes_fit
 
-    def _make_fit_data(self, j):
+    def _make_fit_data(self):
         prepped_data = {}
         for parameter in ['mjs', 'mju', 'mk', 'mpi', 'mrs', 'mru', 'mss', 'lam2_chi']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter] for abbr in self.abbrs])
@@ -332,52 +489,14 @@ class fit_manager(object):
         for parameter in ['a/w0', 'a2DI', 'L', 'alpha_s']:
             prepped_data[parameter] = np.array([self.fit_data[abbr][parameter] for abbr in self.abbrs])
 
-
-
         prepped_data['y'] = [self.fit_data[abbr]['FK/Fpi'] for abbr in self.abbrs]
 
         return prepped_data
 
-    # This will consistently give the same results despite randomizing prior
-    def _randomize_prior(self, prior, j):
-        if j==0:
-            return prior
-
-        new_prior = {}
-        for key in prior.keys():
-            p_mean = gv.mean(prior[key])
-            p_sdev = gv.sdev(prior[key])
-
-            p_re = re.sub('[^A-Za-z0-9]+','',key)
-            if len(p_re) > 6:
-                p_re = p_re[0:6]
-            s = int(p_re,36)
-
-            np.random.seed(s+j)
-            new_prior[key] = gv.gvar(np.random.normal(p_mean,scale=p_sdev), p_sdev)
-
-        return new_prior
-
-    def bootstrap_fits(self):
-        print("Making fits...")
-        start_time = time.time()
-        self.fits = np.array([])
-
-        for j in range(self.bs_N):
-            temp_fit = self._make_fit(j)
-            self.fits = np.append(self.fits, temp_fit)
-
-            sys.stdout.write("\r{0}% complete".format(int((float(j+1)/self.bs_N)*100)))
-            print("",)
-            sys.stdout.flush()
-        end_time = time.time()
-        print("Time (s): ",  end_time - start_time)
-        print("Compiling results...")
-
     def create_prior_from_fit(self):
         output = {}
         temp_prior = self._make_empbayes_fit().prior
-        for key in self.get_fit_keys():
+        for key in self.fit_keys:
             if key in ['L_4', 'L_5']:
                 output[key] = gv.gvar(0, 0.005)
             elif key in ['A_a', 'A_k', 'A_p', 'A_loga', 'A_aa']:
@@ -395,38 +514,18 @@ class fit_manager(object):
 
     def extrapolate_to_ensemble(self, abbr):
         abbr_n = self.abbrs.index(abbr)
-        model_name = list(self.get_fit().data.keys())[-1] # pretty hacky way to get this
 
-        if self.bs_N == 1:
-            temp_fit = self.get_fit()
-            return temp_fit.fcn(temp_fit.p)[model_name][abbr_n]
+        try: # normal fit logic
+            model_name = list(self.fit.data.keys())[-1]
+            return self.fit.fcn(self._get_posterior('all'))[model_name][abbr_n]
+        except AttributeError: # empbayes fit logic
+            return self.fit.fcn(self._get_posterior('all'))[abbr_n]
 
-        else:
-            results = []
-            for j in self.bs_N:
-                temp_fit = self.fits[j]
-                results.append(gv.mean(temp_fit.fcn(temp_fit.p)[model_name][abbr_n]))
-            return gv.gvar(np.mean(results), np.std(results))
-
-    def extrapolate_to_phys_point(self, include_su2_isospin_corrrection=None):
-        if include_su2_isospin_corrrection is None:
-            include_su2_isospin_corrrection = self.include_su2_isospin_corrrection
-
-        output = self.fk_fpi_fit_fcn(fit_data=self.get_phys_point_data().copy())
-        if include_su2_isospin_corrrection:
-            output *= np.sqrt(1 + self.get_delta_su2_correction()) # include SU(2) isospin breaking correction
-
-        # Logic for frequentist vs bayesian fits
-        try:
-            return output[0]
-        except TypeError:
-            return output
-
-    def fk_fpi_fit_fcn(self, fit_data=None, fit_parameters=None, fit_type=None, debug=None):
+    def fk_fpi_fit_fcn(self, fit_data=None, posterior=None, fit_type=None, debug=None):
         if fit_data is None:
-            fit_data = self.get_phys_point_data().copy()
-        if fit_parameters is None:
-            fit_parameters = self.get_posterior().copy()
+            fit_data = self.phys_point_data.copy()
+        if posterior is None:
+            posterior = self.posterior.copy()
         if fit_type is None:
             fit_type = self.fit_type
 
@@ -436,170 +535,11 @@ class fit_manager(object):
             fit_type = 'xpt-ratio'
 
         model = fit.fitter(order=self.order, fit_type=fit_type, F2=self.F2, fast_sunset=self.fast_sunset)._make_models()[0]
-        return model.fitfcn(p=fit_parameters, fit_data=fit_data, debug=debug)
-
-    def get_delta_su2_correction(self):
-        lam2_chi = (4 *np.pi *gv.gvar('80(20)'))**2 #lam2_chi = self.get_phys_point_data('lam2_chi')
-        eps2_pi = (self.get_phys_point_data('mpi'))**2 / lam2_chi
-        eps2_k = (self.get_phys_point_data('mk'))**2 / lam2_chi
-        fkfpi = self.extrapolate_to_phys_point()
-
-        R = gv.gvar('35.7(2.6)') # From FLAG
-        eps_su2 = np.sqrt(3)/(4.0 *R)
-
-        delta = np.sqrt(3) *eps_su2 *(
-            - (4.0/3.0) *(fkfpi - 1)
-            + (2.0/6.0) *(eps2_k - eps2_pi - eps2_pi *np.log(eps2_k/eps2_pi))
-        )
-        return delta
-
-    def get_error_budget(self, print_budget=False):
-        output = {}
-
-        fk_fpi = self.extrapolate_to_phys_point()
-        prior = self.get_prior()
-        posterior = self.get_posterior()
-        phys_point_data = self.get_phys_point_data()
-
-        inputs = {}
-        inputs.update(prior)
-        output['disc'] = fk_fpi.partialsdev(
-            [prior[key] for key in ['A_a', 'A_aa', 'A_loga'] if key in prior]
-        )
-        output['chiral'] = fk_fpi.partialsdev(
-            [prior[key] for key in (set(prior) - set(['A_a', 'A_aa', 'A_loga']))]
-        )
-
-        phys_point = {}
-        phys_point['mpi'] = phys_point_data['mpi']
-        phys_point['mk'] = phys_point_data['mk']
-        phys_point['lam2_chi'] = phys_point_data['lam2_chi']
-        inputs.update(phys_point)
-        output['pp_input'] = fk_fpi.partialsdev(phys_point)
+        return model.fitfcn(p=posterior, fit_data=fit_data, debug=debug)
 
 
-        # Since the input data is correlated,
-        # we only need to use a single variable as a proxy
-        # for all of the variables; we use 'lam2_chi'
-        input_data = {}
-        input_data['input_data'] = self.get_prior('lam2_chi')
-        inputs.update(input_data)
-        output['stat'] = fk_fpi.partialsdev(input_data)
-
-        if print_budget:
-            print('FK/Fpi =', fk_fpi, '\n')
-            print(gv.fmt_errorbudget(outputs={'FK/Fpi' : fk_fpi}, inputs=inputs, percent=False, ndecimal=5, verify=True))
-
-        return output
-
-    def get_fit(self):
-        if self.fits is None:
-            self.bootstrap_fits()
-        return self.fits[0]
-
-    def get_fit_info(self):
-        fit_info = {
-            'name' : self.get_name(),
-            'FK/Fpi' : self.extrapolate_to_phys_point(),
-            'delta_su2' : self.get_delta_su2_correction(),
-            'logGBF' : self.get_fit().logGBF,
-            'chi2/df' : self.get_fit().chi2 / self.get_fit().dof,
-            'Q' : self.get_fit().Q,
-            'vol' : self.order['vol'],
-            'phys_point' : self.get_phys_point_data(),
-            'prior' : {},
-            'posterior' : {},
-            'error_budget' : self.get_error_budget()
-        }
-
-        for key in self.get_fit_keys():
-            fit_info['prior'][key] = self.get_prior(key)
-            fit_info['posterior'][key] = self.get_posterior(key)
-
-        return fit_info
-
-
-    # Returns keys of fit parameters
-    def get_fit_keys(self):
-        if self.fits is None:
-            self.bootstrap_fits()
-
-        keys1 = list(self.prior.keys())
-        keys2 = list(self.get_fit().p.keys())
-        parameters = np.intersect1d(keys1, keys2)
-        return sorted(parameters)
-
-    # Returns dictionary with keys fit parameters, entries gvar results
-    def get_posterior(self, parameter=None):
-        # If fitting only the central values
-        if self.posterior is None:
-            if self.fits is None:
-                self.bootstrap_fits()
-
-            keys1 = list(self.prior.keys())
-            keys2 = list(self.get_fit().p.keys())
-            parameters = np.intersect1d(keys1, keys2)
-
-            self.posterior = {parameter : self.get_fit().p[parameter] for parameter in parameters}
-
-        if parameter is not None:
-            return self.posterior[parameter]
-        else:
-            return self.posterior
-
-    def get_name(self):
-        name = self.fit_type +'_'+ self.F2+'_'+self.order['fit']
-        if self.order['include_log']:
-            name = name + '_log'
-        if self.order['include_log2']:
-            name = name + '_logSq'
-        if self.order['include_sunset']:
-            name = name + '_sunset'
-        if self.order['include_alpha_s']:
-            name = name + '_alphaS'
-        if self.order['include_latt_n3lo']:
-            name = name + '_a4'
-        if self.order['vol'] > 6:
-            name = name + '_FV'
-        if self.use_bijnens_central_value:
-            name = name + '_bijnens'
-        return name
-
-
-    # need to convert to/from lattice units
-    def get_phys_point_data(self, parameter=None):
-        if parameter is None:
-            return self.phys_point_data
-        elif parameter == 'FK/Fpi':
-            # Physical point without su(2) isospin correction
-            return self.phys_point_data['FK/Fpi_pm'] / np.sqrt(1 + self.get_delta_su2_correction())
-        else:
-            return self.phys_point_data[parameter]
-
-    # Returns dictionary with keys fit parameters, entries gvar results
-    def get_posterior(self, parameter=None):
-        # If fitting only the central values
-        if self.posterior is None:
-            if self.fits is None:
-                self.bootstrap_fits()
-
-            keys1 = list(self.prior.keys())
-            keys2 = list(self.get_fit().p.keys())
-            parameters = np.intersect1d(keys1, keys2)
-
-            self.posterior = {parameter : self.get_fit().p[parameter] for parameter in parameters}
-
-        if parameter is not None:
-            return self.posterior[parameter]
-        else:
-            return self.posterior
-
-    def get_prior(self, key=None):
-        if key is None:
-            output = {key : self.get_fit().prior[key] for key in self.get_fit_keys()}
-            return output
-        if key is not None:
-            return self.get_fit().prior[key]
+    def fmt_error_budget(self, **kwargs):
+        return self._get_error_budget(verbose=True, **kwargs)
 
 
     def make_plots(self, show_error_ellipses=False):
@@ -622,7 +562,7 @@ class fit_manager(object):
             # Casts indixes of fit_keys as an upper-triangular matrix,
             # thereby allowing us to get all the 2-combinations
             # of the set of fit_keys
-            fit_keys = list(self.get_posterior())
+            fit_keys = list(self.posterior)
             rs,cs = np.triu_indices(len(fit_keys),1)
             for (i, j) in zip(rs, cs):
                 figs.append(self.plot_error_ellipsis([fit_keys[i], fit_keys[j]]))
@@ -631,8 +571,8 @@ class fit_manager(object):
 
     # Takes keys from posterior (eg, 'L_5' and 'L_4')
     def plot_error_ellipsis(self, x_key, y_key):
-        x = self.get_posterior(x_key)
-        y = self.get_posterior(y_key)
+        x = self.self._get_posterior(x_key)
+        y = self.self._get_posterior(y_key)
 
 
         fig, ax = plt.subplots()
@@ -695,7 +635,7 @@ class fit_manager(object):
             plt.axhline(y-2, ls ='-', color='C4')
 
             # FLAG
-            data = self.get_phys_point_data('FK/Fpi')
+            data = self._get_phys_point_data('FK/Fpi')
             x = gv.mean(data)
             xerr = gv.sdev(data)
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
@@ -705,7 +645,7 @@ class fit_manager(object):
             y = y - 1
 
             # fit result
-            fit_value = self.extrapolate_to_phys_point()
+            fit_value = self.fk_fpi
             x = gv.mean(fit_value)
             xerr = gv.sdev(fit_value)
             plt.errorbar(x=x, y=y, xerr=xerr, yerr=0.0,
@@ -788,7 +728,7 @@ class fit_manager(object):
         if param in ['mpi', 'mk']:
             plot_data['x'] = {abbr : ((self.plot_data[abbr][param] *hbar_c
                                        / (self.plot_data[abbr]['a/w0'] *self.w0))**2
-                                       /self.get_phys_point_data('lam2_chi'))
+                                       /self._get_phys_point_data('lam2_chi'))
                               for abbr in self.abbrs}
         elif param in ['a']:
             plot_data['x'] = {abbr : (self.plot_data[abbr]['a/w0'] / (4 *np.pi))**2 for abbr in self.abbrs}
@@ -797,7 +737,7 @@ class fit_manager(object):
         color_data = {abbr : self.plot_data[abbr]['a/w0'] *self.w0 for abbr in self.abbrs}
 
         # Get lattice spacings used in fit
-        lattice_spacings = np.unique(self._make_fit_data(0)['a/w0']) *self.w0
+        lattice_spacings = np.unique(self._make_fit_data()['a/w0']) *self.w0
 
         # Color lattice spacings
         cmap = matplotlib.cm.get_cmap('rainbow_r')
@@ -809,10 +749,10 @@ class fit_manager(object):
             # Get the range of m^2 (in phys units)
             if param in ['mpi', 'mk']:
                 minimum = np.nanmin([np.nanmin(
-                    np.sqrt([plot_data['x'][abbr] *self.get_phys_point_data('lam2_chi') for abbr in self.abbrs])
+                    np.sqrt([plot_data['x'][abbr] *self._get_phys_point_data('lam2_chi') for abbr in self.abbrs])
                 ) for abbr in self.abbrs])
                 maximum = np.nanmax([np.nanmax(
-                    np.sqrt([plot_data['x'][abbr] *self.get_phys_point_data('lam2_chi')  for abbr in self.abbrs])
+                    np.sqrt([plot_data['x'][abbr] *self._get_phys_point_data('lam2_chi')  for abbr in self.abbrs])
                 ) for abbr in self.abbrs])
             # Get the range of a^2
             elif param in ['a']:
@@ -828,7 +768,7 @@ class fit_manager(object):
             x = np.linspace(np.max((minimum - 0.05*delta, 0)), maximum + 0.05*delta)
 
             # Get phys point data, substituting x-data and current 'a' in loop
-            prepped_data = self.get_phys_point_data().copy()
+            prepped_data = self.phys_point_data.copy()
             prepped_data['a/w0'] = a/self.w0
             if param in ['mpi', 'mk']:
                 prepped_data[param] = x
@@ -837,7 +777,7 @@ class fit_manager(object):
 
             # Covert m -> eps^2
             if param in ['mpi', 'mk']:
-                x = x**2 / self.get_phys_point_data('lam2_chi')
+                x = x**2 / self._get_phys_point_data('lam2_chi')
             elif param in ['a']:
                 x = x**2 / (4 *np.pi)**2
 
@@ -868,9 +808,9 @@ class fit_manager(object):
                          cmap=cmap, rasterized=True, marker="o", alpha=10.0/self.plot_bs_N, edgecolor='black')
 
         # Plot FLAG result
-        x_phys = self.get_phys_point_data(param)**2 / self.get_phys_point_data('lam2_chi')
+        x_phys = self._get_phys_point_data(param)**2 / self._get_phys_point_data('lam2_chi')
         plt.axvline(gv.mean(x_phys), label='Phys point')
-        y_phys = self.get_phys_point_data('FK/Fpi')
+        y_phys = self._get_phys_point_data('FK/Fpi')
 
         plt.errorbar(x=gv.mean(x_phys), xerr=0,
                      y=gv.mean(y_phys), yerr=gv.sdev(y_phys), label='FLAG',
@@ -1005,7 +945,7 @@ class fit_manager(object):
     # phys_params is a list: eg, ['mk'] or ['mk', 'mpi']
     def shift_fk_fpi_for_phys_params(self, phys_params, use_ratio=False):
         hbar_c = 197.32698045930 # MeV-fm
-        lam2_chi = self.get_phys_point_data('lam2_chi')
+        lam2_chi = self._get_phys_point_data('lam2_chi')
 
         shifted_fkfpi = {}
         for abbr in self.abbrs:
@@ -1023,9 +963,9 @@ class fit_manager(object):
                     temp_data[param] = self.plot_data[abbr][param]
 
             for param in phys_params:
-                temp_data[param] = self.get_phys_point_data(param)
+                temp_data[param] = self._get_phys_point_data(param)
 
-            temp_data['lam2_chi'] = self.get_phys_point_data('lam2_chi')
+            temp_data['lam2_chi'] = self._get_phys_point_data('lam2_chi')
 
             fkfpi_fit_phys = self.fk_fpi_fit_fcn(fit_data=temp_data)
 
