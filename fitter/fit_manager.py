@@ -21,74 +21,43 @@ class fit_manager(object):
 
     def __init__(self, fit_data, phys_point_data, prior=None, **kwargs):
 
+        if kwargs is None:
+            kwargs = {}
+
         # Default values
-        order = None
-        fit_type = 'xpt'
-        abbrs = fit_data.keys()
-        use_bijnens_central_value = True
-        bias_correct = True
-        plot_bs_N = 100
-        fast_sunset = False
-        F2 = 'FpiFpi'
-
-        # Overwrite defaults using kwargs
-        if 'fit_type' in kwargs:
-            fit_type = kwargs['fit_type']
-
-        if 'abbrs' in kwargs:
-            abbrs = kwargs['abbrs']
-
-        if 'use_bijnens_central_value' in kwargs:
-            use_bijnens_central_value = kwargs['use_bijnens_central_value']
-
-        if 'order' in kwargs:
-            order = kwargs['order']
-
-        if 'F2' in kwargs:
-            F2 = kwargs['F2']
-            # Set this now so get_phys_point_data('lam2_chi') works
-            self.F2 = F2
-
-        if 'bias_correct' in kwargs:
-            bias_correct = kwargs['bias_correct']
-
-        if 'plot_bs_N' in kwargs:
-            plot_bs_N = kwargs['plot_bs_N']
-
-        if 'fast_sunset' in kwargs:
-            fast_sunset = kwargs['fast_sunset']
-
-        # Get lam_chi^2=renorm_scale^2 depending on choice of F^2
-        if F2 == 'FKFpi':
-            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_kpi']
-        elif F2 == 'FpiFpi':
-            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_pipi']
-        elif F2 == 'FKFK':
-            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_kk']
-        elif F2 == 'F0F0':
-            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_00']
+        kwargs.setdefault('order', None)
+        kwargs.setdefault('fit_type', 'xpt')
+        kwargs.setdefault('abbrs', fit_data.keys())
+        kwargs.setdefault('use_bijnens_central_value', True)
+        kwargs.setdefault('bias_correct', True)
+        kwargs.setdefault('plot_bs_N', 100)
+        kwargs.setdefault('fast_sunset', False)
+        kwargs.setdefault('F2', 'FpiFpi')
 
         # Add default values to order dict
-        order_temp = {
-            'fit' : 'nlo',
-            'vol' : 1,
-            'exclude' : [],
-
-            # semi-nnlo corrections
-            'include_alpha_s' : False,
-            'include_log' : False,
-            'include_log2' : False,
-            'include_sunset' : False,
-
-            # nnnlo corrections
-            'include_latt_n3lo' : False,
-        }
-        if order is None:
-            order = order_temp
+        if kwargs['order'] is None:
+            order = {}
         else:
-            for key in order_temp.keys():
-                if key not in order.keys():
-                    order[key] = order_temp[key]
+            order = kwargs['order']
+
+        order.setdefault('fit', 'nlo')
+        order.setdefault('vol', 0)
+        order.setdefault('exclude', [])
+        order.setdefault('include_alpha_s', False)
+        order.setdefault('include_log', False)
+        order.setdefault('include_log2', False)
+        order.setdefault('include_sunset', False)
+        order.setdefault('include_latt_n3lo', False)
+
+        # Get lam_chi^2=renorm_scale^2 depending on choice of F^2
+        if kwargs['F2'] == 'FKFpi':
+            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_kpi']
+        elif kwargs['F2'] == 'FpiFpi':
+            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_pipi']
+        elif kwargs['F2'] == 'FKFK':
+            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_kk']
+        elif kwargs['F2'] == 'F0F0':
+            phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_00']
 
         # Default prior
         if prior is None:
@@ -99,16 +68,16 @@ class fit_manager(object):
             L_mu0 = np.array([3.72, 4.93, -30.7, 0.89, 3.77, 0.11, -3.4, 2.94])*10**-4
 
             # F2 is F^2 in this context; but F0, F1 are F_0, F_1
-            if F2 == 'FpiFpi':
+            if kwargs['F2'] == 'FpiFpi':
                 F1 = phys_point_data['Fpi']
-            elif F2 == 'FKFpi':
+            elif kwargs['F2'] == 'FKFpi':
                 F1 = np.sqrt(phys_point_data['FK'] *phys_point_data['Fpi'])
-            elif F2 == 'FKFK':
+            elif kwargs['F2'] == 'FKFK':
                 F1 = phys_point_data['Fpi']
 
             F0 = 80 # MeV
             L_mu1 = gv.mean(L_mu0 - gamma/(4 *np.pi)**2 *np.log(F1/F0))
-            if use_bijnens_central_value:
+            if kwargs['use_bijnens_central_value']:
                 L_mu1 = gv.gvar(L_mu1, L_mu1/2)
             else:
                 L_mu1 = gv.gvar(np.repeat(0, len(L_mu1)), L_mu1)
@@ -150,22 +119,22 @@ class fit_manager(object):
         bias_corrector = lambda arr : arr[1:] + (arr[0] - np.mean(arr[1:]))
         gv_data = {}
         plot_data = {}
-        for abbr in abbrs:
+        for abbr in kwargs['abbrs']:
             gv_data[abbr] = {}
             plot_data[abbr] = {}
             for key in ['FK', 'Fpi', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs']:
-                if bias_correct:
+                if kwargs['bias_correct']:
                     gv_data[abbr][key] = bias_corrector(fit_data[abbr][key])
                 else:
                     gv_data[abbr][key] = fit_data[abbr][key]
-                plot_data[abbr][key] = fit_data[abbr][key][:plot_bs_N]
+                plot_data[abbr][key] = fit_data[abbr][key][:kwargs['plot_bs_N']]
 
             gv_data[abbr] = gv.dataset.avg_data(gv_data[abbr], bstrap=True)
             gv_data[abbr]['FK/Fpi'] = gv_data[abbr]['FK'] / gv_data[abbr]['Fpi']
             plot_data[abbr]['FK/Fpi'] = plot_data[abbr]['FK'] / plot_data[abbr]['Fpi']
 
             # Sunset term
-            if fast_sunset and order['include_sunset']:
+            if kwargs['fast_sunset'] and order['include_sunset']:
                 gv_data[abbr]['sunset'] = sf.fcn_FF((gv_data[abbr]['mpi'] / gv_data[abbr]['mk'])**2)
 
             to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
@@ -182,16 +151,16 @@ class fit_manager(object):
                 gv_data[abbr][key] = gv.gvar(value, value/1000000.0)
                 plot_data[abbr][key] = gv.gvar(value, value/1000000.0)
 
-            if F2 == 'FKFpi':
+            if kwargs['F2'] == 'FKFpi':
                 gv_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *gv_data[abbr]['FK'] *gv_data[abbr]['Fpi']
                 plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['FK'] *plot_data[abbr]['Fpi']
-            elif F2 == 'FKFK':
+            elif kwargs['F2'] == 'FKFK':
                 gv_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *gv_data[abbr]['FK'] *gv_data[abbr]['FK']
                 plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['FK'] *plot_data[abbr]['FK']
-            elif F2 == 'FpiFpi':
+            elif kwargs['F2'] == 'FpiFpi':
                 gv_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *gv_data[abbr]['Fpi'] *gv_data[abbr]['Fpi']
                 plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['Fpi'] *plot_data[abbr]['Fpi']
-            elif F2 == 'F0F0':
+            elif kwargs['F2'] == 'F0F0':
                 latt_spacing = { # Taken from arxiv/1503.02769, Table VIII
                     'a15' : gv.gvar('0.1511(18)')*1.00,
                     'a12' : gv.gvar('0.1206(11)')*1.00,
@@ -206,16 +175,16 @@ class fit_manager(object):
         # Set object values
         self.w0 = phys_point_data['w0']
 
-        self.use_bijnens_central_value = use_bijnens_central_value
+        self.use_bijnens_central_value = kwargs['use_bijnens_central_value']
         self.bs_N = 1
-        self.F2 = F2
-        self.plot_bs_N = plot_bs_N
-        self.abbrs = sorted(abbrs)
+        self.F2 = kwargs['F2']
+        self.plot_bs_N = kwargs['plot_bs_N']
+        self.abbrs = sorted(kwargs['abbrs'])
         self.fit_data = gv_data
         self.plot_data = plot_data
         self.order = order
-        self.fit_type = fit_type
-        self.fast_sunset = fast_sunset
+        self.fit_type = kwargs['fit_type']
+        self.fast_sunset = kwargs['fast_sunset']
 
         self._input_prior = prior
         self._fit = None
@@ -281,12 +250,12 @@ class fit_manager(object):
             # default kwargs
             if kwargs is None:
                 kwargs = {}
-            kwargs.setdefault('percent', True)
+            kwargs.setdefault('percent', False)
             kwargs.setdefault('ndecimal', 5)
             kwargs.setdefault('verify', True)
 
-
             return gv.fmt_errorbudget(outputs={'FK/Fpi' : fk_fpi}, inputs=inputs, **kwargs)
+
         else:
             return output
 
