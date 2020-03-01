@@ -285,7 +285,7 @@ class fit_manager(object):
             'Q' : self.fit.Q,
             'vol' : self.order['vol'],
             'phys_point' : self.phys_point_data,
-            'error_budget' : self.get_error_budget(),
+            'error_budget' : self.error_budget,
             'prior' : self.prior,
             'posterior' : self.posterior,
         }
