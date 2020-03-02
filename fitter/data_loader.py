@@ -116,8 +116,16 @@ class data_loader(object):
                 index = np.argwhere(df_fit['name'].values == model)
 
                 output_dict[model] = {}
+                output_dict[model]['posterior'] = {}
+                output_dict[model]['error_budget'] = {}
                 for key in cols:
-                    if key in df_fit.keys():
+                    if key.startswith('po:'):
+                        output_dict[model]['posterior'][key.split(':')[-1]] = (df_fit[key].values[index]).item()
+                    elif key.startswith('eb:'):
+                        output_dict[model]['error_budget'][key.split(':')[-1]] = (df_fit[key].values[index]).item()
+                    elif key.startswith('Unnamed:'):
+                        pass
+                    elif key in df_fit.keys():
                         output_dict[model][key] = (df_fit[key].values[index]).item()
 
             return output_dict
@@ -205,8 +213,11 @@ class data_loader(object):
 
         index = np.argwhere(df_prior['name'].values == name)
         prior = gv.BufferDict()
-        for key in ['L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8',
-                    'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga', 'A_aa']:
+        lecs_keys =  ['A_x', 'L_4', 'L_5', # nlo terms
+                      'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-nnlo terms
+                      'A_a', 'A_k', 'A_p', 'A_loga', 'A_aa', # nnlo terms
+                      'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp'] # nnnlo terms
+        for key in lecs_keys:
             value = np.asscalar(df_prior[key].values[index])
             if value is not np.nan:
                 prior[key] = gv.gvar(value)
@@ -239,11 +250,18 @@ class data_loader(object):
 
         # get fit info
         cols = np.array(['name', 'FK/Fpi', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol'])
-        lecs_cols = ['L_4', 'L_5', # nlo terms
-                     'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-nnlo terms
-                     'A_a', 'A_k', 'A_p', 'A_loga', 'A_aa'] # nnlo terms
-                     #'A_aa', 'A_ak', 'A_ap', # nnnlo terms
-                     #'A_kk', 'A_kp', 'A_pp'] # more nnnlo terms
+        lecs_cols =  ['A_x', 'L_4', 'L_5', # nlo terms
+                      'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-nnlo terms
+                      'A_a', 'A_k', 'A_p', 'A_loga', # nnlo terms
+                      'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp'] # nnnlo terms
+        eb_cols = ['disc', 'chiral', 'pp_input', 'stat']
+        output_cols = []
+        for key in cols:
+            output_cols.append(key)
+        for key in lecs_cols:
+            output_cols.append('po:'+key)
+        for key in eb_cols:
+            output_cols.append('eb:'+key)
 
         posterior_params = {}
         for key in lecs_cols:
@@ -267,15 +285,18 @@ class data_loader(object):
                 for key in cols:
                     output_dict[key][index] = fit_info[key]
                 for key in lecs_cols:
-                    output_dict[key][index] = posterior_params[key]
+                    output_dict['po:'+key][index] = posterior_params[key]
+                for key in eb_cols:
+                    output_dict['eb:'+key][index] = fit_info['error_budget'][key]
 
             else:
                 for key in cols:
                     output_dict[key] = np.append(output_dict[key], fit_info[key])
                 for key in lecs_cols:
-                    output_dict[key] = np.append(output_dict[key], posterior_params[key])
+                    output_dict['po:'+key] = np.append(output_dict['po:'+key], posterior_params[key])
+                for key in eb_cols:
+                    output_dict['eb:'+key] = np.append(output_dict['eb:'+key], fit_info['error_budget'][key])
 
-            output_cols = np.concatenate((cols,lecs_cols), axis=0)
             df = pd.DataFrame.from_dict(output_dict)
             df = df[output_cols]
             df.sort_values('name')
@@ -287,9 +308,10 @@ class data_loader(object):
             for key in cols:
                 output_dict[key] = [fit_info[key]]
             for key in lecs_cols:
-                output_dict[key] = [posterior_params[key]]
+                output_dict['po:'+key] = [posterior_params[key]]
+            for key in eb_cols:
+                output_dict['eb:'+key] = fit_info['error_budget'][key]
 
-            output_cols = np.concatenate((cols,lecs_cols), axis=0)
             df = pd.DataFrame.from_dict(output_dict)
             df = df[output_cols] # rearrange in logical order
             df.to_csv(filepath)

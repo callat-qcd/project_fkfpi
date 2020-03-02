@@ -27,7 +27,7 @@ class model_average(object):
         output += 'FK/Fpi      =  %s \n' %(gv.gvar(fk_fpi[0], np.sqrt(fk_fpi[1]**2 + fk_fpi[2]**2)))
         output += 'delta_su(2) = %s \n' %(self.average('delta_su2'))
 
-        sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3))
+        sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3)) if x>0 else x
         output += '\n---\n'
         output += 'Uncertainty: \n'
         output += '   Unexplained: %s \n' %(sig_fig(fk_fpi[1]))
@@ -101,13 +101,13 @@ class model_average(object):
         return self.fit_results[model]['FK/Fpi']
 
     def _get_fit_posterior(self, model):
-        if 'posterior' in self.fit_results[model]:
+        if 'posterior' in self.fit_results[model] and bool(self.fit_results[model]['posterior']):
             return self.fit_results[model]['posterior']
         else:
             return None
 
     def _get_fit_prior(self, model):
-        if 'prior' in self.fit_results[model]:
+        if 'prior' in self.fit_results[model] and bool(self.fit_results[model]['prior']):
             return self.fit_results[model]['prior']
         else:
             return None
