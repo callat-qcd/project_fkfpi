@@ -143,7 +143,7 @@ class fitter(object):
             newprior['L_4'] = prior['L_4']
             newprior['L_5'] = prior['L_5']
         elif self.fit_type in ['poly']:
-            newprior['A_c'] = prior['A_c']
+            newprior['A_x'] = prior['A_x']
 
 
         if order['include_log']:
@@ -402,7 +402,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
-        output = (eps2_k - eps2_pi) *p['A_c']
+        output = (eps2_k - eps2_pi) *p['A_x']
         return output
 
 

@@ -97,7 +97,7 @@ class fit_manager(object):
             prior['L_5'] = gv.gvar('0.0(0.005)')
 
             # nlo polynomial
-            prior['A_c'] = gv.gvar('0.0(1.0)')
+            prior['A_x'] = gv.gvar('0.0(1.0)')
 
             # Lattice spacing terms
             prior['A_a'] = gv.gvar('0.0(100.0)')#gv.gvar('0.0(5.0)')
