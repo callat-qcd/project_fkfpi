@@ -19,44 +19,41 @@ import fitter.special_functions as sf
 
 class fit_manager(object):
 
-    def __init__(self, fit_data, phys_point_data, prior=None, **kwargs):
+    def __init__(self, fit_data, phys_point_data, prior=None, model_info=None,
+                abbrs=None, bias_correct=True, plot_bs_N=100, fast_sunset=False, **kwargs):
 
-        if kwargs is None:
-            kwargs = {}
+        # Default value for abbrs
+        if abbrs is None:
+            abbrs = fit_data.keys()
 
-        # Default values
-        kwargs.setdefault('order', None)
-        kwargs.setdefault('fit_type', 'xpt')
-        kwargs.setdefault('abbrs', fit_data.keys())
-        kwargs.setdefault('use_bijnens_central_value', True)
-        kwargs.setdefault('bias_correct', True)
-        kwargs.setdefault('plot_bs_N', 100)
-        kwargs.setdefault('fast_sunset', False)
-        kwargs.setdefault('F2', 'FpiFpi')
 
-        # Add default values to order dict
-        if kwargs['order'] is None:
-            order = {}
-        else:
-            order = kwargs['order']
+        # Add default values to model_info dict
+        if model_info is None:
+            model_info = {}
 
-        order.setdefault('fit', 'nlo')
-        order.setdefault('vol', 0)
-        order.setdefault('exclude', [])
-        order.setdefault('include_alpha_s', False)
-        order.setdefault('include_log', False)
-        order.setdefault('include_log2', False)
-        order.setdefault('include_sunset', False)
-        order.setdefault('include_latt_n3lo', False)
+        model_info.setdefault('fit_type', 'xpt')
+        model_info.setdefault('order', 'nnlo')
+        model_info.setdefault('F2', 'FpiFpi')
+
+        model_info.setdefault('include_FV', True)
+        model_info.setdefault('exclude', [])
+        model_info.setdefault('use_bijnens_central_value', True)
+
+        model_info.setdefault('include_alpha_s', False)
+        model_info.setdefault('include_log', False)
+        model_info.setdefault('include_log2', False)
+        model_info.setdefault('include_sunset', False)
+        model_info.setdefault('include_latt_n3lo', False)
+
 
         # Get lam_chi^2=renorm_scale^2 depending on choice of F^2
-        if kwargs['F2'] == 'FKFpi':
+        if model_info['F2'] == 'FKFpi':
             phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_kpi']
-        elif kwargs['F2'] == 'FpiFpi':
+        elif model_info['F2'] == 'FpiFpi':
             phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_pipi']
-        elif kwargs['F2'] == 'FKFK':
+        elif model_info['F2'] == 'FKFK':
             phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_kk']
-        elif kwargs['F2'] == 'F0F0':
+        elif model_info['F2'] == 'F0F0':
             phys_point_data['lam2_chi'] = phys_point_data['lam2_chi_00']
 
         # Default prior
@@ -68,16 +65,16 @@ class fit_manager(object):
             L_mu0 = np.array([3.72, 4.93, -30.7, 0.89, 3.77, 0.11, -3.4, 2.94])*10**-4
 
             # F2 is F^2 in this context; but F0, F1 are F_0, F_1
-            if kwargs['F2'] == 'FpiFpi':
+            if model_info['F2'] == 'FpiFpi':
                 F1 = phys_point_data['Fpi']
-            elif kwargs['F2'] == 'FKFpi':
+            elif model_info['F2'] == 'FKFpi':
                 F1 = np.sqrt(phys_point_data['FK'] *phys_point_data['Fpi'])
-            elif kwargs['F2'] == 'FKFK':
+            elif model_info['F2'] == 'FKFK':
                 F1 = phys_point_data['Fpi']
 
             F0 = 80 # MeV
             L_mu1 = gv.mean(L_mu0 - gamma/(4 *np.pi)**2 *np.log(F1/F0))
-            if kwargs['use_bijnens_central_value']:
+            if model_info['use_bijnens_central_value']:
                 L_mu1 = gv.gvar(L_mu1, L_mu1/2)
             else:
                 L_mu1 = gv.gvar(np.repeat(0, len(L_mu1)), L_mu1)
@@ -119,22 +116,22 @@ class fit_manager(object):
         bias_corrector = lambda arr : arr[1:] + (arr[0] - np.mean(arr[1:]))
         gv_data = {}
         plot_data = {}
-        for abbr in kwargs['abbrs']:
+        for abbr in abbrs:
             gv_data[abbr] = {}
             plot_data[abbr] = {}
             for key in ['FK', 'Fpi', 'mpi', 'mk', 'mss', 'mju', 'mjs', 'mru', 'mrs']:
-                if kwargs['bias_correct']:
+                if bias_correct:
                     gv_data[abbr][key] = bias_corrector(fit_data[abbr][key])
                 else:
                     gv_data[abbr][key] = fit_data[abbr][key]
-                plot_data[abbr][key] = fit_data[abbr][key][:kwargs['plot_bs_N']]
+                plot_data[abbr][key] = fit_data[abbr][key][:plot_bs_N]
 
             gv_data[abbr] = gv.dataset.avg_data(gv_data[abbr], bstrap=True)
             gv_data[abbr]['FK/Fpi'] = gv_data[abbr]['FK'] / gv_data[abbr]['Fpi']
             plot_data[abbr]['FK/Fpi'] = plot_data[abbr]['FK'] / plot_data[abbr]['Fpi']
 
             # Sunset term
-            if kwargs['fast_sunset'] and order['include_sunset']:
+            if fast_sunset and model_info['include_sunset']:
                 gv_data[abbr]['sunset'] = sf.fcn_FF((gv_data[abbr]['mpi'] / gv_data[abbr]['mk'])**2)
 
             to_gvar = lambda arr : gv.gvar(arr[0], arr[1])
@@ -151,16 +148,16 @@ class fit_manager(object):
                 gv_data[abbr][key] = gv.gvar(value, value/1000000.0)
                 plot_data[abbr][key] = gv.gvar(value, value/1000000.0)
 
-            if kwargs['F2'] == 'FKFpi':
+            if model_info['F2'] == 'FKFpi':
                 gv_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *gv_data[abbr]['FK'] *gv_data[abbr]['Fpi']
                 plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['FK'] *plot_data[abbr]['Fpi']
-            elif kwargs['F2'] == 'FKFK':
+            elif model_info['F2'] == 'FKFK':
                 gv_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *gv_data[abbr]['FK'] *gv_data[abbr]['FK']
                 plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['FK'] *plot_data[abbr]['FK']
-            elif kwargs['F2'] == 'FpiFpi':
+            elif model_info['F2'] == 'FpiFpi':
                 gv_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *gv_data[abbr]['Fpi'] *gv_data[abbr]['Fpi']
                 plot_data[abbr]['lam2_chi'] = (4 *np.pi)**2 *plot_data[abbr]['Fpi'] *plot_data[abbr]['Fpi']
-            elif kwargs['F2'] == 'F0F0':
+            elif model_info['F2'] == 'F0F0':
                 latt_spacing = { # Taken from arxiv/1503.02769, Table VIII
                     'a15' : gv.gvar('0.1511(18)')*1.00,
                     'a12' : gv.gvar('0.1206(11)')*1.00,
@@ -174,17 +171,12 @@ class fit_manager(object):
 
         # Set object values
         self.w0 = phys_point_data['w0']
-
-        self.use_bijnens_central_value = kwargs['use_bijnens_central_value']
         self.bs_N = 1
-        self.F2 = kwargs['F2']
-        self.plot_bs_N = kwargs['plot_bs_N']
-        self.abbrs = sorted(kwargs['abbrs'])
+        self.plot_bs_N = plot_bs_N
+        self.abbrs = sorted(abbrs)
         self.fit_data = gv_data
         self.plot_data = plot_data
-        self.order = order
-        self.fit_type = kwargs['fit_type']
-        self.fast_sunset = kwargs['fast_sunset']
+        self.model_info = model_info
 
         self._input_prior = prior
         self._fit = None
@@ -283,7 +275,7 @@ class fit_manager(object):
             'logGBF' : self.fit.logGBF,
             'chi2/df' : self.fit.chi2 / self.fit.dof,
             'Q' : self.fit.Q,
-            'vol' : self.order['vol'],
+            'vol' : self.model_info['include_FV'],
             'phys_point' : self.phys_point_data,
             'error_budget' : self.error_budget,
             'prior' : self.prior,
@@ -313,20 +305,20 @@ class fit_manager(object):
 
     @property
     def model(self):
-        name = self.fit_type +'_'+ self.F2+'_'+self.order['fit']
-        if self.order['include_log']:
+        name = self.model_info['fit_type'] +'_'+ self.model_info['F2'] +'_'+ self.model_info['order']
+        if self.model_info['include_log']:
             name = name + '_log'
-        if self.order['include_log2']:
+        if self.model_info['include_log2']:
             name = name + '_logSq'
-        if self.order['include_sunset']:
+        if self.model_info['include_sunset']:
             name = name + '_sunset'
-        if self.order['include_alpha_s']:
+        if self.model_info['include_alpha_s']:
             name = name + '_alphaS'
-        if self.order['include_latt_n3lo']:
+        if self.model_info['include_latt_n3lo']:
             name = name + '_a4'
-        if self.order['vol'] > 6:
+        if self.model_info['include_FV']:
             name = name + '_FV'
-        if self.use_bijnens_central_value:
+        if self.model_info['use_bijnens_central_value']:
             name = name + '_bijnens'
         return name
 
@@ -434,15 +426,13 @@ class fit_manager(object):
         prepped_data = self._make_fit_data()
         # Need to randomize prior in bayesian-bootstrap hybrid
         temp_prior = self._input_prior
-        temp_fitter = fit.fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
-                        order=self.order, fit_type=self.fit_type, fast_sunset=self.fast_sunset)
+        temp_fitter = fit.fitter(fit_data=prepped_data, prior=temp_prior, **self.model_info)
         return temp_fitter.get_fit()
 
     def _make_empbayes_fit(self):
         prepped_data = self._make_fit_data()
         temp_prior = self._input_prior
-        temp_fitter = fit.fitter(fit_data=prepped_data, prior=temp_prior, F2=self.F2,
-                        order=self.order, fit_type=self.fit_type, fast_sunset=self.fast_sunset)
+        temp_fitter = fit.fitter(fit_data=prepped_data, prior=temp_prior, **self.model_info)
 
         empbayes_fit = temp_fitter.get_empbayes_fit()
         self._fit = empbayes_fit
@@ -473,7 +463,7 @@ class fit_manager(object):
                 sdev = gv.sdev(temp_prior[key])
                 output[key] = gv.gvar(mean, sdev)
             elif ['L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9']:
-                if self.use_bijnens_central_value:
+                if self.model_info['use_bijnens_central_value']:
                     output[key] = temp_prior[key]
                 else:
                     output[key] = gv.gvar(0, gv.sdev(temp_prior[key]))
@@ -496,14 +486,17 @@ class fit_manager(object):
         if posterior is None:
             posterior = self.posterior.copy()
         if fit_type is None:
-            fit_type = self.fit_type
+            fit_type = self.model_info['fit_type']
 
         if fit_type in ['ma', 'xpt']:
             fit_type = 'xpt'
         elif fit_type in ['ma-ratio', 'xpt-ratio']:
             fit_type = 'xpt-ratio'
 
-        model = fit.fitter(order=self.order, fit_type=fit_type, F2=self.F2, fast_sunset=self.fast_sunset)._make_models()[0]
+        model_info = self.model_info.copy()
+        model_info['fit_type'] = fit_type
+
+        model = fit.fitter(**model_info)._make_models()[0]
         return model.fitfcn(p=posterior, fit_data=fit_data, debug=debug)
 
 
@@ -534,14 +527,14 @@ class fit_manager(object):
             fit_keys = list(self.posterior)
             rs,cs = np.triu_indices(len(fit_keys),1)
             for (i, j) in zip(rs, cs):
-                figs.append(self.plot_error_ellipsis([fit_keys[i], fit_keys[j]]))
+                figs.append(self.plot_error_ellipsis(x_key=fit_keys[i], y_key=fit_keys[j]))
 
         return figs
 
     # Takes keys from posterior (eg, 'L_5' and 'L_4')
     def plot_error_ellipsis(self, x_key, y_key):
-        x = self.self._get_posterior(x_key)
-        y = self.self._get_posterior(y_key)
+        x = self._get_posterior(x_key)
+        y = self._get_posterior(y_key)
 
 
         fig, ax = plt.subplots()

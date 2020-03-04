@@ -9,19 +9,38 @@ import fitter.special_functions as sf
 
 class fitter(object):
 
-    def __init__(self, order, fit_type, F2, fit_data=None, prior=None, fast_sunset=False):
+    def __init__(self,
+            fit_type, order, F2,
+            include_FV, exclude,
+            include_alpha_s, include_log, include_log2, include_sunset,
+            include_latt_n3lo,
+            fit_data=None, prior=None, fast_sunset=False, **kwargs
+        ):
         self.prior = prior
         self.fit_data = fit_data
+
+        # Model info
+        self.model_info = {
+            'fit_type' : fit_type,
+            'order' : order,
+            'F2' : F2,
+
+            'include_FV' : include_FV,
+            'exclude' : exclude,
+
+            'include_alpha_s' : include_alpha_s,
+            'include_log' : include_log,
+            'include_log2' : include_log2,
+            'include_sunset' : include_sunset,
+
+            'include_latt_n3lo' : include_latt_n3lo,
+
+        }
+
+        # attributes of fitter object
+        self.counter = {'iters' : 0, 'evals' : 0} # To force empbayes_fit to converge?
         self.fit = None
         self.empbayes_fit = None
-        self.order = order
-        self.fit_type = fit_type
-        self.F2 = F2
-        self.fast_sunset=fast_sunset
-
-        # To force empbayes_fit to converge?
-        self.counter = {'iters' : 0, 'evals' : 0}
-        #self.z = {}
 
     def _make_fitargs(self, z):
         y_data = self._make_y_data()
@@ -34,7 +53,7 @@ class fitter(object):
         # But for some reason, these restrictions (other than the last) cause empbayes_fit not to converge
         z['chiral'] = np.abs(z['chiral']) #np.max([np.abs(np.around(z['chiral'], 2)), 0.01])
         #z['spacing_n2lo'] = np.abs(z['spacing_n2lo']) #np.max([np.abs(np.around(z['spacing_n2lo'], 2)), 0.01]) #
-        #if self.order['include_latt_n3lo']:
+        #if self.model_info['include_latt_n3lo']:
         #    z['spacing_n3lo'] = np.abs(z['spacing_n3lo']) #np.max([np.abs(np.around(z['spacing_n3lo'], 2)), 0.01]) #
 
         # Helps with convergence (minimizer doesn't use extra digits -- bug in lsqfit?)
@@ -65,7 +84,7 @@ class fitter(object):
         z0 = gv.BufferDict()
         z0['chiral'] = 1.0
         #z0['spacing_n2lo'] = 1.0
-        #if self.order['include_latt_n3lo']:
+        #if self.model_info['include_latt_n3lo']:
         #    z0['spacing_n3lo'] = 10.0
 
 
@@ -91,7 +110,7 @@ class fitter(object):
         y_data = self._make_y_data()
         prior = self._make_prior()
 
-        if self.fit_type == 'simultaneous':
+        if self.model_info['fit_type'] == 'simultaneous':
             fitter = lsqfit.MultiFitter(models=models)
             fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
         else:
@@ -106,17 +125,19 @@ class fitter(object):
         models = np.array([])
 
         # simultaneous fits -- don't chain nlo -> nnlo
-        if self.fit_type == 'simultaneous':
-            order = self.order.copy()
+        if self.model_info['fit_type'] == 'simultaneous':
+            model_info = self.model_info.copy()
             for fit_type in ['ma', 'xpt']:
-                models = np.append(models, fk_fpi_model(datatag=fit_type+'_'+order['fit'],
-                            F2=self.F2, order=self.order, fit_type=fit_type, fast_sunset=self.fast_sunset))
+                model_info = self.model_info.copy()
+                model_info['fit_type'] = fit_type
+                models = np.append(models, fk_fpi_model(datatag=fit_type+'_'+model_info['order'],
+                            **model_info))
             return models
 
 
-        order = self.order.copy()
-        models = np.append(models, fk_fpi_model(datatag=self.fit_type+'_'+order['fit'],
-                    F2=self.F2, order=order, fit_type=self.fit_type, fast_sunset=self.fast_sunset))
+        model_info = self.model_info.copy()
+        models = np.append(models, fk_fpi_model(datatag=self.model_info['fit_type']+'_'+model_info['order'],
+                    **self.model_info))
 
         return models
 
@@ -127,26 +148,26 @@ class fitter(object):
         prior = self.prior
 
         newprior = gv.BufferDict()
-        order = self.order
+        model_info = self.model_info
 
         # Move fit_data into prior
         for key in fit_data:
             if key != 'y':
                 newprior[key] = fit_data[key]
 
-        if order['include_alpha_s'] :
+        if self.model_info['include_alpha_s'] :
             newprior['alpha_s'] = fit_data['alpha_s']
             newprior['A_loga'] = prior['A_loga']
 
         # Fit parameters, depending on fit type
-        if self.fit_type in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
+        if self.model_info['fit_type'] in ['ma', 'ma-ratio', 'xpt', 'xpt-ratio']:
             newprior['L_4'] = prior['L_4']
             newprior['L_5'] = prior['L_5']
-        elif self.fit_type in ['poly']:
+        elif self.model_info['fit_type'] in ['poly']:
             newprior['A_x'] = prior['A_x']
 
 
-        if order['include_log']:
+        if self.model_info['include_log']:
             newprior['L_1'] = prior['L_1']
             newprior['L_2'] = prior['L_2']
             newprior['L_3'] = prior['L_3']
@@ -155,22 +176,22 @@ class fitter(object):
             newprior['L_7'] = prior['L_7']
             newprior['L_8'] = prior['L_8']
 
-        if order['fit'] in ['nnlo', 'nnnlo']:
+        if self.model_info['order'] in ['nnlo', 'nnnlo']:
             newprior['A_k'] = prior['A_k']
             newprior['A_p'] = prior['A_p']
             newprior['A_a'] = prior['A_a']
 
-        if order['fit'] in ['nnnlo']:
+        if self.model_info['order'] in ['nnnlo']:
             newprior['A_aa'] = prior['A_aa']
             newprior['A_ak'] = prior['A_ak']
             newprior['A_ap'] = prior['A_ap']
             newprior['A_kk'] = prior['A_kk']
             newprior['A_kp'] = prior['A_kp']
             newprior['A_pp'] = prior['A_pp']
-        elif order['include_latt_n3lo']:
+        elif model_info['include_latt_n3lo']:
             newprior['A_aa'] = prior['A_aa']
 
-        for key in self.order['exclude']:
+        for key in self.model_info['exclude']:
             if key in newprior.keys():
                 del(newprior[key])
 
@@ -200,13 +221,32 @@ class fitter(object):
 
 class fk_fpi_model(lsqfit.MultiFitterModel):
 
-    def __init__(self, datatag, fit_type, order, F2, fast_sunset=False):
+    def __init__(self, datatag,
+            fit_type, order, F2,
+            include_FV, exclude,
+            include_alpha_s, include_log, include_log2, include_sunset,
+            include_latt_n3lo, fast_sunset=False, **kwargs
+        ):
         super(fk_fpi_model, self).__init__(datatag)
 
+        # Model info
+        self.model_info = {
+            'fit_type' : fit_type,
+            'order' : order,
+            'F2' : F2,
+
+            'include_FV' : include_FV,
+            'exclude' : exclude,
+
+            'include_alpha_s' : include_alpha_s,
+            'include_log' : include_log,
+            'include_log2' : include_log2,
+            'include_sunset' : include_sunset,
+
+            'include_latt_n3lo' : include_latt_n3lo,
+        }
+
         self.fast_sunset = fast_sunset # Use correlated gvar instead
-        self.fit_type = fit_type
-        self.order = order
-        self.F2 = F2
         self.debug = False
 
 
@@ -218,51 +258,51 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             for key in fit_data.keys():
                 p[key] = fit_data[key]
 
-        for key in self.order['exclude']:
+        for key in self.model_info['exclude']:
             p[key] = 0
 
         # nlo fits
-        if self.order['fit'] in ['nlo', 'nnlo', 'nnnlo']:
+        if self.model_info['order'] in ['nlo', 'nnlo', 'nnnlo']:
             # mixed-action/xpt fits
-            if self.fit_type == 'ma-ratio':
+            if self.model_info['fit_type'] == 'ma-ratio':
                 output = self.fitfcn_nlo_ma_ratio(p)
-            elif self.fit_type == 'ma':
+            elif self.model_info['fit_type'] == 'ma':
                 output = self.fitfcn_nlo_ma(p)
-            elif self.fit_type == 'xpt-ratio':
+            elif self.model_info['fit_type'] == 'xpt-ratio':
                 output = self.fitfcn_nlo_xpt_ratio(p)
-            elif self.fit_type == 'xpt':
+            elif self.model_info['fit_type'] == 'xpt':
                 output = self.fitfcn_nlo_xpt(p)
-            elif self.fit_type == 'poly':
+            elif self.model_info['fit_type'] == 'poly':
                 output = self.fitfcn_nlo_polynomial(p)
 
         if debug:
             temp = output
 
         # n2lo corrections
-        if self.order['fit'] in ['nnlo', 'nnnlo']:
+        if self.model_info['order'] in ['nnlo', 'nnnlo']:
             output = output + self.fitfcn_nnlo_pure_ct(p)
-            if self.fit_type is not 'poly':
+            if self.model_info['fit_type'] != 'poly':
                 output = output + self.fitfcn_nnlo_ratio(p)
                 output = output + self.fitfcn_nnlo_renormalization_ct(p)
 
         # semi-nnlo corrections
-        if self.order['include_log']:
+        if self.model_info['include_log']:
             output = output + self.fitfcn_seminnlo_log_ct(p)
-        if self.order['include_log2']:
+        if self.model_info['include_log2']:
             output = output + self.fitfcn_seminnlo_log_squared_ct(p)
-        if self.order['include_sunset']:
+        if self.model_info['include_sunset']:
             output = output + self.fitfcn_seminnlo_sunset_ct(p)
-        if self.order['include_alpha_s']:
+        if self.model_info['include_alpha_s']:
             output = output + self.fitfcn_seminnlo_alpha_s_ct(p)
 
 
         # n3lo corrections
-        if self.order['fit'] in ['nnnlo']:
+        if self.model_info['order'] in ['nnnlo']:
             output = output + self.fitfcn_nnnlo_pure_ct(p)
-        elif self.order['include_latt_n3lo']:
+        elif self.model_info['include_latt_n3lo']:
             output = output + self.fitfcn_nnnlo_latt_spacing_ct(p)
 
-        for key in self.order['exclude']:
+        for key in self.model_info['exclude']:
             del(p[key])
 
         if debug:
@@ -273,7 +313,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_nlo_ma(self, p):
         # Constants
-        order_vol = self.order['vol']
+        if self.model_info['include_FV']:
+            order_vol = 10
+        else:
+            order_vol = 0
 
         # Independent variables
         mju = p['mju']
@@ -329,7 +372,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_nlo_ma_ratio(self, p):
         # Constants
-        order_vol = self.order['vol']
+        if self.model_info['include_FV']:
+            order_vol = 10
+        else:
+            order_vol = 0
 
         # Independent variables
         mju = p['mju']
@@ -409,7 +455,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
     def fitfcn_nlo_xpt(self, p):
 
         # Constants
-        order_vol = self.order['vol']
+        if self.model_info['include_FV']:
+            order_vol = 10
+        else:
+            order_vol = 0
 
         # Independent variables
         mpi = p['mpi']
@@ -437,7 +486,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_nlo_xpt_ratio(self, p):
        # Constants
-        order_vol = self.order['vol']
+        if self.model_info['include_FV']:
+            order_vol = 10
+        else:
+            order_vol = 0
 
         # Independent variables
         mpi = p['mpi']
@@ -473,7 +525,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_nnlo_pure_ct(self, p, include_log=None):
         if include_log is None:
-            include_log = self.order['include_log']
+            include_log = self.model_info['include_log']
 
         lam2_chi = p['lam2_chi']
         eps2_a = (p['a/w0'])**2 / (4 *np.pi)
@@ -512,7 +564,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         fcn_l = lambda x : x *np.log(x)
 
-        if self.fit_type in ['ma-ratio', 'xpt-ratio']:
+        if self.model_info['fit_type'] in ['ma-ratio', 'xpt-ratio']:
             output = (
                 + (
                     + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
@@ -550,7 +602,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             )
         )
 
-        if self.F2 == 'FKFK':
+        if self.model_info['F2'] == 'FKFK':
             output = (3./2) *(eps2_k - eps2_pi) *(
                 + (3./8) *fcn_l(eps2_pi)
                 + (3./4) *fcn_l(eps2_k)
@@ -564,7 +616,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 + 2 *xi**2
             )
 
-        elif self.F2 == 'FKFpi':
+        elif self.model_info['F2'] == 'FKFpi':
             output = (3./2) *(eps2_k - eps2_pi) *(
                 + (11./8) *fcn_l(eps2_pi)
                 + (5./4) *fcn_l(eps2_k)
@@ -578,7 +630,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 + xi**2
             )
 
-        elif self.F2 == 'FpiFpi':
+        elif self.model_info['F2'] == 'FpiFpi':
             output = (3./2) *(eps2_k - eps2_pi) *(
                 + fcn_l(eps2_pi)
                 + (1./2) * fcn_l(eps2_k)

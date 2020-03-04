@@ -13,13 +13,12 @@ class data_loader(object):
     def __init__(self):
         self.project_path = os.path.normpath(os.path.join(os.path.realpath(__file__), os.pardir, os.pardir))
         self.file_h5 = os.path.normpath(self.project_path+'/FK_Fpi_data.h5')
-        self.models = None
 
-    def _pickle_fit_parameters(self, fit_info, output_name):
+    def _pickle_fit_parameters(self, fit_info, collection_name):
         model = fit_info['name']
-        filename = self.project_path+'/pickles/'+ output_name +'/'+ model +'.p'
-        if not os.path.exists(self.project_path +'/pickles/'+ output_name):
-            os.makedirs(self.project_path +'/pickles/'+ output_name)
+        filename = self.project_path +'/results/'+ collection_name +'/pickles/'+ model +'.p'
+        if not os.path.exists(self.project_path +'/results/'+ collection_name +'/pickles/'):
+            os.makedirs(self.project_path +'/results/'+ collection_name +'/pickles/')
 
         output = {
             'FK/Fpi' : fit_info['FK/Fpi'],
@@ -46,8 +45,8 @@ class data_loader(object):
         gv.dump(output, filename)
         return None
 
-    def _unpickle_fit_parameters(self, model, output_name):
-        filepath = self.project_path+'/pickles/'+ output_name +'/'+ model +'.p'
+    def _unpickle_fit_parameters(self, model, collection_name):
+        filepath = self.project_path +'/results/'+ collection_name +'/pickles/'+ model +'.p'
         if os.path.isfile(filepath):
             return gv.load(filepath)
         else:
@@ -73,11 +72,17 @@ class data_loader(object):
                         data[ensemble][key] = dset[()]
         return data
 
-    def get_fit_results(self, output_name):
-        if os.path.exists(self.project_path +'/pickles/'+ output_name):
+    def get_fit_results(self, collection_name):
+        if os.path.exists(self.project_path +'/results/'+ collection_name +'/pickles/'):
             fit_info = {}
-            for model in self.get_model_names(output_name):
-                fit_info_model = self._unpickle_fit_parameters(model=model, output_name=output_name)
+
+            models = []
+            for file in os.listdir(self.project_path +'/results/'+ collection_name +'/pickles/'):
+                if(file.endswith('.p')):
+                    models.append(file.split('.')[0])
+
+            for model in models:
+                fit_info_model = self._unpickle_fit_parameters(model=model, collection_name=collection_name)
                 fit_info[model] = {}
                 fit_info[model]['name'] = model
                 fit_info[model]['FK/Fpi'] = fit_info_model['FK/Fpi']
@@ -105,7 +110,7 @@ class data_loader(object):
         # Alternatively, read info from csv file.
         # Used for getting fit results from other collabs
         else:
-            filepath = os.path.normpath(self.project_path + '/results/'+output_name+'.csv')
+            filepath = os.path.normpath(self.project_path + '/results/' +collection_name+ '/results.csv')
 
             df_fit = pd.read_csv(filepath, header=0)
             cols = df_fit.columns.values
@@ -132,6 +137,70 @@ class data_loader(object):
 
         if not os.path.isfile(filepath):
             return None
+
+    def get_model_info_from_name(self, name):
+        model_info = {}
+        model_info['base'] = name.split('_')[0] # eg, 'ma-ratio'
+        model_info['F2'] = name.split('_')[1] # eg, 'FKFPi'
+        model_info['order'] = name.split('_')[2] # eg, 'nnlo'
+
+        model_info['include_FV'] = False
+        model_info['exclude'] = []
+        model_info['use_bijnens_central_value'] = False
+
+        model_info['include_alpha_s'] = False
+        model_info['include_log'] = False
+        model_info['include_log2'] = False
+        model_info['include_sunset'] = False
+
+        model_info['include_latt_n3lo'] = False
+
+
+        if '_FV' in name:
+            model_info['include_FV'] = True
+        if '_alphaS' in name:
+            model_info['include_alpha_s'] = True
+        if '_log_' in name or name.endswith('_log'): # (consider '_logSq')
+            model_info['include_log'] = True
+        if '_logSq' in name:
+            model_info['include_log2'] = True
+        if '_sunset' in name:
+            model_info['include_sunset'] = True
+        if '_a4' in name:
+            model_info['include_latt_n3lo'] = True
+        if '_bijnens' in name:
+            model_info['use_bijnens_central_value'] = True
+
+        if (model_info['include_log'] == True
+                and model_info['include_log2'] == True
+                and model_info['include_sunset'] == True
+                and model_info['use_bijnens_central_value'] == True):
+            output_dict['semi-nnlo_corrections'] = 'nnlo-full_bijnens'
+
+        elif (model_info['include_log'] == True
+                and model_info['include_log2'] == True
+                and model_info['include_sunset'] == True
+                and model_info['use_bijnens_central_value'] == False):
+            model_info['semi-nnlo_corrections'] = 'nnlo-full'
+
+        elif (model_info['include_log'] == False
+                and model_info['include_log2'] == True
+                and model_info['include_sunset'] == True
+                and model_info['use_bijnens_central_value'] == False):
+            model_info['semi-nnlo_corrections'] = 'nnlo-logSq_ct'
+
+        elif (model_info['include_log'] == False
+                and model_info['include_log2'] == False
+                and model_info['include_sunset'] == False
+                and model_info['use_bijnens_central_value'] == False):
+            model_info['semi-nnlo_corrections'] = 'nnlo-ct'
+
+        return model_info
+
+
+    def get_model_names(self, collection_name):
+        return None
+
 
 
     def get_phys_point_data(self, parameter=None):
@@ -181,12 +250,10 @@ class data_loader(object):
         else:
             return phys_point_data[parameter]
 
-    def get_prior(self, fit_type, order, F2,
+    def get_prior(self, collection_name, fit_type, order, F2,
                   include_log, include_log2, include_sunset,
-                  include_alpha_s, include_latt_n3lo, include_FV, use_bijnens_central_value):
-        filepath = os.path.normpath(self.project_path + '/priors/'+fit_type+'.csv')
-
-        print(filepath)
+                  include_alpha_s, include_latt_n3lo, include_FV, use_bijnens_central_value, **kwargs):
+        filepath = os.path.normpath(self.project_path + '/results/'+ collection_name +'/prior.csv')
 
         if not os.path.isfile(filepath):
             return None
@@ -218,35 +285,26 @@ class data_loader(object):
                       'A_a', 'A_k', 'A_p', 'A_loga', 'A_aa', # nnlo terms
                       'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp'] # nnnlo terms
         for key in lecs_keys:
-            value = np.asscalar(df_prior[key].values[index])
-            if value is not np.nan:
-                prior[key] = gv.gvar(value)
+            if key in df_prior.keys():
+                value = np.asscalar(df_prior[key].values[index])
+                if value is not np.nan:
+                    prior[key] = gv.gvar(value)
 
         return prior
 
-    def get_model_names(self, output_name):
-        if self.models is None:
-            models = []
-            for file in os.listdir(self.project_path +'/pickles/'+ output_name):
-                if(file.endswith('.p')):
-                    models.append(file.split('.')[0])
-            self.models = models
-        return self.models
-
-
     # pickle correlated prior/posterior,
     # save rest to csv file
-    def save_fit_info(self, fit_info, output_name=None, save_pickles=True):
+    def save_fit_info(self, fit_info, collection_name=None, save_pickles=True):
         print("Saving...")
 
-        if output_name is None:
-            output_name = 'fit_results'
+        if collection_name is None:
+            collection_name = 'fit_results'
         if save_pickles:
-            self._pickle_fit_parameters(fit_info, output_name)
+            self._pickle_fit_parameters(fit_info, collection_name)
 
-        if not os.path.exists(self.project_path + '/results/'):
-            os.makedirs(self.project_path + '/results/')
-        filepath = os.path.normpath(self.project_path + '/results/'+output_name+'.csv')
+        if not os.path.exists(self.project_path +'/results/'+ collection_name):
+            os.makedirs(self.project_path +'/results/'+ collection_name)
+        filepath = os.path.normpath(self.project_path +'/results/'+ collection_name +'/results.csv')
 
         # get fit info
         cols = np.array(['name', 'FK/Fpi', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol'])
