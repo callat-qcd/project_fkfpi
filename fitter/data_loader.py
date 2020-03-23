@@ -199,7 +199,15 @@ class data_loader(object):
 
 
     def get_model_names(self, collection_name):
-        return None
+        if not os.path.exists(os.path.normpath(self.project_path+'/results/'+collection_name+'/model_list.txt')):
+            print('No such collection!')
+            return None
+
+        output = []
+        with open(self.project_path+'/results/'+collection_name+'/model_list.txt', 'r') as file:
+            output = [current_line.rstrip() for current_line in file.readlines()]
+
+        return output
 
 
 
@@ -375,6 +383,15 @@ class data_loader(object):
             df.to_csv(filepath)
 
         print("Done.")
+        return None
+
+    def save_model_names(self, collection_name, model_list):
+        if not os.path.exists(os.path.normpath(self.project_path+'/results/'+collection_name)):
+            os.makedirs(os.path.normpath(self.project_path+'/results/'+collection_name))
+
+        with open(self.project_path+'/results/'+collection_name+'/model_list.txt', 'w') as file:
+            file.writelines('%s\n'%model for model in model_list)
+
         return None
 
     def save_plots(self, figs=None, output_filename=None):
