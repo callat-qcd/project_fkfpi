@@ -45,7 +45,7 @@ class model_average(object):
 
     def _get_model_info_from_name(self, name):
         output_dict = {}
-        output_dict['base'] = name.split('_')[0] # eg, 'ma-ratio'
+        output_dict['fit_type'] = name.split('_')[0] # eg, 'ma-ratio'
         output_dict['F2'] = name.split('_')[1] # eg, 'FKFPi'
         output_dict['order'] = name.split('_')[2] # eg, 'nnlo'
         output_dict['include_FV'] = False
@@ -283,9 +283,9 @@ class model_average(object):
         else:
             order['vol'] = 10
 
-        if model_info['base'] in ['xpt', 'ma']:
+        if model_info['fit_type'] in ['xpt', 'ma']:
             fitfcn = fit.fk_fpi_model(datatag='xpt', fit_type='xpt', order=order, F2=model_info['F2']).fitfcn
-        elif model_info['base'] in ['xpt-ratio', 'ma-ratio']:
+        elif model_info['fit_type'] in ['xpt-ratio', 'ma-ratio']:
             fitfcn = fit.fk_fpi_model(datatag='xpt-ratio', fit_type='xpt-ratio', order=order, F2=model_info['F2']).fitfcn
 
         return fitfcn(p=p, fit_data=data)
@@ -342,15 +342,15 @@ class model_average(object):
                         y = y + 1
 
                     else:
-                        # Color by base model
+                        # Color by fit_type model
                         model_info = self._get_model_info_from_name(name)
-                        if model_info['base'] == 'ma':
+                        if model_info['fit_type'] == 'ma':
                             color = colors[0]
-                        elif model_info['base'] == 'xpt':
+                        elif model_info['fit_type'] == 'xpt':
                             color = colors[1]
-                        elif model_info['base'] == 'xpt-ratio':
+                        elif model_info['fit_type'] == 'xpt-ratio':
                             color = colors[2]
-                        elif model_info['base'] == 'ma-ratio':
+                        elif model_info['fit_type'] == 'ma-ratio':
                             color = colors[3]
                         else:
                             color = colors[4]
@@ -413,13 +413,13 @@ class model_average(object):
         for results in [self.fit_results]:
             for name in sorted(results.keys()):
                 model_info = self._get_model_info_from_name(name)
-                if model_info['base'] == 'ma':
+                if model_info['fit_type'] == 'ma':
                     color = colors[0]
-                elif model_info['base'] == 'xpt':
+                elif model_info['fit_type'] == 'xpt':
                     color = colors[1]
-                elif model_info['base'] == 'xpt-ratio':
+                elif model_info['fit_type'] == 'xpt-ratio':
                     color = colors[2]
-                elif model_info['base'] == 'ma-ratio':
+                elif model_info['fit_type'] == 'ma-ratio':
                     color = colors[3]
                 else:
                     color = colors[4]
@@ -462,13 +462,13 @@ class model_average(object):
         for results in [self.fit_results]:
             for name in sorted(results.keys()):
                 model_info = self._get_model_info_from_name(name)
-                if model_info['base'] == 'ma':
+                if model_info['fit_type'] == 'ma':
                     color = colors[0]
-                elif model_info['base'] == 'xpt':
+                elif model_info['fit_type'] == 'xpt':
                     color = colors[1]
-                elif model_info['base'] == 'xpt-ratio':
+                elif model_info['fit_type'] == 'xpt-ratio':
                     color = colors[2]
-                elif model_info['base'] == 'ma-ratio':
+                elif model_info['fit_type'] == 'ma-ratio':
                     color = colors[3]
                 else:
                     color = colors[4]
@@ -506,13 +506,13 @@ class model_average(object):
         for results in [self.fit_results]:
             for name in sorted(results.keys()):
                 model_info = self._get_model_info_from_name(name)
-                if model_info['base'] == 'ma':
+                if model_info['fit_type'] == 'ma':
                     color = colors[0]
-                elif model_info['base'] == 'xpt':
+                elif model_info['fit_type'] == 'xpt':
                     color = colors[1]
-                elif model_info['base'] == 'xpt-ratio':
+                elif model_info['fit_type'] == 'xpt-ratio':
                     color = colors[2]
-                elif model_info['base'] == 'ma-ratio':
+                elif model_info['fit_type'] == 'ma-ratio':
                     color = colors[3]
                 else:
                     color = colors[4]

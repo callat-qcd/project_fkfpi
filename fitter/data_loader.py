@@ -140,7 +140,7 @@ class data_loader(object):
 
     def get_model_info_from_name(self, name):
         model_info = {}
-        model_info['base'] = name.split('_')[0] # eg, 'ma-ratio'
+        model_info['fit_type'] = name.split('_')[0] # eg, 'ma-ratio'
         model_info['F2'] = name.split('_')[1] # eg, 'FKFPi'
         model_info['order'] = name.split('_')[2] # eg, 'nnlo'
 
@@ -419,14 +419,13 @@ class data_loader(object):
 
         return None
 
-    def save_prior(self, prior, name):
-        print("Saving...")
+    def save_prior(self, collection_name, prior, name):
 
         fit_type = name.split('_')[0]
 
-        if not os.path.exists(self.project_path + '/priors/'):
-            os.makedirs(self.project_path + '/priors/')
-        filepath = os.path.normpath(self.project_path + '/priors/'+fit_type+'.csv')
+        if not os.path.exists(self.project_path +'/results/'+ collection_name):
+            os.makedirs(self.project_path +'/results/'+ collection_name)
+        filepath = os.path.normpath(self.project_path +'/results/'+ collection_name +'/prior.csv')
 
         # get fit info
         cols = np.array(['name', 'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8',
@@ -470,5 +469,5 @@ class data_loader(object):
             df = df[cols] # rearrange in logical order
             df.to_csv(filepath)
 
-        print("Done.")
+        print("Saving prior.")
         return None

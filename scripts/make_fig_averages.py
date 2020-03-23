@@ -1,4 +1,4 @@
-import numpy as np
+ import numpy as np
 import gvar as gv
 import lsqfit
 import sys
@@ -19,18 +19,18 @@ for j in range(10): # Sometimes this needs to be loaded twice...
 
 # Promp for output
 if len(sys.argv) > 1:
-    output_name = sys.argv[1]
+    collection_name = sys.argv[1]
 else:
-    output_name = input('Specify result to average: ')
+    collection_name = input('Specify collection to average: ')
 
 data_loader = dl.data_loader()
 
-fit_results = data_loader.get_fit_results(output_name)
+fit_results = data_loader.get_fit_results(collection_name)
 other_results = data_loader.get_fit_results('other_collabs')
 model_average = md.model_average(fit_results)
 
 # Make histograms
-for vary_choice in ['base', 'F2', 'include_alpha_s', 'include_latt_n3lo', 'include_FV', 'semi-nnlo_corrections']:
+for vary_choice in ['fit_type', 'F2', 'include_alpha_s', 'include_latt_n3lo', 'include_FV', 'semi-nnlo_corrections']:
     fig = model_average.plot_histogram('FK/Fpi', vary_choice=vary_choice)
     data_loader.save_plots(fig, output_filename=output_name+'/histogram_fit_'+vary_choice)
 

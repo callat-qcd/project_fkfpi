@@ -5,7 +5,7 @@ sys.path.append("../")
 import fitter.data_loader as dl
 
 ### Edit these lines
-collection_name = 'test'
+collection_name = 'optimized_priors'
 choices = {
     'fit_type' : ['ma', 'ma-ratio', 'xpt', 'xpt-ratio'],
     'order' : ['nnlo'],
