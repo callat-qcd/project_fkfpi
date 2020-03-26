@@ -5,10 +5,9 @@ sys.path.append("../")
 import fitter.data_loader as dl
 
 ### Edit these lines
-collection_name = 'optimized_priors'
 choices = {
     'fit_type' : ['ma', 'ma-ratio', 'xpt', 'xpt-ratio'],
-    'order' : ['nnlo'],
+    'order' : ['nnlo', 'nnnlo'],
     'F2' : ['FKFK', 'FKFpi', 'FpiFpi'],
 
     # Vol corrections
@@ -16,13 +15,19 @@ choices = {
 
     # semi-nnlo corrections
     'include_alpha_s' : [False, True],
-    'semi-nnlo_corrections' : ['nnlo-ct', 'nnlo-logSq_ct', 'nnlo-full', 'nnlo-full_bijnens'],
+    'semi-nnlo_corrections' : ['nnlo-ct', 'nnlo-full_bijnens'],
 
     # nnnlo corrections
     'include_latt_n3lo' : [False, True],
 }
 
 ### Don't edit
+
+if len(sys.argv) > 1:
+    collection_name = sys.argv[1]
+else:
+    collection_name = input('Name for fit collection: ')
+
 model_list = []
 for j, choice in enumerate(dict(zip(choices, x)) for x in itertools.product(*choices.values())):
 

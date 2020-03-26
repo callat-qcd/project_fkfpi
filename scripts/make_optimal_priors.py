@@ -16,7 +16,7 @@ import fitter.fit_manager as fm
 
 
 
-p_dict = {
+params = {
     'bias_correct' : True,
     'fast_sunset' : True,
 
@@ -30,15 +30,15 @@ p_dict = {
 }
 
 if len(sys.argv) > 1:
-    p_dict['collection_name'] = sys.argv[1]
+    params['collection_name'] = sys.argv[1]
 else:
-    p_dict['collection_name'] = input('Name for fit collection: ')
+    params['collection_name'] = input('Name for fit collection: ')
 
 
 t0_all = time.time()
 
 data_loader = dl.data_loader()
-model_list = data_loader.get_model_names(p_dict['collection_name'])
+model_list = data_loader.get_model_names(params['collection_name'])
 
 for model in model_list:
     t0 = time.time()
@@ -46,28 +46,28 @@ for model in model_list:
     # Load data
     fit_data = data_loader.get_fit_data()
     phys_point_data = data_loader.get_phys_point_data()
-    p_dict['model_info'] = data_loader.get_model_info_from_name(model)
+    params['model_info'] = data_loader.get_model_info_from_name(model)
 
     # See if a prior has been generated; if not, create one
-    temp_prior = data_loader.get_prior(collection_name=p_dict['collection_name'], **p_dict['model_info'])
+    temp_prior = data_loader.get_prior(collection_name=params['collection_name'], **params['model_info'])
 
-    if temp_prior is None or p_dict['replace_entries']:
+    if temp_prior is None or params['replace_entries']:
 
         # Make fit_manager
-        fit_manager = fm.fit_manager(fit_data, phys_point_data, prior=temp_prior, **p_dict)
+        fit_manager = fm.fit_manager(fit_data, phys_point_data, prior=temp_prior, **params)
 
         new_prior = fit_manager.create_prior_from_fit()
         data_loader.save_prior(
-            collection_name=p_dict['collection_name'],
+            collection_name=params['collection_name'],
             prior=new_prior,
             name=fit_manager.model
         )
 
-        if p_dict['save_results']:
+        if params['save_results']:
             data_loader.save_fit_info(
                 fit_manager.fit_info,
-                collection_name=p_dict['collection_name'],
-                save_pickles=p_dict['save_pickles']
+                collection_name=params['collection_name'],
+                save_pickles=params['save_pickles']
             )
 
     t1 = time.time()

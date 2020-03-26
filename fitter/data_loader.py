@@ -111,6 +111,8 @@ class data_loader(object):
         # Used for getting fit results from other collabs
         else:
             filepath = os.path.normpath(self.project_path + '/results/' +collection_name+ '/results.csv')
+            if not os.path.exists(filepath):
+                return None
 
             df_fit = pd.read_csv(filepath, header=0)
             cols = df_fit.columns.values
@@ -175,7 +177,7 @@ class data_loader(object):
                 and model_info['include_log2'] == True
                 and model_info['include_sunset'] == True
                 and model_info['use_bijnens_central_value'] == True):
-            output_dict['semi-nnlo_corrections'] = 'nnlo-full_bijnens'
+            model_info['semi-nnlo_corrections'] = 'nnlo-full_bijnens'
 
         elif (model_info['include_log'] == True
                 and model_info['include_log2'] == True
