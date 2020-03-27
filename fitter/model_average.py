@@ -98,7 +98,7 @@ class model_average(object):
         return output_dict
 
     def _get_fit_extrapolation(self, model):
-        return self.fit_results[model]['FK/Fpi']
+        return gv.gvar(self.fit_results[model]['FK/Fpi'])
 
     def _get_fit_posterior(self, model):
         if 'posterior' in self.fit_results[model] and bool(self.fit_results[model]['posterior']):
@@ -640,10 +640,10 @@ class model_average(object):
 
     # See self._get_model_info_from_name for possible values for 'vary_choice'
     def plot_histogram(self, param=None, title=None, xlabel=None, vary_choice='F2'):
-        if xlabel is None:
-            xlabel = self._param_keys_dict(param)+' (choose: '+vary_choice+')'
         if param is None:
             param = 'FK/Fpi_pm'
+        if xlabel is None:
+            xlabel = self._param_keys_dict(param)+' (choose: '+vary_choice+')'
         if title is None:
             title = ""
 
