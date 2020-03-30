@@ -1,3 +1,5 @@
+## Model Description
+
 Using default priors w/ Bijnen's central values:
 ```python
 prior = {}
@@ -44,4 +46,24 @@ choices = {
     # nnnlo corrections
     'include_latt_n3lo' : [False, True],
 }
+```
+
+## Model Average
+```
+FK/Fpi_pm = 1.1951(82) 	 [FLAG: 1.1932(19)]
+
+---
+FK/Fpi      =  1.1977(83)
+delta_su(2) = -0.00430(73)
+
+---
+Uncertainty:
+   Unexplained: 0.00547
+   Explained:   0.00625
+
+---
+Error Budget:
+   Chiral:      0.000915
+   Phys Point:  0.00157
+   Statistical: 0.00478
 ```

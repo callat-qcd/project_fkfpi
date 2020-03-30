@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import gvar as gv
 import sys
+import re
 import time
 import os
 import h5py
@@ -385,6 +386,26 @@ class data_loader(object):
             df.to_csv(filepath)
 
         print("Done.")
+        return None
+
+    def save_model_average(self, collection_name, model_avg_str):
+        filename = self.project_path +'/results/'+ collection_name + '/README.md'
+        with open(filename, 'r') as file:
+            file_content = file.read()
+
+        if os.path.exists(filename) and '## Model Average' in file_content:
+            file_content = re.sub(r'## Model Average\s```(.*\s*)*```',
+                                  '## Replaced text\n'+model_avg_str,
+                                  file_content)
+            print(file_content)
+        else:
+            with open(filename, 'a+') as file:
+                file_content = '\n## Model Average'
+                file_content += '\n```\n'
+                file_content += model_avg_str
+                file_content += '```'
+                file.write(file_content)
+
         return None
 
     def save_model_names(self, collection_name, model_list):

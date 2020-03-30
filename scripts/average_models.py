@@ -29,6 +29,9 @@ fit_results = data_loader.get_fit_results(collection_name)
 other_results = data_loader.get_fit_results('other_collabs')
 model_average = md.model_average(fit_results)
 
+# Save fit info to /results/{collection_name}/README.md
+data_loader.save_model_average(collection_name, str(model_average))
+
 # Make histograms
 for vary_choice in ['fit_type', 'F2', 'include_alpha_s', 'include_latt_n3lo', 'include_FV', 'semi-nnlo_corrections']:
     fig = model_average.plot_histogram('FK/Fpi', vary_choice=vary_choice)
