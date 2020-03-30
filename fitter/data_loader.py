@@ -395,10 +395,13 @@ class data_loader(object):
 
         if os.path.exists(filename) and '## Model Average' in file_content:
             file_content = re.sub(r'## Model Average\s```(.*\s*)*```',
-                                  '## Replaced text\n'+model_avg_str,
+                                  '## Model Average\n```\n'+model_avg_str+'```',
                                   file_content)
-            print(file_content)
+            with open(filename, 'w') as file:
+                file.write(file_content)
+
         else:
+            file.close()
             with open(filename, 'a+') as file:
                 file_content = '\n## Model Average'
                 file_content += '\n```\n'
@@ -418,6 +421,10 @@ class data_loader(object):
         return None
 
     def save_plots(self, figs=None, output_filename=None):
+
+        if figs is None:
+            print('Nothing here!')
+            return None
 
         if not os.path.exists(os.path.normpath(self.project_path+'/tmp/')):
             os.makedirs(os.path.normpath(self.project_path+'/tmp/'))
