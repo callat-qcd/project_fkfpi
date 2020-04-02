@@ -10,10 +10,9 @@ import fitter.special_functions as sf
 class fitter(object):
 
     def __init__(self,
-            fit_type, order, F2,
+            fit_type, order, latt_ct, F2,
             include_FV, exclude,
             include_alpha_s, include_log, include_log2, include_sunset,
-            include_latt_n3lo, include_latt_n4lo,
             fit_data=None, prior=None, fast_sunset=False, **kwargs
         ):
         self.prior = prior
@@ -23,6 +22,7 @@ class fitter(object):
         self.model_info = {
             'fit_type' : fit_type,
             'order' : order,
+            'latt_ct' : latt_ct,
             'F2' : F2,
 
             'include_FV' : include_FV,
@@ -32,9 +32,6 @@ class fitter(object):
             'include_log' : include_log,
             'include_log2' : include_log2,
             'include_sunset' : include_sunset,
-
-            'include_latt_n3lo' : include_latt_n3lo,
-            'include_latt_n4lo' : include_latt_n4lo,
 
         }
 
@@ -125,7 +122,7 @@ class fitter(object):
     def _make_models(self):
         models = np.array([])
 
-        # simultaneous fits -- don't chain nlo -> nnlo
+        # simultaneous fits -- don't chain nlo -> n2lo
         if self.model_info['fit_type'] == 'simultaneous':
             model_info = self.model_info.copy()
             for fit_type in ['ma', 'xpt']:
@@ -177,22 +174,26 @@ class fitter(object):
             newprior['L_7'] = prior['L_7']
             newprior['L_8'] = prior['L_8']
 
-        if self.model_info['order'] in ['nnlo', 'nnnlo']:
+        if self.model_info['order'] in ['n2lo', 'n3lo']:
             newprior['A_k'] = prior['A_k']
             newprior['A_p'] = prior['A_p']
             newprior['A_a'] = prior['A_a']
 
-        if self.model_info['order'] in ['nnnlo']:
+        if self.model_info['order'] in ['n3lo']:
             newprior['A_aa'] = prior['A_aa']
             newprior['A_ak'] = prior['A_ak']
             newprior['A_ap'] = prior['A_ap']
             newprior['A_kk'] = prior['A_kk']
             newprior['A_kp'] = prior['A_kp']
             newprior['A_pp'] = prior['A_pp']
-        elif self.model_info['include_latt_n3lo']:
-            newprior['A_aa'] = prior['A_aa']
 
-        if self.model_info['include_latt_n4lo']:
+
+        # Lattice spacing terms
+        if self.model_info['latt_ct'] in ['n2lo', 'n3lo', 'n4lo']:
+            newprior['A_a'] = prior['A_a']
+        if self.model_info['latt_ct'] in ['n3lo', 'n4lo']:
+            newprior['A_aa'] = prior['A_aa']
+        if self.model_info['latt_ct'] in ['n4lo']:
             newprior['A_aaa'] = prior['A_aaa']
 
         for key in self.model_info['exclude']:
@@ -226,10 +227,9 @@ class fitter(object):
 class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def __init__(self, datatag,
-            fit_type, order, F2,
+            fit_type, order, latt_ct, F2,
             include_FV, exclude,
             include_alpha_s, include_log, include_log2, include_sunset,
-            include_latt_n3lo, include_latt_n4lo,
             fast_sunset=False, **kwargs
         ):
         super(fk_fpi_model, self).__init__(datatag)
@@ -238,6 +238,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         self.model_info = {
             'fit_type' : fit_type,
             'order' : order,
+            'latt_ct' : latt_ct,
             'F2' : F2,
 
             'include_FV' : include_FV,
@@ -247,9 +248,6 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             'include_log' : include_log,
             'include_log2' : include_log2,
             'include_sunset' : include_sunset,
-
-            'include_latt_n3lo' : include_latt_n3lo,
-            'include_latt_n4lo' : include_latt_n4lo,
         }
 
         self.fast_sunset = fast_sunset # Use correlated gvar instead
@@ -268,7 +266,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             p[key] = 0
 
         # nlo fits
-        if self.model_info['order'] in ['nlo', 'nnlo', 'nnnlo']:
+        if self.model_info['order'] in ['nlo', 'n2lo', 'n3lo']:
             # mixed-action/xpt fits
             if self.model_info['fit_type'] == 'ma-ratio':
                 output = self.fitfcn_nlo_ma_ratio(p)
@@ -285,37 +283,40 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             temp = output
 
         # n2lo corrections
-        if self.model_info['order'] in ['nnlo', 'nnnlo']:
-            output = output + self.fitfcn_nnlo_pure_ct(p)
+        if self.model_info['order'] in ['n2lo', 'n3lo']:
+            output = output + self.fitfcn_n2lo_pure_ct(p)
             if self.model_info['fit_type'] != 'poly':
-                output = output + self.fitfcn_nnlo_ratio(p)
-                output = output + self.fitfcn_nnlo_renormalization_ct(p)
+                output = output + self.fitfcn_n2lo_ratio(p)
+                output = output + self.fitfcn_n2lo_renormalization_ct(p)
+        elif self.model_info['latt_ct'] in ['n2lo', 'n3lo', 'n4lo']:
+            output = output + self.fitfcn_n2lo_latt_spacing_ct(p)
 
-        # semi-nnlo corrections
+        # semi-n2lo corrections
         if self.model_info['include_log']:
-            output = output + self.fitfcn_seminnlo_log_ct(p)
+            output = output + self.fitfcn_semi_n2lo_log_ct(p)
         if self.model_info['include_log2']:
-            output = output + self.fitfcn_seminnlo_log_squared_ct(p)
+            output = output + self.fitfcn_semi_n2lo_log_squared_ct(p)
         if self.model_info['include_sunset']:
-            output = output + self.fitfcn_seminnlo_sunset_ct(p)
+            output = output + self.fitfcn_semi_n2lo_sunset_ct(p)
         if self.model_info['include_alpha_s']:
-            output = output + self.fitfcn_seminnlo_alpha_s_ct(p)
+            output = output + self.fitfcn_semi_n2lo_alpha_s_ct(p)
 
 
         # n3lo corrections
-        if self.model_info['order'] in ['nnnlo']:
-            output = output + self.fitfcn_nnnlo_pure_ct(p)
-        elif self.model_info['include_latt_n3lo']:
-            output = output + self.fitfcn_nnnlo_latt_spacing_ct(p)
+        if self.model_info['order'] in ['n3lo']:
+            output = output + self.fitfcn_n3lo_pure_ct(p)
+        elif self.model_info['latt_ct'] in ['n3lo', 'n4lo']:
+            output = output + self.fitfcn_n3lo_latt_spacing_ct(p)
 
-        if self.model_info['include_latt_n4lo']:
-            output = output + self.fitfcn_nnnnlo_latt_spacing_ct(p)
+        # n4lo corrections
+        if self.model_info['latt_ct'] in ['n4lo']:
+            output = output + self.fitfcn_n4lo_latt_spacing_ct(p)
 
         for key in self.model_info['exclude']:
             del(p[key])
 
         if debug:
-            print('nnlo', output - temp)
+            print('n2lo', output - temp)
             #print('p', p)
 
         return output
@@ -330,7 +331,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         # Independent variables
         mju = p['mju']
         mpi = p['mpi']
-        mk = p['mk']
+        mk  = p['mk']
         mru = p['mru']
         msj = p['mjs'] #msj = mjs
         mss = p['mss']
@@ -532,7 +533,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return FK_nlo_per_F0 / Fpi_nlo_per_F0
 
 
-    def fitfcn_nnlo_pure_ct(self, p, include_log=None):
+    def fitfcn_n2lo_pure_ct(self, p, include_log=None):
         if include_log is None:
             include_log = self.model_info['include_log']
 
@@ -565,7 +566,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output
 
-    def fitfcn_nnlo_ratio(self, p):
+    def fitfcn_n2lo_ratio(self, p):
         lam2_chi = p['lam2_chi']
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
@@ -593,7 +594,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output
 
-    def fitfcn_nnlo_renormalization_ct(self, p):
+    def fitfcn_n2lo_renormalization_ct(self, p):
         lam2_chi = p['lam2_chi']
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
@@ -653,7 +654,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             print('mu fix', output)
         return output
 
-    def fitfcn_seminnlo_alpha_s_ct(self, p):
+    def fitfcn_semi_n2lo_alpha_s_ct(self, p):
         lam2_chi = p['lam2_chi']
         eps2_a = (p['a/w0'])**2 / (4 *np.pi)
         eps2_pi = p['mpi']**2 / lam2_chi
@@ -666,7 +667,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         return output
 
 
-    def fitfcn_seminnlo_log_ct(self, p):
+    def fitfcn_semi_n2lo_log_ct(self, p):
         lam2_chi = p['lam2_chi']
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
@@ -682,7 +683,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             print('log', output)
         return output
 
-    def fitfcn_seminnlo_log_squared_ct(self, p):
+    def fitfcn_semi_n2lo_log_squared_ct(self, p):
         lam2_chi = p['lam2_chi']
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
@@ -701,7 +702,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             print('logSq', output)
         return output
 
-    def fitfcn_seminnlo_sunset_ct(self, p):
+    def fitfcn_semi_n2lo_sunset_ct(self, p):
         lam2_chi = p['lam2_chi']
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
@@ -715,8 +716,19 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             print('FF', output)
         return output
 
+    def fitfcn_n2lo_latt_spacing_ct(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
 
-    def fitfcn_nnnlo_latt_spacing_ct(self, p):
+        output = (
+            + (eps2_a) *p['A_a']
+        ) *(eps2_k - eps2_pi)
+
+        return output
+
+    def fitfcn_n3lo_latt_spacing_ct(self, p):
         lam2_chi = p['lam2_chi']
         eps2_a = (p['a/w0'])**2 / (4 *np.pi)
         eps2_pi = p['mpi']**2 / lam2_chi
@@ -728,7 +740,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output
 
-    def fitfcn_nnnnlo_latt_spacing_ct(self, p):
+    def fitfcn_n4lo_latt_spacing_ct(self, p):
         lam2_chi = p['lam2_chi']
         eps2_a = (p['a/w0'])**2 / (4 *np.pi)
         eps2_pi = p['mpi']**2 / lam2_chi
@@ -740,7 +752,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         return output
 
-    def fitfcn_nnnlo_pure_ct(self, p):
+    def fitfcn_n3lo_pure_ct(self, p):
         lam2_chi = p['lam2_chi']
         eps2_a = (p['a/w0'])**2 / (4 *np.pi)
         eps2_pi = p['mpi']**2 / lam2_chi

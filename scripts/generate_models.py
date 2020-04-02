@@ -1,61 +1,54 @@
 import itertools
 import sys
 
-sys.path.append("../")
+sys.path.append("../../")
 import fitter.data_loader as dl
+
+data_loader = dl.data_loader()
 
 ### Edit these lines
 choices = []
 
 choices.append({
     'fit_type' : ['ma', 'ma-ratio', 'xpt', 'xpt-ratio'],
-    'order' : ['nnlo'],
+    'order' : ['n2lo'],
+    'latt_ct' : ['n2lo', 'n3lo'],
     'F2' : ['FKFK', 'FKFpi', 'FpiFpi'],
 
     # Vol corrections
     'include_FV' : [True],
 
-    # semi-nnlo corrections
+    # semi-n2lo corrections
     'include_alpha_s' : [False, True],
-    'semi-nnlo_corrections' : ['nnlo-ct', 'nnlo-full_bijnens'],
-
-    # nnnlo corrections
-    'include_latt_n3lo' : [False, True],
-    'include_latt_n4lo' : [False],
+    'semi-n2lo_corrections' : ['n2lo-ct', 'n2lo-full_bijnens'],
 })
 
 choices.append({
     'fit_type' : ['ma', 'ma-ratio', 'xpt', 'xpt-ratio'],
-    'order' : ['nnnlo'],
+    'order' : ['n3lo'],
+    'latt_ct' : ['n3lo'],
     'F2' : ['FKFK', 'FKFpi', 'FpiFpi'],
 
     # Vol corrections
     'include_FV' : [True],
 
-    # semi-nnlo corrections
+    # semi-n2lo corrections
     'include_alpha_s' : [False, True],
-    'semi-nnlo_corrections' : ['nnlo-full_bijnens'],
-
-    # nnnlo corrections
-    'include_latt_n3lo' : [True],
-    'include_latt_n4lo' : [False],
+    'semi-n2lo_corrections' : ['n2lo-full_bijnens'],
 })
 
 choices.append({
     'fit_type' : ['ma', 'ma-ratio', 'xpt', 'xpt-ratio'],
-    'order' : ['nnnlo'],
+    'order' : ['n3lo'],
+    'latt_ct' : ['n4lo'],
     'F2' : ['FKFK', 'FKFpi', 'FpiFpi'],
 
     # Vol corrections
     'include_FV' : [True],
 
-    # semi-nnlo corrections
+    # semi-n2lo corrections
     'include_alpha_s' : [False],
-    'semi-nnlo_corrections' : ['nnlo-full_bijnens'],
-
-    # nnnlo corrections
-    'include_latt_n3lo' : [False],
-    'include_latt_n4lo' : [True],
+    'semi-n2lo_corrections' : ['n2lo-full_bijnens'],
 })
 
 ### Don't edit
@@ -77,27 +70,27 @@ for k in range(len(choices)):
 
         model_info['include_FV'] = choice['include_FV']
         model_info['include_alpha_s'] = choice['include_alpha_s']
-        model_info['include_latt_n3lo'] = choice['include_latt_n3lo']
+        model_info['latt_ct'] = choice['latt_ct']
 
-        if choice['semi-nnlo_corrections'] == 'nnlo-full_bijnens':
+        if choice['semi-n2lo_corrections'] == 'n2lo-full_bijnens':
             model_info['include_log'] = True
             model_info['include_log2'] = True
             model_info['include_sunset'] = True
             model_info['use_bijnens_central_value'] = True
 
-        elif choice['semi-nnlo_corrections'] == 'nnlo-full':
+        elif choice['semi-n2lo_corrections'] == 'n2lo-full':
             model_info['include_log'] = True
             model_info['include_log2'] = True
             model_info['include_sunset'] = True
             model_info['use_bijnens_central_value'] = False
 
-        elif choice['semi-nnlo_corrections'] == 'nnlo-logSq_ct':
+        elif choice['semi-n2lo_corrections'] == 'n2lo-logSq_ct':
             model_info['include_log'] = False
             model_info['include_log2'] = True
             model_info['include_sunset'] = True
             model_info['use_bijnens_central_value'] = False
 
-        elif choice['semi-nnlo_corrections'] == 'nnlo-ct':
+        elif choice['semi-n2lo_corrections'] == 'n2lo-ct':
             model_info['include_log'] = False
             model_info['include_log2'] = False
             model_info['include_sunset'] = False
@@ -105,23 +98,9 @@ for k in range(len(choices)):
 
 
         # Get model name from info
-        name = model_info['fit_type'] +'_'+ model_info['F2'] +'_'+ model_info['order']
-        if model_info['include_log']:
-            name = name + '_log'
-        if model_info['include_log2']:
-            name = name + '_logSq'
-        if model_info['include_sunset']:
-            name = name + '_sunset'
-        if model_info['include_alpha_s']:
-            name = name + '_alphaS'
-        if model_info['include_latt_n3lo']:
-            name = name + '_a4'
-        if model_info['include_FV']:
-            name = name + '_FV'
-        if model_info['use_bijnens_central_value']:
-            name = name + '_bijnens'
+        name = data_loader.get_model_name_from_model_info(model_info)
 
         model_list.append(name)
 
-data_loader = dl.data_loader()
+
 data_loader.save_model_names(collection_name, model_list)

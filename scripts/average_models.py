@@ -33,7 +33,7 @@ model_average = md.model_average(fit_results)
 data_loader.save_model_average(collection_name, str(model_average))
 
 # Make histograms
-for vary_choice in ['fit_type', 'F2', 'include_alpha_s', 'include_latt_n3lo', 'include_FV', 'semi-nnlo_corrections']:
+for vary_choice in ['fit_type', 'F2', 'include_alpha_s', 'latt_ct', 'include_FV', 'semi-n2lo_corrections']:
     fig = model_average.plot_histogram('FK/Fpi', vary_choice=vary_choice)
     data_loader.save_plots(fig, output_filename=collection_name+'/histogram_fit_'+vary_choice)
 

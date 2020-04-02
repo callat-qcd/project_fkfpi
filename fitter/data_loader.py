@@ -143,9 +143,10 @@ class data_loader(object):
 
     def get_model_info_from_name(self, name):
         model_info = {}
+        model_info['name'] = name
         model_info['fit_type'] = name.split('_')[0] # eg, 'ma-ratio'
         model_info['F2'] = name.split('_')[1] # eg, 'FKFPi'
-        model_info['order'] = name.split('_')[2] # eg, 'nnlo'
+        model_info['order'] = name.split('_')[2] # eg, 'n2lo'
 
         model_info['include_FV'] = False
         model_info['exclude'] = []
@@ -156,8 +157,7 @@ class data_loader(object):
         model_info['include_log2'] = False
         model_info['include_sunset'] = False
 
-        model_info['include_latt_n3lo'] = False
-        model_info['include_latt_n4lo'] = False
+        model_info['latt_ct'] = 'n2lo'
 
 
         if '_FV' in name:
@@ -170,38 +170,60 @@ class data_loader(object):
             model_info['include_log2'] = True
         if '_sunset' in name:
             model_info['include_sunset'] = True
-        if '_a4' in name:
-            model_info['include_latt_n3lo'] = True
-        if '_a6' in name:
-            model_info['include_latt_n4lo'] = True
         if '_bijnens' in name:
             model_info['use_bijnens_central_value'] = True
+
+        if '_a6' in name:
+            model_info['latt_ct'] = 'n4lo'
+        elif '_a4' in name:
+            model_info['latt_ct'] = 'n3lo'
 
         if (model_info['include_log'] == True
                 and model_info['include_log2'] == True
                 and model_info['include_sunset'] == True
                 and model_info['use_bijnens_central_value'] == True):
-            model_info['semi-nnlo_corrections'] = 'nnlo-full_bijnens'
+            model_info['semi-n2lo_corrections'] = 'n2lo-full_bijnens'
 
         elif (model_info['include_log'] == True
                 and model_info['include_log2'] == True
                 and model_info['include_sunset'] == True
                 and model_info['use_bijnens_central_value'] == False):
-            model_info['semi-nnlo_corrections'] = 'nnlo-full'
+            model_info['semi-n2lo_corrections'] = 'n2lo-full'
 
         elif (model_info['include_log'] == False
                 and model_info['include_log2'] == True
                 and model_info['include_sunset'] == True
                 and model_info['use_bijnens_central_value'] == False):
-            model_info['semi-nnlo_corrections'] = 'nnlo-logSq_ct'
+            model_info['semi-n2lo_corrections'] = 'n2lo-logSq_ct'
 
         elif (model_info['include_log'] == False
                 and model_info['include_log2'] == False
                 and model_info['include_sunset'] == False
                 and model_info['use_bijnens_central_value'] == False):
-            model_info['semi-nnlo_corrections'] = 'nnlo-ct'
+            model_info['semi-n2lo_corrections'] = 'n2lo-ct'
 
         return model_info
+
+    def get_model_name_from_model_info(self, model_info):
+        name = model_info['fit_type'] +'_'+ model_info['F2'] +'_'+ model_info['order']
+        if model_info['include_log']:
+            name = name + '_log'
+        if model_info['include_log2']:
+            name = name + '_logSq'
+        if model_info['include_sunset']:
+            name = name + '_sunset'
+        if model_info['include_alpha_s']:
+            name = name + '_alphaS'
+        if (model_info['latt_ct'] in ['n3lo', 'n4lo']
+                or model_info['order'] in ['n3lo']):
+            name = name + '_a4'
+        if model_info['latt_ct'] in ['n4lo']:
+            name = name + '_a6'
+        if model_info['include_FV']:
+            name = name + '_FV'
+        if model_info['use_bijnens_central_value']:
+            name = name + '_bijnens'
+        return name
 
 
     def get_model_names(self, collection_name):
@@ -297,9 +319,9 @@ class data_loader(object):
         index = np.argwhere(df_prior['name'].values == name)
         prior = gv.BufferDict()
         lecs_keys =  ['A_x', 'L_4', 'L_5', # nlo terms
-                      'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-nnlo terms
-                      'A_a', 'A_k', 'A_p', 'A_loga', 'A_aa', # nnlo terms
-                      'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp'] # nnnlo terms
+                      'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-n2lo terms
+                      'A_a', 'A_k', 'A_p', 'A_loga', 'A_aa', # n2lo terms
+                      'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp'] # n3lo terms
         for key in lecs_keys:
             if key in df_prior.keys():
                 value = np.asscalar(df_prior[key].values[index])
@@ -325,9 +347,9 @@ class data_loader(object):
         # get fit info
         cols = np.array(['name', 'FK/Fpi', 'delta_su2', 'logGBF', 'chi2/df', 'Q', 'vol'])
         lecs_cols =  ['A_x', 'L_4', 'L_5', # nlo terms
-                      'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-nnlo terms
-                      'A_a', 'A_k', 'A_p', 'A_loga', # nnlo terms
-                      'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp'] # nnnlo terms
+                      'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-n2lo terms
+                      'A_a', 'A_k', 'A_p', 'A_loga', # n2lo terms
+                      'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp'] # n3lo terms
         eb_cols = ['disc', 'chiral', 'pp_input', 'stat']
         output_cols = []
         for key in cols:

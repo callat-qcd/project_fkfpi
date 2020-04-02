@@ -31,8 +31,10 @@ class fit_manager(object):
         if model_info is None:
             model_info = {}
 
+        model_info.setdefault('name', 'unspecified')
         model_info.setdefault('fit_type', 'xpt')
-        model_info.setdefault('order', 'nnlo')
+        model_info.setdefault('order', 'n2lo')
+        model_info.setdefault('latt_ct', 'n2lo')
         model_info.setdefault('F2', 'FpiFpi')
 
         model_info.setdefault('include_FV', True)
@@ -43,8 +45,6 @@ class fit_manager(object):
         model_info.setdefault('include_log', False)
         model_info.setdefault('include_log2', False)
         model_info.setdefault('include_sunset', False)
-        model_info.setdefault('include_latt_n3lo', False)
-        model_info.setdefault('include_latt_n4lo', False)
 
 
         # Get lam_chi^2=renorm_scale^2 depending on choice of F^2
@@ -103,11 +103,11 @@ class fit_manager(object):
             prior['A_aa'] = gv.gvar('0.0(1000.0)')#gv.gvar('0.0(50.0)')
             prior['A_aaa'] = gv.gvar('0.0(10000.0)')#gv.gvar('0.0(50.0)')
 
-            # nnlo terms
+            # n2lo terms
             prior['A_k'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(5.0)')
             prior['A_p'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(5.0)')
 
-            # nnnlo terms
+            # n3lo terms
             prior['A_ak'] = gv.gvar('0.0(100.0)')
             prior['A_ap'] = gv.gvar('0.0(100.0)')
             prior['A_kk'] = gv.gvar('0.0(100.0)')
@@ -307,24 +307,7 @@ class fit_manager(object):
 
     @property
     def model(self):
-        name = self.model_info['fit_type'] +'_'+ self.model_info['F2'] +'_'+ self.model_info['order']
-        if self.model_info['include_log']:
-            name = name + '_log'
-        if self.model_info['include_log2']:
-            name = name + '_logSq'
-        if self.model_info['include_sunset']:
-            name = name + '_sunset'
-        if self.model_info['include_alpha_s']:
-            name = name + '_alphaS'
-        if self.model_info['include_latt_n3lo']:
-            name = name + '_a4'
-        if self.model_info['include_latt_n4lo']:
-            name = name + '_a6'
-        if self.model_info['include_FV']:
-            name = name + '_FV'
-        if self.model_info['use_bijnens_central_value']:
-            name = name + '_bijnens'
-        return name
+        return self.model_info['name']
 
     @property
     def phys_point_data(self):

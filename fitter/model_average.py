@@ -10,12 +10,14 @@ import scipy.stats as stats
 from collections import OrderedDict
 
 import fitter.fitter as fit
+import fitter.data_loader as dl
 
 class model_average(object):
     def __init__(self, fit_results):
         for model in fit_results.keys():
             fit_results[model]['FK/Fpi_pm'] = gv.gvar(fit_results[model]['FK/Fpi']) *np.sqrt(1 + gv.gvar(fit_results[model]['delta_su2']))
         self.fit_results = fit_results
+        self.data_loader = dl.data_loader()
 
     def __str__(self):
         output  = 'FK/Fpi_pm: %s\n'%(self.average('FK/Fpi_pm'))
@@ -43,61 +45,7 @@ class model_average(object):
         return output
 
     def _get_model_info_from_name(self, name):
-        output_dict = {}
-        output_dict['fit_type'] = name.split('_')[0] # eg, 'ma-ratio'
-        output_dict['F2'] = name.split('_')[1] # eg, 'FKFPi'
-        output_dict['order'] = name.split('_')[2] # eg, 'nnlo'
-        output_dict['include_FV'] = False
-        output_dict['include_alpha_s'] = False
-        output_dict['include_log'] = False
-        output_dict['include_log2'] = False
-        output_dict['include_sunset'] = False
-        output_dict['include_latt_n3lo'] = False
-        output_dict['include_latt_n4lo'] = False
-        output_dict['use_bijnens_central_value'] = False
-
-        if '_FV' in name:
-            output_dict['include_FV'] = True
-        if '_alphaS' in name:
-            output_dict['include_alpha_s'] = True
-        if '_log_' in name or name.endswith('_log'): # (consider '_logSq')
-            output_dict['include_log'] = True
-        if '_logSq' in name:
-            output_dict['include_log2'] = True
-        if '_sunset' in name:
-            output_dict['include_sunset'] = True
-        if '_a4' in name:
-            output_dict['include_latt_n3lo'] = True
-        if '_a6' in name:
-            output_dict['include_latt_n4lo'] = True
-        if '_bijnens' in name:
-            output_dict['use_bijnens_central_value'] = True
-
-        if (output_dict['include_log'] == True
-                and output_dict['include_log2'] == True
-                and output_dict['include_sunset'] == True
-                and output_dict['use_bijnens_central_value'] == True):
-            output_dict['semi-nnlo_corrections'] = 'nnlo-full_bijnens'
-
-        if (output_dict['include_log'] == True
-                and output_dict['include_log2'] == True
-                and output_dict['include_sunset'] == True
-                and output_dict['use_bijnens_central_value'] == False):
-            output_dict['semi-nnlo_corrections'] = 'nnlo-full'
-
-        if (output_dict['include_log'] == False
-                and output_dict['include_log2'] == True
-                and output_dict['include_sunset'] == True
-                and output_dict['use_bijnens_central_value'] == False):
-            output_dict['semi-nnlo_corrections'] = 'nnlo-logSq_ct'
-
-        if (output_dict['include_log'] == False
-                and output_dict['include_log2'] == False
-                and output_dict['include_sunset'] == False
-                and output_dict['use_bijnens_central_value'] == False):
-            output_dict['semi-nnlo_corrections'] = 'nnlo-ct'
-
-        return output_dict
+        return self.data_loader.get_model_info_from_name(name)
 
     def _get_fit_extrapolation(self, model):
         return gv.gvar(self.fit_results[model]['FK/Fpi'])
@@ -261,35 +209,17 @@ class model_average(object):
         return self.fitfcn(model, data)
 
     def fitfcn(self, model, data, p=None):
-        model_info = self._get_model_info_from_name(model)
+        model_info = self._get_model_info_from_name(model).copy()
 
         if p is None:
             p = self._get_fit_posterior(model)
 
-        order = {
-            'fit' : model_info['order'],
-            'exclude' : [], # put LECs here
-
-            # semi-nnlo corrections
-            'include_alpha_s' : model_info['include_alpha_s'],
-            'include_log' : model_info['include_log'],
-            'include_log2' : model_info['include_log2'],
-            'include_sunset' : model_info['include_sunset'],
-
-            # nnnlo corrections
-            'include_latt_n3lo' : model_info['include_latt_n3lo'],
-            'include_latt_n4lo' : model_info['include_latt_n4lo'],
-        }
-
-        if model_info['include_FV']:
-            order['vol'] = 10
-        else:
-            order['vol'] = 10
-
         if model_info['fit_type'] in ['xpt', 'ma']:
-            fitfcn = fit.fk_fpi_model(datatag='xpt', fit_type='xpt', order=order, F2=model_info['F2']).fitfcn
+            model_info['fit_type'] = 'xpt'
+            fitfcn = fit.fk_fpi_model(datatag='xpt', **model_info).fitfcn
         elif model_info['fit_type'] in ['xpt-ratio', 'ma-ratio']:
-            fitfcn = fit.fk_fpi_model(datatag='xpt-ratio', fit_type='xpt-ratio', order=order, F2=model_info['F2']).fitfcn
+            model_info['fit_type'] = 'xpt-ratio'
+            fitfcn = fit.fk_fpi_model(datatag='xpt-ratio', **model_info).fitfcn
 
         return fitfcn(p=p, fit_data=data)
 
