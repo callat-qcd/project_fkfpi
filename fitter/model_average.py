@@ -18,14 +18,13 @@ class model_average(object):
         self.fit_results = fit_results
 
     def __str__(self):
-        output = 'FK/Fpi_pm = %s \t [FLAG: %s] \n' %(
-            self.average('FK/Fpi_pm'),
-            self._get_phys_point_data()['FK/Fpi_pm'])
+        output  = 'FK/Fpi_pm: %s\n'%(self.average('FK/Fpi_pm'))
+        output += '[FLAG:     %s]\n'%(self._get_phys_point_data()['FK/Fpi_pm'])
 
         output += '\n---\n'
         fk_fpi = self.average('FK/Fpi', split_unc=True)
-        output += 'FK/Fpi      =  %s \n' %(gv.gvar(fk_fpi[0], np.sqrt(fk_fpi[1]**2 + fk_fpi[2]**2)))
-        output += 'delta_su(2) = %s \n' %(self.average('delta_su2'))
+        output += 'FK/Fpi:        %s \n' %(gv.gvar(fk_fpi[0], np.sqrt(fk_fpi[1]**2 + fk_fpi[2]**2)))
+        output += 'delta_su(2):  %s \n' %(self.average('delta_su2'))
 
         sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3)) if x>0 else x
         output += '\n---\n'

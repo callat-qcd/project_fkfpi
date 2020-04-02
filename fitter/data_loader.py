@@ -401,7 +401,7 @@ class data_loader(object):
                 file_content = file.read()
             if '## Model Average' in file_content:
                 file_content = re.sub(r'## Model Average\s```(.*\s*)*```',
-                                      '## Model Average\n```\n'+model_avg_str+'```',
+                                      '## Model Average\n```yaml\n'+model_avg_str+'```',
                                       file_content)
                 with open(filename, 'w') as file:
                     file.write(file_content)
@@ -409,7 +409,7 @@ class data_loader(object):
         else:
             with open(filename, 'a+') as file:
                 file_content = '\n## Model Average'
-                file_content += '\n```\n'
+                file_content += '\n```yaml\n'
                 file_content += model_avg_str
                 file_content += '```'
                 file.write(file_content)
