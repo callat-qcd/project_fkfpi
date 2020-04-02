@@ -13,13 +13,13 @@ prior['L_5'] = gv.gvar('0.0(0.005)')
 prior['A_x'] = gv.gvar('0.0(1.0)')
 
 # Lattice spacing terms
-prior['A_a'] = gv.gvar('0.0(100.0)')#gv.gvar('0.0(5.0)')
-prior['A_loga'] = gv.gvar('0.0(100.0)')#gv.gvar('0.0(5.0)')
-prior['A_aa'] = gv.gvar('0.0(1000.0)')#gv.gvar('0.0(50.0)')
+prior['A_a']    = gv.gvar('0.0(100.0)')
+prior['A_loga'] = gv.gvar('0.0(100.0)')
+prior['A_aa']   = gv.gvar('0.0(1000.0)')
 
 # nnlo terms
-prior['A_k'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(5.0)')
-prior['A_p'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(5.0)')
+prior['A_k'] = gv.gvar('0.0(10.0)')
+prior['A_p'] = gv.gvar('0.0(10.0)')
 
 # nnnlo terms
 prior['A_ak'] = gv.gvar('0.0(100.0)')
@@ -49,12 +49,13 @@ choices = {
 ```
 
 ## Model Average
-```
-FK/Fpi_pm = 1.1951(82) 	 [FLAG: 1.1932(19)] 
+```yaml
+FK/Fpi_pm: 1.1951(82)
+[FLAG:     1.1932(19)]
 
 ---
-FK/Fpi      =  1.1977(83) 
-delta_su(2) = -0.00430(73) 
+FK/Fpi:        1.1977(83) 
+delta_su(2):  -0.00430(73) 
 
 ---
 Uncertainty: 
