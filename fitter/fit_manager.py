@@ -44,6 +44,7 @@ class fit_manager(object):
         model_info.setdefault('include_log2', False)
         model_info.setdefault('include_sunset', False)
         model_info.setdefault('include_latt_n3lo', False)
+        model_info.setdefault('include_latt_n4lo', False)
 
 
         # Get lam_chi^2=renorm_scale^2 depending on choice of F^2
@@ -100,6 +101,7 @@ class fit_manager(object):
             prior['A_a'] = gv.gvar('0.0(100.0)')#gv.gvar('0.0(5.0)')
             prior['A_loga'] = gv.gvar('0.0(100.0)')#gv.gvar('0.0(5.0)')
             prior['A_aa'] = gv.gvar('0.0(1000.0)')#gv.gvar('0.0(50.0)')
+            prior['A_aaa'] = gv.gvar('0.0(10000.0)')#gv.gvar('0.0(50.0)')
 
             # nnlo terms
             prior['A_k'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(5.0)')
@@ -216,10 +218,10 @@ class fit_manager(object):
         inputs = {}
         inputs.update(prior)
         output['disc'] = fk_fpi.partialsdev(
-            [prior[key] for key in ['A_a', 'A_aa', 'A_loga'] if key in prior]
+            [prior[key] for key in ['A_a', 'A_aa', 'A_loga', 'A_aaa'] if key in prior]
         )
         output['chiral'] = fk_fpi.partialsdev(
-            [prior[key] for key in (set(prior) - set(['A_a', 'A_aa', 'A_loga']))]
+            [prior[key] for key in (set(prior) - set(['A_a', 'A_aa', 'A_loga', 'A_aaa']))]
         )
 
         phys_point = {}
@@ -316,6 +318,8 @@ class fit_manager(object):
             name = name + '_alphaS'
         if self.model_info['include_latt_n3lo']:
             name = name + '_a4'
+        if self.model_info['include_latt_n4lo']:
+            name = name + '_a6'
         if self.model_info['include_FV']:
             name = name + '_FV'
         if self.model_info['use_bijnens_central_value']:
@@ -458,7 +462,7 @@ class fit_manager(object):
         for key in self.fit_keys:
             if key in ['L_4', 'L_5']:
                 output[key] = gv.gvar(0, 0.005)
-            elif key in ['A_a', 'A_k', 'A_p', 'A_loga', 'A_aa']:
+            elif key in ['A_a', 'A_k', 'A_p', 'A_loga', 'A_aa', 'A_aaa']:
                 mean = 0
                 sdev = gv.sdev(temp_prior[key])
                 output[key] = gv.gvar(mean, sdev)

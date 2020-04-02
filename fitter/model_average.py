@@ -54,6 +54,7 @@ class model_average(object):
         output_dict['include_log2'] = False
         output_dict['include_sunset'] = False
         output_dict['include_latt_n3lo'] = False
+        output_dict['include_latt_n4lo'] = False
         output_dict['use_bijnens_central_value'] = False
 
         if '_FV' in name:
@@ -68,6 +69,8 @@ class model_average(object):
             output_dict['include_sunset'] = True
         if '_a4' in name:
             output_dict['include_latt_n3lo'] = True
+        if '_a6' in name:
+            output_dict['include_latt_n4lo'] = True
         if '_bijnens' in name:
             output_dict['use_bijnens_central_value'] = True
 
@@ -276,6 +279,7 @@ class model_average(object):
 
             # nnnlo corrections
             'include_latt_n3lo' : model_info['include_latt_n3lo'],
+            'include_latt_n4lo' : model_info['include_latt_n4lo'],
         }
 
         if model_info['include_FV']:

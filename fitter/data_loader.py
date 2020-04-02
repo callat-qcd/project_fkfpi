@@ -157,6 +157,7 @@ class data_loader(object):
         model_info['include_sunset'] = False
 
         model_info['include_latt_n3lo'] = False
+        model_info['include_latt_n4lo'] = False
 
 
         if '_FV' in name:
@@ -171,6 +172,8 @@ class data_loader(object):
             model_info['include_sunset'] = True
         if '_a4' in name:
             model_info['include_latt_n3lo'] = True
+        if '_a6' in name:
+            model_info['include_latt_n4lo'] = True
         if '_bijnens' in name:
             model_info['use_bijnens_central_value'] = True
 
@@ -280,6 +283,8 @@ class data_loader(object):
             name = name + '_alphaS'
         if include_latt_n3lo:
             name = name + '_a4'
+        if include_latt_n4lo:
+            name = name + '_a6'
         if include_FV:
             name = name + '_FV'
         if use_bijnens_central_value:

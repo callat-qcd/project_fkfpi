@@ -13,7 +13,7 @@ class fitter(object):
             fit_type, order, F2,
             include_FV, exclude,
             include_alpha_s, include_log, include_log2, include_sunset,
-            include_latt_n3lo,
+            include_latt_n3lo, include_latt_n4lo,
             fit_data=None, prior=None, fast_sunset=False, **kwargs
         ):
         self.prior = prior
@@ -34,6 +34,7 @@ class fitter(object):
             'include_sunset' : include_sunset,
 
             'include_latt_n3lo' : include_latt_n3lo,
+            'include_latt_n4lo' : include_latt_n4lo,
 
         }
 
@@ -148,7 +149,7 @@ class fitter(object):
         prior = self.prior
 
         newprior = gv.BufferDict()
-        model_info = self.model_info
+        #model_info = self.model_info
 
         # Move fit_data into prior
         for key in fit_data:
@@ -188,8 +189,11 @@ class fitter(object):
             newprior['A_kk'] = prior['A_kk']
             newprior['A_kp'] = prior['A_kp']
             newprior['A_pp'] = prior['A_pp']
-        elif model_info['include_latt_n3lo']:
+        elif self.model_info['include_latt_n3lo']:
             newprior['A_aa'] = prior['A_aa']
+
+        if self.model_info['include_latt_n4lo']:
+            newprior['A_aaa'] = prior['A_aaa']
 
         for key in self.model_info['exclude']:
             if key in newprior.keys():
@@ -225,7 +229,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             fit_type, order, F2,
             include_FV, exclude,
             include_alpha_s, include_log, include_log2, include_sunset,
-            include_latt_n3lo, fast_sunset=False, **kwargs
+            include_latt_n3lo, include_latt_n4lo,
+            fast_sunset=False, **kwargs
         ):
         super(fk_fpi_model, self).__init__(datatag)
 
@@ -244,6 +249,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             'include_sunset' : include_sunset,
 
             'include_latt_n3lo' : include_latt_n3lo,
+            'include_latt_n4lo' : include_latt_n4lo,
         }
 
         self.fast_sunset = fast_sunset # Use correlated gvar instead
@@ -301,6 +307,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             output = output + self.fitfcn_nnnlo_pure_ct(p)
         elif self.model_info['include_latt_n3lo']:
             output = output + self.fitfcn_nnnlo_latt_spacing_ct(p)
+
+        if self.model_info['include_latt_n4lo']:
+            output = output + self.fitfcn_nnnnlo_latt_spacing_ct(p)
 
         for key in self.model_info['exclude']:
             del(p[key])
@@ -715,6 +724,18 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         output = (
             + (eps2_a)**2 *p['A_aa']
+        ) *(eps2_k - eps2_pi)
+
+        return output
+
+    def fitfcn_nnnnlo_latt_spacing_ct(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+
+        output = (
+            + (eps2_a)**4 *p['A_aaa']
         ) *(eps2_k - eps2_pi)
 
         return output
