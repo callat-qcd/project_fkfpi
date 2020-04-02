@@ -395,18 +395,18 @@ class data_loader(object):
 
     def save_model_average(self, collection_name, model_avg_str):
         filename = self.project_path +'/results/'+ collection_name + '/README.md'
-        with open(filename, 'r') as file:
-            file_content = file.read()
 
-        if os.path.exists(filename) and '## Model Average' in file_content:
-            file_content = re.sub(r'## Model Average\s```(.*\s*)*```',
-                                  '## Model Average\n```\n'+model_avg_str+'```',
-                                  file_content)
-            with open(filename, 'w') as file:
-                file.write(file_content)
+        if os.path.exists(filename):
+            with open(filename, 'r') as file:
+                file_content = file.read()
+            if '## Model Average' in file_content:
+                file_content = re.sub(r'## Model Average\s```(.*\s*)*```',
+                                      '## Model Average\n```\n'+model_avg_str+'```',
+                                      file_content)
+                with open(filename, 'w') as file:
+                    file.write(file_content)
 
         else:
-            file.close()
             with open(filename, 'a+') as file:
                 file_content = '\n## Model Average'
                 file_content += '\n```\n'
