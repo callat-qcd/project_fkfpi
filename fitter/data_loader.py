@@ -110,7 +110,7 @@ class data_loader(object):
 
         # Alternatively, read info from csv file.
         # Used for getting fit results from other collabs
-        else:
+        elif os.path.exists(self.project_path + '/results/' +collection_name+ '/results.csv'):
             filepath = os.path.normpath(self.project_path + '/results/' +collection_name+ '/results.csv')
             if not os.path.exists(filepath):
                 return None
@@ -138,7 +138,7 @@ class data_loader(object):
 
             return output_dict
 
-        if not os.path.isfile(filepath):
+        else:
             return None
 
     def get_model_info_from_name(self, name):

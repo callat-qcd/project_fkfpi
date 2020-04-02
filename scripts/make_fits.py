@@ -20,9 +20,9 @@ for j in range(10): # Sometimes this needs to be loaded twice...
     matplotlib.rcParams['figure.figsize'] = [10, 10]
 
 params = {
-    'use_prior' : True,
+    'use_prior' : False,
     'bias_correct' : True,
-    'fast_sunset' : True,
+    'fast_sunset' : False,
 
     'abbrs' : [u'a06m310L', u'a09m220', u'a09m310', u'a09m350', u'a09m400', u'a12m130',
            u'a12m220',  u'a12m220S', u'a12m220L', u'a12m310', u'a12m350',
@@ -44,7 +44,9 @@ t0_all = time.time()
 
 data_loader = dl.data_loader()
 model_list = data_loader.get_model_names(params['collection_name'])
-finished_models = list(data_loader.get_fit_results(params['collection_name']))
+finished_models = []
+if data_loader.get_fit_results(params['collection_name']) is not None:
+    finished_models = list(data_loader.get_fit_results(params['collection_name']))
 
 # Get all enumerations of these choices
 for j, model in enumerate(model_list):
