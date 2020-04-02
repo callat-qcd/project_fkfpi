@@ -1,9 +1,8 @@
 import itertools
 import sys
 
-sys.path.append("../../")
+sys.path.append("../")
 import fitter.data_loader as dl
-
 data_loader = dl.data_loader()
 
 ### Edit these lines
