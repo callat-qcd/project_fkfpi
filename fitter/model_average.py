@@ -42,6 +42,13 @@ class model_average(object):
             output += '   Phys Point:  %s \n' %(sig_fig(error_budget['pp_input']))
             output += '   Statistical: %s \n' %(sig_fig(error_budget['stat']))
 
+        model_list = self.get_model_names(by_weight=True)
+        weight = lambda model_k : np.exp(self.fit_results[model_k]['logGBF']) / np.sum([np.exp(self.fit_results[model_l]['logGBF']) for model_l in model_list])
+        output += '\n---\n'
+        output += 'Highest Weight: \n'
+        for k in range(np.min([5, len(model_list)])):
+            output += '  %s: %s\n' %(np.around(weight(model_list[k]), 3), model_list[k])
+
         return output
 
     def _get_model_info_from_name(self, name):
@@ -223,8 +230,16 @@ class model_average(object):
 
         return fitfcn(p=p, fit_data=data)
 
-    def get_model_names(self):
-        return sorted(list(self.fit_results))
+    def get_model_names(self, by_weight=False):
+        if by_weight:
+            models_list = self.get_model_names()
+            temp = {model : self.fit_results[model]['logGBF'] for model in models_list}
+            sorted_list = [model for model, logGBF
+                           in sorted(temp.items(), key=lambda item: item[1], reverse=True)]
+            return sorted_list
+
+        else:
+            return sorted(list(self.fit_results))
 
     def plot_comparison(self, param=None, other_results=None, title=None, xlabel=None,
                         show_model_avg=True):
