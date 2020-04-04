@@ -187,6 +187,33 @@ class fit_manager(object):
         #self._posterior = None
         #self._prior = None
 
+    def __str__(self):
+        output = "\nModel: %s\n" %(self.model)
+        output = output + "\nFitted/[FLAG] values at physical point:"
+        output = output + '\n\tF_K / F_pi = %s [%s]'%(
+                            self.fk_fpi,
+                            self._get_phys_point_data('FK/Fpi'))
+        output = output + '\t(delta_su2 = %s)' %(self.delta_su2)
+        output = output + "\n\n"
+
+
+        output += 'Parameters:\n'
+        my_str = self.fit.format(pstyle='m')
+        for item in my_str.split('\n'):
+            for key in self.fit_keys:
+                re = key+' '
+                if re in item:
+                    output += item + '\n'
+
+        output += '\n'
+        output += self.fit.format(pstyle=None)
+
+        sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3)) # Round to 3 sig figs
+        output += '\nError Budget (relative error):\n'
+        for key in self.error_budget:
+            output += "  %s: %s\n" %(key, sig_fig(self.error_budget[key]/self.fk_fpi.mean))
+        return output
+
     @property
     def delta_su2(self):
         lam2_chi = (4 *np.pi *gv.gvar('80(20)'))**2 #Defn of lam2_chi for delta_su2 calc per FLAG 2019
@@ -353,34 +380,6 @@ class fit_manager(object):
             return self.fit.prior
         else:
             return self.fit.prior[param]
-
-    def __str__(self):
-        output = "\nModel: %s\n" %(self.model)
-        output = output + "\nFitted/[FLAG] values at physical point:"
-        output = output + '\n\tF_K / F_pi = %s [%s]'%(
-                            self.fk_fpi,
-                            self._get_phys_point_data('FK/Fpi'))
-        output = output + '\t(delta_su2 = %s)' %(self.delta_su2)
-        output = output + "\n\n"
-
-
-        output += 'Parameters:\n'
-        my_str = self.fit.format(pstyle='m')
-        for item in my_str.split('\n'):
-            for key in self.fit_keys:
-                re = key+' '
-                if re in item:
-                    output += item + '\n'
-
-        output += '\n'
-        output += self.fit.format(pstyle=None)
-
-        sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3)) # Round to 3 sig figs
-        output += '\nError Budget (relative error):\n'
-        for key in self.error_budget:
-            output += "\t%s: %s" %(key, sig_fig(self.error_budget[key]/self.fk_fpi.mean))
-
-        return output
 
     def _fmt_key_as_latex(self, key):
         convert = {
