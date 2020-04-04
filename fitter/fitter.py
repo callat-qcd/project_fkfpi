@@ -49,15 +49,13 @@ class fitter(object):
             # Don't let z=0 (=> null GBF)
             # Don't bother with negative values (meaningless)
         # But for some reason, these restrictions (other than the last) cause empbayes_fit not to converge
-        z['chiral'] = np.abs(z['chiral']) #np.max([np.abs(np.around(z['chiral'], 2)), 0.01])
-        #z['spacing_n2lo'] = np.abs(z['spacing_n2lo']) #np.max([np.abs(np.around(z['spacing_n2lo'], 2)), 0.01]) #
-        #if self.model_info['include_latt_n3lo']:
-        #    z['spacing_n3lo'] = np.abs(z['spacing_n3lo']) #np.max([np.abs(np.around(z['spacing_n3lo'], 2)), 0.01]) #
+        z['chiral'] = np.abs(z['chiral'])
 
         # Helps with convergence (minimizer doesn't use extra digits -- bug in lsqfit?)
         sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3)) # Round to 3 sig figs
         for key in z:
             z[key] = np.max([z[key], 1e-5])
+            z[key] = np.min([z[key], 100])
             z[key] = sig_fig(z[key])
 
         for key in prior.keys():
@@ -72,7 +70,25 @@ class fitter(object):
         fitfcn = self._make_models()[-1].fitfcn
         print(self.counter['iters'], ' ', z)#{key : np.round(1. / z[key], 8) for key in z.keys()})
 
-        return dict(data=y_data, fcn=fitfcn, prior=prior)#, plausibility
+        # Jeffrey's prior
+        def plausibility(s):
+            s_max = 1000
+            s_min = 1e-5
+            k = 1 / np.log(s_max/s_min)
+
+            plaus = -np.sum([np.log(k/s[key]) for key in s.keys()])
+            return plaus
+
+            #if all([s[key] > s_min and s[key] < s_max for key in s]):
+            #    plaus = np.sum([np.log(k/s[key]) for key in s.keys()])
+            #else:
+            #    plaus = 0
+            #return plaus
+
+        plaus = plausibility(z)
+        print(-plaus)
+
+        return (dict(data=y_data, fcn=fitfcn, prior=prior), plaus)
 
     def _make_empbayes_fit(self):
         #models = self._make_models(fast_sunset=True)
@@ -99,7 +115,13 @@ class fitter(object):
             print(type(arg[0]))
             return None
 
-        fit, z = lsqfit.empbayes_fit(z0, fitargs = self._make_fitargs, tol=0.01, maxit=100, analyzer=None)
+
+
+
+        fit, z = lsqfit.empbayes_fit(z0, fitargs=self._make_fitargs,
+                                     tol=0.01, maxit=100, analyzer=None)
+
+        print(z)
         self.empbayes_fit = fit
         return fit
 
