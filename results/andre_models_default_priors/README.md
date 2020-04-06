@@ -91,29 +91,29 @@ choices.append({
 
 ## Model Average
 ```yaml
-FK/Fpi_pm: 1.1955(80)
+FK/Fpi_pm: 1.1982(78)
 [FLAG:     1.1932(19)]
 
 ---
-FK/Fpi:        1.1981(81)
-delta_su(2):  -0.00431(73)
+FK/Fpi:        1.2009(80) 
+delta_su(2):  -0.00439(73) 
 
 ---
-Uncertainty:
-   Unexplained: 0.00534
-   Explained:   0.00605
+Uncertainty: 
+   Unexplained: 0.00474 
+   Explained:   0.00639 
 
 ---
-Error Budget:
-   Chiral:      0.000754
-   Phys Point:  0.00156
-   Statistical: 0.00473
+Error Budget: 
+   Chiral:      0.000589 
+   Phys Point:  0.00141 
+   Statistical: 0.00415 
 
 ---
-Highest Weight:
-  0.241: xpt_FKFK_n2lo_a4_FV
-  0.225: xpt_FKFK_n2lo_alphaS_FV
-  0.092: xpt_FKFpi_n2lo_log_logSq_sunset_a4_FV_bijnens
-  0.075: xpt_FKFK_n2lo_log_logSq_sunset_alphaS_FV_bijnens
-  0.074: xpt_FpiFpi_n2lo_log_logSq_sunset_a4_FV_bijnens
+Highest Weight: 
+  0.206: xpt_FpiFpi_n2lo_log_logSq_sunset_a4_FV_bijnens
+  0.193: xpt_FKFpi_n2lo_log_logSq_sunset_a4_FV_bijnens
+  0.16: xpt_FKFK_n2lo_a4_FV
+  0.073: xpt_FKFpi_n2lo_log_logSq_sunset_alphaS_FV_bijnens
+  0.073: xpt_FpiFpi_n2lo_log_logSq_sunset_alphaS_FV_bijnens
 ```

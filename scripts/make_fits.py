@@ -24,12 +24,13 @@ params = {
     'bias_correct' : True,
     'fast_sunset' : False,
 
-    'abbrs' : [u'a06m310L', u'a09m220', u'a09m310', u'a09m350', u'a09m400', u'a12m130',
-           u'a12m220',  u'a12m220S', u'a12m220L', u'a12m310', u'a12m350',
-           u'a12m400',  u'a15m135XL', u'a15m220', u'a15m310', u'a15m350', 'a15m400'], # u'a15m130'
+    'abbrs' : [u'a06m310L',
+               u'a09m135', u'a09m220', u'a09m310', u'a09m350', u'a09m400',
+               u'a12m130', u'a12m220', u'a12m220S', u'a12m220L', u'a12m310', u'a12m350', u'a12m400',
+               u'a15m135XL', u'a15m220', u'a15m310', u'a15m350', 'a15m400'], # u'a15m130'
 
     'save_results' : True, # If fast_sunset = True, this should be set to False
-    'save_pickles' : False,
+    'save_pickles' : True,
     'replace_fits' : False,
     'make_plots' : False,
 }
@@ -64,7 +65,7 @@ for j, model in enumerate(model_list):
     if params['use_prior']:
         prior = data_loader.get_prior(
             collection_name=params['collection_name'],
-            **params['model_info']
+            model_info=params['model_info']
         )
 
     # Make fit_manager

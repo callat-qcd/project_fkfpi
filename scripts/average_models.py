@@ -66,7 +66,7 @@ for j, model in enumerate(model_average.get_model_names(by_weight=True)[:5]):
         'fast_sunset' : False,
 
         'abbrs' : [u'a06m310L',
-                   u'a09m220', u'a09m310', u'a09m350', u'a09m400', #u'a09m135',
+                   u'a09m135', u'a09m220', u'a09m310', u'a09m350', u'a09m400', 
                    u'a12m130', u'a12m220', u'a12m220S', u'a12m220L', u'a12m310', u'a12m350', u'a12m400',
                    u'a15m135XL', u'a15m220', u'a15m310', u'a15m350', 'a15m400'], # u'a15m130'
     }
@@ -82,7 +82,7 @@ for j, model in enumerate(model_average.get_model_names(by_weight=True)[:5]):
     fit_manager = fm.fit_manager(fit_data, phys_point_data, prior=prior, **params)
 
     fig = fit_manager.plot_fit('a')
-    data_loader.save_plots(fig, output_filename=collection_name+'/figs/fits/'+str(j+1)+'-'+fit_manager.model+'-vs_a')
+    data_loader.save_plots(fig, output_filename=collection_name+'/figs/fits/'+str(j+1)+'_vs_a--'+fit_manager.model)
 
     fig = fit_manager.plot_fit('mpi')
-    data_loader.save_plots(fig, output_filename=collection_name+'/figs/fits/'+str(j+1)+'-'+fit_manager.model+'-vs_mpi')
+    data_loader.save_plots(fig, output_filename=collection_name+'/figs/fits/'+str(j+1)+'_vs_mpi--'+fit_manager.model)
