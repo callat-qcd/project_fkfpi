@@ -292,7 +292,7 @@ class data_loader(object):
         if not os.path.isfile(filepath):
             return None
 
-        name = self.get_model_name_from_model_info(self, model_info)
+        name = self.get_model_name_from_model_info(model_info)
 
         df_prior = pd.read_csv(filepath, header=0)
         if name not in df_prior['name'].values:
@@ -302,8 +302,9 @@ class data_loader(object):
         prior = gv.BufferDict()
         lecs_keys =  ['A_x', 'L_4', 'L_5', # nlo terms
                       'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-n2lo terms
-                      'A_a', 'A_k', 'A_p', 'A_loga', 'A_aa', # n2lo terms
-                      'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp'] # n3lo terms
+                      'A_a', 'A_k', 'A_p', 'A_loga', # n2lo terms
+                      'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp', # n3lo terms
+                      'A_aaa'] # n4lo terms
         for key in lecs_keys:
             if key in df_prior.keys():
                 value = np.asscalar(df_prior[key].values[index])
@@ -331,7 +332,8 @@ class data_loader(object):
         lecs_cols =  ['A_x', 'L_4', 'L_5', # nlo terms
                       'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-n2lo terms
                       'A_a', 'A_k', 'A_p', 'A_loga', # n2lo terms
-                      'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp'] # n3lo terms
+                      'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp', # n3lo terms
+                      'A_aaa'] # n4lo terms
         eb_cols = ['disc', 'chiral', 'pp_input', 'stat']
         output_cols = []
         for key in cols:
@@ -466,9 +468,12 @@ class data_loader(object):
             os.makedirs(self.project_path +'/results/'+ collection_name)
         filepath = os.path.normpath(self.project_path +'/results/'+ collection_name +'/prior.csv')
 
-        # get fit info
-        cols = np.array(['name', 'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8',
-                         'L_4', 'L_5', 'A_k', 'A_p', 'A_a', 'A_loga', 'A_aa'])
+        cols = np.array (['name',
+                          'A_x', 'L_4', 'L_5', # nlo terms
+                          'L_1', 'L_2', 'L_3', 'L_6', 'L_7', 'L_8', 'L_9', #semi-n2lo terms
+                          'A_a', 'A_k', 'A_p', 'A_loga', # n2lo terms
+                          'A_aa', 'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp', # n3lo terms
+                          'A_aaa']) # n4lo terms
 
         # fit_info keys not in cols -> create key in fit_info
         for key in cols:

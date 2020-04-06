@@ -444,7 +444,11 @@ class fit_manager(object):
         for key in self.fit_keys:
             if key in ['L_4', 'L_5']:
                 output[key] = gv.gvar(0, 0.005)
-            elif key in ['A_a', 'A_k', 'A_p', 'A_loga', 'A_aa', 'A_aaa']:
+            elif key in ['A_p', 'A_k', # chiral_n2lo
+                         'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp', # chiral_n3lo
+                         'A_loga', 'A_a', # latt_n2lo
+                         'A_aa', # latt_n3lo
+                         'A_aaa']: # latt_n4lo
                 mean = 0
                 sdev = gv.sdev(temp_prior[key])
                 output[key] = gv.gvar(mean, sdev)
