@@ -49,22 +49,68 @@ class fitter(object):
             # Don't let z=0 (=> null GBF)
             # Don't bother with negative values (meaningless)
         # But for some reason, these restrictions (other than the last) cause empbayes_fit not to converge
-        z['chiral'] = np.abs(z['chiral'])
+        multiplicity = {}
+        for key in z:
+            multiplicity[key] = 0
+            z[key] = np.abs(z[key])
+
+
 
         # Helps with convergence (minimizer doesn't use extra digits -- bug in lsqfit?)
         sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3)) # Round to 3 sig figs
-        for key in z:
-            z[key] = np.max([z[key], 1e-5])
-            z[key] = np.min([z[key], 100])
-            z[key] = sig_fig(z[key])
+        capped = lambda x, x_min, x_max : np.max([np.min([x, x_max]), x_min])
+
+        # Min/max values for unc
+        z_min = {}
+        z_max = {}
+
+        z_min['chiral_n2lo'] = 1e-2
+        z_max['chiral_n2lo'] = 1e3
+
+        z_min['chiral_n3lo'] = 1e-2
+        z_max['chiral_n3lo'] = 1e5
+
+        z_min['latt_n2lo'] = 1e0
+        z_max['latt_n2lo'] = 1e5
+
+        z_min['latt_n3lo'] = 1e0
+        z_max['latt_n3lo'] = 1e6
+
+        z_min['latt_n4lo'] = 1e0
+        z_max['latt_n4lo'] = 1e7
+
 
         for key in prior.keys():
+            # chiral_n2lo
             if key in ['A_p', 'A_k']:
-                prior[key] = gv.gvar(0, 1) *z['chiral']
-            #if key in ['A_loga', 'A_a']:
-            #    prior[key] = gv.gvar(0, 1) *z['spacing_n2lo']
-            #if key in ['A_aa']:
-            #    prior[key] = gv.gvar(0, 1) *z['spacing_n3lo']
+                multiplicity['chiral_n2lo'] += 1
+                z['chiral_n2lo'] = sig_fig(capped(z['chiral_n2lo'], z_min['chiral_n2lo'], z_max['chiral_n2lo']))
+                prior[key] = gv.gvar(0, 1) *z['chiral_n2lo']
+
+            # chiral_n3lo
+            if key in ['A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp']:
+                multiplicity['chiral_n3lo'] += 1
+                z['chiral_n3lo'] = sig_fig(capped(z['chiral_n3lo'], z_min['chiral_n3lo'], z_max['chiral_n3lo']))
+                prior[key] = gv.gvar(0, 1) *z['chiral_n3lo']
+
+            # latt_n2lo
+            elif key in ['A_loga', 'A_a']:
+                multiplicity['latt_n2lo'] += 1
+                z['latt_n2lo'] = sig_fig(capped(z['latt_n2lo'], z_min['latt_n2lo'], z_max['latt_n2lo']))
+                prior[key] = gv.gvar(0, 1) *z['latt_n2lo']
+
+            # latt_n3lo
+            elif key in ['A_aa']:
+                multiplicity['latt_n3lo'] += 1
+                z['latt_n3lo'] = sig_fig(capped(z['latt_n3lo'], z_min['latt_n3lo'], z_max['latt_n3lo']))
+                prior[key] = gv.gvar(0, 1) *z['latt_n3lo']
+
+            # latt_n4lo
+            elif key in ['A_aaa']:
+                multiplicity['latt_n4lo'] += 1
+                z['latt_n4lo'] = sig_fig(capped(z['latt_n4lo'], z_min['latt_n4lo'], z_max['latt_n4lo']))
+                prior[key] = gv.gvar(0, 1) *z['latt_n4lo']
+
 
         self.counter['iters'] += 1
         fitfcn = self._make_models()[-1].fitfcn
@@ -72,34 +118,35 @@ class fitter(object):
 
         # Jeffrey's prior
         def plausibility(s):
-            s_max = 1000
-            s_min = 1e-5
-            k = 1 / np.log(s_max/s_min)
+            plaus = 0
+            for key in s:
+                k = 1 / np.log(z_max[key]/z_min[key])
+                plaus -= np.log(k/s[key]) *multiplicity[key]
 
-            plaus = -np.sum([np.log(k/s[key]) for key in s.keys()])
             return plaus
 
-            #if all([s[key] > s_min and s[key] < s_max for key in s]):
-            #    plaus = np.sum([np.log(k/s[key]) for key in s.keys()])
-            #else:
-            #    plaus = 0
-            #return plaus
-
-        plaus = plausibility(z)
-        print(-plaus)
+        plaus = 0# plausibility(z)
+        #print(plaus)
 
         return (dict(data=y_data, fcn=fitfcn, prior=prior), plaus)
 
     def _make_empbayes_fit(self):
-        #models = self._make_models(fast_sunset=True)
-        #y_data = self._make_y_data()
-        #prior = self._make_prior()
 
         z0 = gv.BufferDict()
-        z0['chiral'] = 1.0
-        #z0['spacing_n2lo'] = 1.0
-        #if self.model_info['include_latt_n3lo']:
-        #    z0['spacing_n3lo'] = 10.0
+
+        # chiral terms
+        if self.model_info['order'] in ['n2lo', 'n3lo']:
+            z0['chiral_n2lo'] = 1.0
+        if self.model_info['order'] in ['n3lo']:
+            z0['chiral_n3lo'] = 1.0
+
+        # latt terms
+        if self.model_info['latt_ct'] in ['n2lo', 'n3lo', 'n4lo']:
+            z0['latt_n2lo'] = 100.0
+        if self.model_info['latt_ct'] in ['n3lo', 'n4lo']:
+            z0['latt_n3lo'] = 1000.0
+        if self.model_info['latt_ct'] in ['n4lo']:
+            z0['latt_n4lo'] = 1000.0
 
 
         # Might need to change minargs default values for empbayes_fit to converge:
