@@ -286,31 +286,13 @@ class data_loader(object):
         else:
             return phys_point_data[parameter]
 
-    def get_prior(self, collection_name, fit_type, order, F2,
-                  include_log, include_log2, include_sunset,
-                  include_alpha_s, include_latt_n3lo, include_FV, use_bijnens_central_value, **kwargs):
+    def get_prior(self, collection_name, model_info, **kwargs):
         filepath = os.path.normpath(self.project_path + '/results/'+ collection_name +'/prior.csv')
 
         if not os.path.isfile(filepath):
             return None
 
-        name = fit_type +'_'+ F2+'_'+order
-        if include_log:
-            name = name + '_log'
-        if include_log2:
-            name = name + '_logSq'
-        if include_sunset:
-            name = name + '_sunset'
-        if include_alpha_s:
-            name = name + '_alphaS'
-        if include_latt_n3lo:
-            name = name + '_a4'
-        if include_latt_n4lo:
-            name = name + '_a6'
-        if include_FV:
-            name = name + '_FV'
-        if use_bijnens_central_value:
-            name = name + '_bijnens'
+        name = self.get_model_name_from_model_info(self, model_info)
 
         df_prior = pd.read_csv(filepath, header=0)
         if name not in df_prior['name'].values:
@@ -459,7 +441,7 @@ class data_loader(object):
         if output_filename is None:
             output_file = os.path.normpath(self.project_path+'/tmp/temp.pdf')
         else:
-            output_file = os.path.normpath(self.project_path+'/figs/generated/'+output_filename+'.pdf')
+            output_file = os.path.normpath(self.project_path+'/results/'+output_filename+'.pdf')
 
         if not os.path.exists(os.path.dirname(output_file)):
             os.makedirs(os.path.dirname(output_file))
