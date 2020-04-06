@@ -1,4 +1,5 @@
 ## Model Description
+These fits are missing `a09m135`.
 
 Using default priors w/ Bijnen's central values:
 ```python
@@ -54,22 +55,22 @@ FK/Fpi_pm: 1.1929(66)
 [FLAG:     1.1932(19)]
 
 ---
-FK/Fpi:        1.1954(67) 
-delta_su(2):  -0.00423(72) 
+FK/Fpi:        1.1954(67)
+delta_su(2):  -0.00423(72)
 
 ---
-Uncertainty: 
-   Unexplained: 0.0047 
-   Explained:   0.00476 
+Uncertainty:
+   Unexplained: 0.0047
+   Explained:   0.00476
 
 ---
-Error Budget: 
-   Chiral:      0.000807 
-   Phys Point:  0.00134 
-   Statistical: 0.00405 
+Error Budget:
+   Chiral:      0.000807
+   Phys Point:  0.00134
+   Statistical: 0.00405
 
 ---
-Highest Weight: 
+Highest Weight:
   0.402: xpt_FKFK_n2lo_a4_FV
   0.154: xpt_FKFpi_n2lo_log_logSq_sunset_a4_FV_bijnens
   0.123: xpt_FpiFpi_n2lo_log_logSq_sunset_a4_FV_bijnens
