@@ -123,3 +123,32 @@ choices = {
     'semi-nnlo_corrections' : ['nnlo-ct'],
 }
 ```
+
+## Model Average
+```yaml
+FK/Fpi_pm: 1.2158(70)
+[FLAG:     1.1932(19)]
+
+---
+FK/Fpi:        1.2188(71) 
+delta_su(2):  -0.00489(74) 
+
+---
+Uncertainty: 
+   Unexplained:  0.00710 
+   Explained:    0.00019 
+
+---
+Error Budget: 
+   Chiral:       0.00170 
+   Phys Point:   0.00228 
+   Statistical:  0.00636 
+
+---
+Highest Weight: 
+   0.999:  poly_FKFK_n3lo_a4
+   0.001:  poly_FKFK_n3lo_a4_a6
+   0.000:  poly_FKFpi_n3lo_a4_a6
+   0.000:  poly_FpiFpi_n3lo_a4_a6
+   0.000:  poly_FKFpi_n3lo_a4
+```
