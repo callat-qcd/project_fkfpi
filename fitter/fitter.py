@@ -64,6 +64,9 @@ class fitter(object):
         z_min = {}
         z_max = {}
 
+        z_min['chiral_nlo'] = 1e-2
+        z_max['chiral_nlo'] = 1e4
+
         z_min['chiral_n2lo'] = 1e-2
         z_max['chiral_n2lo'] = 1e3
 
@@ -81,6 +84,12 @@ class fitter(object):
 
 
         for key in prior.keys():
+            # polynomial fit
+            if key in ['A_x']:
+                multiplicity['chiral_nlo'] += 1
+                z['chiral_nlo'] = sig_fig(capped(z['chiral_nlo'], z_min['chiral_nlo'], z_max['chiral_nlo']))
+                prior[key] = gv.gvar(0, 1) *z['chiral_nlo']
+
             # chiral_n2lo
             if key in ['A_p', 'A_k']:
                 multiplicity['chiral_n2lo'] += 1
@@ -135,6 +144,8 @@ class fitter(object):
         z0 = gv.BufferDict()
 
         # chiral terms
+        if self.model_info['fit_type'] == 'poly':
+            z0['chiral_nlo'] = 1.0
         if self.model_info['order'] in ['n2lo', 'n3lo']:
             z0['chiral_n2lo'] = 1.0
         if self.model_info['order'] in ['n3lo']:
@@ -182,7 +193,7 @@ class fitter(object):
             fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
         else:
             fitter = lsqfit.MultiFitter(models=models)
-            fit = fitter.lsqfit(data=y_data, prior=prior, fast=False)
+            fit = fitter.lsqfit(data=y_data, prior=prior, fast=False, mopt=True)
 
         self.fit = fit
         print("Done!")
