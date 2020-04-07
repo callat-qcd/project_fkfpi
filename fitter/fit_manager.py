@@ -208,10 +208,12 @@ class fit_manager(object):
         output += '\n'
         output += self.fit.format(pstyle=None)
 
-        sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3)) # Round to 3 sig figs
         output += '\nError Budget (relative error):\n'
+        max_len = np.max([len(key) for key in self.error_budget])
         for key in self.error_budget:
-            output += "  %s: %s\n" %(key, sig_fig(self.error_budget[key]/self.fk_fpi.mean))
+            output += '  '
+            output += key.ljust(max_len+2)
+            output += '{: .1e}\n'.format(self.error_budget[key]/self.fk_fpi.mean)
         return output
 
     @property
@@ -444,7 +446,8 @@ class fit_manager(object):
         for key in self.fit_keys:
             if key in ['L_4', 'L_5']:
                 output[key] = gv.gvar(0, 0.005)
-            elif key in ['A_p', 'A_k', # chiral_n2lo
+            elif key in ['A_x', # poly/chiral_nlo
+                         'A_p', 'A_k', # chiral_n2lo
                          'A_ak', 'A_ap', 'A_kk', 'A_kp', 'A_pp', # chiral_n3lo
                          'A_loga', 'A_a', # latt_n2lo
                          'A_aa', # latt_n3lo

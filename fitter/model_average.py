@@ -31,23 +31,23 @@ class model_average(object):
         sig_fig = lambda x : np.around(x, int(np.floor(-np.log10(x))+3)) if x>0 else x
         output += '\n---\n'
         output += 'Uncertainty: \n'
-        output += '   Unexplained: %s \n' %(sig_fig(fk_fpi[1]))
-        output += '   Explained:   %s \n' %(sig_fig(fk_fpi[2]))
+        output += '   Unexplained: % .5f \n' %(fk_fpi[1])
+        output += '   Explained:   % .5f \n' %(fk_fpi[2])
 
         error_budget = self.error_budget()
         if error_budget['chiral'] is not None:
             output += '\n---\n'
             output += 'Error Budget: \n'
-            output += '   Chiral:      %s \n' %(sig_fig(error_budget['chiral']))
-            output += '   Phys Point:  %s \n' %(sig_fig(error_budget['pp_input']))
-            output += '   Statistical: %s \n' %(sig_fig(error_budget['stat']))
+            output += '   Chiral:      % .5f \n' %(error_budget['chiral'])
+            output += '   Phys Point:  % .5f \n' %(error_budget['pp_input'])
+            output += '   Statistical: % .5f \n' %(error_budget['stat'])
 
         model_list = self.get_model_names(by_weight=True)
         weight = lambda model_k : np.exp(self.fit_results[model_k]['logGBF']) / np.sum([np.exp(self.fit_results[model_l]['logGBF']) for model_l in model_list])
         output += '\n---\n'
         output += 'Highest Weight: \n'
         for k in range(np.min([5, len(model_list)])):
-            output += '  %s: %s\n' %(np.around(weight(model_list[k]), 3), model_list[k])
+            output += '  % .3f:  %s\n' %(weight(model_list[k]), model_list[k])
 
         return output
 
