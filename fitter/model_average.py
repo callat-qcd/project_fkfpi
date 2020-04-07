@@ -221,12 +221,17 @@ class model_average(object):
         if p is None:
             p = self._get_fit_posterior(model)
 
+        '''
         if model_info['fit_type'] in ['xpt', 'ma']:
             model_info['fit_type'] = 'xpt'
             fitfcn = fit.fk_fpi_model(datatag='xpt', **model_info).fitfcn
         elif model_info['fit_type'] in ['xpt-ratio', 'ma-ratio']:
             model_info['fit_type'] = 'xpt-ratio'
             fitfcn = fit.fk_fpi_model(datatag='xpt-ratio', **model_info).fitfcn
+        elif model_info=='poly':
+            fitfcn = fit.fk_fpi_model(datatag='poly', **model_info).fitfcn
+        '''
+        fitfcn = fit.fk_fpi_model(datatag='temp', **model_info).fitfcn
 
         return fitfcn(p=p, fit_data=data)
 
@@ -253,7 +258,7 @@ class model_average(object):
             xlabel = self._param_keys_dict(param)
 
 
-        colors = ['salmon', 'darkorange', 'mediumaquamarine', 'orchid', 'silver']
+        colors = ['salmon', 'darkorange', 'mediumaquamarine', 'orchid', 'navy']
         markers = ['^', 'o', 'v', '*']
 
         results_array = [self.fit_results]
@@ -558,7 +563,7 @@ class model_average(object):
             y = self.fitfcn(name, data) *np.sqrt(1 + gv.gvar(self.fit_results[name]['delta_su2']))
 
             weight = np.exp(self.fit_results[name]['logGBF']) / total_GBF
-            plt.fill_between(pm(x, 0), pm(y, -1), pm(y, 1), color=color, alpha=2*weight, rasterized=False)
+            plt.fill_between(pm(x, 0), pm(y, -1), pm(y, 1), color=color, alpha=np.min([2*weight, 1]), rasterized=False)
 
 
         y = np.repeat(self._get_phys_point_data(name)['FK/Fpi_pm'],len(x))
