@@ -410,15 +410,18 @@ class data_loader(object):
                                       '## Model Average\n```yaml\n'+model_avg_str+'```',
                                       file_content)
                 with open(filename, 'w') as file:
+                    print(file_content)
                     file.write(file_content)
 
-        else:
-            with open(filename, 'a+') as file:
-                file_content = '\n## Model Average'
-                file_content += '\n```yaml\n'
-                file_content += model_avg_str
-                file_content += '```'
-                file.write(file_content)
+                return None
+
+        # else
+        with open(filename, 'a+') as file:
+            file_content = '\n## Model Average'
+            file_content += '\n```yaml\n'
+            file_content += model_avg_str
+            file_content += '```'
+            file.write(file_content)
 
         return None
 
