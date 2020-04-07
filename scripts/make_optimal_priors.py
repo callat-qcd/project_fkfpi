@@ -41,8 +41,8 @@ t0_all = time.time()
 data_loader = dl.data_loader()
 model_list = data_loader.get_model_names(params['collection_name'])
 
-for model in model_list:
-    print('\n\n-----', model)
+for j, model in enumerate(model_list):
+    print('\n\n----- (%s / %s) %s'%(j+1, len(model_list), model))
     t0 = time.time()
 
     # Load data
