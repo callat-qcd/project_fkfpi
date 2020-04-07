@@ -20,7 +20,7 @@ for j in range(10): # Sometimes this needs to be loaded twice...
     matplotlib.rcParams['figure.figsize'] = [10, 10]
 
 params = {
-    'use_prior' : False,
+    'use_prior' : True,
     'bias_correct' : True,
     'fast_sunset' : False,
 
@@ -51,7 +51,7 @@ if data_loader.get_fit_results(params['collection_name']) is not None:
 
 # Get all enumerations of these choices
 for j, model in enumerate(model_list):
-    print('\n---\nMaking model', j, 'of', len(model_list))
+    print('\n---\nMaking model', j+1, 'of', len(model_list))
 
     t0 = time.time()
 
