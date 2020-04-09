@@ -148,8 +148,10 @@ class fitter(object):
             z0['chiral_nlo'] = 1.0
         if self.model_info['order'] in ['n2lo', 'n3lo']:
             z0['chiral_n2lo'] = 1.0
+            z0['latt_n2lo'] = 100.0
         if self.model_info['order'] in ['n3lo']:
             z0['chiral_n3lo'] = 1.0
+            z0['latt_n3lo'] = 1000.0
 
         # latt terms
         if self.model_info['latt_ct'] in ['n2lo', 'n3lo', 'n4lo']:
