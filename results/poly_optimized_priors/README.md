@@ -151,4 +151,167 @@ Highest Weight:
    0.000:  poly_FKFpi_n3lo_a4_a6
    0.000:  poly_FpiFpi_n3lo_a4_a6
    0.000:  poly_FKFpi_n3lo_a4
+
+---
+
+Model: poly_FKFK_n3lo_a4
+
+Fitted/[FLAG] values at physical point:
+	F_K / F_pi = 1.2188(71) [1.1961(20)]	(delta_su2 = -0.00489(74))
+
+Parameters:
+            A_x      11.5 (4.8)      [       0 (402) ]  
+            A_k         61 (71)      [       0 (120) ]  
+            A_p        224 (27)      [       0 (120) ]  *
+            A_a        -94 (28)      [        0 (60) ]  *
+           A_aa        140 (38)      [       0 (736) ]  
+           A_ak       604 (229)      [       0 (389) ]  *
+           A_ap        -87 (80)      [       0 (389) ]  
+           A_kk      -588 (266)      [       0 (389) ]  *
+           A_kp     -1374 (217)      [       0 (389) ]  ***
+           A_pp       1015 (55)      [       0 (389) ]  **
+
+Least Square Fit:
+  chi2/dof [dof] = 3.4 [18]    Q = 1.4e-06    logGBF = 25.762
+
+Settings:
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 58/1.6)
+
+Error Budget (relative error):
+  disc       1.1e-03
+  chiral     1.4e-03
+  pp_input   1.9e-03
+  stat       5.2e-03
+
+
+---
+
+Model: poly_FKFK_n3lo_a4_a6
+
+Fitted/[FLAG] values at physical point:
+	F_K / F_pi = 1.2107(62) [1.1960(20)]	(delta_su2 = -0.00466(73))
+
+Parameters:
+            A_x       7.8 (5.3)      [       0 (386) ]  
+            A_k         88 (79)      [       0 (612) ]  
+            A_p        220 (27)      [       0 (612) ]  
+            A_a      -5.9 (7.4)      [     0.0 (7.7) ]  
+           A_aa        209 (32)      [      0 (1020) ]  
+           A_ak       -109 (64)      [       0 (344) ]  
+           A_ap        132 (42)      [       0 (344) ]  
+           A_kk      -565 (292)      [       0 (344) ]  *
+           A_kp     -1429 (214)      [       0 (344) ]  ****
+           A_pp       1052 (51)      [       0 (344) ]  ***
+          A_aaa       130 (868)      [       0 (870) ]  
+
+Least Square Fit:
+  chi2/dof [dof] = 4 [18]    Q = 1.5e-08    logGBF = 18.264
+
+Settings:
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 57/1.6)
+
+Error Budget (relative error):
+  disc       7.0e-04
+  chiral     1.0e-03
+  pp_input   1.6e-03
+  stat       4.7e-03
+
+
+---
+
+Model: poly_FKFpi_n3lo_a4_a6
+
+Fitted/[FLAG] values at physical point:
+	F_K / F_pi = 1.143(15) [1.1949(20)]	(delta_su2 = -0.00277(78))
+
+Parameters:
+            A_x      -3.8 (5.4)      [       0 (153) ]  
+            A_k        136 (69)      [       0 (397) ]  
+            A_p          6 (23)      [       0 (397) ]  
+            A_a        171 (27)      [        0 (57) ]  ***
+           A_aa        -70 (37)      [      0 (1060) ]  
+           A_ak     -1076 (170)      [       0 (237) ]  ****
+           A_ap        -58 (32)      [       0 (237) ]  
+           A_kk      -395 (222)      [       0 (237) ]  *
+           A_kp       122 (156)      [       0 (237) ]  
+           A_pp        509 (29)      [       0 (237) ]  **
+          A_aaa        48 (875)      [       0 (875) ]  
+
+Least Square Fit:
+  chi2/dof [dof] = 7.7 [18]    Q = 9.5e-21    logGBF = -18.796
+
+Settings:
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 92/2.6)
+
+Error Budget (relative error):
+  disc       2.0e-03
+  chiral     3.1e-03
+  pp_input   1.1e-02
+  stat       7.3e-03
+
+
+---
+
+Model: poly_FpiFpi_n3lo_a4_a6
+
+Fitted/[FLAG] values at physical point:
+	F_K / F_pi = 0.82(11) [1.1894(27)]	(delta_su2 = 0.0064(32))
+
+Parameters:
+            A_x      -9.2 (5.0)      [        0 (55) ]  
+            A_k       1.7 (9.7)      [     0.0 (9.7) ]  
+            A_p       0.9 (9.5)      [     0.0 (9.7) ]  
+            A_a        155 (52)      [       0 (241) ]  
+           A_aa     -1836 (425)      [       0 (745) ]  **
+           A_ak       -48 (244)      [       0 (251) ]  
+           A_ap       -419 (94)      [       0 (251) ]  *
+           A_kk       383 (130)      [       0 (251) ]  *
+           A_kp        373 (90)      [       0 (251) ]  *
+           A_pp        189 (94)      [       0 (251) ]  
+          A_aaa      -39 (1010)      [      0 (1010) ]  
+
+Least Square Fit:
+  chi2/dof [dof] = 7.2 [18]    Q = 4.8e-19    logGBF = -30.48
+
+Settings:
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 37/1.2)
+
+Error Budget (relative error):
+  disc       5.7e-02
+  chiral     6.6e-02
+  pp_input   8.3e-02
+  stat       5.9e-02
+
+
+---
+
+Model: poly_FKFpi_n3lo_a4
+
+Fitted/[FLAG] values at physical point:
+	F_K / F_pi = 0.987(40) [1.1922(20)]	(delta_su2 = 0.0016(13))
+
+Parameters:
+            A_x      -0.09 (46)      [     0.00 (46) ]  
+            A_k         -8 (22)      [        0 (37) ]  
+            A_p         -9 (21)      [        0 (37) ]  
+            A_a         81 (27)      [       0 (612) ]  
+           A_aa     -1071 (163)      [       0 (993) ]  *
+           A_ak       -56 (179)      [       0 (183) ]  
+           A_ap       -288 (58)      [       0 (183) ]  *
+           A_kk       340 (134)      [       0 (183) ]  *
+           A_kp       246 (143)      [       0 (183) ]  *
+           A_pp        333 (49)      [       0 (183) ]  *
+
+Least Square Fit:
+  chi2/dof [dof] = 9.2 [18]    Q = 5.1e-26    logGBF = -37.226
+
+Settings:
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 31/1.0)
+
+Error Budget (relative error):
+  disc       4.8e-03
+  chiral     2.4e-02
+  pp_input   2.5e-02
+  stat       2.1e-02
+
 ```
