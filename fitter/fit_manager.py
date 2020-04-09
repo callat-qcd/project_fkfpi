@@ -848,7 +848,7 @@ class fit_manager(object):
                     label = '$\epsilon_a^2(\epsilon_K^2 - \epsilon_\pi^2)$'
                 elif param == 'A_aa':
                     fcn = lambda eps2_a, eps2_pi, eps2_k : (eps2_k - eps2_pi) *eps2_a *eps2_a
-                    label = '$\epsilon_a^2(\epsilon_K^2 - \epsilon_\pi^2)$'
+                    label = '$\epsilon_a^4(\epsilon_K^2 - \epsilon_\pi^2)$'
 
 
                 # params is a variable
