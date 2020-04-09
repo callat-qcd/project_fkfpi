@@ -154,3 +154,190 @@ choices.append({
 })
 
 ```
+
+## Model Average
+```yaml
+FK/Fpi_pm: 1.1956(56)
+[FLAG:     1.1932(19)]
+
+---
+FK/Fpi:        1.1982(57) 
+delta_su(2):  -0.00431(71) 
+
+---
+Uncertainty: 
+   Unexplained:  0.00390 
+   Explained:    0.00415 
+
+---
+Error Budget: 
+   Chiral:       0.00066 
+   Phys Point:   0.00140 
+   Statistical:  0.00308 
+
+---
+Highest Weight: 
+   0.091:  xpt_FKFK_n2lo_a4_FV
+   0.090:  xpt_FpiFpi_n2lo_log_logSq_sunset_alphaS_a4_FV_bijnens
+   0.088:  xpt_FKFpi_n3lo_log_logSq_sunset_a4_a6_FV_bijnens
+   0.083:  xpt_FKFK_n2lo_alphaS_a4_FV
+   0.081:  xpt_FKFpi_n2lo_log_logSq_sunset_a4_FV_bijnens
+
+---
+
+Model: xpt_FKFK_n2lo_a4_FV
+
+Fitted/[FLAG] values at physical point:
+	F_K / F_pi = 1.1937(32) [1.1957(19)]	(delta_su2 = -0.00419(70))
+
+Parameters:
+            L_4   -0.00218 (10)      [   0.0000 (50) ]  
+            L_5   0.000466 (82)      [   0.0000 (50) ]  
+            A_k    8(10000)e-06      [    0.000 (10) ]  
+            A_p   -6(10000)e-06      [    0.000 (10) ]  
+            A_a     -11.0 (1.4)      [        0 (11) ]  *
+           A_aa         82 (17)      [      0 (1030) ]  
+
+Least Square Fit:
+  chi2/dof [dof] = 0.9 [18]    Q = 0.58    logGBF = 71.789
+
+Settings:
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 10/0.7)
+
+Error Budget (relative error):
+  disc       3.0e-04
+  chiral     4.1e-05
+  pp_input   1.1e-03
+  stat       2.5e-03
+
+
+---
+
+Model: xpt_FpiFpi_n2lo_log_logSq_sunset_alphaS_a4_FV_bijnens
+
+Fitted/[FLAG] values at physical point:
+	F_K / F_pi = 1.2013(41) [1.1958(20)]	(delta_su2 = -0.00440(71))
+
+Parameters:
+         A_loga      -2.3 (5.8)      [     0.0 (7.2) ]  
+            L_4   -0.00013 (89)      [   0.0000 (50) ]  
+            L_5   -0.00060 (49)      [   0.0000 (50) ]  
+            L_1    0.00028 (14)      [  0.00029 (14) ]  
+            L_2    0.00031 (16)      [  0.00033 (16) ]  
+            L_3    -0.0041 (14)      [  -0.0031 (15) ]  
+            L_7   -0.00037 (17)      [ -0.00034 (17) ]  
+            A_k      -1.0 (2.2)      [     0.0 (2.4) ]  
+            A_p       1.9 (1.3)      [     0.0 (2.4) ]  
+            A_a      -7.3 (3.3)      [     0.0 (7.2) ]  *
+           A_aa         70 (17)      [       0 (795) ]  
+
+Least Square Fit:
+  chi2/dof [dof] = 0.73 [18]    Q = 0.78    logGBF = 71.776
+
+Settings:
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 44/23.4)
+
+Error Budget (relative error):
+  disc       2.1e-03
+  chiral     2.8e-04
+  pp_input   1.2e-03
+  stat       2.4e-03
+
+
+---
+
+Model: xpt_FKFpi_n3lo_log_logSq_sunset_a4_a6_FV_bijnens
+
+Fitted/[FLAG] values at physical point:
+	F_K / F_pi = 1.1980(31) [1.1958(19)]	(delta_su2 = -0.00431(70))
+
+Parameters:
+            L_4    -0.00053 (58)       [   0.0000 (50) ]  
+            L_5    -0.00025 (50)       [   0.0000 (50) ]  
+            L_2     0.00021 (11)       [  0.00022 (11) ]  
+            L_3     -0.0038 (14)       [  -0.0031 (15) ]  
+            L_7    -0.00037 (17)       [ -0.00034 (17) ]  
+            A_k       -0.7 (1.7)       [     0.0 (1.9) ]  
+            A_p        1.5 (1.0)       [     0.0 (1.9) ]  
+            A_a       -9.5 (1.2)       [     0.0 (9.4) ]  *
+           A_aa          71 (18)       [       0 (946) ]  
+           A_ak   -0.0003 (1700)       [     0.00 (17) ]  
+           A_ap   -0.0006 (1699)       [     0.00 (17) ]  
+           A_kk   -0.0006 (1700)       [     0.00 (17) ]  
+           A_kp      0.001 (170)       [     0.00 (17) ]  
+           A_pp     -0.002 (170)       [     0.00 (17) ]  
+          A_aaa         7 (1041)       [      0 (1050) ]  
+
+Least Square Fit:
+  chi2/dof [dof] = 0.74 [18]    Q = 0.77    logGBF = 71.764
+
+Settings:
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 31/17.9)
+
+Error Budget (relative error):
+  disc       5.0e-04
+  chiral     4.4e-04
+  pp_input   9.6e-04
+  stat       2.3e-03
+
+
+---
+
+Model: xpt_FKFK_n2lo_alphaS_a4_FV
+
+Fitted/[FLAG] values at physical point:
+	F_K / F_pi = 1.1922(39) [1.1957(19)]	(delta_su2 = -0.00415(70))
+
+Parameters:
+         A_loga      -4.2 (7.4)      [     0.0 (9.1) ]  
+            L_4   -0.00217 (10)      [   0.0000 (50) ]  
+            L_5   0.000444 (88)      [   0.0000 (50) ]  
+            A_k    7(10000)e-06      [    0.000 (10) ]  
+            A_p   -5(10000)e-06      [    0.000 (10) ]  
+            A_a      -8.7 (4.2)      [     0.0 (9.1) ]  
+           A_aa         87 (21)      [      0 (1030) ]  
+
+Least Square Fit:
+  chi2/dof [dof] = 0.91 [18]    Q = 0.57    logGBF = 71.701
+
+Settings:
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 10/1.4)
+
+Error Budget (relative error):
+  disc       1.9e-03
+  chiral     5.0e-05
+  pp_input   1.1e-03
+  stat       2.4e-03
+
+
+---
+
+Model: xpt_FKFpi_n2lo_log_logSq_sunset_a4_FV_bijnens
+
+Fitted/[FLAG] values at physical point:
+	F_K / F_pi = 1.1980(31) [1.1958(19)]	(delta_su2 = -0.00431(70))
+
+Parameters:
+            L_4   -0.00053 (56)      [   0.0000 (50) ]  
+            L_5   -0.00027 (50)      [   0.0000 (50) ]  
+            L_2    0.00021 (11)      [  0.00022 (11) ]  
+            L_3    -0.0039 (14)      [  -0.0031 (15) ]  
+            L_7   -0.00037 (17)      [ -0.00034 (17) ]  
+            A_k      -0.7 (1.6)      [     0.0 (1.8) ]  
+            A_p       1.5 (1.0)      [     0.0 (1.8) ]  
+            A_a      -9.5 (1.2)      [     0.0 (9.8) ]  
+           A_aa         71 (15)      [      0 (1040) ]  
+
+Least Square Fit:
+  chi2/dof [dof] = 0.74 [18]    Q = 0.77    logGBF = 71.68
+
+Settings:
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 32/18.0)
+
+Error Budget (relative error):
+  disc       2.7e-04
+  chiral     4.4e-04
+  pp_input   9.7e-04
+  stat       2.3e-03
+
+```
