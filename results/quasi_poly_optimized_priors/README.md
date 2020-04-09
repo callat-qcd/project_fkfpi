@@ -1,5 +1,5 @@
 ## Model Description
-These models only include polynomial fits (ie, no log terms).
+These models only include polynomial fits (ie, no log terms). This collection contains a rather glaring error: in the su(2) isospin limit, these fits tend to $`F_K/F_\pi \rightarrow 0`$, not towards 1 as they should.
 
 These width of the priors were chosen by using empirical Bayes; the central values of the priors are set to 0.
 ```python
@@ -130,22 +130,22 @@ FK/Fpi_pm: 1.2158(70)
 [FLAG:     1.1932(19)]
 
 ---
-FK/Fpi:        1.2188(71) 
-delta_su(2):  -0.00489(74) 
+FK/Fpi:        1.2188(71)
+delta_su(2):  -0.00489(74)
 
 ---
-Uncertainty: 
-   Unexplained:  0.00710 
-   Explained:    0.00019 
+Uncertainty:
+   Unexplained:  0.00710
+   Explained:    0.00019
 
 ---
-Error Budget: 
-   Chiral:       0.00170 
-   Phys Point:   0.00228 
-   Statistical:  0.00636 
+Error Budget:
+   Chiral:       0.00170
+   Phys Point:   0.00228
+   Statistical:  0.00636
 
 ---
-Highest Weight: 
+Highest Weight:
    0.999:  poly_FKFK_n3lo_a4
    0.001:  poly_FKFK_n3lo_a4_a6
    0.000:  poly_FKFpi_n3lo_a4_a6
