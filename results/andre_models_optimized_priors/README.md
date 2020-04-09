@@ -157,31 +157,69 @@ choices.append({
 
 ## Model Average
 ```yaml
-FK/Fpi_pm: 1.1956(56)
+FK/Fpi_pm: 1.1957(55)
 [FLAG:     1.1932(19)]
 
 ---
-FK/Fpi:        1.1982(57) 
+FK/Fpi:        1.1982(56) 
 delta_su(2):  -0.00431(71) 
 
 ---
 Uncertainty: 
-   Unexplained:  0.00390 
-   Explained:    0.00415 
+   Unexplained:  0.00393 
+   Explained:    0.00396 
 
 ---
 Error Budget: 
-   Chiral:       0.00066 
-   Phys Point:   0.00140 
-   Statistical:  0.00308 
+   Chiral:       0.00076 
+   Phys Point:   0.00144 
+   Statistical:  0.00310 
 
 ---
 Highest Weight: 
-   0.091:  xpt_FKFK_n2lo_a4_FV
-   0.090:  xpt_FpiFpi_n2lo_log_logSq_sunset_alphaS_a4_FV_bijnens
-   0.088:  xpt_FKFpi_n3lo_log_logSq_sunset_a4_a6_FV_bijnens
-   0.083:  xpt_FKFK_n2lo_alphaS_a4_FV
-   0.081:  xpt_FKFpi_n2lo_log_logSq_sunset_a4_FV_bijnens
+   0.090:  xpt_FpiFpi_n3lo_log_logSq_sunset_a4_a6_FV_bijnens
+   0.082:  xpt_FKFK_n2lo_a4_FV
+   0.081:  xpt_FpiFpi_n2lo_log_logSq_sunset_alphaS_a4_FV_bijnens
+   0.080:  xpt_FKFpi_n3lo_log_logSq_sunset_a4_a6_FV_bijnens
+   0.075:  xpt_FKFK_n2lo_alphaS_a4_FV
+
+---
+
+Model: xpt_FpiFpi_n3lo_log_logSq_sunset_a4_a6_FV_bijnens
+
+Fitted/[FLAG] values at physical point:
+	F_K / F_pi = 1.1988(42) [1.1958(20)]	(delta_su2 = -0.00433(71))
+
+Parameters:
+            L_4    -0.0006 (11)      [   0.0000 (50) ]  
+            L_5   -0.00087 (57)      [   0.0000 (50) ]  
+            L_1    0.00028 (14)      [  0.00029 (14) ]  
+            L_2    0.00031 (16)      [  0.00033 (16) ]  
+            L_3    -0.0039 (14)      [  -0.0031 (15) ]  
+            L_7   -0.00035 (17)      [ -0.00034 (17) ]  
+            A_k      -1.0 (2.7)      [     0.0 (2.9) ]  
+            A_p       2.1 (1.9)      [     0.0 (2.9) ]  
+            A_a      -7.2 (2.0)      [     0.0 (7.1) ]  *
+           A_aa         54 (19)      [      0 (1010) ]  
+           A_ak      -1.1 (8.2)      [     0.0 (8.4) ]  
+           A_ap      -6.0 (4.7)      [     0.0 (8.4) ]  
+           A_kk      -0.8 (7.6)      [     0.0 (8.4) ]  
+           A_kp       1.4 (7.7)      [     0.0 (8.4) ]  
+           A_pp      -6.1 (6.3)      [     0.0 (8.4) ]  
+          A_aaa       -3 (1028)      [      0 (1040) ]  
+
+Least Square Fit:
+  chi2/dof [dof] = 0.62 [18]    Q = 0.89    logGBF = 71.877
+
+Settings:
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 62/28.3)
+
+Error Budget (relative error):
+  disc       6.8e-04
+  chiral     1.5e-03
+  pp_input   1.6e-03
+  stat       2.7e-03
+
 
 ---
 
@@ -202,7 +240,7 @@ Least Square Fit:
   chi2/dof [dof] = 0.9 [18]    Q = 0.58    logGBF = 71.789
 
 Settings:
-  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 10/0.7)
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 10/0.6)
 
 Error Budget (relative error):
   disc       3.0e-04
@@ -235,7 +273,7 @@ Least Square Fit:
   chi2/dof [dof] = 0.73 [18]    Q = 0.78    logGBF = 71.776
 
 Settings:
-  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 44/23.4)
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 44/20.9)
 
 Error Budget (relative error):
   disc       2.1e-03
@@ -272,7 +310,7 @@ Least Square Fit:
   chi2/dof [dof] = 0.74 [18]    Q = 0.77    logGBF = 71.764
 
 Settings:
-  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 31/17.9)
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 31/15.6)
 
 Error Budget (relative error):
   disc       5.0e-04
@@ -301,43 +339,12 @@ Least Square Fit:
   chi2/dof [dof] = 0.91 [18]    Q = 0.57    logGBF = 71.701
 
 Settings:
-  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 10/1.4)
+  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 10/0.8)
 
 Error Budget (relative error):
   disc       1.9e-03
   chiral     5.0e-05
   pp_input   1.1e-03
   stat       2.4e-03
-
-
----
-
-Model: xpt_FKFpi_n2lo_log_logSq_sunset_a4_FV_bijnens
-
-Fitted/[FLAG] values at physical point:
-	F_K / F_pi = 1.1980(31) [1.1958(19)]	(delta_su2 = -0.00431(70))
-
-Parameters:
-            L_4   -0.00053 (56)      [   0.0000 (50) ]  
-            L_5   -0.00027 (50)      [   0.0000 (50) ]  
-            L_2    0.00021 (11)      [  0.00022 (11) ]  
-            L_3    -0.0039 (14)      [  -0.0031 (15) ]  
-            L_7   -0.00037 (17)      [ -0.00034 (17) ]  
-            A_k      -0.7 (1.6)      [     0.0 (1.8) ]  
-            A_p       1.5 (1.0)      [     0.0 (1.8) ]  
-            A_a      -9.5 (1.2)      [     0.0 (9.8) ]  
-           A_aa         71 (15)      [      0 (1040) ]  
-
-Least Square Fit:
-  chi2/dof [dof] = 0.74 [18]    Q = 0.77    logGBF = 71.68
-
-Settings:
-  svdcut/n = 1e-12/0    tol = (1e-08*,1e-10,1e-10)    (itns/time = 32/18.0)
-
-Error Budget (relative error):
-  disc       2.7e-04
-  chiral     4.4e-04
-  pp_input   9.7e-04
-  stat       2.3e-03
 
 ```
