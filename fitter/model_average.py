@@ -221,7 +221,6 @@ class model_average(object):
         if p is None:
             p = self._get_fit_posterior(model)
 
-        '''
         if model_info['fit_type'] in ['xpt', 'ma']:
             model_info['fit_type'] = 'xpt'
             fitfcn = fit.fk_fpi_model(datatag='xpt', **model_info).fitfcn
@@ -230,8 +229,8 @@ class model_average(object):
             fitfcn = fit.fk_fpi_model(datatag='xpt-ratio', **model_info).fitfcn
         elif model_info=='poly':
             fitfcn = fit.fk_fpi_model(datatag='poly', **model_info).fitfcn
-        '''
-        fitfcn = fit.fk_fpi_model(datatag='temp', **model_info).fitfcn
+
+        #fitfcn = fit.fk_fpi_model(datatag='temp', **model_info).fitfcn
 
         return fitfcn(p=p, fit_data=data)
 
