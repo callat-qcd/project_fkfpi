@@ -802,96 +802,115 @@ class fit_manager(object):
 
         return fig
 
-    def plot_parameters(self, xy_parameters, color_parameter=None,
-                        xfcn=None, xlabel=None, yfcn=None, ylabel=None):
+    def plot_parameters(self, xparam, yparam=None, show_posterior=False, show_prior=False):
+        if yparam is None:
+            yparam = 'FK/Fpi'
 
-        # used to convert to phys units
-        hbar_c = 197.32698045930
+        x = {}
+        y = {}
+        c = {}
 
-        if xlabel is None:
-            xlabel = self._fmt_key_as_latex(xy_parameters[0])
-        if ylabel is None:
-            ylabel = self._fmt_key_as_latex(xy_parameters[1])
+        colors = {
+            '06' : 'deeppink',
+            '09' : 'deepskyblue',
+            '12' : 'palegreen',
+            '15' : 'darkorange',
+        }
+        c = {abbr : colors[abbr[1:3]] for abbr in self.abbrs}
 
-        if xfcn is None:
-            xfcn = lambda x : 1 * x
-        if yfcn is None:
-            yfcn = lambda y : 1 * y
+        for abbr in self.abbrs:
+            lam2_chi = self.plot_data[abbr]['lam2_chi']
 
-        # Make plot data
-        plot_data = {}
-        myfcn = [xfcn, yfcn]
-        for j, parameter in enumerate(xy_parameters):
-            if parameter in ['FK/Fpi', 'FK / Fpi']:
-                plot_data[j] = {abbr :  myfcn[j](self.plot_data[abbr]['FK'] /self.plot_data[abbr]['Fpi']) for abbr in self.abbrs}
-            elif parameter in ['mpi', 'mju', 'mru', 'mk', 'mrs', 'mss', 'FK', 'Fpi']:
-                # Convert to physical units
-                plot_data[j] = {}
-                for abbr in self.abbrs:
-                    plot_data[j][abbr] = myfcn[j](self.plot_data[abbr][parameter] *hbar_c / (self.plot_data[abbr]['a/w0'] *self.w0))
-            elif parameter in ['mpiL', 'mjuL', 'mruL', 'mkL', 'mrsL', 'mssL']:
-                m_name = parameter[:-1]
-                plot_data[j] = {}
-                for abbr in self.abbrs:
-                    plot_data[j][abbr] = myfcn[j](self.plot_data[abbr][m_name] *self.plot_data[abbr]['L'])
-            else:
-                plot_data[j] = {abbr :  myfcn[j](self.plot_data[abbr][parameter]) for abbr in self.abbrs}
+            eps2_a  = np.repeat(gv.mean(self.plot_data[abbr]['a/w0'])**2, self.plot_bs_N) / (4 *np.pi)
+            eps2_pi = self.plot_data[abbr]['mpi']**2 / lam2_chi
+            eps2_k  = self.plot_data[abbr]['mk']**2 / lam2_chi
+
+            fk_fpi = self.plot_data[abbr]['FK'] / self.plot_data[abbr]['Fpi']
 
 
-        # Get data for color coding graph
-        if color_parameter is None:
-            color_parameter = 'a'
+            for j, param in enumerate([xparam, yparam]):
+                if param == 'FK/Fpi':
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : fk_fpi
+                    label = '$F_K/F_\pi$'
 
-        if color_parameter in ['a']:
-            color_data = {abbr : np.repeat(self.plot_data[abbr]['a/w0'] *self.w0, self.bs_N).ravel() for abbr in self.abbrs}
-        elif color_parameter in ['L']:
-            color_data = {abbr : np.repeat(gv.mean(self.plot_data[abbr][color_parameter]), self.bs_N).ravel() for abbr in self.abbrs}
-        elif color_parameter == 'mpiL':
-            color_data = {abbr : gv.mean(self.plot_data[abbr][color_parameter]).ravel() for abbr in self.abbrs}
-        else:
-            color_data = {abbr : gv.mean(self.plot_data[abbr][color_parameter]).ravel() for abbr in self.abbrs}
+                # params is a key in posterior
+                elif param == 'A_x':
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : eps2_k - eps2_pi
+                    label = '$\epsilon_K^2 - \epsilon_\pi^2$'
+                elif param == 'A_p':
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : (eps2_k - eps2_pi) *eps2_pi
+                    label = '$\epsilon_\pi^2(\epsilon_K^2 - \epsilon_\pi^2)$'
+                elif param == 'A_k':
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : (eps2_k - eps2_pi) *eps2_k
+                    label = '$\epsilon_K^2(\epsilon_K^2 - \epsilon_\pi^2)$'
+                elif param == 'A_a':
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : (eps2_k - eps2_pi) *eps2_a
+                    label = '$\epsilon_a^2(\epsilon_K^2 - \epsilon_\pi^2)$'
+                elif param == 'A_aa':
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : (eps2_k - eps2_pi) *eps2_a *eps2_a
+                    label = '$\epsilon_a^2(\epsilon_K^2 - \epsilon_\pi^2)$'
 
-        # Color by lattice spacing/length
-        cmap = matplotlib.cm.get_cmap('rainbow')
-        min_max = lambda x : [np.min(x), np.max(x)]
-        minimum, maximum = min_max(np.concatenate([gv.mean(color_data[abbr]) for abbr in self.abbrs]))
-        norm = matplotlib.colors.Normalize(vmin=minimum, vmax=maximum)
 
-        # Get scatter plot & color data
-        x = np.zeros(self.plot_bs_N * len(self.abbrs))
-        y = np.zeros(self.plot_bs_N * len(self.abbrs))
-        z = np.zeros(self.plot_bs_N * len(self.abbrs))
-        for j, abbr in enumerate(self.abbrs):
-            x[j*self.plot_bs_N:(j+1)*self.plot_bs_N] = gv.mean(plot_data[0][abbr])
-            y[j*self.plot_bs_N:(j+1)*self.plot_bs_N] = gv.mean(plot_data[1][abbr])
-            z[j*self.plot_bs_N:(j+1)*self.plot_bs_N] = gv.mean(color_data[abbr])
+                # params is a variable
+                elif param == 'mpi':
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : (eps2_k - eps2_pi) *eps2_pi
+                    label = '$\epsilon_\pi^2$'
+                elif param == 'mk':
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : (eps2_k - eps2_pi) *eps2_k
+                    label = '$\epsilon_K^2$'
+                else:
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : np.repeat(1, len(eps2_a))
+                    label = None
 
-        # Plot data
-        sc = plt.scatter(x, y, c=z, vmin=minimum, vmax=maximum,
-                         cmap=cmap, rasterized=True, marker=".", alpha=100.0/self.bs_N)
 
-        # Plot labels
+                if j == 0:
+                    x[abbr] = fcn(eps2_a, eps2_pi, eps2_k)
+                    xlabel = label
+                elif j == 1:
+                    y[abbr] = fcn(eps2_a, eps2_pi, eps2_k)
+                    ylabel = label
+
+
+        if (show_posterior or show_prior) and (xparam in self.posterior) and (yparam=='FK/Fpi'):
+
+            xmin = (np.min([np.min(x[abbr]) for abbr in self.abbrs]))
+            xmax = (np.max([np.max(x[abbr]) for abbr in self.abbrs]))
+            ymin = (np.min([np.min(y[abbr]) for abbr in self.abbrs]))
+            ymax = (np.max([np.max(y[abbr]) for abbr in self.abbrs]))
+
+            x_plt = np.linspace(xmin, xmax)
+            if show_prior:
+                m = self.prior[xparam]
+            elif show_posterior:
+                m = self.posterior[xparam]
+
+            for abbr in reversed(self.abbrs):
+
+                gv_xy = gv.dataset.avg_data({'x' : x[abbr], 'y' : y[abbr]}, bstrap=True)
+                x0 = gv_xy['y'] - m *gv_xy['x']
+                y_plt = m *x_plt + x0
+
+                alpha = 0.4 #1.0 / [abbr[:3] for abbr in self.abbrs].count(abbr[:3])
+
+                pm = lambda g, k : gv.mean(g) + k *gv.sdev(g)
+                plt.fill_between(pm(x_plt, 0), pm(y_plt, -1), pm(y_plt, 1),
+                                 alpha=alpha, color=c[abbr], rasterized=True)
+
+            plt.xlim(xmin - 0.05 *(xmax-xmin), xmax + 0.05 *(xmax-xmin))
+            plt.ylim(ymin - 0.05 *(ymax-ymin), ymax + 0.05 *(ymax-ymin))
+
+        for abbr in self.abbrs:
+            sc = plt.scatter(x[abbr], y[abbr], c=c[abbr],
+                       rasterized=True, marker='.', alpha=100.0/self.plot_bs_N,
+                        label=abbr[:3])
+
         plt.grid()
         plt.xlabel(xlabel, fontsize = 24)
         plt.ylabel(ylabel, fontsize = 24)
 
-        # Format colorbar
-        color_bar = plt.colorbar(sc)
-        color_bar.set_alpha(0.8)
-        color_bar.draw_all()
-        color_bar.set_label(self._fmt_key_as_latex(color_parameter), fontsize = 24)
-
-        # Set xlim, ylim -- only works if xy_parameters[i] is a vector, not a scalar
-        min_max = lambda x : [np.min(x), np.max(x)]
-        try:
-            xmin, xmax = min_max(np.concatenate([gv.mean(plot_data[0][abbr]) for abbr in self.abbrs]))
-            ymin, ymax = min_max(np.concatenate([gv.mean(plot_data[1][abbr]) for abbr in self.abbrs]))
-            xdelta = xmax - xmin
-            ydelta = ymax - ymin
-            plt.xlim(xmin-0.05*xdelta, xmax+0.05*xdelta) #xmin-0.05*xdelta
-            #plt.ylim(ymin-0.05*ydelta, ymax+0.05*ydelta)
-        except ValueError:
-            pass
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        plt.legend(by_label.values(), by_label.keys())
 
         fig = plt.gcf()
         plt.close()
