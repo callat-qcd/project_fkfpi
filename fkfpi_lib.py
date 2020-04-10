@@ -293,76 +293,6 @@ def set_priors(p_init,priors,optimized_priors=None):
         print('      using default prior widths')
     return p_init
 
-def pickle_fit(model,fit_result,phys_point):
-    fit = gv.BufferDict()
-    fit['phys_extrap'] = fit_result.report_phys_point()['phys']
-    for k in fit_result.fit.prior:
-        if type(k) is tuple:
-            fit['prior_'+k[0]+'_'+k[1]] = fit_result.fit.prior[k]
-        else:
-            fit['prior_'+k] = fit_result.fit.prior[k]
-    for k in fit_result.fit.p:
-        if type(k) is tuple:
-            fit['p_'+k[0]+'_'+k[1]] = fit_result.fit.p[k]
-        else:
-            fit['p_'+k] = fit_result.fit.p[k]
-    # we can't save the fit.cov easily, as it is an np.array
-    # but, they can be reconstructed after reading in all the fit.p values
-    fit['chi2']   = gv.gvar(fit_result.fit.chi2)
-    fit['dof']    = gv.gvar(fit_result.fit.dof)
-    fit['logGBF'] = gv.gvar(fit_result.fit.logGBF)
-    fit['Q']      = gv.gvar(fit_result.fit.Q)
-    for k in fit_result.fit.y:
-        fit['data_'+k] = fit_result.fit.y[k]
-
-    if not os.path.exists('pickled_fits'):
-        os.makedirs('pickled_fits')
-    gv.dump(fit,'pickled_fits/'+model+'.p', add_dependencies=True)
-
-def read_fit(model):
-    fit = gv.load('pickled_fits/'+model+'.p')
-    fit_processed = dict()
-    fit_processed['phys_extrap'] = fit['phys_extrap']
-    fit_processed['prior'] = dict()
-    fit_processed['p']     = dict()
-    fit_processed['stat']  = dict()
-    fit_processed['data']  = dict()
-    for k in fit:
-        if 'data' in k:
-            fit_processed['data'][k.split('_')[1]] = fit[k]
-        if k in ['chi2','dof','logGBF','Q']:
-            fit_processed['stat'][k] = fit[k]
-        if 'p_' in k and 'prior' not in k:
-            if any(part in k for part in ['a06','a09','a12','a15']):
-                tmp,ens,kk = k.split('_')
-                fit_processed['p'][(ens,kk)] = fit[k]
-            elif len(k.split('p_')) == 3:
-                fit_processed['p']['p_'+k.split('p_')[2]] = fit[k]
-            elif len(k.split('p_')) == 2:
-                fit_processed['p'][k.split('p_')[1]] = fit[k]
-            else:
-                print('what to do?',k)
-        if 'prior' in k:
-            if any(part in k for part in ['a06','a09','a12','a15']):
-                tmp,ens,kk = k.split('_')
-                fit_processed['prior'][(ens,kk)] = fit[k]
-            else:
-                fit_processed['prior'][k.split('prior_')[1]] = fit[k]
-
-    return fit_processed
-
-class PickledFit():
-    def __init__(self,pickled_fit):
-        self.p      = pickled_fit['p']
-        self.prior  = pickled_fit['prior']
-        self.y      = pickled_fit['data']
-        self.dof    = pickled_fit['stat']['dof'].mean
-        self.chi2   = pickled_fit['stat']['chi2'].mean
-        self.logGBF = pickled_fit['stat']['logGBF'].mean
-        self.Q      = pickled_fit['stat']['Q'].mean
-        self.cov    = gv.evalcov(self.p)
-        self.corr   = gv.evalcorr(self.p)
-
 def fkfpi_phys(x_phys,fit):
     # use metaSq = 4/3 mK**2 - 1/3 mpi**2
     print('prediction from LQCD')
@@ -484,15 +414,10 @@ def perform_analysis(switches,gv_data,priors,phys_point):
             p_fit = model+'_optimized_priors'
         else:
             p_fit = model
-        if switches['save_fits']:
+        if switches['save_fits'] or switches['debug_save_fit']:
             if os.path.exists('pickled_fits/'+p_fit+'.p'):
                 print('reading pickled_fits/'+p_fit+'.p')
-                pickled_fit = read_fit(p_fit)
-                fit_p = xpt.Fit(switches,xyp_init={'x':x_e,'y':y_e,'p':p_e},phys=phys_point)
-                fit_p.fit = PickledFit(pickled_fit)
-                fit_p.report_phys_point()
-                fit_results[model] = fit_p
-
+                fit_results[model] = gv.load('pickled_fits/'+p_fit+'.p')
             else:
                 do_fit = True
         else:
@@ -523,11 +448,14 @@ def perform_analysis(switches,gv_data,priors,phys_point):
             fit_e.fit_data()
             fit_results[model] = fit_e
             if switches['save_fits']:
-                pickle_fit(p_fit,fit_e,phys_point)
+                if not os.path.exists('pickled_fits/'+p_fit+'.p'):
+                    gv.dump(fit_e, 'pickled_fits/'+p_fit+'.p', add_dependencies=True)
+                    if switches['debug_save_fit']:
+                        fit_p = gv.load('pickled_fits/'+p_fit+'.p')
             else:
                 fit_p = fit_e
 
-        if switches['debug_save_fit'] and not do_fit:
+        if switches['debug_save_fit']:
             print('=================================================================')
             print('Comparing Live fit to Pickled Fit')
             print('=================================================================')
@@ -540,6 +468,7 @@ def perform_analysis(switches,gv_data,priors,phys_point):
                     fit_priors[k] = fit_e.fit.prior[k]
             print(fit_e.report_phys_point()['phys'].partialsdev(fit_priors))
 
+            fit_p = fit_results[model]
             print('pickled fit: FK/Fpi.report_phys = ',fit_p.report_phys_point()['phys'])
             print('pickled fit: FK/Fpi.saved_fit   = ',fit_p.phys_extrap)
             print('error breakdown: y, L_i')
@@ -551,8 +480,8 @@ def perform_analysis(switches,gv_data,priors,phys_point):
             print(fit_p.report_phys_point()['phys'].partialsdev(fit_priors))
             print('=================================================================')
 
-        if not do_fit:
-            fit_e = fit_p
+        if not do_fit and switches['save_fits']:
+            fit_e = fit_results[model]
         print('FK/Fpi = ',fit_e.report_phys_point()['phys'])
         print('do fit',do_fit)
         if switches['print_fit'] and do_fit:
