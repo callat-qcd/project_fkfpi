@@ -96,6 +96,7 @@ def main():
             for model in switches['ansatz']['models']:
                 if model in ['xpt_nnlo_FV_a4_PK','xpt_nnlo_FV_a4_PP','xpt_nnlo_FV_PP']:
                     fit_results[model].vs_ea()
+                    #fit_results[model].vs_epi()
 
     if switches['check_fit']:
         fit_checker(switches,priors)
@@ -160,6 +161,11 @@ a_ens = {
     'a06':gv.gvar(0.0566,0.0005),
 }
 
+def sort_ens(ensembles):
+    sorted = list(ensembles)
+    sorted.sort(reverse=True)
+    return sorted
+
 def format_h5_data(switches,data):
     x = dict()
     y = dict()
@@ -172,7 +178,7 @@ def format_h5_data(switches,data):
 
     print('%9s FK/Fpi' %'ensemble')
     print('-----------------------------------------------------------------')
-    for ens in switches['ensembles']:
+    for ens in sort_ens(switches['ensembles']):
         x[ens] = dict()
         data_dict = dict()
         for m in ['mpi','mk','mss','mju','mjs','mrs','mru']:
@@ -184,15 +190,6 @@ def format_h5_data(switches,data):
         if switches['debug']:
             fkfpi = data_dict['FK']/data_dict['Fpi']
             print('  FK/Fpi = %.5f +- %.5f' %(fkfpi.mean(),fkfpi.std()))
-        # HACK
-        if True:
-            if ens == 'a06m310L':
-                for f in ['FK','Fpi']:
-                    ff = data_dict[f]
-                    df = ff - ff.mean()
-                    df = df / 2
-                    ff = ff.mean() + df
-                    data_dict[f] = ff
 
         if switches['bs_bias']:
             data_bs = dict()
@@ -258,18 +255,23 @@ def format_h5_data(switches,data):
             djs = p[(ens,'aw0')]**(-2) * (gvdata['mjs']**2 - gvdata['mk']**2)
             dru = p[(ens,'aw0')]**(-2) * (gvdata['mru']**2 - gvdata['mk']**2)
             drs = p[(ens,'aw0')]**(-2) * (gvdata['mrs']**2 - gvdata['mss']**2)
-            mixed_fits.append('%9s& %s& %s& %s& %s& %s& %s& %s& %s\\\\' \
-                %(ens,gvdata['mju'],gvdata['mjs'],gvdata['mru'],gvdata['mrs'],dju,djs,dru,drs))
+            mixed_fits.append('%9s& %s& %s& %s& %s& %s& %s& %s& %s& %s\\\\' \
+                %(ens,gvdata['mju'],gvdata['mjs'],gvdata['mru'],gvdata['mrs'],gvdata['mss'],dju,djs,dru,drs))
     if switches['print_lattice']:
         print(r'ensemble& $am^{\rm res}_l$& $am^{\rm res}_s$& $am_\pi$& $am_K$& $aF_\pi$& $aF_K$& $F_K / F_\pi$\\')
         for l in lattice_fits:
             print(l)
+            if any(ens in l for ens in ['a15m135XL','a12m130','a09m135']):
+                print("\\hline")
         print('')
-        print(r'ensemble& $am_{ju}$& $am_{js}$& $am_{ru}$& $am_{rs}$& $w_0^2(m_{ju}^2 -m_\pi^2)$& $w_0^2(m_{js}^2-m_K^2)$& $w_0^2(m_{ru}^2-m_K^2)$& $w_0^2(m_{rs}^2 -m_{ss}^2)$\\')
+        print(r'ensemble& $am_{ju}$& $am_{js}$& $am_{ru}$& $am_{rs}$& $am_{ss}$& $w_0^2(m_{ju}^2 -m_\pi^2)$& $w_0^2(m_{js}^2-m_K^2)$& $w_0^2(m_{ru}^2-m_K^2)$& $w_0^2(m_{rs}^2 -m_{ss}^2)$\\')
         print(r'\hline')
         for l in mixed_fits:
             print(l)
+            if any(ens in l for ens in ['a15m135XL','a12m130','a09m135']):
+                print("\\hline")
         data.close()
+
         sys.exit()
     return {'x':x, 'y':y, 'p':p}
 

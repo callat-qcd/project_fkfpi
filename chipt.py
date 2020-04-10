@@ -776,7 +776,8 @@ class Fit(object):
         print('FK - Fpi | NNLO    = %f' %nnlo)
         print('FK/Fpi = %f' %(nlo + nnlo))
 
-    def vs_epi(self,epi_range, ax):
+    def vs_epi(self,raw_data=False):
+        print('making chiral plot')
         # get copy of all self attributes
         self_dict = self.__dict__.copy()
         # switch to continuum fit func
@@ -788,34 +789,37 @@ class Fit(object):
             self.fit_function = self.xpt
         self.fv = False
         # set x,y,p
+
         x = dict()
-        y_phys = dict()
         p = dict()
-        for k in self.fit.p:
-            if isinstance(k,str):
-                print(k,self.fit.p[k])
         for k in self.lec_nnlo + self.lec_nnnlo:
             if k in self.fit.p:
                 p[k] = self.fit.p[k]
 
-        Lchi = epi_range['Lchi']
         x_plot = []
         y_plot = {}
-        y_plot['a0']  = []
+        y_plot['a00'] = []
+        y_plot['a06'] = []
         y_plot['a09'] = []
         y_plot['a12'] = []
         y_plot['a15'] = []
-        for mpi in epi_range['mpi']:
+        Lchi = self.phys['Lchi_'+self.switches['scale']]
+        k2 = self.phys['mk']**2 / Lchi**2
+        mpi_range = np.sqrt(np.arange(1,401**2,400**2/50))
+        for mpi in mpi_range:
+            print(mpi)
             x[mpi] = {k:np.inf for k in ['mpiL','mkL']}
             x[mpi]['alphaS'] = 0.
-
-            p[(mpi,'p2')] = mpi**2 / Lchi**2
-            p[(mpi,'k2')] = epi_range['mk']**2  / Lchi**2
-            p[(mpi,'e2')] = 4./3*p[(mpi,'k2')] - 1./3 * p[(mpi,'p2')]
+            p2 = mpi**2 / Lchi**2
+            p[(mpi,'p2')] = p2
+            p[(mpi,'k2')] = k2
+            p[(mpi,'e2')] = 4./3*k2 - 1./3*p2
             p[(mpi,'a2')] = 0.
             x_plot.append(p[(mpi,'p2')].mean)
-            y_plot['a0'].append(self.fit_function(x,p)[mpi])
+            y_plot['a00'].append(self.fit_function(x,p)[mpi])
             # finite a
+            p[(mpi,'a2')] = self.p_init[('a06m310L','aw0')]**2 / (4 * pi)
+            y_plot['a06'].append(self.fit_function(x,p)[mpi])
             p[(mpi,'a2')] = self.p_init[('a09m310','aw0')]**2 / (4 * pi)
             y_plot['a09'].append(self.fit_function(x,p)[mpi])
             p[(mpi,'a2')] = self.p_init[('a12m310','aw0')]**2 / (4 * pi)
@@ -824,19 +828,35 @@ class Fit(object):
             y_plot['a15'].append(self.fit_function(x,p)[mpi])
 
         x_plot = np.array(x_plot)
-        y  = np.array([k.mean for k in y_plot['a0']])
-        dy = np.array([k.sdev for k in y_plot['a0']])
+        y  = np.array([k.mean for k in y_plot['a00']])
+        dy = np.array([k.sdev for k in y_plot['a00']])
 
-        ax.fill_between(x_plot, y-dy, y+dy,color='#b36ae2',alpha=0.4)
+        fig = plt.figure('FKFpi_vs_epi_'+self.model,figsize=figsize)
+        self.ax_chiral = plt.axes(plt_axes)
+        self.ax_chiral.fill_between(x_plot, y-dy, y+dy,color='#b36ae2',alpha=0.4)
         colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9', 'a06':'#00FFFF'}
-        for a in ['a15','a12','a09']:
+        for a in ['a15','a12','a09','a06']:
             y = np.array([k.mean for k in y_plot[a]])
             ax.plot(x_plot, y, color=colors[a])
+        # plot data
+        self.plot_data('ea',offset='cont')
+        if self.switches['plot_raw_data']:
+            self.plot_data('ea', offset='cont', raw=True)
+        # plot phys point
         epi_phys =  epi_range['mpi_phys']**2 / Lchi**2
-        ax.axvline(epi_phys.mean,linestyle='--',color='#a6aaa9')
-        ax.axvspan(epi_phys.mean -epi_phys.sdev, epi_phys.mean +epi_phys.sdev,
+        self.ax_chiral.axvline(epi_phys.mean,linestyle='--',color='#a6aaa9')
+        self.ax_chiral.axvspan(epi_phys.mean -epi_phys.sdev, epi_phys.mean +epi_phys.sdev,
             alpha=0.4, color='#a6aaa9')
-        ax.axvline(epi_phys.mean,linestyle='--',color='#a6aaa9')
+        self.ax_chiral.axvline(epi_phys.mean,linestyle='--',color='#a6aaa9')
+        # axis labels, legends, etc
+        self.ax_chiral.set_xlabel(r'$\epsilon_\pi^2 = (m_\pi / 4\pi F_\pi)^2$',fontsize=fs_text)
+        self.ax_chiral.set_ylabel(r'$F_K / F_\pi$',fontsize=fs_text)
+        self.ax_chiral.set_xlim(0,.1)
+        if self.switches['plot_raw_data']:
+            self.ax_chiral.set_ylim(1.06, 1.228)
+        else:
+            self.ax_chiral.set_ylim(1.14, 1.228)
+
         # restore original self attributes
         for key,val in self_dict.items():
             setattr(self, key, val)
@@ -844,6 +864,7 @@ class Fit(object):
         return ax
 
     def vs_ea(self,raw_data=False):
+        print('making continuum plot')
         # get copy of all self attributes
         self_dict = self.__dict__.copy()
         # switch to continuum fit func
@@ -964,7 +985,7 @@ class Fit(object):
             'a15m400':'', 'a15m350':'', 'a15m310':'a15', 'a15m220':'','a15m135XL':'',
             'a12m400':'', 'a12m350':'', 'a12m310':'a12', 'a12m220':'', 'a12m130':'',
             'a12m220L':'', 'a12m220S':'',
-            'a09m400':'', 'a09m350':'', 'a09m310':'a09', 'a09m220':'',
+            'a09m400':'', 'a09m350':'', 'a09m310':'a09', 'a09m220':'', 'a09m135':'',
             'a06m310L':'a06',
             }
         dx_cont = {
@@ -972,7 +993,7 @@ class Fit(object):
             'a15m350'  :0.0008, 'a12m350':0.0008, 'a09m350':0.0008,
             'a15m310'  :0.,     'a12m310':0.,     'a09m310':0.,     'a06m310L':0.,
             'a15m220'  :-0.0008,'a12m220':-0.0008,'a09m220':-0.0008,
-            'a15m135XL':-.0016, 'a12m130':-0.0016,
+            'a15m135XL':-.0016, 'a12m130':-0.0016,'a09m135':-0.0016,
             'a12m220L' :-0.0012,'a12m220S':-0.0004,
         }
 

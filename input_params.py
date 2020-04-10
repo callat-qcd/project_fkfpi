@@ -7,13 +7,13 @@ switches['ensembles'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
     'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
-    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
+    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220','a09m135',
     'a15m135XL','a12m130',]
 switches['ensembles_fit'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
     'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
-    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
+    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',#'a09m135',
     'a15m135XL','a12m130',
     ]
 #switches['ensembles_fit'] = [
@@ -27,7 +27,8 @@ switches['ensembles_fit'] = [
 # FIT MODELS
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
-switches['ansatz']['models'] = ['xpt_nnlo_FV_a4']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnlo_FV_a4','ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnlo_FV_a4', 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
 switches['sys']['Lam_chi']   = False
@@ -97,11 +98,11 @@ priors['L8']   = gv.gvar( 0.000294,0.000294)
 ''' default values '''
 n2lo_width = 5.
 #priors['s_4']   = gv.gvar(0.0, n2lo_width)
-priors['s_4']   = gv.gvar(0, 100)
+priors['s_4']   = gv.gvar(0, 10)
 #priors['s_4']   = gv.gvar(0, 100)
 priors['k_4']   = gv.gvar(0.0, n2lo_width)
 priors['p_4']   = gv.gvar(0.0, n2lo_width)
-priors['saS_4'] = gv.gvar(0.0, 100)
+priors['saS_4'] = gv.gvar(0.0, 10)
 #priors['saS_4'] = gv.gvar(0.0, n2lo_width)
 
 # Ananthanarayan et al, 1711.11328
@@ -145,7 +146,7 @@ phys_point['FK']  = gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2)) #PDG fK+ eq(16)
 # FLAG values for "pure" QCD point
 phys_point['mpi'] = gv.gvar(134.8, 0.3) #FLAG 2017 (16)
 phys_point['mk']  = gv.gvar(494.2 , 0.3) #FLAG 2017 (16)
-phys_point['mk']  = gv.gvar(485 , 0.3) #FLAG 2017 (16)
+#phys_point['mk']  = gv.gvar(485 , 0.3) #FLAG 2017 (16)
 
 phys_point['F0']  = gv.gvar(80,20) #FLAG use of F0 in SU(2) correction for FK/Fpi
 #if switches['scale'] == 'PK':
