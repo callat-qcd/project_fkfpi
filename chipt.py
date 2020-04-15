@@ -1,4 +1,5 @@
 import sys
+import copy
 import scipy.special as spsp
 import numpy as np
 import matplotlib.pyplot as plt
@@ -56,7 +57,12 @@ def FF_approximate(x):
     return ff
 
 class Fit(object):
-    def __init__(self,switches,xyp_init,phys):
+    def __init__(self,switches,xyp_init,phys, name=None):
+        ''' In the init, we will use parameters specified for the fit to declare
+            the precise fit function used, such that the minimizer has no
+            if/else decisions to make
+        '''
+        # collect all parameters for a given "model"
         self.phys      = phys
         self.switches  = switches
         self.x         = xyp_init['x']
@@ -65,6 +71,7 @@ class Fit(object):
         self.model     = self.switches['ansatz']['model']
         self.eft       = self.switches['ansatz']['model'].split('_')[0]
         self.order     = self.switches['ansatz']['model'].split('_')[1]
+        self.FF        = self.switches['ansatz']['model'].split('_')[-1]
         self.fv        = 'FV'     in self.switches['ansatz']['model']
         self.alphaS    = 'alphaS' in self.switches['ansatz']['model']
         self.logSq     = 'logSq'  in self.switches['ansatz']['model']
@@ -78,18 +85,42 @@ class Fit(object):
             self.lec_nnlo += ['L1','L2','L3','L6','L7','L8']
         self.lec_nnnlo = ['s_6','sk_6','sp_6','kp_6','k_6','p_6']
 
-        if self.eft   == 'xpt':
-            self.fit_function = self.xpt
-        elif self.eft == 'xpt-ratio':
-            self.fit_function = self.xpt_ratio
-        elif self.eft == 'ma':
-            self.fit_function = self.ma
-        elif self.eft == 'ma-ratio':
-            self.fit_function = self.ma_ratio
-        elif self.eft == 'ma-longform':
-            self.fit_function = self.ma_longform
+        # create dictionary of function pieces
+        self.fit_func_elementals = {# the NLO terms are LO + NLO, while the rest ar NnLO
+            'xpt_nlo'         : self.xpt_nlo,
+            'xpt-ratio_nlo'   : self.xpt_ratio_nlo,
+            'ma_nlo'          : self.ma_nlo,
+            'ma-longform_nlo' : self.ma_longform_nlo,
+            'ma-ratio_nlo'    : self.ma_ratio_nlo,
+            'taylor_nlo'      : self.taylor_nlo,
+            # NNLO terms
+            'nnlo_ct'         : self.nnlo_ct,
+            'xpt_nnlo_logSq'  : self.xpt_nnlo_logSq,
+            'xpt_nnlo_log'    : self.xpt_nnlo_log,
+            'xpt_ratio_nnlo'  : self.xpt_ratio_nnlo,
+            'nnlo_alphaS'     : self.nnlo_alphaS,
+            # NNLO scale and F=Fpi, FK fix
+            'xpt_nnlo_FF_PP'  : self.xpt_nnlo_FF_PP,
+            #'xpt_nnlo_FF_PK'  : self.nnlo_FF_PK,
+            #'xpt_nnlo_FF_KK'  : self.nnlo_FF_KK,
+            # NNNLO terms
+            #'nnnlo_ct'        : self.nnnlo_ct, # all NNNLO terms
+            'nnnlo_a4'        : self.nnnlo_a4,
+        }
 
-        if self.fv:
+        # fit function
+        self.func_elements = self.make_function_elementals()
+        #self.fit_function = self.make_fit_function
+
+        # Init the finite volume stuff
+        if not self.fv:
+            self.I  = self.I_IV
+            self.dI = self.dI_IV
+        else:
+            # declare tadpole functions
+            self.I  = self.I_FV
+            self.dI = self.dI_FV
+            # make finite volume corrections
             self.fv_I  = dict()
             self.fv_dI = dict()
             def k1k2k3(mL):
@@ -99,9 +130,9 @@ class Fit(object):
                 k2 = np.sum(cn * spsp.kn(2,n_mag * mL) )
                 k0 = np.sum(cn * spsp.kn(0,n_mag * mL) )
                 return k0,k1,k2
-            for e in self.switches['ensembles']:
+            for e in self.switches['ensembles_fit']:
                 # mpi
-                Lchi     = self.p_init[(e,'Lchi_'+self.switches['scale'])]
+                Lchi     = self.p_init[(e,'Lchi_'+self.FF)]
                 esq      = self.p_init[(e,'mpi')]**2 / Lchi**2
                 mL       = self.x[e]['mpiL']
                 k0,k1,k2 = k1k2k3(mL)
@@ -161,6 +192,71 @@ class Fit(object):
                     self.fv_I[(e,'x2')]  = 4 * k1
                     self.fv_dI[(e,'x2')] = (2*k1 - k0 - k2) / (4*pi)**2
 
+    def make_function_elementals(self):
+        func_elements = [self.eft+'_nlo']
+
+        if self.eft == 'taylor':
+            if self.order in ['nnlo','nnnlo']:
+                func_elements += ['nnlo_ct']
+            if self.order in ['nnnlo']:
+                func_elements += ['nnnlo_ct']
+        else:
+            if self.order in ['nnlo','nnnlo']:
+                if self.alphaS:
+                    func_elements += ['nnlo_alphaS']
+                if self.nnlo_full:
+                    func_elements += ['nnlo_ct', 'xpt_nnlo_logSq', 'xpt_nnlo_log']
+                if 'ratio' in self.eft:
+                    func_elements += ['xpt_ratio_nnlo']
+                else:
+                    if self.ct:
+                        func_elements += ['nnlo_ct']
+                    if self.logSq:
+                        func_elements += ['xpt_nnlo_logSq']
+                # FF choice
+                if self.FF not in ['PP','PK','KK']:
+                    sys.exit('unrecognized FF choice [PP, PK, KK]: '+self.FF)
+                else:
+                    func_elements += ['xpt_nnlo_FF_'+self.FF]
+
+                # a^4?
+                if self.order == 'nnlo' and self.a4:
+                    func_elements += ['nnnlo_a4']
+                if self.order == 'nnnlo': # this gets all fits
+                    func_elements += ['nnnlo_ct']
+        return func_elements
+
+    #def __reduce__(self):
+    #    return (self.__class__, (self.make_fit_function, ))
+
+    """
+    def __getstate__(self):
+    #    return dict(_registry=self._registry, _obj=self._obj)
+        print('DEBUG self')
+        for k in self.instances:
+            print(k.name)
+        state = self.__dict__.copy()
+        # gvar dump can not handle this function
+        #print('DEBUG: state keys')
+        #for k in state:
+        #    print(k)
+        print('===================================================')
+        print('===================================================')
+        print('===================================================')
+        print('===================================================')
+        #del state['make_fit_function']
+        return state
+    """
+    def make_fit_function(self,term_list):
+        def fit_function(*args):
+            results = dict()
+            for elem in term_list:
+                tmp_results = self.fit_func_elementals[elem](*args)
+                for k,v in tmp_results.items():
+                    results[k] = results.get(k, 0.) + v
+            return results
+        return fit_function
+
     def prune_x(self):
         x = gv.BufferDict()
         for e in self.switches['ensembles_fit']:
@@ -178,13 +274,13 @@ class Fit(object):
         if self.switches['debug']:
             print('DEBUG:',"%9s" %'ens','  ',"%11s" %'Lchi','eps_pi**2')
         for e in self.switches['ensembles_fit']:
-            Lchi = self.p_init[(e,'Lchi_'+self.switches['scale'])]
-            #Lchi = self.x[e]['Lchi_'+self.switches['scale']]
+            Lchi = self.p_init[(e,'Lchi_'+self.FF)]
+            #Lchi = self.x[e]['Lchi_'+self.FF]
             p[(e,'p2')] = self.p_init[(e,'mpi')]**2 / Lchi**2
             p[(e,'k2')] = self.p_init[(e,'mk')]**2 /  Lchi**2
             p[(e,'e2')] = 4./3 * p[(e,'k2')] - 1./3 * p[(e,'p2')]
             if self.switches['debug']:
-                print('DEBUG:',"%9s" %e,self.switches['scale'],"%11s" %Lchi,p[(e,'p2')])
+                print('DEBUG:',"%9s" %e,self.FF,"%11s" %Lchi,p[(e,'p2')])
             if 'ma' in self.eft:
                 p[(e,'s2')] = self.p_init[(e,'mss')]**2 / Lchi**2
                 ''' Add ability to use average mixed meson splitting? '''
@@ -201,7 +297,7 @@ class Fit(object):
         if self.order in ['nlo','nnlo','nnnlo']:
             p['L5'] = self.p_init['L5']
         if self.order in ['nnlo','nnnlo']:
-            p['L4'] = self.p_init['L4'] #L4 appears in the mu correction
+            p['L4']  = self.p_init['L4'] #L4 appears in the mu correction
             p['s_4'] = self.p_init['s_4']
             p['k_4'] = self.p_init['k_4']
             p['p_4'] = self.p_init['p_4']
@@ -234,64 +330,62 @@ class Fit(object):
 
         return p
 
-    def make_x_lec(self,x,p,e):
-        x_par = gv.BufferDict()
-        x_par['p2'] = {'esq':p[(e,'p2')]}
-        x_par['k2'] = {'esq':p[(e,'k2')]}
-        x_par['e2'] = {'esq':p[(e,'e2')]}
-        if self.fv:
-            x_par['p2'].update({'fvI':self.fv_I[(e,'p2')], 'fvdI':self.fv_dI[(e,'p2')]})
-            x_par['k2'].update({'fvI':self.fv_I[(e,'k2')], 'fvdI':self.fv_dI[(e,'k2')]})
-            x_par['e2'].update({'fvI':self.fv_I[(e,'e2')], 'fvdI':self.fv_dI[(e,'e2')]})
-        if 'ma' in self.eft:
-            x_par['s2'] = {'esq':p[(e,'s2')]}
-            x_par['ju'] = {'esq':p[(e,'ju')]}
-            x_par['js'] = {'esq':p[(e,'js')]}
-            x_par['ru'] = {'esq':p[(e,'ru')]}
-            x_par['rs'] = {'esq':p[(e,'rs')]}
-            x_par['x2'] = {'esq':p[(e,'x2')]}
+    def make_x_lec(self,x,p):
+        x_e = dict()
+        lec = {key:val for key,val in p.items() if isinstance(key,str)}
+        for e in x:
+            x_par = gv.BufferDict()
+            x_par['p2'] = {'esq':p[(e,'p2')]}
+            x_par['k2'] = {'esq':p[(e,'k2')]}
+            x_par['e2'] = {'esq':p[(e,'e2')]}
             if self.fv:
-                x_par['s2'].update({'fvI':self.fv_I[(e,'s2')], 'fvdI':self.fv_dI[(e,'s2')]})
-                x_par['ju'].update({'fvI':self.fv_I[(e,'ju')], 'fvdI':self.fv_dI[(e,'ju')]})
-                x_par['js'].update({'fvI':self.fv_I[(e,'js')], 'fvdI':self.fv_dI[(e,'js')]})
-                x_par['ru'].update({'fvI':self.fv_I[(e,'ru')], 'fvdI':self.fv_dI[(e,'ru')]})
-                x_par['rs'].update({'fvI':self.fv_I[(e,'rs')], 'fvdI':self.fv_dI[(e,'rs')]})
-                x_par['x2'].update({'fvI':self.fv_I[(e,'x2')], 'fvdI':self.fv_dI[(e,'x2')]})
+                x_par['p2'].update({'fvI':self.fv_I[(e,'p2')], 'fvdI':self.fv_dI[(e,'p2')]})
+                x_par['k2'].update({'fvI':self.fv_I[(e,'k2')], 'fvdI':self.fv_dI[(e,'k2')]})
+                x_par['e2'].update({'fvI':self.fv_I[(e,'e2')], 'fvdI':self.fv_dI[(e,'e2')]})
+            if 'ma' in self.eft:
+                x_par['s2'] = {'esq':p[(e,'s2')]}
+                x_par['ju'] = {'esq':p[(e,'ju')]}
+                x_par['js'] = {'esq':p[(e,'js')]}
+                x_par['ru'] = {'esq':p[(e,'ru')]}
+                x_par['rs'] = {'esq':p[(e,'rs')]}
+                x_par['x2'] = {'esq':p[(e,'x2')]}
+                if self.fv:
+                    x_par['s2'].update({'fvI':self.fv_I[(e,'s2')], 'fvdI':self.fv_dI[(e,'s2')]})
+                    x_par['ju'].update({'fvI':self.fv_I[(e,'ju')], 'fvdI':self.fv_dI[(e,'ju')]})
+                    x_par['js'].update({'fvI':self.fv_I[(e,'js')], 'fvdI':self.fv_dI[(e,'js')]})
+                    x_par['ru'].update({'fvI':self.fv_I[(e,'ru')], 'fvdI':self.fv_dI[(e,'ru')]})
+                    x_par['rs'].update({'fvI':self.fv_I[(e,'rs')], 'fvdI':self.fv_dI[(e,'rs')]})
+                    x_par['x2'].update({'fvI':self.fv_I[(e,'x2')], 'fvdI':self.fv_dI[(e,'x2')]})
 
-            x_par['dju2'] = p[(e,'dju2')]
-            x_par['drs2'] = p[(e,'drs2')]
-        if self.order in ['nnlo','nnnlo'] or (self.order == 'nlo' and self.a4):
-            x_par['a2']   = p[(e,'a2')]
-        if self.alphaS:
+                x_par['dju2'] = p[(e,'dju2')]
+                x_par['drs2'] = p[(e,'drs2')]
+            if self.order in ['nnlo','nnnlo'] or (self.order == 'nlo' and self.a4):
+                x_par['a2']   = p[(e,'a2')]
+            #if self.alphaS:
             x_par['alphaS'] = x[e]['alphaS']
 
-        lec = {key:val for key,val in p.items() if isinstance(key,str)}
+            x_e[e] = x_par
 
-        return x_par,lec
+        return x_e,lec
 
-    def I(self,x):
-        r = x['esq'] * np.log(x['esq'])
-        if self.fv:
-            r += x['esq'] * x['fvI']
+    # Fit Functions
+    # NLO terms
+    def xpt_nlo(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        for e in x_e:
+            r[e]  = 1.
+            r[e] +=  self.FK_xpt_nlo(x_e[e],lec)
+            r[e] += -self.Fpi_xpt_nlo(x_e[e],lec)
         return r
-    def dI(self,x):
-        r = 1 + np.log(x['esq'])
-        if self.fv:
-            r += x['fvdI']
-        return r
-    def K(self,x1,x2):
-        r  = self.I(x2)
-        r += -self.I(x1)
-        r  = r / (x2['esq'] - x1['esq'])
-        return r
-    def K21(self,x1,x2):
-        r  = self.K(x1,x2) / (x2['esq'] - x1['esq'])
-        r += -self.dI(x1) / (x2['esq'] - x1['esq'])
-        return r
-    def K123(self,x1,x2,x3):
-        r  = self.I(x1) / (x1['esq'] - x2['esq']) / (x1['esq'] - x3['esq'])
-        r += self.I(x2) / (x2['esq'] - x1['esq']) / (x2['esq'] - x3['esq'])
-        r += self.I(x3) / (x3['esq'] - x1['esq']) / (x3['esq'] - x2['esq'])
+
+    def xpt_ratio_nlo(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        for e in x_e:
+            num  = 1. + self.FK_xpt_nlo(x_e[e],lec)
+            den  = 1. + self.Fpi_xpt_nlo(x_e[e],lec)
+            r[e] = num / den
         return r
 
     def Fpi_xpt_nlo(self,x,lec):
@@ -319,6 +413,240 @@ class Fit(object):
         if 'ratio' in self.eft:
             r += lec['L4'] * (4*pi)**2 * (4 * x['p2']['esq'] + 8 * x['k2']['esq'])
         return r
+
+    # MA NLO - the long form is below with the Tadpole Integrals
+    def ma_nlo(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        for e in x_e:
+            r[e]  = 1.
+            r[e] += self.FK_ma_nlo(x_e[e],lec)
+            r[e] += -self.Fpi_ma_nlo(x_e[e],lec)
+        return r
+
+    def ma_ratio_nlo(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        for e in x_e:
+            num  = 1. + self.FK_ma_nlo(x_e[e],lec)
+            den  = 1. + self.Fpi_ma_nlo(x_e[e],lec)
+            r[e] = num / den
+        return r
+
+    # Taylor Expansion
+    def taylor_nlo(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        for e in x_e:
+            r[e]  = 1.
+            r[e] +=  lec['L5'] * (4*pi)**2 * 4 * x['k2']['esq']
+            r[e] += -lec['L5'] * (4*pi)**2 * 4 * x['p2']['esq']
+        return r
+
+    # NNLO Terms
+    def nnlo_ct(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        for e in x_e:
+            k2 = x_e[e]['k2']['esq']
+            p2 = x_e[e]['p2']['esq']
+            r[e]  = (k2 - p2) * k2 * lec['k_4']
+            r[e] += (k2 - p2) * p2 * lec['p_4']
+            a2 = x_e[e]['a2']
+            r[e] += (k2 - p2) * a2 * lec['s_4']
+            if self.switches['debug_nnlo_check']:
+                print('\nct        = %f' %r[e])
+        return r
+
+    def nnlo_alphaS(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        for e in x_e:
+            k2 = x_e[e]['k2']['esq']
+            p2 = x_e[e]['p2']['esq']
+            a2 = x_e[e]['a2']
+            r[e] = (k2 - p2) * a2 * x_e[e]['alphaS'] * lec['saS_4']
+        return r
+
+    def xpt_nnlo_logSq(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        for e in x_e:
+            k2 = x_e[e]['k2']['esq']
+            p2 = x_e[e]['p2']['esq']
+            lk = np.log(k2)
+            lp = np.log(p2)
+            e2 = 4./3 * k2 - 1./3 * p2
+            le = np.log(e2)
+            r[e]  = lp * lp   * ( 11./24   * p2 *k2  -131./192 * p2 *p2)
+            r[e] += lp * lk   * (-41./96   * p2 *k2  -3./32    * p2 *p2)
+            r[e] += lp * le   * ( 13./24   * p2 *k2  +59./96   * p2 *p2)
+            r[e] += lk * lk   * ( 17./36   * k2 *k2  +7./144   * p2 *k2)
+            r[e] += lk * le   * (-163./144 * k2 *k2  -67./288  * p2 *k2 + 3./32   * p2 *p2)
+            r[e] += le * le   * ( 241./288 * k2 *k2  -13./72   * p2 *k2 - 61./192 * p2 *p2)
+            tmp = gv.gvar(r[e])
+            r[e] += k2**2 * FF(p2/k2)
+            if self.switches['debug_nnlo_check']:
+                print('logSq     = %f' %(tmp))
+                print('FF        = %f' %(k2**2 * FF(p2/k2)))
+                FF_approx = k2**2 * FF_approximate(p2/k2)
+                print('FF_approx = %f' %(k2**2 * FF_approximate(p2/k2)))
+        return r
+
+    def xpt_nnlo_log(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        L1 = lec['L1']
+        L2 = lec['L2']
+        L3 = lec['L3']
+        L4 = lec['L4']
+        L5 = lec['L5']
+        L6 = lec['L6']
+        L7 = lec['L7']
+        L8 = lec['L8']
+        for e in x_e:
+            k2 = x_e[e]['k2']['esq']
+            p2 = x_e[e]['p2']['esq']
+            lk = np.log(k2)
+            lp = np.log(p2)
+            e2 = 4./3 * k2 - 1./3 * p2
+            le = np.log(e2)
+            # extra counter terms
+            tk  = 8*(4*pi)**2 *L5 *(8*L4 +3*L5 -16*L6 -8*L8) -2*L1 -L2 -1./18*L3 +4./3*L5 -16*L7 -8*L8
+            tp  = 8*(4*pi)**2 *L5 *(4*L4 +5*L5  -8*L6 -8*L8) -2*L1 -L2 -5./18*L3 -4./3*L5 +16*L7 +8*L8
+            ct  = (4*pi)**2 * (k2 - p2) * tk * k2
+            ct += (4*pi)**2 * (k2 - p2) *tp * p2
+            r[e] = ct
+
+            # single log terms
+            C1  = -(7./9     + (4*pi)**2 * 11./2 *L5) *p2 *k2
+            C1 += -(113./72  + (4*pi)**2 *(4*L1 +10*L2 +13./2*L3 -21./2*L5))*p2**2
+
+            C2  =  (209./144 + (4*pi)**2 *3*L5)*p2*k2
+            C2 +=  (53./96   + (4*pi)**2 *(4*L1 +10*L2 +5*L3 -5*L5))*k2**2
+
+            C3  =  (13./18   + (4*pi)**2 *(8./3*L3 -2./3 *L5 -16*L7  -8*L8))* k2*k2
+            C3 += -(4./9     + (4*pi)**2 *(4./3*L3 +25./6*L5 -32*L7 -16*L8))* p2*k2
+            C3 +=  (19./288  + (4*pi)**2 *(1./6*L3 +11./6*L5 -16*L7  -8*L8))* p2*p2
+
+            r[e] += C1 * lp  + C2 * lk  + C3 * le
+            if self.switches['debug_nnlo_check']:
+                print('extra ct  = %f' %ct)
+                print('C1 = %s' %C1)
+                print('C2 = %s' %C2)
+                print('C3 = %s' %C3)
+                print('log terms = %f' %(r[e] - ct))
+        return r
+
+    def xpt_ratio_nnlo(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        L4 = lec['L4']
+        L5 = lec['L5']
+        for e in x_e:
+            k2 = x_e[e]['k2']['esq']
+            p2 = x_e[e]['p2']['esq']
+            lk = np.log(k2)
+            lp = np.log(p2)
+            e2 = 4./3 * k2 - 1./3 * p2
+            le = np.log(e2)
+
+            r[e]  = (p2*lp +0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4)) \
+                * (3./8*p2*lp +3./4*k2*lk +3./8*e2*le +4*(4*pi)**2 *(p2*L4 +k2*(2*L4+L5)))
+            #r[e] += -1.0*( p2*lp +0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4) )**2
+            r[e] += 0.5*( p2*lp +0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4) )**2
+            if self.switches['debug_nnlo_check']:
+                print('ratio fix = %f\n' %(r[e]))
+        return r
+
+    def xpt_nnlo_FF_PP(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        L4 = lec['L4']
+        L5 = lec['L5']
+        for e in x_e:
+            k2 = x_e[e]['k2']['esq']
+            p2 = x_e[e]['p2']['esq']
+            lk = np.log(k2)
+            lp = np.log(p2)
+            r[e] = 3./2 *(k2-p2) *(p2*lp + 0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4))
+            if self.switches['debug_nnlo_check']:
+                print('mu fix    = %f\n' %(r[e]))
+        return r
+
+    # NNNLO terms
+    def nnnlo_a4(self,x,p):
+        r = dict()
+        x_e, lec = self.make_x_lec(x,p)
+        for e in x_e:
+            r[e] = (x_e[e]['k2']['esq'] - x_e[e]['p2']['esq']) * x_e[e]['a2']**2 * lec['s_6']
+        return r
+
+    # MA NLO Long Form for debugging
+    def ma_longform_nlo(self,x,p):
+        ''' for debugging - a cross check expression '''
+        r = dict()
+        for e in x:
+            x_e[e] = self.x_p_ens[e]
+            lec   = self.lec_ens[e]
+            r[e]  = self.counterterms(x_e[e],lec)
+            r[e] += 1.
+            r[e] += x_e[e]['ju'] * np.log(x_e[e]['ju'])
+            r[e] += 0.5 * x_e[e]['ru'] * np.log(x_e[e]['ru'])
+            # (+) kaon log terms
+            r[e] += -0.5 * x_e[e]['ju'] * np.log(x_e[e]['ju'])
+            r[e] += -1./4 * x_e[e]['ru'] * np.log(x_e[e]['ru'])
+            r[e] += -0.5*x_e[e]['js'] * np.log(x_e[e]['js'])
+            r[e] += -1./4 * x_e[e]['rs'] * np.log(x_e[e]['rs'])
+            r[e] += -x_e[e]['dju2'] / 8
+            r[e] +=  x_e[e]['dju2']**2 / 24 / (x_e[e]['x2'] - x_e[e]['p2'])
+            r[e] +=  x_e[e]['drs2'] * (x_e[e]['k2']-x_e[e]['p2']) / 6 / (x_e[e]['x2']-x_e[e]['s2'])
+            r[e] += -x_e[e]['dju2'] * x_e[e]['drs2'] / 12 / (x_e[e]['x2'] - x_e[e]['s2'])
+            r[e] += np.log(x_e[e]['p2'])/24 * (3*x_e[e]['p2'] \
+                    - 3*x_e[e]['dju2']*(x_e[e]['x2']+x_e[e]['p2'])/(x_e[e]['x2']-x_e[e]['p2']) \
+                    + x_e[e]['dju2']**2 * x_e[e]['x2']/(x_e[e]['x2']-x_e[e]['p2'])**2\
+                    -4*x_e[e]['dju2']*x_e[e]['drs2']*x_e[e]['p2']/(x_e[e]['x2']-x_e[e]['p2'])/(x_e[e]['s2']-x_e[e]['p2'])\
+                    )
+            r[e] += -x_e[e]['x2']/24 * np.log(x_e[e]['x2'])*(9 \
+                    -6*x_e[e]['dju2']/(x_e[e]['x2']-x_e[e]['p2']) \
+                    + x_e[e]['dju2']**2/(x_e[e]['x2']-x_e[e]['p2'])**2\
+                    +x_e[e]['drs2']*(4*(x_e[e]['k2']-x_e[e]['p2'])+6*(x_e[e]['s2']-x_e[e]['x2']))/(x_e[e]['x2']- x_e[e]['s2'])**2 \
+                    -2*x_e[e]['dju2']*x_e[e]['drs2']*(2*x_e[e]['s2']-x_e[e]['p2']-x_e[e]['x2'])/(x_e[e]['x2']-x_e[e]['s2'])**2/(x_e[e]['x2']-x_e[e]['p2'])\
+                    )
+            r[e] += np.log(x_e[e]['s2'])/12 * (3*x_e[e]['s2'] \
+                    +x_e[e]['drs2']*(3*x_e[e]['s2']**2 + 2*(x_e[e]['k2']-x_e[e]['p2'])*x_e[e]['x2'] -3*x_e[e]['s2']*x_e[e]['x2'])/(x_e[e]['x2']-x_e[e]['s2'])**2\
+                    -x_e[e]['dju2']*x_e[e]['drs2']*(2*x_e[e]['s2']**2 - x_e[e]['x2']*(x_e[e]['s2']+x_e[e]['p2']))/(x_e[e]['x2']-x_e[e]['s2'])**2 / (x_e[e]['s2']-x_e[e]['p2'])\
+                    )
+        return r
+
+    # Tadpole Integrals
+    def I_IV(self,x):
+        return x['esq'] * np.log(x['esq'])
+    def I_FV(self,x):
+        r  = x['esq'] * np.log(x['esq'])
+        r += x['esq'] * x['fvI']
+        return r
+    def dI_IV(self,x):
+        return 1 + np.log(x['esq'])
+    def dI_FV(self,x):
+        r = 1 + np.log(x['esq'])
+        r += x['fvdI']
+        return r
+    def K(self,x1,x2):
+        r  = self.I(x2)
+        r += -self.I(x1)
+        r  = r / (x2['esq'] - x1['esq'])
+        return r
+    def K21(self,x1,x2):
+        r  = self.K(x1,x2) / (x2['esq'] - x1['esq'])
+        r += -self.dI(x1) / (x2['esq'] - x1['esq'])
+        return r
+    def K123(self,x1,x2,x3):
+        r  = self.I(x1) / (x1['esq'] - x2['esq']) / (x1['esq'] - x3['esq'])
+        r += self.I(x2) / (x2['esq'] - x1['esq']) / (x2['esq'] - x3['esq'])
+        r += self.I(x3) / (x3['esq'] - x1['esq']) / (x3['esq'] - x2['esq'])
+        return r
+
 
     def Fpi_ma_nlo(self,x,lec):
         r  = -self.I(x['ju'])
@@ -452,7 +780,7 @@ class Fit(object):
 
         # correct for renormalization scale defined by F_latt
         #         and for changing Fpi -> sqrt(Fpi FK) or FK
-        if self.switches['scale'] == 'PP':
+        if self.FF == 'PP':
             if self.switches['debug_nnlo_check']: tmp = float(r)
             r += 3./2 *(k2-p2) *(p2*lp + 0.5*k2*lk -4*(4*pi)**2 *(p2*(L4+L5) +2*k2*L4))
             if self.switches['debug_nnlo_check']:
@@ -462,7 +790,7 @@ class Fit(object):
                     print('mu fix    = %f\n' %(r-tmp))
         else:
             dFKFpi_nlo  = 5./8 *p2*lp -1./4 *k2*lk -3./8 *e2*le +4*(4*pi)**2 * L5 * (k2-p2)
-            if self.switches['scale'] == 'PK':
+            if self.FF == 'PK':
                 if self.switches['debug_nnlo_check']: tmp = float(r)
                 r += 3./4 *(k2-p2) * (11./8 *p2*lp +5./4 *k2*lk +3./8 *e2*le )
                 r += 3./4 *(k2-p2) * (-4)*(4*pi)**2* (p2*(2*L4 +L5) + k2*(4*L4 +L5))
@@ -472,7 +800,7 @@ class Fit(object):
                 r += dFKFpi_nlo**2
                 if self.switches['debug_nnlo_check']:
                     print('F fix     = %f\n' %(r-tmp))
-            elif self.switches['scale'] == 'KK':
+            elif self.FF == 'KK':
                 if self.switches['debug_nnlo_check']: tmp = float(r)
                 r += 3./2 *(k2-p2) * (3./8 *p2*lp  +3./4 *k2*lk +3./8 *e2*le )
                 r += 3./2 *(k2-p2) * (-4)*(4*pi)**2* (p2*L4 +k2*(2*L4 +L5))
@@ -486,7 +814,7 @@ class Fit(object):
                     else:
                         print('F fix     = %f\n' %(r-tmp))
             else:
-                sys.exit('unrecognized F=F_{pi,K} option: '+self.switches['scale'])
+                sys.exit('unrecognized F=F_{pi,K} option: '+self.FF)
 
         # correct if ratio functions are used
         if 'ratio' in self.eft:
@@ -530,7 +858,8 @@ class Fit(object):
     def xpt(self,x,p,debug=False):
         r = dict()
         for e in x:
-            x_par,lec = self.make_x_lec(x,p,e)
+            x_par = {key:val for key,val in p[e].items if not isinstance(key,str)}
+            lec   = {key:val for key,val in p[e].items if isinstance(key,str)}
             if debug:
                 print(e,x_par)
                 print(lec)
@@ -547,7 +876,8 @@ class Fit(object):
     def xpt_ratio(self,x,p):
         r = dict()
         for e in x:
-            x_par,lec = self.make_x_lec(x,p,e)
+            x_par = self.x_p_ens[e]
+            lec   = self.lec_ens[e]
             num  = 1. + self.FK_xpt_nlo(x_par,lec)
             den  = 1. + self.Fpi_xpt_nlo(x_par,lec)
             r[e] = num / den
@@ -555,64 +885,6 @@ class Fit(object):
                 r[e] += self.fkfpi_nnlo(x_par,lec)
             if self.order in ['nnnlo'] or self.a4:
                 r[e] += self.nnnlo(x_par,lec)
-        return r
-    def ma(self,x,p):
-        r = dict()
-        for e in x:
-            x_par,lec = self.make_x_lec(x,p,e)
-            r[e]  = 1.
-            r[e] += self.FK_ma_nlo(x_par,lec)
-            r[e] += -self.Fpi_ma_nlo(x_par,lec)
-            if self.order in ['nnlo','nnnlo']:
-                r[e] += self.fkfpi_nnlo(x_par,lec)
-            if self.order in ['nnnlo'] or self.a4:
-                r[e] += self.nnnlo(x_par,lec)
-        return r
-    def ma_ratio(self,x,p):
-        r = dict()
-        for e in x:
-            x_par,lec = self.make_x_lec(x,p,e)
-            num  = 1. + self.FK_ma_nlo(x_par,lec)
-            den  = 1. + self.Fpi_ma_nlo(x_par,lec)
-            r[e] = num / den
-            if self.order in ['nnlo','nnnlo']:
-                r[e] += self.fkfpi_nnlo(x_par,lec)
-            if self.order in ['nnnlo'] or self.a4:
-                r[e] += self.nnnlo(x_par,lec)
-        return r
-    def ma_longform(self,x,p):
-        ''' for debugging - a cross check expression '''
-        r = dict()
-        for e in x:
-            x_par,lec = self.make_x_lec(x,p,e)
-            r[e]  = self.counterterms(x_par,lec)
-            r[e] += 1.
-            r[e] += x_par['ju'] * np.log(x_par['ju'])
-            r[e] += 0.5 * x_par['ru'] * np.log(x_par['ru'])
-            # (+) kaon log terms
-            r[e] += -0.5 * x_par['ju'] * np.log(x_par['ju'])
-            r[e] += -1./4 * x_par['ru'] * np.log(x_par['ru'])
-            r[e] += -0.5*x_par['js'] * np.log(x_par['js'])
-            r[e] += -1./4 * x_par['rs'] * np.log(x_par['rs'])
-            r[e] += -x_par['dju2'] / 8
-            r[e] +=  x_par['dju2']**2 / 24 / (x_par['x2'] - x_par['p2'])
-            r[e] +=  x_par['drs2'] * (x_par['k2']-x_par['p2']) / 6 / (x_par['x2']-x_par['s2'])
-            r[e] += -x_par['dju2'] * x_par['drs2'] / 12 / (x_par['x2'] - x_par['s2'])
-            r[e] += np.log(x_par['p2'])/24 * (3*x_par['p2'] \
-                    - 3*x_par['dju2']*(x_par['x2']+x_par['p2'])/(x_par['x2']-x_par['p2']) \
-                    + x_par['dju2']**2 * x_par['x2']/(x_par['x2']-x_par['p2'])**2\
-                    -4*x_par['dju2']*x_par['drs2']*x_par['p2']/(x_par['x2']-x_par['p2'])/(x_par['s2']-x_par['p2'])\
-                    )
-            r[e] += -x_par['x2']/24 * np.log(x_par['x2'])*(9 \
-                    -6*x_par['dju2']/(x_par['x2']-x_par['p2']) \
-                    + x_par['dju2']**2/(x_par['x2']-x_par['p2'])**2\
-                    +x_par['drs2']*(4*(x_par['k2']-x_par['p2'])+6*(x_par['s2']-x_par['x2']))/(x_par['x2']- x_par['s2'])**2 \
-                    -2*x_par['dju2']*x_par['drs2']*(2*x_par['s2']-x_par['p2']-x_par['x2'])/(x_par['x2']-x_par['s2'])**2/(x_par['x2']-x_par['p2'])\
-                    )
-            r[e] += np.log(x_par['s2'])/12 * (3*x_par['s2'] \
-                    +x_par['drs2']*(3*x_par['s2']**2 + 2*(x_par['k2']-x_par['p2'])*x_par['x2'] -3*x_par['s2']*x_par['x2'])/(x_par['x2']-x_par['s2'])**2\
-                    -x_par['dju2']*x_par['drs2']*(2*x_par['s2']**2 - x_par['x2']*(x_par['s2']+x_par['p2']))/(x_par['x2']-x_par['s2'])**2 / (x_par['s2']-x_par['p2'])\
-                    )
         return r
 
     def fit_data(self):
@@ -623,11 +895,23 @@ class Fit(object):
             fitter='scipy_least_squares'
         else:
             fitter='gsl_multifit'
-        self.fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=self.fit_function,fitter=fitter)
+        fit_func = self.make_fit_function(self.func_elements)
+        self.fit = lsqfit.nonlinear_fit(data=(x,y),prior=p,fcn=fit_func,fitter=fitter, debug=True)
 
     def report_phys_point(self,debug=False):
-        # get copy of all self attributes
-        self_dict = self.__dict__.copy()
+        # copy the class objects we will change for constructing the physical point
+        fit_ensembles = list(self.switches['ensembles_fit'])
+        self.switches['ensembles_fit'] = ['phys']
+        func_elements = list(self.func_elements)
+        if 'ma' in self.func_elements[0]:
+            func_elements[0] = func_elements[0].replace('ma','xpt')
+            eft = self.eft
+            self.eft = eft.replace('ma','xpt')
+        fit_fv = self.fv
+        if fit_fv:
+            self.fv = False
+            self.I  = self.I_IV
+            self.dI = self.dI_IV
         # set physical point
         x_phys = dict()
         x_phys['phys'] = {k:np.inf for k in ['mpiL','mkL']}
@@ -643,26 +927,20 @@ class Fit(object):
         p_phys = dict()
         for k in ['s_4','saS_4','s_6','sk_6','sp_6']:
             p_phys[k] = 0.
-        Lchi_phys = self.phys['Lchi_'+self.switches['scale']]
+        Lchi_phys = self.phys['Lchi_'+self.FF]
         p_phys[('phys','p2')] = self.phys['mpi']**2 / Lchi_phys**2
         p_phys[('phys','k2')] = self.phys['mk']**2  / Lchi_phys**2
         p_phys[('phys','e2')] = 4./3*p_phys[('phys','k2')] - 1./3 * p_phys[('phys','p2')]
         p_phys[('phys','a2')] = 0.
+
         for k in ['L5','L4','k_4','p_4','kp_6','k_6','p_6','L1','L2','L3','L6','L7','L8']:
             if k in self.fit.p:
                 p_phys[k] = self.fit.p[k]
-        if 'ratio' in self.eft:
-            self.eft          = 'xpt-ratio'
-            self.fit_function = self.xpt_ratio
-        else:
-            self.eft          = 'xpt'
-            self.fit_function = self.xpt
-        self.fv = False
-
-        self.phys_extrap = self.fit_function(x_phys,p_phys)
-        FK_Fpi_phys = self.fit_function(x_phys,p_phys)
+        # create new function elementals if need be
+        fit_function_phys = self.make_fit_function(func_elements)
+        self.phys_extrap = fit_function_phys(x_phys,p_phys)
         if self.switches['debug_phys']:
-            print('DEBUG: SCALE', self.switches['scale'])
+            print('DEBUG: SCALE', self.FF)
             print('DEBUG: Lchi =',Lchi_phys)
             print('DEBUG: mpi =',self.phys['mpi'])
             print('DEBUG: mK  =',self.phys['mk'])
@@ -675,21 +953,28 @@ class Fit(object):
             for k in self.fit.p:
                 if isinstance(k,str):
                     print(k,self.fit.p[k])
-            print(FK_Fpi_phys['phys'],'\n')
-        #if self.switches['debug_save_fit']:
-            #print('error breakdown: y, L5')
-            #print(FK_Fpi_phys['phys'].partialsdev(p_phys[('phys','p2')]))
-            #print(FK_Fpi_phys['phys'].partialsdev(self.y))
-            #print(FK_Fpi_phys['phys'].partialsdev(self.p_init['L5']))
-
-        # restore original self attributes
-        for key,val in self_dict.items():
-            setattr(self, key, val)
-        return FK_Fpi_phys
+            print(self.phys_extrap['phys'],'\n')
+        # restore objects to original
+        if 'ma' in self.func_elements[0]:
+            self.eft = eft
+        self.switches['ensembles_fit'] = fit_ensembles
+        if fit_fv:
+            self.fv = True
+            self.I  = self.I_FV
+            self.dI = self.dI_FV
+        #self.func_elements = self.make_function_elementals()
+        #self.fit_function = self.make_fit_function
+        #for key,val in self_dict.items():
+        #    setattr(self, key, val)
+        return self.phys_extrap
 
     def check_fit(self,phys_point):
         # get copy of all self attributes
-        self_dict = self.__dict__.copy()
+        self_dict = copy.deepcopy(self.__dict__)
+        # turn off FV
+        self.fv = False
+        self.I  = self.I_IV
+        self.dI = self.dI_IV
         # set physical point
         x_phys = dict()
         x_phys['phys'] = {k:np.inf for k in ['mpiL','mkL']}
@@ -719,7 +1004,6 @@ class Fit(object):
         else:
             self.eft          = 'xpt'
             self.fit_function = self.xpt
-        self.fv = False
 
         #print('chi2/dof [dof] = %.2f [%d]    Q = %.2e    logGBF = %.3f' \
         #    %(self.fit.chi2/self.fit.dof,self.fit.dof,self.fit.Q,self.fit.logGBF))
@@ -741,7 +1025,7 @@ class Fit(object):
             p[k] = self.p_init[k]
         for k in ['s_4','saS_4','s_6','sk_6','sp_6']:
             p[k] = 0.
-        Lchi = self.p_init[('check','Lchi_'+self.switches['scale'])]
+        Lchi = self.p_init[('check','Lchi_'+self.FF)]
         p[('check','p2')] = check_point['mpi']**2 / Lchi**2
         p[('check','k2')] = check_point['mk']**2  / Lchi**2
         p[('check','e2')] = 4.*p[('check','k2')]/3 - p[('check','p2')]/3
@@ -779,7 +1063,11 @@ class Fit(object):
     def vs_epi(self,raw_data=False):
         print('making chiral plot')
         # get copy of all self attributes
-        self_dict = self.__dict__.copy()
+        self_dict = copy.deepcopy(self.__dict__)
+        # turn off FV
+        self.fv = False
+        self.I  = self.I_IV
+        self.dI = self.dI_IV
         # switch to continuum fit func
         if 'ratio' in self.eft:
             self.eft          = 'xpt-ratio'
@@ -787,7 +1075,6 @@ class Fit(object):
         else:
             self.eft          = 'xpt'
             self.fit_function = self.xpt
-        self.fv = False
         # set x,y,p
 
         x = dict()
@@ -803,7 +1090,7 @@ class Fit(object):
         y_plot['a09'] = []
         y_plot['a12'] = []
         y_plot['a15'] = []
-        Lchi = self.phys['Lchi_'+self.switches['scale']]
+        Lchi = self.phys['Lchi_'+self.FF]
         k2 = self.phys['mk']**2 / Lchi**2
         mpi_range = np.sqrt(np.arange(1,401**2,400**2/50))
         for mpi in mpi_range:
@@ -866,7 +1153,11 @@ class Fit(object):
     def vs_ea(self,raw_data=False):
         print('making continuum plot')
         # get copy of all self attributes
-        self_dict = self.__dict__.copy()
+        self_dict = copy.deepcopy(self.__dict__)
+        # turn off FV
+        self.fv = False
+        self.I  = self.I_IV
+        self.dI = self.dI_IV
         # switch to continuum fit func
         if 'ratio' in self.eft:
             self.eft          = 'xpt-ratio'
@@ -874,7 +1165,6 @@ class Fit(object):
         else:
             self.eft          = 'xpt'
             self.fit_function = self.xpt
-        self.fv = False
 
         # set x,y,p
         x = dict()
@@ -893,8 +1183,8 @@ class Fit(object):
             p_a4 = dict(p)
             p_a2['s_6'] = gv.gvar(0,0)
             p_a4['s_4'] = gv.gvar(0,0)
-        p2 = self.phys['mpi']**2 / self.phys['Lchi_'+self.switches['scale']]**2
-        k2 = self.phys['mk']**2  / self.phys['Lchi_'+self.switches['scale']]**2
+        p2 = self.phys['mpi']**2 / self.phys['Lchi_'+self.FF]**2
+        k2 = self.phys['mk']**2  / self.phys['Lchi_'+self.FF]**2
         # make equal spaced a in a**2 range
         a_range = np.sqrt(np.arange(0, .16**2, .16**2 / 50))
         for a in a_range:
@@ -1046,7 +1336,11 @@ class Fit(object):
             return a dictionary of shifts
         '''
         # get copy of all self attributes
-        self_dict = self.__dict__.copy()
+        self_dict = copy.deepcopy(self.__dict__)
+        # turn off FV
+        self.fv = False
+        self.I  = self.I_IV
+        self.dI = self.dI_IV
 
         # determine fitted values of FK/FPi
         y_shift = dict()
@@ -1054,7 +1348,7 @@ class Fit(object):
         print('for model %s' %self.switches['ansatz']['model'])
         x = self.prune_x()
         for e in x:
-            Lchi = self.p_init[(e,'Lchi_'+self.switches['scale'])]
+            Lchi = self.p_init[(e,'Lchi_'+self.FF)]
             p    = self.prune_priors()
             for k in self.lec_nnlo + self.lec_nnnlo:
                 if k in self.fit.p:
@@ -1067,7 +1361,6 @@ class Fit(object):
         else:
             self.eft          = 'xpt'
             self.fit_function = self.xpt
-        self.fv = False
         if self.switches['verbose']:
             print("%9s %12s %12s" %('ensemble','data', 'shift'))
             print('-------- | ----------- | ----------')
@@ -1079,7 +1372,7 @@ class Fit(object):
             for k in self.lec_nnlo + self.lec_nnnlo:
                 if k in self.fit.p:
                     p_tmp[k] = self.fit.p[k]
-            Lchi = self.p_init[(e,'Lchi_'+self.switches['scale'])]
+            Lchi = self.p_init[(e,'Lchi_'+self.FF)]
             p_tmp[(e,'p2')] = self.p_init[(e,'mpi')]**2 / Lchi**2
             p_tmp[(e,'k2')] = phys_point['mk']**2 / phys_point['Lchi']**2
             p_tmp[(e,'e2')] = 4./3 *p_tmp[(e,'k2')] - 1./3 *p_tmp[(e,'p2')]
@@ -1119,7 +1412,7 @@ class Fit(object):
             return a dictionary of shifts
         '''
         # get copy of all self attributes
-        self_dict = self.__dict__.copy()
+        self_dict = copy.deepcopy(self.__dict__)
 
         # determine fitted values of FK/FPi
         y_shift = dict()
@@ -1128,7 +1421,14 @@ class Fit(object):
         x = self.prune_x()
         # turn FV corrections back on temporarily
         self.fv = 'FV' in self.switches['ansatz']['model']
-        PK = self.switches['scale']
+        if self.fv:
+            self.I  = self.I_FV
+            self.dI = self.dI_FV
+        else:
+            self.I  = self.I_IV
+            self.dI = self.dI_IV
+
+        PK = self.FF
         p    = self.prune_priors()
         for k in self.lec_nnlo + self.lec_nnnlo:
             if k in self.fit.p:

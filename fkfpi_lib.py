@@ -446,9 +446,13 @@ def perform_analysis(switches,gv_data,priors,phys_point):
             d_e['p'] = p_e
             fit_e = xpt.Fit(switches,xyp_init=d_e,phys=phys_point)
             fit_e.fit_data()
+            #print('DEBUG: phys_point')
+            #print(fit_e.report_phys_point())
+
             fit_results[model] = fit_e
             if switches['save_fits']:
                 if not os.path.exists('pickled_fits/'+p_fit+'.p'):
+                    #state = fit_e.__dict__.copy()
                     gv.dump(fit_e, 'pickled_fits/'+p_fit+'.p', add_dependencies=True)
                     if switches['debug_save_fit']:
                         fit_p = gv.load('pickled_fits/'+p_fit+'.p')
