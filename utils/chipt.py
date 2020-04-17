@@ -1,0 +1,187 @@
+#!/usr/bin/env python3
+import sys
+import numpy as np
+import functools # for LRU cache
+import scipy.special as spsp # Bessel functions
+
+sys.path.append('py_chiron')
+import chiron
+
+lru_cache_size=200 #increase this if need be to store all bessel function evaluations in cache memory
+pi = np.pi
+
+'''
+lazily evaluated dictionary that will compute convenience observables
+as they are needed by calling into the parent model's convenience
+functions (with a prepended underscore)
+'''
+class ConvenienceDict(dict):
+
+    def __init__(self, parent_model, x, p, *args, **kwargs):
+        self.p_model = parent_model
+        self.x = x
+        self.p = p
+        dict.__init__(self,*args, **kwargs)
+
+    def __getitem__(self, key):
+        if key not in self.keys():
+            dict.__setitem__(self, key, getattr(FitModel, "_"+key)(self.p_model,self.x,self.p,self))
+        return dict.__getitem__(self,key)
+
+
+'''
+This class defines the functions that go into the various fit models
+'''
+class FitModel:
+
+    def __init__(self, _term_list, _fv, _FF):
+        self.term_list       = _term_list
+        self.fv              = _fv
+        self.FF              = _FF
+        self.required_params = self._get_used_params()
+
+    def __call__(self, x, p):
+        convenience_p = ConvenienceDict(self, x, p)
+        return sum(getattr(FitModel, term)(self, x, p, convenience_p) for term in self.term_list)
+
+    def get_required_parameters(self):
+        return self.required_params[1]
+
+    ''' this function self-reflects to find out
+        which x, p and convenience_p (cp) are going to be required '''
+    def _get_used_params(self):
+        class FakeDict(dict):
+            def __init__(self):
+                self.param_list = set()
+            def __getitem__(self, key):
+                self.param_list.add(key)
+                return 1.
+        fake_x  = FakeDict()
+        fake_p  = FakeDict()
+        fake_cp = ConvenienceDict(self, fake_x, fake_p)
+        # the regular function calls (which automatically recurse into the
+        # convenience functions)
+        dummy = sum(getattr(FitModel, term)(self,fake_x,fake_p,fake_cp)
+                    for term in self.term_list)
+        return fake_x.param_list, fake_p.param_list, set(fake_cp.keys())
+
+    ''' define all the convenience functions; whichever attribute is accessed of
+        `cP` in the physics functions above needs to have a corresponding
+        function defined here with the name and an underscore prepended '''
+    # xpt masses
+    def _p2(self, x, p, cP):  return (p['mpi'] / p['Lchi_'+self.FF])**2
+    def _k2(self, x, p, cP):  return (p['mk']  / p['Lchi_'+self.FF])**2
+    def _e2(self, x, p, cP):  return 4./3.*cP['k2']-1./3.*cP['p2']
+    # eps_a**2
+    def _a2(self, x, p, cP):  return p['aw0']**2 / (4 * pi)
+    # mixed action params
+    def _ju2(self, x, p, cP): return (p['mju'] / p['Lchi_'+self.FF])**2
+    def _ru2(self, x, p, cP): return (p['mru'] / p['Lchi_'+self.FF])**2
+    def _js2(self, x, p, cP): return (p['mjs'] / p['Lchi_'+self.FF])**2
+    def _rs2(self, x, p, cP): return (p['mrs'] / p['Lchi_'+self.FF])**2
+    def _ss2(self, x, p, cP): return (p['mss'] / p['Lchi_'+self.FF])**2
+    def _xx2(self, x, p, cP): return cP['e2'] + (p['a2DI'] / p['Lchi_'+self.FF])**2
+    def _dju2(self, x, p, cP): return p['a2DI']
+    def _drs2(self, x, p, cP): return p['a2DI']
+
+    # Finite Volume Corrections to Tadpole Integral
+    @functools.lru_cache(maxsize=lru_cache_size)
+    def k0k1k2(self, mL):
+        cn = np.array([6,12,8,6,24,24,0,12,30,24,24,8,24,48,0,6,48,36,24,24])
+        n_mag = np.sqrt(np.arange(1,len(cn)+1,1))
+        k1 = np.sum(cn * spsp.kn(1,n_mag * mL) / mL / n_mag)
+        k2 = np.sum(cn * spsp.kn(2,n_mag * mL) )
+        k0 = np.sum(cn * spsp.kn(0,n_mag * mL) )
+        return k0,k1,k2
+
+    # Tadpole Integrals
+    def _I(self, eps_sq, mL):
+        return eps_sq*np.log(eps_sq) + (4.*eps_sq*self.k0k1k2(mL)[1] if self.fv else 0.)
+    def _Ip(self, x, p, cP): return self._I(cP['p2'], (x['mpiL'] if self.fv else None))
+    def _Ik(self, x, p, cP): return self._I(cP['k2'], (x['mkL']  if self.fv else None))
+    def _Ie(self, x, p, cP): return self._I(cP['e2'], (x['meL']  if self.fv else None))
+    # mixed action
+    def _Iju(self, x, p, cP): return self._I(cP['ju2'], (x['mjuL'] if self.fv else None))
+    def _Iru(self, x, p, cP): return self._I(cP['ru2'], (x['mruL'] if self.fv else None))
+    def _Ijs(self, x, p, cP): return self._I(cP['js2'], (x['mjsL'] if self.fv else None))
+    def _Irs(self, x, p, cP): return self._I(cP['rs2'], (x['mrsL'] if self.fv else None))
+    def _Iss(self, x, p, cP): return self._I(cP['ss2'], (x['mssL'] if self.fv else None))
+    def _Ixx(self, x, p, cP): return self._I(cP['xx2'], (x['mxL']  if self.fv else None))
+
+    def _dI(self, eps_sq, mL):
+        return 1 + np.log(eps_sq) + (2*self.k0k1k2(mL)[1] -self.k0k1k2(mL)[0] -self.k0k1k2(mL)[2] if self.fv else 0.)
+    def _dIp(self, x, p, cP): return self._dI(cP['p2'], (x['mpiL'] if self.fv else None))
+    def _dIss(self, x, p, cP): return self._dI(cP['ss2'], (x['mssL'] if self.fv else None))
+
+    def _Kpx(self, x, p, cP): return (cP['Ixx'] - cP['Ip'])  / (cP['xx2'] - cP['p2'])
+    def _Ksx(self, x, p, cP): return (cP['Ixx'] - cP['Iss']) / (cP['xx2'] - cP['ss2'])
+    def _K21px(self, x, p, cP): return (cP['Kpx'] - cP['dIp'])  / (cP['xx2'] - cP['p2'])
+    def _K21sx(self, x, p, cP): return (cP['Ksx'] - cP['dIss']) / (cP['xx2'] - cP['ss2'])
+    def _K123psx(self, x, p, cP):
+        r  = cP['Ip']  / (cP['p2'] - cP['ss2']) / (cP['p2'] - cP['xx2'])
+        r += cP['Iss'] / (cP['ss2'] - cP['p2']) / (cP['ss2'] - cP['xx2'])
+        r += cP['Ixx'] / (cP['xx2'] - cP['p2']) / (cP['xx2'] - cP['ss2'])
+        return r
+
+    # Fit functions
+    def xpt_nlo(self,x,p,cP):
+        r  = 1.
+        r +=  self.FK_xpt_nlo(x,p,cP)
+        r += -self.Fpi_xpt_nlo(x,p,cP)
+        return r
+
+    def xpt_ratio_nlo(self,x,p,cP):
+        num = 1 + self.FK_xpt_nlo(x,p,cP)  + p['L4'] * (4*pi)**2 *(4*cP['p2'] +8*cP['k2'])
+        den = 1 + self.Fpi_xpt_nlo(x,p,cP) + p['L4'] * (4*pi)**2 *(4*cP['p2'] +8*cP['k2'])
+        return num / den
+
+    def Fpi_xpt_nlo(self,x,p,cP):
+        r  = -cP['Ip']
+        r += -0.5 * cP['Ik']
+        r += p['L5'] * (4*pi)**2 * 4 * cP['p2']
+        return r
+
+    def FK_xpt_nlo(self,x,p,cP):
+        r  = -3./8 * cP['Ip']
+        r += -3./4 * cP['Ik']
+        r += -3./8 * cP['Ie']
+        r += p['L5'] * (4*pi)**2 * 4 * cP['k2']
+        return r
+
+    def ma_nlo(self,x,p,cP):
+        r  = 1.
+        r +=  self.FK_ma_nlo(x,p,cP)
+        r += -self.Fpi_ma_nlo(x,p,cP)
+        return r
+
+    def ma_ratio_nlo(self,x,p,cP):
+        num = 1 + self.FK_ma_nlo(x,p,cP)  + p['L4'] * (4*pi)**2 *(4*cP['p2'] +8*cP['k2'])
+        den = 1 + self.Fpi_ma_nlo(x,p,cP) + p['L4'] * (4*pi)**2 *(4*cP['p2'] +8*cP['k2'])
+        return num / den
+
+    def Fpi_ma_nlo(self,x,p,cP):
+        r  = -cP['Iju']
+        r += -1./2 * cP['Iru']
+        r += p['L5'] * (4*pi)**2 * 4 * cP['p2']
+        return r
+
+    def FK_ma_nlo(self,x,p,cP):
+        r  = -1./2 * cP['Iju']
+        r +=  1./8 * cP['Ip']
+        r += -1./4 * cP['Iru']
+        r += -1./2 * cP['Ijs']
+        r += -1./4 * cP['Irs']
+        r +=  1./4 * cP['Iss']
+        r += -3./8 * cP['Ixx']
+        r += p['L5'] * (4*pi)**2 * 4 * cP['k2']
+
+        r += cP['dju2']              * -1./8  * cP['dIp']
+        r += cP['dju2']              *  1./4  * cP['Kpx']
+        r += cP['dju2']**2           * -1./24 * cP['K21px']
+        r += cP['dju2'] * cP['drs2'] *  1./12 * cP['K21sx']
+        r += cP['dju2'] * cP['drs2'] * -1./6  * cP['K123psx']
+        r += cP['drs2']              *  1./4  * cP['Ksx']
+        r += cP['drs2'] * cP['k2']   * -1./6  * cP['K21sx']
+        r += cP['drs2'] * cP['p2']   *  1./6  * cP['K21sx']
+
+        return r

@@ -13,8 +13,8 @@ switches['ensembles_fit'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
     'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
-    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',#'a09m135',
-    'a15m135XL','a12m130',
+    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
+    'a15m135XL','a12m130','a09m135',
     ]
 #switches['ensembles_fit'] = [
 #    'a12m400' ,'a09m400',
@@ -23,12 +23,13 @@ switches['ensembles_fit'] = [
 #    'a12m220S','a12m220','a12m220L','a09m220',
 #    'a12m130',
 #    ]
+#switches['ensembles_fit'] = ['a09m135']
 
 # FIT MODELS
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
 switches['ansatz']['models'] = ['xpt_nnlo_FV_a4','ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
-switches['ansatz']['models'] = ['xpt_nnlo_FV_a4', 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnlo_FV_a4','ma_nnlo_FV_a4']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
 switches['sys']['Lam_chi']   = False
@@ -52,9 +53,9 @@ switches['bs_bias']          = True
 # use scipy instead of GSL?
 switches['scipy']            = False
 # fit options
-switches['print_fit']        = True
+switches['print_fit']        = False
 switches['report_fit']       = False
-switches['make_plots']       = True
+switches['make_plots']       = False
 switches['save_figs']        = True
 switches['plot_raw_data']    = False
 switches['verbose']          = False
@@ -71,6 +72,7 @@ switches['simple_fit']       = False
 #switches['check_fit']       = False
 # DEBUGGING
 switches['debug']            = False
+switches['debug_bs']         = False
 switches['debug_x']          = False
 switches['debug_phys']       = False
 switches['debug_nlo_check']  = False

@@ -137,52 +137,52 @@ class Fit(object):
                 mL       = self.x[e]['mpiL']
                 k0,k1,k2 = k1k2k3(mL)
                 self.fv_I[(e,'p2')]  = 4 * k1
-                self.fv_dI[(e,'p2')] = (2*k1 - k0 - k2) / (4*pi)**2
+                self.fv_dI[(e,'p2')] = (2*k1 - k0 - k2) #/ (4*pi)**2
                 #print(e,'p2',self.fv_I[(e,'p2')],self.fv_dI[(e,'p2')])
                 # mK
                 esq      = self.p_init[(e,'mk')]**2 / Lchi**2
                 mL       = self.x[e]['mkL']
                 k0,k1,k2 = k1k2k3(mL)
                 self.fv_I[(e,'k2')]  = 4 * k1
-                self.fv_dI[(e,'k2')] = (2*k1 - k0 - k2) / (4*pi)**2
+                self.fv_dI[(e,'k2')] = (2*k1 - k0 - k2) #/ (4*pi)**2
                 # meta
                 esq      = 4./3 * self.p_init[(e,'mk')]**2 / Lchi**2
                 esq     += -1./3 *self.p_init[(e,'mpi')]**2 / Lchi**2
                 mL       = np.sqrt(4./3*self.x[e]['mkL']**2 - 1./3 * self.x[e]['mpiL']**2)
                 k0,k1,k2 = k1k2k3(mL)
                 self.fv_I[(e,'e2')]  = 4 * k1
-                self.fv_dI[(e,'e2')] = (2*k1 - k0 - k2) / (4*pi)**2
+                self.fv_dI[(e,'e2')] = (2*k1 - k0 - k2) #/ (4*pi)**2
                 if 'ma' in self.eft:
                     # mss
                     esq = self.p_init[(e,'mss')]**2 / Lchi**2
                     mL  = self.x[e]['mssL']
                     k0,k1,k2 = k1k2k3(mL)
                     self.fv_I[(e,'s2')]  = 4 * k1
-                    self.fv_dI[(e,'s2')] = (2*k1 - k0 - k2) / (4*pi)**2
+                    self.fv_dI[(e,'s2')] = (2*k1 - k0 - k2) #/ (4*pi)**2
                     # mju
                     esq = self.p_init[(e,'mju')]**2 / Lchi**2
                     mL  = self.x[e]['mjuL']
                     k0,k1,k2 = k1k2k3(mL)
                     self.fv_I[(e,'ju')]  = 4 * k1
-                    self.fv_dI[(e,'ju')] = (2*k1 - k0 - k2) / (4*pi)**2
+                    self.fv_dI[(e,'ju')] = (2*k1 - k0 - k2) #/ (4*pi)**2
                     # mjs
                     esq = self.p_init[(e,'mjs')]**2 / Lchi**2
                     mL  = self.x[e]['mjsL']
                     k0,k1,k2 = k1k2k3(mL)
                     self.fv_I[(e,'js')]  = 4 * k1
-                    self.fv_dI[(e,'js')] = (2*k1 - k0 - k2) / (4*pi)**2
+                    self.fv_dI[(e,'js')] = (2*k1 - k0 - k2) #/ (4*pi)**2
                     # mru
                     esq = self.p_init[(e,'mru')]**2 / Lchi**2
                     mL  = self.x[e]['mruL']
                     k0,k1,k2 = k1k2k3(mL)
                     self.fv_I[(e,'ru')]  = 4 * k1
-                    self.fv_dI[(e,'ru')] = (2*k1 - k0 - k2) / (4*pi)**2
+                    self.fv_dI[(e,'ru')] = (2*k1 - k0 - k2) #/ (4*pi)**2
                     # mrs
                     esq = self.p_init[(e,'mrs')]**2 / Lchi**2
                     mL  = self.x[e]['mrsL']
                     k0,k1,k2 = k1k2k3(mL)
                     self.fv_I[(e,'rs')]  = 4 * k1
-                    self.fv_dI[(e,'rs')] = (2*k1 - k0 - k2) / (4*pi)**2
+                    self.fv_dI[(e,'rs')] = (2*k1 - k0 - k2) #/ (4*pi)**2
                     # mX
                     e2  = 4./3 * self.p_init[(e,'mk')]**2 / Lchi**2
                     e2 += -1./3 *self.p_init[(e,'mpi')]**2 / Lchi**2
@@ -190,7 +190,7 @@ class Fit(object):
                     mL  = np.sqrt(4./3*self.x[e]['mkL']**2 - 1./3 * self.x[e]['mpiL']**2)
                     mL  = np.sqrt(esq / e2) * mL
                     self.fv_I[(e,'x2')]  = 4 * k1
-                    self.fv_dI[(e,'x2')] = (2*k1 - k0 - k2) / (4*pi)**2
+                    self.fv_dI[(e,'x2')] = (2*k1 - k0 - k2) #/ (4*pi)**2
 
     def make_function_elementals(self):
         func_elements = [self.eft+'_nlo']
