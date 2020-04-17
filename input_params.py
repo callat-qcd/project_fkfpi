@@ -29,10 +29,10 @@ switches['ensembles_fit'] = [
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
 switches['ansatz']['models'] = ['xpt_nnlo_FV_a4','ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
-switches['ansatz']['models'] = ['xpt_nnlo_FV_a4','ma_nnlo_FV_a4']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnlo_FV_a4']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
-switches['sys']['Lam_chi']   = False
+switches['sys']['Lam_chi']   = True
 switches['sys']['FV']        = False
 switches['sys']['alphaS']    = False
 switches['sys']['nnlo_ct']   = False
@@ -87,7 +87,7 @@ switches['FF_approximate']   = False
 switches['LECs'] = ['L1','L2','L3','L4','L5','L6','L7','L8','p_4','k_4','s_4','saS_4']
 
 priors = dict()
-priors['L5']   = gv.gvar(0, 0.005)
+priors['L5']   = gv.gvar(0, 0.04)
 priors['L4']   = gv.gvar(0, 0.005)
 
 priors['L1']   = gv.gvar( 0.000372,0.000372)
@@ -96,6 +96,9 @@ priors['L3']   = gv.gvar(-0.003070,0.003070)
 priors['L6']   = gv.gvar( 0.000011,0.00011)
 priors['L7']   = gv.gvar(-0.000340,0.000340)
 priors['L8']   = gv.gvar( 0.000294,0.000294)
+
+# Taylor priors
+priors['c2'] = gv.gvar(0,10)
 
 ''' default values '''
 n2lo_width = 5.

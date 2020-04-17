@@ -30,17 +30,17 @@ def main():
     gv_data = io_utils.format_h5_data('data/FK_Fpi_data.h5',switches)
     #print('y',gv_data['y'])
 
-    for model in ['xpt_nlo', 'ma_nlo']:
+    models = sys_models(switches)
+    for model in models:
+        print('===============================================================')
         print(model)
-        fit_model  = chipt.FitModel([model], _fv=False, _FF='PP')
+        print('---------------------------------------------------------------')
+        model_list, FF, fv = gather_model_elements(model)
+        fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
         fitEnv = FitEnv(gv_data, fit_model, switches)
         fit_result = fitEnv.fit_data(priors)
         print(fit_result.format(maxline=True))
 
-        fit_model  = chipt.FitModel([model], _fv=True, _FF='PP')
-        fitEnv = FitEnv(gv_data, fit_model, switches)
-        fit_result = fitEnv.fit_data(priors)
-        print(fit_result.format(maxline=True))
 
 '''
     This is the main class that runs a given fit specified by a model
@@ -87,6 +87,100 @@ class FitEnv:
             fitter='gsl_multifit'
         #print('p',p)
         return lsqfit.nonlinear_fit(data=(x,y), prior=p, fcn=self.fit_function, fitter=fitter, debug=True)
+
+
+def check_for_duplicates(list_of_elems):
+    ''' Check if given list contains any duplicates '''
+    if len(list_of_elems) == len(set(list_of_elems)):
+        return False
+    else:
+        return True
+
+def sys_models(switches):
+    def check_model(sys_val,models,nnlo=False,nnnlo=False):
+        for model in models:
+            new_model = model+sys_val
+            if nnlo:
+                if (sys_val not in model) and (new_model not in models):
+                    if nnnlo:
+                        if 'nnlo' in model and 'nnnlo' not in model:
+                            models.append(new_model)
+                    else:
+                        if 'nnlo' in model:
+                            models.append(new_model)
+            else:
+                if (sys_val not in model) and (new_model not in models):
+                    models.append(new_model)
+        #return models
+    models = switches['ansatz']['models'].copy()
+    #print(len(models),'models')
+    if switches['sys']['FV']:
+        check_model('_FV',models)
+    if switches['sys']['alphaS']:
+        check_model('_alphaS',models,nnlo=True)
+    if switches['sys']['nnlo_ct']:
+        check_model('_ct',models,nnlo=True)
+    if switches['sys']['logSq']:
+        check_model('_logSq',models,nnlo=True)
+    if switches['sys']['a4']:
+        check_model('_a4',models,nnlo=True,nnnlo=True)
+    if switches['sys']['ratio']:
+        for model in models:
+            model_ratio = model.replace('xpt','xpt-ratio').replace('ma','ma-ratio')
+            if '-ratio' not in model and model_ratio not in models:
+                models.append(model_ratio)
+    models_FPK = []
+    for model in models:
+        if switches['sys']['Lam_chi']:
+            for FPK in switches['scales']:
+                models_FPK.append(model+'_'+FPK)
+        else:
+            models_FPK.append(model+'_'+switches['scale'])
+    if switches['debug_models']:
+        for model in models_FPK:
+            print(model)
+    print(len(models_FPK),'models')
+    print('Duplicate models?',check_for_duplicates(models_FPK))
+    return models_FPK
+
+
+def gather_model_elements(model):
+    eft    = model.split('_')[0]
+    order  = model.split('_')[1]
+    FF     = model.split('_')[-1]
+    fv     = 'FV'     in model
+    alphaS = 'alphaS' in model
+    ct     = 'ct'     in model
+    a4     = 'a4'     in model
+
+    if FF not in ['PP','PK','KK']:
+        sys.exit('unrecognized FF choice [PP, PK, KK]: '+FF)
+
+    model_elements = [eft+'_nlo']
+    if eft == 'taylor':
+        if order in ['nnlo', 'nnnlo']:
+            model_elements += ['nnlo_ct']
+        if order in ['nnnlo']:
+            model_elements += ['nnnlo_ct']
+    else:
+        if order in ['nnlo','nnnlo']:
+            if alphaS:
+                model_elements += ['nnlo_alphaS']
+            if ct:
+                model_elements += ['nnlo_ct']
+            else:
+                model_elements += ['nnlo_ct','xpt_nnlo_logSq','xpt_nnlo_log','xpt_nnlo_FF_'+FF]
+                if 'ratio' in eft:
+                    model_elements += ['xpt_nnlo_ratio']
+
+
+            if a4 and order == 'nnlo':
+                model_elements += ['nnnlo_a4']
+            if order == 'nnnlo':
+                model_elements += ['nnnlo_ct']
+
+    return model_elements, FF, fv
+
 
 
 

@@ -3,9 +3,18 @@ import sys
 import numpy as np
 import functools # for LRU cache
 import scipy.special as spsp # Bessel functions
+import gvar as gv
 
 sys.path.append('py_chiron')
 import chiron
+def FF(x):
+    if isinstance(x, gv.GVar):
+        f = chiron.FF(x.mean)
+        stepSize = 1e-7# * chiron.FF(x.mean)
+        dfdx = 0.5*(chiron.FF(x.mean+stepSize) - chiron.FF(x.mean-stepSize))/stepSize
+        return gv.gvar_function(x, f, dfdx)
+    else:
+        return chiron.FF(x)
 
 lru_cache_size=200 #increase this if need be to store all bessel function evaluations in cache memory
 pi = np.pi
@@ -72,6 +81,11 @@ class FitModel:
     def _p2(self, x, p, cP):  return (p['mpi'] / p['Lchi_'+self.FF])**2
     def _k2(self, x, p, cP):  return (p['mk']  / p['Lchi_'+self.FF])**2
     def _e2(self, x, p, cP):  return 4./3.*cP['k2']-1./3.*cP['p2']
+    def _k2p2(self, x, p, cP): return cP['k2'] - cP['p2']
+    # logs
+    def _lp(self, x, p, cP): return np.log(cP['p2'])
+    def _lk(self, x, p, cP): return np.log(cP['k2'])
+    def _le(self, x, p, cP): return np.log(cP['e2'])
     # eps_a**2
     def _a2(self, x, p, cP):  return p['aw0']**2 / (4 * pi)
     # mixed action params
@@ -123,6 +137,11 @@ class FitModel:
         r += cP['Ixx'] / (cP['xx2'] - cP['p2']) / (cP['xx2'] - cP['ss2'])
         return r
 
+
+    ''' Define all the fit functions to be used in the analysis.  We describe them
+        in pieces, which are assembled based upon the term_list, to form a given
+        fit function.
+    '''
     # Fit functions
     def xpt_nlo(self,x,p,cP):
         r  = 1.
@@ -183,5 +202,126 @@ class FitModel:
         r += cP['drs2']              *  1./4  * cP['Ksx']
         r += cP['drs2'] * cP['k2']   * -1./6  * cP['K21sx']
         r += cP['drs2'] * cP['p2']   *  1./6  * cP['K21sx']
+
+        return r
+
+    def taylor_nlo(self,x,p,cP):
+        ''' in order to keep the LECs of the same order as XPT, we multiply
+            by powers of (4pi)**2 just as in XPT
+        '''
+        return 1. + (4*pi)**2 * p['L5'] * cP['k2p2']
+
+    # NNLO terms
+    def nnlo_ct(self, x, p, cP):
+        r  = cP['k2p2'] * cP['k2'] * p['k_4']
+        r += cP['k2p2'] * cP['p2'] * p['p_4']
+        r += cP['k2p2'] * cP['a2'] * p['s_4']
+        return r
+
+    def nnlo_alphaS(self, x, p, cP):
+        return cP['k2p2'] * cP['a2'] * x['alphaS'] * p['saS_4']
+
+    def xpt_nnlo_logSq(self, x, p, cP):
+        r  = cP['lp']*cP['lp'] * ( 11./24   * cP['p2']*cP['k2'] -131./192 * cP['p2']*cP['p2'])
+        r += cP['lp']*cP['lk'] * (-41./96   * cP['p2']*cP['k2'] -3./32    * cP['p2']*cP['p2'])
+        r += cP['lp']*cP['le'] * ( 13./24   * cP['p2']*cP['k2'] +59./96   * cP['p2']*cP['p2'])
+        r += cP['lk']*cP['lk'] * ( 17./36   * cP['k2']*cP['k2'] +7./144   * cP['p2']*cP['k2'])
+        r += cP['lk']*cP['le'] * (-163./144 * cP['k2']*cP['k2'] -67./288  * cP['p2']*cP['k2'] +3./32   * cP['p2']*cP['p2'])
+        r += cP['le']*cP['le'] * ( 241./288 * cP['k2']*cP['k2'] -13./72   * cP['p2']*cP['k2'] -61./192 * cP['p2']*cP['p2'])
+        r += cP['k2']**2 * FF(cP['p2'] / cP['k2'])
+
+        return r
+
+    def xpt_nnlo_log(self, x, p, cP):
+        tk  =  8*(4*pi)**2 *p['L5'] *(8*p['L4'] +3*p['L5'] -16*p['L6'] -8*p['L8'])
+        tk += -2*p['L1'] -p['L2'] -1./18*p['L3'] +4./3*p['L5'] -16*p['L7'] -8*p['L8']
+
+        tp  =  8*(4*pi)**2 *p['L5'] *(4*p['L4'] +5*p['L5']  -8*p['L6'] -8*p['L8'])
+        tp += -2*p['L1'] -p['L2'] -5./18*p['L3'] -4./3*p['L5'] +16*p['L7'] +8*p['L8']
+
+        ct  = (4*pi)**2 * cP['k2p2'] * cP['k2'] * tk
+        ct += (4*pi)**2 * cP['k2p2'] * cP['p2'] * tp
+
+
+        C1  = -cP['p2']*cP['k2'] *(7./9     + (4*pi)**2 * 11./2 *p['L5'])
+        C1 += -cP['p2']*cP['p2'] *(113./72  + (4*pi)**2 *(4*p['L1'] +10*p['L2'] +13./2*p['L3'] -21./2*p['L5']))
+
+        C2  =  cP['p2']*cP['k2'] *(209./144 + (4*pi)**2 *3*p['L5'])
+        C2 +=  cP['k2']*cP['k2'] *(53./96   + (4*pi)**2 *(4*p['L1'] +10*p['L2'] +5*p['L3'] -5*p['L5']))
+
+        C3  =  cP['k2']*cP['k2'] *(13./18   + (4*pi)**2 *(8./3*p['L3'] -2./3 *p['L5'] -16*p['L7']  -8*p['L8']))
+        C3 += -cP['p2']*cP['k2'] *(4./9     + (4*pi)**2 *(4./3*p['L3'] +25./6*p['L5'] -32*p['L7'] -16*p['L8']))
+        C3 +=  cP['p2']*cP['p2'] *(19./288  + (4*pi)**2 *(1./6*p['L3'] +11./6*p['L5'] -16*p['L7']  -8*p['L8']))
+
+        return ct + C1*cP['lp'] +C2*cP['lk'] +C3*cP['le']
+
+    def xpt_nnlo_ratio(self, x, p, cP):
+        ''' Note: we are constructng eps_sq * ln(eps_sq) so that we do not have
+            FV corrections in these terms.  This is just to be consistent with
+            only including NLO FV corrections
+        '''
+        tpp  =  cP['p2']*cP['lp'] +0.5*cP['k2']*cP['lk']
+        tpp += -4*(4*pi)**2 *(p['L5']*cP['p2'] +p['L4']*(cP['p2']+2*cP['k2']))
+
+        tkp  =  3./8 * (cP['p2']*cP['lp'] +2*cP['k2']*cP['lk'] +cP['e2']*cP['le'])
+        tkp += -4*(4*pi)**2 *(p['L5']*cP['k2'] +p['L4']*(cP['p2']+2*cP['k2']))
+
+        return tkp*tpp - tpp**2
+
+    def xpt_nnlo_FF_PP(self, x, p, cP):
+        ''' Note: we are constructng eps_sq * ln(eps_sq) so that we do not have
+            FV corrections in these terms.  This is just to be consistent with
+            only including NLO FV corrections
+        '''
+        # add mu corrections
+        r  =  3./2*cP['k2p2'] *(cP['p2']*cP['lp'] +0.5*cP['k2']*cP['lk'])
+        r += -3./2*cP['k2p2'] *4*(4*pi)**2 *(p['L5']*cP['p2'] +p['L4']*(cP['p2']+2*cP['k2']))
+        # no 1/F corrections compared to Bijnens et al
+        return r
+
+    def xpt_nnlo_FF_PK(self, x, p, cP):
+        ''' Note: we are constructng eps_sq * ln(eps_sq) so that we do not have
+            FV corrections in these terms.  This is just to be consistent with
+            only including NLO FV corrections
+        '''
+        # add mu corrections
+        r  =  3./4*cP['k2p2'] *(11./8*cP['p2']*cP['lp'] +5./4*cP['k2']*cP['lk'] +3./8*cP['e2']*cP['le'])
+        r += -3./4*cP['k2p2'] *4*(4*pi)**2 *(p['L5']*(cP['p2']+cP['k2']) +p['L4']*(2*cP['p2']+4*cP['k2']))
+        # add 1/F corrections
+        dFKpi  = 5./8 *cP['p2']*cP['lp'] -1./4 *cP['k2']*cP['lk'] -3./8 *cP['e2']*cP['le']
+        dFKpi += +4*(4*pi)**2 * p['L5'] * cP['k2p2']
+        r += dFKpi**2
+
+        return r
+
+    def xpt_nnlo_FF_KK(self, x, p, cP):
+        ''' Note: we are constructng eps_sq * ln(eps_sq) so that we do not have
+            FV corrections in these terms.  This is just to be consistent with
+            only including NLO FV corrections
+        '''
+        # add mu corrections
+        r  =  3./2*cP['k2p2'] *(3./8*cP['p2']*cP['lp'] +3./4*cP['k2']*cP['lk'] +3./8**cP['e2']*cP['le'])
+        r += -3./2*cP['k2p2'] *4*(4*pi)**2 *(p['L5']*cP['k2'] +p['L4']*(cP['p2'] +2*cP['k2']))
+        # add 1/F corrections
+        dFKpi  = 5./8 *cP['p2']*cP['lp'] -1./4 *cP['k2']*cP['lk'] -3./8 *cP['e2']*cP['le']
+        dFKpi += +4*(4*pi)**2 * p['L5'] * cP['k2p2']
+        r += 2 * dFKpi**2
+
+        return r
+
+    # NNNLO terms
+    def nnnlo_a4(self, x, p, cP):
+        return cP['k2p2'] * cP['a2']**2 * p['s_6']
+
+    def nnnlo_ct(self, x, p, cP):
+        # a^4
+        r  = cP['k2p2'] * cP['a2'] * cP['a2'] * p['s_6']
+        # a^2
+        r += cP['k2p2'] * cP['k2'] * cP['a2'] * p['sk_6']
+        r += cP['k2p2'] * cP['p2'] * cP['a2'] * p['sp_6']
+        # xpt
+        r += cP['k2p2'] * cP['k2'] * cP['p2'] * p['kp_6']
+        r += cP['k2p2']**2         * cP['k2'] * p['k_6']
+        r += cP['k2p2']**2         * cP['p2'] * p['p_6']
 
         return r
