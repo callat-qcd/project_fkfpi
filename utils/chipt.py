@@ -86,6 +86,18 @@ class FitModel:
     def _lp(self, x, p, cP): return np.log(cP['p2'])
     def _lk(self, x, p, cP): return np.log(cP['k2'])
     def _le(self, x, p, cP): return np.log(cP['e2'])
+    # convenience NLO functions - so we can evaluate without FV corrections
+    # when we stick them in NNLO terms
+    def _dFPnlo(self, x, p, cP):
+        r  = -cP['p2']*cP['lp'] -0.5*cP['k2']*cP['lk']
+        r += p['L5'] * (4*pi)**2 * 4 * cP['p2']
+        r += p['L4'] * (4*pi)**2 * 4 * (cP['p2'] + cP['k2'])
+        return r
+    def _dFKnlo(self, x, p, cP):
+        r  = -3./8 * cP['p2']*cP['lp'] -3./4 *cP['k2']*cP['lk'] -3./8*cP['e2']*cP['le']
+        r += p['L5'] * (4*pi)**2 * 4 * cP['k2']
+        r += p['L4'] * (4*pi)**2 * 4 * (cP['p2'] + cP['k2'])
+        return r
     # eps_a**2
     def _a2(self, x, p, cP):  return p['aw0']**2 / (4 * pi)
     # mixed action params
@@ -256,58 +268,20 @@ class FitModel:
         return ct + C1*cP['lp'] +C2*cP['lk'] +C3*cP['le']
 
     def xpt_nnlo_ratio(self, x, p, cP):
-        ''' Note: we are constructng eps_sq * ln(eps_sq) so that we do not have
-            FV corrections in these terms.  This is just to be consistent with
-            only including NLO FV corrections
-        '''
-        tpp  =  cP['p2']*cP['lp'] +0.5*cP['k2']*cP['lk']
-        tpp += -4*(4*pi)**2 *(p['L5']*cP['p2'] +p['L4']*(cP['p2']+2*cP['k2']))
-
-        tkp  =  3./8 * (cP['p2']*cP['lp'] +2*cP['k2']*cP['lk'] +cP['e2']*cP['le'])
-        tkp += -4*(4*pi)**2 *(p['L5']*cP['k2'] +p['L4']*(cP['p2']+2*cP['k2']))
-
-        return tkp*tpp - tpp**2
+        # Note: we used predefined NLO terms without FV to be consistent at NNLO
+        return cP['dFKnlo']*cP['dFPnlo'] - cP['dFPnlo']**2
 
     def xpt_nnlo_FF_PP(self, x, p, cP):
-        ''' Note: we are constructng eps_sq * ln(eps_sq) so that we do not have
-            FV corrections in these terms.  This is just to be consistent with
-            only including NLO FV corrections
-        '''
-        # add mu corrections
-        r  =  3./2*cP['k2p2'] *(cP['p2']*cP['lp'] +0.5*cP['k2']*cP['lk'])
-        r += -3./2*cP['k2p2'] *4*(4*pi)**2 *(p['L5']*cP['p2'] +p['L4']*(cP['p2']+2*cP['k2']))
-        # no 1/F corrections compared to Bijnens et al
-        return r
+        # Note: we used predefined NLO terms without FV to be consistent at NNLO
+        return -3./2*cP['k2p2'] * cP['dFPnlo']
 
     def xpt_nnlo_FF_PK(self, x, p, cP):
-        ''' Note: we are constructng eps_sq * ln(eps_sq) so that we do not have
-            FV corrections in these terms.  This is just to be consistent with
-            only including NLO FV corrections
-        '''
-        # add mu corrections
-        r  =  3./4*cP['k2p2'] *(11./8*cP['p2']*cP['lp'] +5./4*cP['k2']*cP['lk'] +3./8*cP['e2']*cP['le'])
-        r += -3./4*cP['k2p2'] *4*(4*pi)**2 *(p['L5']*(cP['p2']+cP['k2']) +p['L4']*(2*cP['p2']+4*cP['k2']))
-        # add 1/F corrections
-        dFKpi  = 5./8 *cP['p2']*cP['lp'] -1./4 *cP['k2']*cP['lk'] -3./8 *cP['e2']*cP['le']
-        dFKpi += +4*(4*pi)**2 * p['L5'] * cP['k2p2']
-        r += dFKpi**2
-
-        return r
+        # Note: we used predefined NLO terms without FV to be consistent at NNLO
+        return -3./4*cP['k2p2'] *(cP['dFKnlo'] +cP['dFPnlo']) +(cP['dFKnlo'] -cP['dFPnlo'])**2
 
     def xpt_nnlo_FF_KK(self, x, p, cP):
-        ''' Note: we are constructng eps_sq * ln(eps_sq) so that we do not have
-            FV corrections in these terms.  This is just to be consistent with
-            only including NLO FV corrections
-        '''
-        # add mu corrections
-        r  =  3./2*cP['k2p2'] *(3./8*cP['p2']*cP['lp'] +3./4*cP['k2']*cP['lk'] +3./8**cP['e2']*cP['le'])
-        r += -3./2*cP['k2p2'] *4*(4*pi)**2 *(p['L5']*cP['k2'] +p['L4']*(cP['p2'] +2*cP['k2']))
-        # add 1/F corrections
-        dFKpi  = 5./8 *cP['p2']*cP['lp'] -1./4 *cP['k2']*cP['lk'] -3./8 *cP['e2']*cP['le']
-        dFKpi += +4*(4*pi)**2 * p['L5'] * cP['k2p2']
-        r += 2 * dFKpi**2
-
-        return r
+        # Note: we used predefined NLO terms without FV to be consistent at NNLO
+        return -3./2*cP['k2p2'] *cP['dFKnlo'] +2*(cP['dFKnlo'] -cP['dFPnlo'])**2
 
     # NNNLO terms
     def nnnlo_a4(self, x, p, cP):
