@@ -37,10 +37,11 @@ def main():
         print('---------------------------------------------------------------')
         model_list, FF, fv = gather_model_elements(model)
         fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
-        fitEnv = FitEnv(gv_data, fit_model, switches)
+        fitEnv     = FitEnv(gv_data, fit_model, switches)
         fit_result = fitEnv.fit_data(priors)
-        print(fit_result.format(maxline=True))
-
+        #print(fit_result.format(maxline=True))
+        report_phys_point(fit_result, phys_point, model_list, FF)
+        #gv.dump(fit_result, 'pickled_fits/'+model+'.p', add_dependencies=True)
 
 '''
     This is the main class that runs a given fit specified by a model
@@ -181,7 +182,15 @@ def gather_model_elements(model):
 
     return model_elements, FF, fv
 
-
+def report_phys_point(fit_result, phys_point, model_list, FF):
+    phys_data = {'x':dict(phys_point['x']), 'y':dict(phys_point['y']), 'p':dict(phys_point['p'])}
+    fit_model = chipt.FitModel(model_list, _fv=False, _FF=FF)
+    fitEnv    = FitEnv(phys_data, fit_model, {'ensembles_fit':['phys']})
+    for k in fit_result.p:
+        if isinstance(k,str):
+            phys_data['p'][k] = fit_result.p[k]
+    result    = fitEnv.fit_function(phys_data['x'], phys_data['p'])
+    print('FK/Fpi = %s' %result['phys'])
 
 
 if __name__ == "__main__":

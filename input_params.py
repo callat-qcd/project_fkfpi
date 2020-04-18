@@ -146,25 +146,29 @@ phys_point = dict()
 #phys_point['mk']  = gv.gvar(497,0.3)
 #phys_point['meta'] = gv.gvar(547.862,0.017) #PDG
 # http://pdg.lbl.gov/2015/reviews/rpp2015-rev-pseudoscalar-meson-decay-cons.pdf
-phys_point['Fpi'] = gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2)) #PDG fpi+ eq(16)
-phys_point['FK']  = gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2)) #PDG fK+ eq(16)
-# FLAG values for "pure" QCD point
-phys_point['mpi'] = gv.gvar(134.8, 0.3) #FLAG 2017 (16)
-phys_point['mk']  = gv.gvar(494.2 , 0.3) #FLAG 2017 (16)
-#phys_point['mk']  = gv.gvar(485 , 0.3) #FLAG 2017 (16)
+FPi_phys = gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2))
+FK_phys  = gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2))
+phys_point = {
+    'p':{
+        ('phys', 'Fpi')  : FPi_phys, #PDG fpi+ eq(16)
+        ('phys', 'FK')   : FK_phys, #PDG fK+ eq(16)
+        ('phys', 'Lchi_PP') : 4 * np.pi * FPi_phys,
+        ('phys', 'Lchi_PK') : 4 * np.pi * np.sqrt(FPi_phys * FK_phys),
+        ('phys', 'Lchi_KK') : 4 * np.pi * FK_phys,
+        ('phys', 'mpi')  : gv.gvar(134.8, 0.3), #FLAG 2017 (16)
+        #('phys', 'mk')   : gv.gvar(494.2, 0.3), #FLAG 2017 (16) isospin symmetric
+        ('phys', 'mk')   : gv.gvar(491.5, 0.7), # my estimate of MK+ without QED
 
-phys_point['F0']  = gv.gvar(80,20) #FLAG use of F0 in SU(2) correction for FK/Fpi
-#if switches['scale'] == 'PK':
-phys_point['Lchi_PK'] = 4*np.pi*np.sqrt(phys_point['Fpi']*phys_point['FK'])
-#elif switches['scale'] == 'PP':
-phys_point['Lchi_PP'] = 4*np.pi*phys_point['Fpi']
-#elif switches['scale'] == 'KK':
-phys_point['Lchi_KK'] = 4*np.pi*phys_point['FK']
-#phys_point['Lchi_F0'] = 4*np.pi*131.5/np.sqrt(2)
-phys_point['Lchi_F0'] = 4*np.pi* gv.gvar(80,1)
-phys_point['aw0'] = 0
-phys_point['w0']  = 0.1714
-phys_point['FKFPi_FLAG'] = gv.gvar(1.1932, 0.0019)
+        ('phys', 'aw0')  : gv.gvar(0,0),
+        ('phys', 'a2DI') : gv.gvar(0,0),
+        #('phys', 'w0')   : gv.gvar(0.1714,0)
+
+        ('phys', 'F0')   : gv.gvar(80,20), #FLAG use of F0 in SU(2) correction for FK/Fpi
+        ('phys', 'FKFpi_FLAG') : gv.gvar(1.1932, 0.0019)
+    },
+    'x' : { 'phys' : {'alphaS':0} },
+    'y' : { 'phys' : {} }
+}
 
 check_fit = dict()
 check_fit['mpi'] =  135.0
