@@ -89,15 +89,15 @@ class FitModel:
     # convenience NLO functions - so we can evaluate without FV corrections
     # when we stick them in NNLO terms
     def _dFPnlo(self, x, p, cP):
-        r  = -cP['p2']*cP['lp'] -0.5*cP['k2']*cP['lk']
-        r += p['L5'] * (4*pi)**2 * 4 * cP['p2']
-        r += p['L4'] * (4*pi)**2 * 4 * (cP['p2'] + cP['k2'])
-        return r
+        a_result  = -cP['p2']*cP['lp'] -0.5*cP['k2']*cP['lk']
+        a_result += p['L5'] * (4*pi)**2 * 4 * cP['p2']
+        a_result += p['L4'] * (4*pi)**2 * 4 * (cP['p2'] + cP['k2'])
+        return a_result
     def _dFKnlo(self, x, p, cP):
-        r  = -3./8 * cP['p2']*cP['lp'] -3./4 *cP['k2']*cP['lk'] -3./8*cP['e2']*cP['le']
-        r += p['L5'] * (4*pi)**2 * 4 * cP['k2']
-        r += p['L4'] * (4*pi)**2 * 4 * (cP['p2'] + cP['k2'])
-        return r
+        a_result  = -3./8 * cP['p2']*cP['lp'] -3./4 *cP['k2']*cP['lk'] -3./8*cP['e2']*cP['le']
+        a_result += p['L5'] * (4*pi)**2 * 4 * cP['k2']
+        a_result += p['L4'] * (4*pi)**2 * 4 * (cP['p2'] + cP['k2'])
+        return a_result
     # eps_a**2
     def _a2(self, x, p, cP):  return p['aw0']**2 / (4 * pi)
     # mixed action params
@@ -144,10 +144,10 @@ class FitModel:
     def _K21px(self, x, p, cP): return (cP['Kpx'] - cP['dIp'])  / (cP['xx2'] - cP['p2'])
     def _K21sx(self, x, p, cP): return (cP['Ksx'] - cP['dIss']) / (cP['xx2'] - cP['ss2'])
     def _K123psx(self, x, p, cP):
-        r  = cP['Ip']  / (cP['p2'] - cP['ss2']) / (cP['p2'] - cP['xx2'])
-        r += cP['Iss'] / (cP['ss2'] - cP['p2']) / (cP['ss2'] - cP['xx2'])
-        r += cP['Ixx'] / (cP['xx2'] - cP['p2']) / (cP['xx2'] - cP['ss2'])
-        return r
+        a_result  = cP['Ip']  / (cP['p2'] - cP['ss2']) / (cP['p2'] - cP['xx2'])
+        a_result += cP['Iss'] / (cP['ss2'] - cP['p2']) / (cP['ss2'] - cP['xx2'])
+        a_result += cP['Ixx'] / (cP['xx2'] - cP['p2']) / (cP['xx2'] - cP['ss2'])
+        return a_result
 
 
     ''' Define all the fit functions to be used in the analysis.  We describe them
@@ -156,10 +156,10 @@ class FitModel:
     '''
     # Fit functions
     def xpt_nlo(self,x,p,cP):
-        r  = 1.
-        r +=  self.FK_xpt_nlo(x,p,cP)
-        r += -self.Fpi_xpt_nlo(x,p,cP)
-        return r
+        a_result  = 1.
+        a_result +=  self.FK_xpt_nlo(x,p,cP)
+        a_result += -self.Fpi_xpt_nlo(x,p,cP)
+        return a_result
 
     def xpt_ratio_nlo(self,x,p,cP):
         num = 1 + self.FK_xpt_nlo(x,p,cP)  + p['L4'] * (4*pi)**2 *(4*cP['p2'] +8*cP['k2'])
@@ -167,23 +167,23 @@ class FitModel:
         return num / den
 
     def Fpi_xpt_nlo(self,x,p,cP):
-        r  = -cP['Ip']
-        r += -0.5 * cP['Ik']
-        r += p['L5'] * (4*pi)**2 * 4 * cP['p2']
-        return r
+        a_result  = -cP['Ip']
+        a_result += -0.5 * cP['Ik']
+        a_result += p['L5'] * (4*pi)**2 * 4 * cP['p2']
+        return a_result
 
     def FK_xpt_nlo(self,x,p,cP):
-        r  = -3./8 * cP['Ip']
-        r += -3./4 * cP['Ik']
-        r += -3./8 * cP['Ie']
-        r += p['L5'] * (4*pi)**2 * 4 * cP['k2']
-        return r
+        a_result  = -3./8 * cP['Ip']
+        a_result += -3./4 * cP['Ik']
+        a_result += -3./8 * cP['Ie']
+        a_result += p['L5'] * (4*pi)**2 * 4 * cP['k2']
+        return a_result
 
     def ma_nlo(self,x,p,cP):
-        r  = 1.
-        r +=  self.FK_ma_nlo(x,p,cP)
-        r += -self.Fpi_ma_nlo(x,p,cP)
-        return r
+        a_result  = 1.
+        a_result +=  self.FK_ma_nlo(x,p,cP)
+        a_result += -self.Fpi_ma_nlo(x,p,cP)
+        return a_result
 
     def ma_ratio_nlo(self,x,p,cP):
         num = 1 + self.FK_ma_nlo(x,p,cP)  + p['L4'] * (4*pi)**2 *(4*cP['p2'] +8*cP['k2'])
@@ -191,31 +191,31 @@ class FitModel:
         return num / den
 
     def Fpi_ma_nlo(self,x,p,cP):
-        r  = -cP['Iju']
-        r += -1./2 * cP['Iru']
-        r += p['L5'] * (4*pi)**2 * 4 * cP['p2']
-        return r
+        a_result  = -cP['Iju']
+        a_result += -1./2 * cP['Iru']
+        a_result += p['L5'] * (4*pi)**2 * 4 * cP['p2']
+        return a_result
 
     def FK_ma_nlo(self,x,p,cP):
-        r  = -1./2 * cP['Iju']
-        r +=  1./8 * cP['Ip']
-        r += -1./4 * cP['Iru']
-        r += -1./2 * cP['Ijs']
-        r += -1./4 * cP['Irs']
-        r +=  1./4 * cP['Iss']
-        r += -3./8 * cP['Ixx']
-        r += p['L5'] * (4*pi)**2 * 4 * cP['k2']
+        a_result  = -1./2 * cP['Iju']
+        a_result +=  1./8 * cP['Ip']
+        a_result += -1./4 * cP['Iru']
+        a_result += -1./2 * cP['Ijs']
+        a_result += -1./4 * cP['Irs']
+        a_result +=  1./4 * cP['Iss']
+        a_result += -3./8 * cP['Ixx']
+        a_result += p['L5'] * (4*pi)**2 * 4 * cP['k2']
 
-        r += cP['dju2']              * -1./8  * cP['dIp']
-        r += cP['dju2']              *  1./4  * cP['Kpx']
-        r += cP['dju2']**2           * -1./24 * cP['K21px']
-        r += cP['dju2'] * cP['drs2'] *  1./12 * cP['K21sx']
-        r += cP['dju2'] * cP['drs2'] * -1./6  * cP['K123psx']
-        r += cP['drs2']              *  1./4  * cP['Ksx']
-        r += cP['drs2'] * cP['k2']   * -1./6  * cP['K21sx']
-        r += cP['drs2'] * cP['p2']   *  1./6  * cP['K21sx']
+        a_result += cP['dju2']              * -1./8  * cP['dIp']
+        a_result += cP['dju2']              *  1./4  * cP['Kpx']
+        a_result += cP['dju2']**2           * -1./24 * cP['K21px']
+        a_result += cP['dju2'] * cP['drs2'] *  1./12 * cP['K21sx']
+        a_result += cP['dju2'] * cP['drs2'] * -1./6  * cP['K123psx']
+        a_result += cP['drs2']              *  1./4  * cP['Ksx']
+        a_result += cP['drs2'] * cP['k2']   * -1./6  * cP['K21sx']
+        a_result += cP['drs2'] * cP['p2']   *  1./6  * cP['K21sx']
 
-        return r
+        return a_result
 
     def taylor_nlo(self,x,p,cP):
         ''' in order to keep the LECs of the same order as XPT, we multiply
@@ -225,24 +225,24 @@ class FitModel:
 
     # NNLO terms
     def nnlo_ct(self, x, p, cP):
-        r  = cP['k2p2'] * cP['k2'] * p['k_4']
-        r += cP['k2p2'] * cP['p2'] * p['p_4']
-        r += cP['k2p2'] * cP['a2'] * p['s_4']
-        return r
+        a_result  = cP['k2p2'] * cP['k2'] * p['k_4']
+        a_result += cP['k2p2'] * cP['p2'] * p['p_4']
+        a_result += cP['k2p2'] * cP['a2'] * p['s_4']
+        return a_result
 
     def nnlo_alphaS(self, x, p, cP):
         return cP['k2p2'] * cP['a2'] * x['alphaS'] * p['saS_4']
 
     def xpt_nnlo_logSq(self, x, p, cP):
-        r  = cP['lp']*cP['lp'] * ( 11./24   * cP['p2']*cP['k2'] -131./192 * cP['p2']*cP['p2'])
-        r += cP['lp']*cP['lk'] * (-41./96   * cP['p2']*cP['k2'] -3./32    * cP['p2']*cP['p2'])
-        r += cP['lp']*cP['le'] * ( 13./24   * cP['p2']*cP['k2'] +59./96   * cP['p2']*cP['p2'])
-        r += cP['lk']*cP['lk'] * ( 17./36   * cP['k2']*cP['k2'] +7./144   * cP['p2']*cP['k2'])
-        r += cP['lk']*cP['le'] * (-163./144 * cP['k2']*cP['k2'] -67./288  * cP['p2']*cP['k2'] +3./32   * cP['p2']*cP['p2'])
-        r += cP['le']*cP['le'] * ( 241./288 * cP['k2']*cP['k2'] -13./72   * cP['p2']*cP['k2'] -61./192 * cP['p2']*cP['p2'])
-        r += cP['k2']**2 * FF(cP['p2'] / cP['k2'])
+        a_result  = cP['lp']*cP['lp'] * ( 11./24   * cP['p2']*cP['k2'] -131./192 * cP['p2']*cP['p2'])
+        a_result += cP['lp']*cP['lk'] * (-41./96   * cP['p2']*cP['k2'] -3./32    * cP['p2']*cP['p2'])
+        a_result += cP['lp']*cP['le'] * ( 13./24   * cP['p2']*cP['k2'] +59./96   * cP['p2']*cP['p2'])
+        a_result += cP['lk']*cP['lk'] * ( 17./36   * cP['k2']*cP['k2'] +7./144   * cP['p2']*cP['k2'])
+        a_result += cP['lk']*cP['le'] * (-163./144 * cP['k2']*cP['k2'] -67./288  * cP['p2']*cP['k2'] +3./32   * cP['p2']*cP['p2'])
+        a_result += cP['le']*cP['le'] * ( 241./288 * cP['k2']*cP['k2'] -13./72   * cP['p2']*cP['k2'] -61./192 * cP['p2']*cP['p2'])
+        a_result += cP['k2']**2 * FF(cP['p2'] / cP['k2'])
 
-        return r
+        return a_result
 
     def xpt_nnlo_log(self, x, p, cP):
         tk  =  8*(4*pi)**2 *p['L5'] *(8*p['L4'] +3*p['L5'] -16*p['L6'] -8*p['L8'])
@@ -289,13 +289,13 @@ class FitModel:
 
     def nnnlo_ct(self, x, p, cP):
         # a^4
-        r  = cP['k2p2'] * cP['a2'] * cP['a2'] * p['s_6']
+        a_result  = cP['k2p2'] * cP['a2'] * cP['a2'] * p['s_6']
         # a^2
-        r += cP['k2p2'] * cP['k2'] * cP['a2'] * p['sk_6']
-        r += cP['k2p2'] * cP['p2'] * cP['a2'] * p['sp_6']
+        a_result += cP['k2p2'] * cP['k2'] * cP['a2'] * p['sk_6']
+        a_result += cP['k2p2'] * cP['p2'] * cP['a2'] * p['sp_6']
         # xpt
-        r += cP['k2p2'] * cP['k2'] * cP['p2'] * p['kp_6']
-        r += cP['k2p2']**2         * cP['k2'] * p['k_6']
-        r += cP['k2p2']**2         * cP['p2'] * p['p_6']
+        a_result += cP['k2p2'] * cP['k2'] * cP['p2'] * p['kp_6']
+        a_result += cP['k2p2']**2         * cP['k2'] * p['k_6']
+        a_result += cP['k2p2']**2         * cP['p2'] * p['p_6']
 
-        return r
+        return a_result
