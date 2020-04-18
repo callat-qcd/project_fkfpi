@@ -157,7 +157,10 @@ def gather_model_elements(model):
     if FF not in ['PP','PK','KK']:
         sys.exit('unrecognized FF choice [PP, PK, KK]: '+FF)
 
-    model_elements = [eft+'_nlo']
+    if 'ratio' in eft:
+        model_elements = [eft.replace('-','_')+'_nlo']
+    else:
+        model_elements = [eft+'_nlo']
     if eft == 'taylor':
         if order in ['nnlo', 'nnnlo']:
             model_elements += ['nnlo_ct']
