@@ -31,6 +31,15 @@ def main():
     #print('y',gv_data['y'])
 
     models = sys_models(switches)
+    if switches['check_fit']:
+        for model in models:
+            print('===============================================================')
+            print('DEBUGGING Terms in ',model)
+            print('---------------------------------------------------------------')
+            model_list, FF, fv = gather_model_elements(model)
+            debug_fit_function(check_fit, model_list, FF, fv, switches)
+        sys.exit()
+
     for model in models:
         print('===============================================================')
         print(model)
@@ -195,6 +204,23 @@ def report_phys_point(fit_result, phys_point, model_list, FF):
             phys_data['p'][k] = fit_result.p[k]
     result    = FitEnv._fit_function(fit_model, phys_data['x'], phys_data['p'])
     print('FK/Fpi = %s' %result)
+
+def debug_fit_function(check_fit, model_list, FF, fv, switches):
+    switches['ensembles_fit'] = ['']
+    x = check_fit['x']
+    p = check_fit['p']
+    fit_model = chipt.FitModel(model_list, _fv=False, _FF=FF)
+    cP        = chipt.ConvenienceDict(fit_model, x, p)
+    if fv:
+        fit_model_fv = chipt.FitModel(model_list, _fv=True, _FF=FF)
+        cP_FV        = chipt.ConvenienceDict(fit_model_fv, x, p)
+        for term in model_list:
+            if '_nlo' in term:
+                print('%14s' %(term+'_FV'), getattr(chipt.FitModel, term)(fit_model_fv, x, p, cP_FV))
+                print('%14s' %(term), getattr(chipt.FitModel, term)(fit_model, x, p, cP))
+    else:
+        for term in model_list:
+            print('%14s' %(term), getattr(chipt.FitModel, term)(fit_model, x, p, cP))
 
 
 if __name__ == "__main__":

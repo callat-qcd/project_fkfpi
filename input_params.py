@@ -29,11 +29,11 @@ switches['ensembles_fit'] = [
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
 switches['ansatz']['models'] = ['xpt_nnlo_FV_a4','ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
-switches['ansatz']['models'] = ['xpt_nnlo_FV_a4', 'xpt_nnnlo_FV']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
 switches['sys']['Lam_chi']   = False
-switches['sys']['FV']        = False
+switches['sys']['FV']        = True
 switches['sys']['alphaS']    = False
 switches['sys']['nnlo_ct']   = False
 switches['sys']['logSq']     = False
@@ -81,7 +81,7 @@ switches['debug_save_fit']   = False # also need 'save_fits' to work
 switches['debug_models']     = False
 switches['print_lattice']    = False # this will turn off all fitting - only reads data
 # testing NNLO function
-switches['check_fit']        = False # need a new name
+switches['check_fit']        = True # need a new name
 switches['FF_approximate']   = False
 
 switches['LECs'] = ['L1','L2','L3','L4','L5','L6','L7','L8','p_4','k_4','s_4','saS_4']
@@ -171,19 +171,31 @@ phys_point = {
     'y' : {},
 }
 
-
-check_fit = dict()
-check_fit['mpi'] =  135.0
-check_fit['mk']  =  495.5
-check_fit['Fpi'] =  92.2
-check_fit['FK']  =  110.5
-check_fit['L1']  =  0.000372
-check_fit['L2']  =  0.000493
-check_fit['L3']  = -0.003070
-check_fit['L4']  =  0.000089
-check_fit['L5']  =  0.000377
-check_fit['L6']  =  0.000011
-check_fit['L7']  = -0.000340
-check_fit['L8']  =  0.000294
-check_fit['k_4'] = -3.0
-check_fit['p_4'] =  4.0
+Fpi_check = 92.2
+FK_check  = 110.
+mpi_check = 135.0
+mk_check  = 495.5
+me_check  = np.sqrt(4./3*mk_check**2 - 1./3*mpi_check**2)
+L_check   = 3.5 / mpi_check
+check_fit = {
+    'p':{
+        'mpi' :  mpi_check,
+        'mk'  :  mk_check,
+        'Fpi' :  Fpi_check,
+        'FK'  :  FK_check,
+        'Lchi_PP': 4 * np.pi * Fpi_check,
+        'Lchi_PK': 4 * np.pi * np.sqrt(Fpi_check * FK_check),
+        'Lchi_KK': 4 * np.pi * FK_check,
+        'L1'  :  0.000372,
+        'L2'  :  0.000493,
+        'L3'  : -0.003070,
+        'L4'  :  0.000089,
+        'L5'  :  0.000377,
+        'L6'  :  0.000011,
+        'L7'  : -0.000340,
+        'L8'  :  0.000294,
+        'k_4' : -3.0,
+        'p_4' :  4.0,
+    },
+    'x':{'alphaS':0.2, 'mpiL':mpi_check * L_check, 'mkL':mk_check*L_check, 'meL':me_check*L_check}
+}
