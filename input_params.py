@@ -29,10 +29,10 @@ switches['ensembles_fit'] = [
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
 switches['ansatz']['models'] = ['xpt_nnlo_FV_a4','ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
-switches['ansatz']['models'] = ['xpt_nnlo_FV_a4']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnlo_FV_a4', 'xpt_nnnlo_FV']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
-switches['sys']['Lam_chi']   = True
+switches['sys']['Lam_chi']   = False
 switches['sys']['FV']        = False
 switches['sys']['alphaS']    = False
 switches['sys']['nnlo_ct']   = False
@@ -148,27 +148,29 @@ phys_point = dict()
 # http://pdg.lbl.gov/2015/reviews/rpp2015-rev-pseudoscalar-meson-decay-cons.pdf
 FPi_phys = gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2))
 FK_phys  = gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2))
+
 phys_point = {
     'p':{
-        ('phys', 'Fpi')  : FPi_phys, #PDG fpi+ eq(16)
-        ('phys', 'FK')   : FK_phys, #PDG fK+ eq(16)
-        ('phys', 'Lchi_PP') : 4 * np.pi * FPi_phys,
-        ('phys', 'Lchi_PK') : 4 * np.pi * np.sqrt(FPi_phys * FK_phys),
-        ('phys', 'Lchi_KK') : 4 * np.pi * FK_phys,
-        ('phys', 'mpi')  : gv.gvar(134.8, 0.3), #FLAG 2017 (16)
-        #('phys', 'mk')   : gv.gvar(494.2, 0.3), #FLAG 2017 (16) isospin symmetric
-        ('phys', 'mk')   : gv.gvar(491.5, 0.7), # my estimate of MK+ without QED
+        'Fpi'     : FPi_phys, #PDG fpi+ eq(16)
+        'FK'      : FK_phys, #PDG fK+ eq(16)
+        'Lchi_PP' : 4 * np.pi * FPi_phys,
+        'Lchi_PK' : 4 * np.pi * np.sqrt(FPi_phys * FK_phys),
+        'Lchi_KK' : 4 * np.pi * FK_phys,
+        'mpi'     : gv.gvar(134.8, 0.3), #FLAG 2017 (16)
+        #'mk'      : gv.gvar(494.2, 0.3), #FLAG 2017 (16) isospin symmetric
+        'mk'      : gv.gvar(491.5, 0.7), # my estimate of MK+ without QED
 
-        ('phys', 'aw0')  : gv.gvar(0,0),
-        ('phys', 'a2DI') : gv.gvar(0,0),
-        #('phys', 'w0')   : gv.gvar(0.1714,0)
+        'aw0'     : gv.gvar(0,0),
+        'a2DI'    : gv.gvar(0,0),
+        'w0'      : gv.gvar(0.1714,0),
 
-        ('phys', 'F0')   : gv.gvar(80,20), #FLAG use of F0 in SU(2) correction for FK/Fpi
-        ('phys', 'FKFpi_FLAG') : gv.gvar(1.1932, 0.0019)
+        'F0'      : gv.gvar(80,20), #FLAG use of F0 in SU(2) correction for FK/Fpi
+        'FKFpi_FLAG' : gv.gvar(1.1932, 0.0019)
     },
-    'x' : { 'phys' : {'alphaS':0} },
-    'y' : { 'phys' : {} }
+    'x' : {'alphaS':0},
+    'y' : {},
 }
+
 
 check_fit = dict()
 check_fit['mpi'] =  135.0

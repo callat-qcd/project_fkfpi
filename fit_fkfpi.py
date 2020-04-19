@@ -63,8 +63,12 @@ class FitEnv:
                                 if k in required_params and ens in self.ensembles}
         self.model      = model
 
+    # create a callable function that acts on a single x and p (not all ensembles)
+    def _fit_function(a_model, x, p):
+        return a_model(x,p)
+
     def fit_function(self, x, p):
-        r = dict()
+        a_result = dict()
         for ens in x.keys():
             p_ens = dict()
             for k, v in p.items():
@@ -72,8 +76,9 @@ class FitEnv:
                     p_ens[k[1]] = v # the x-params which are priors
                 else:
                     p_ens[k] = v    # the LECs of the fit
-            r[ens] = self.model(x[ens], p_ens)
-        return r
+            model = self.model
+            a_result[ens] = FitEnv._fit_function(model, x[ens], p_ens)
+        return a_result
 
     def fit_data(self, lec_priors):
         required_params = self.model.get_required_parameters()
@@ -86,7 +91,6 @@ class FitEnv:
             fitter='scipy_least_squares'
         else:
             fitter='gsl_multifit'
-        #print('p',p)
         return lsqfit.nonlinear_fit(data=(x,y), prior=p, fcn=self.fit_function, fitter=fitter, debug=True)
 
 
@@ -112,9 +116,7 @@ def sys_models(switches):
             else:
                 if (sys_val not in model) and (new_model not in models):
                     models.append(new_model)
-        #return models
     models = switches['ansatz']['models'].copy()
-    #print(len(models),'models')
     if switches['sys']['FV']:
         check_model('_FV',models)
     if switches['sys']['alphaS']:
@@ -186,14 +188,13 @@ def gather_model_elements(model):
     return model_elements, FF, fv
 
 def report_phys_point(fit_result, phys_point, model_list, FF):
-    phys_data = {'x':dict(phys_point['x']), 'y':dict(phys_point['y']), 'p':dict(phys_point['p'])}
+    phys_data = dict(phys_point)
     fit_model = chipt.FitModel(model_list, _fv=False, _FF=FF)
-    fitEnv    = FitEnv(phys_data, fit_model, {'ensembles_fit':['phys']})
     for k in fit_result.p:
         if isinstance(k,str):
             phys_data['p'][k] = fit_result.p[k]
-    result    = fitEnv.fit_function(phys_data['x'], phys_data['p'])
-    print('FK/Fpi = %s' %result['phys'])
+    result    = FitEnv._fit_function(fit_model, phys_data['x'], phys_data['p'])
+    print('FK/Fpi = %s' %result)
 
 
 if __name__ == "__main__":
