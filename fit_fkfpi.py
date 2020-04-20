@@ -25,13 +25,15 @@ def main():
     check_fit  = ip.check_fit
 
     # if check_fit: - add support
-
-    # load data
-    gv_data = io_utils.format_h5_data('data/FK_Fpi_data.h5',switches)
-    #print('y',gv_data['y'])
-
-    models = sys_models(switches)
     if switches['check_fit']:
+        models = sys_models(switches)
+        print('DEBUGGING FIT FUNCTION')
+        print('p')
+        for k in check_fit['p']:
+            print("%7s" %k,check_fit['p'][k])
+        print('x')
+        for k in check_fit['x']:
+            print("%7s" %k,check_fit['x'][k])
         for model in models:
             print('===============================================================')
             print('DEBUGGING Terms in ',model)
@@ -40,6 +42,10 @@ def main():
             debug_fit_function(check_fit, model_list, FF, fv, switches)
         sys.exit()
 
+    # load data
+    gv_data = io_utils.format_h5_data('data/FK_Fpi_data.h5',switches)
+
+    models = sys_models(switches)
     for model in models:
         print('===============================================================')
         print(model)
@@ -216,11 +222,13 @@ def debug_fit_function(check_fit, model_list, FF, fv, switches):
         cP_FV        = chipt.ConvenienceDict(fit_model_fv, x, p)
         for term in model_list:
             if '_nlo' in term:
-                print('%14s' %(term+'_FV'), getattr(chipt.FitModel, term)(fit_model_fv, x, p, cP_FV))
-                print('%14s' %(term), getattr(chipt.FitModel, term)(fit_model, x, p, cP))
+                print('%16s ' %(term+'_FV'), getattr(chipt.FitModel, term)(fit_model_fv, x, p, cP_FV))
+                print('%16s ' %(term), getattr(chipt.FitModel, term)(fit_model, x, p, cP))
+            else:
+                print('%16s ' %(term), getattr(chipt.FitModel, term)(fit_model, x, p, cP))
     else:
         for term in model_list:
-            print('%14s' %(term), getattr(chipt.FitModel, term)(fit_model, x, p, cP))
+            print('%16s ' %(term), getattr(chipt.FitModel, term)(fit_model, x, p, cP))
 
 
 if __name__ == "__main__":

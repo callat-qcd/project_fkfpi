@@ -29,11 +29,11 @@ switches['ensembles_fit'] = [
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
 switches['ansatz']['models'] = ['xpt_nnlo_FV_a4','ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
-switches['ansatz']['models'] = ['xpt_nlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['ma_nlo_FV', 'xpt-ratio_nnnlo_alphaS_FV']#, 'xpt_nnnlo_FV']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
 switches['sys']['Lam_chi']   = False
-switches['sys']['FV']        = True
+switches['sys']['FV']        = False
 switches['sys']['alphaS']    = False
 switches['sys']['nnlo_ct']   = False
 switches['sys']['logSq']     = False
@@ -179,23 +179,44 @@ me_check  = np.sqrt(4./3*mk_check**2 - 1./3*mpi_check**2)
 L_check   = 3.5 / mpi_check
 check_fit = {
     'p':{
-        'mpi' :  mpi_check,
-        'mk'  :  mk_check,
-        'Fpi' :  Fpi_check,
-        'FK'  :  FK_check,
+        'mpi'    : mpi_check,
+        'mk'     : mk_check,
+        'Fpi'    : Fpi_check,
+        'FK'     : FK_check,
         'Lchi_PP': 4 * np.pi * Fpi_check,
         'Lchi_PK': 4 * np.pi * np.sqrt(Fpi_check * FK_check),
         'Lchi_KK': 4 * np.pi * FK_check,
-        'L1'  :  0.000372,
-        'L2'  :  0.000493,
-        'L3'  : -0.003070,
-        'L4'  :  0.000089,
-        'L5'  :  0.000377,
-        'L6'  :  0.000011,
-        'L7'  : -0.000340,
-        'L8'  :  0.000294,
-        'k_4' : -3.0,
-        'p_4' :  4.0,
+        'L1'     :  0.000372,
+        'L2'     :  0.000493,
+        'L3'     : -0.003070,
+        'L4'     :  0.000089,
+        'L5'     :  0.000377,
+        'L6'     :  0.000011,
+        'L7'     : -0.000340,
+        'L8'     :  0.000294,
+        'k_4'    : -3.0,
+        'p_4'    :  4.0,
+        # discretization
+        'aw0'    : 0.8,
+        's_4'    : 1.5,
+        'saS_4'  : 2.5,
+        'kp_6'   : 2.1,
+        'k_6'    : 2.2,
+        'p_6'    : 2.3,
+        's_6'    : 2.4,
+        'sk_6'   : 2.5,
+        'sp_6'   : 2.6,
+        # mixed action
+        'mss'    : 520.,
+        'mju'    : 200.,
+        'mjs'    : 510.,
+        'mru'    : 505.,
+        'mrs'    : 525.,
+        'a2DI'   : 400.**2,
     },
-    'x':{'alphaS':0.2, 'mpiL':mpi_check * L_check, 'mkL':mk_check*L_check, 'meL':me_check*L_check}
+    'x':{'alphaS':0.2, 'meL':me_check*L_check}
 }
+for mphi in ['mpi','mk', 'mju', 'mjs', 'mru', 'mrs', 'mss']:
+    if mphi in check_fit['p']:
+        check_fit['x'][mphi+'L'] = check_fit['p'][mphi] * L_check
+check_fit['x']['mxL'] = L_check * np.sqrt(4./3*mk_check**2 - 1./3*mpi_check**2 + check_fit['p']['a2DI'])

@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import functools # for LRU cache
+import warnings # supress divide by zero warning in fakeData determination of terms
 import scipy.special as spsp # Bessel functions
 import gvar as gv
 
@@ -70,8 +71,10 @@ class FitModel:
         fake_cp = ConvenienceDict(self, fake_x, fake_p)
         # the regular function calls (which automatically recurse into the
         # convenience functions)
-        dummy = sum(getattr(FitModel, term)(self,fake_x,fake_p,fake_cp)
-                    for term in self.term_list)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            dummy = sum(getattr(FitModel, term)(self,fake_x,fake_p,fake_cp)
+                        for term in self.term_list)
         return fake_x.param_list, fake_p.param_list, set(fake_cp.keys())
 
     ''' define all the convenience functions; whichever attribute is accessed of
@@ -106,9 +109,9 @@ class FitModel:
     def _js2(self, x, p, cP): return (p['mjs'] / p['Lchi_'+self.FF])**2
     def _rs2(self, x, p, cP): return (p['mrs'] / p['Lchi_'+self.FF])**2
     def _ss2(self, x, p, cP): return (p['mss'] / p['Lchi_'+self.FF])**2
-    def _xx2(self, x, p, cP): return cP['e2'] + (p['a2DI'] / p['Lchi_'+self.FF])**2
-    def _dju2(self, x, p, cP): return p['a2DI']
-    def _drs2(self, x, p, cP): return p['a2DI']
+    def _xx2(self, x, p, cP): return cP['e2'] + p['a2DI'] / p['Lchi_'+self.FF]**2
+    def _dju2(self, x, p, cP): return p['a2DI'] / p['Lchi_'+self.FF]**2
+    def _drs2(self, x, p, cP): return p['a2DI'] / p['Lchi_'+self.FF]**2
 
     # Finite Volume Corrections to Tadpole Integral
     @functools.lru_cache(maxsize=lru_cache_size)
