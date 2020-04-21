@@ -26,8 +26,6 @@ def run_from_ipython():
     except NameError:
         return False
 
-
-
 def main():
     print("python     version:", sys.version)
     import input_params as ip
@@ -64,18 +62,39 @@ def main():
     for model in models:
         print('===============================================================')
         print(model)
-        #print('---------------------------------------------------------------')
-        model_list, FF, fv = gather_model_elements(model)
-        fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
-        fitEnv     = 0.
-        fitEnv     = FitEnv(gv_data, fit_model, switches)
-        fit_result = fitEnv.fit_data(priors)
-        if switches['print_fit']:
-            print(fit_result.format(maxline=True))
-        phys = report_phys_point(fit_result, phys_point, model_list, FF)
-        fit_results[model] = (fit_result,phys)
-        if switches['save_fits']:
-            gv.dump(fit_result, 'pickled_fits/'+model+'.p', add_dependencies=True)
+
+        do_fit = False
+        if switches['save_fits'] or switches['debug_save_fits']:
+            if os.path.exists('pickled_fits/'+model+'.p'):
+                print('reading pickled_fits/'+model+'.p')
+                fit_result = gv.load('pickled_fits/'+model+'.p')
+            else:
+                do_fit = True
+        else:
+            do_fit = True
+        if do_fit or switches['debug_save_fit']:
+            model_list, FF, fv = gather_model_elements(model)
+            fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
+            fitEnv     = 0.
+            fitEnv     = FitEnv(gv_data, fit_model, switches)
+            tmp_result = fitEnv.fit_data(priors)
+            tmp_result.phys = report_phys_point(tmp_result, phys_point, model_list, FF)
+            if switches['print_fit']:
+                print(fit_result.format(maxline=True))
+            if not os.path.exists('pickled_fits/'+model+'.p') and switches['save_fits']:
+                gv.dump(tmp_result, 'pickled_fits/'+model+'.p', add_dependencies=True)
+                fit_result = gv.load('pickled_fits/'+model+'.p')
+            if switches['debug_save_fit']:
+                print('live fit')
+                print('dF/dy =', tmp_result.phys.partialsdev(tmp_result.y))
+                print('dF/dprior =', tmp_result.phys.partialsdev(tmp_result.prior))
+                print('pickled fit')
+                print('dF/dy =', fit_result.phys.partialsdev(fit_result.y))
+                print('dF/dprior =', fit_result.phys.partialsdev(fit_result.prior))
+            if do_fit:
+                fit_result = tmp_result
+
+        fit_results[model] = fit_result
         if switches['make_plots']:
             plots = plotting.ExtrapolationPlots(model, model_list, fitEnv, fit_result, switches)
             if 'alphaS' not in model and 'ma' not in model:

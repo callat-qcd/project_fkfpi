@@ -29,10 +29,10 @@ switches['ensembles_fit'] = [
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
 switches['ansatz']['models'] = ['xpt_nnlo_FV_a4','ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
-switches['ansatz']['models'] = ['xpt_nnnlo_FV']#, 'xpt_nnnlo_FV']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnnlo_ct_FV']#, 'xpt_nnnlo_FV']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
-switches['sys']['Lam_chi']   = True
+switches['sys']['Lam_chi']   = False
 switches['sys']['FV']        = False
 switches['sys']['alphaS']    = False
 switches['sys']['nnlo_ct']   = False
@@ -42,9 +42,9 @@ switches['sys']['ratio']     = False
 
 switches['ansatz']['a2dm']   = 'individual' # avg or individual
 switches['scales']           = ['PP','PK','KK']#,'PK','KK']
-switches['scale']            = 'PK' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
+switches['scale']            = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
 switches['do_analysis']      = True
-switches['save_fits']        = False
+switches['save_fits']        = True
 switches['model_avg']        = True
 # use optimized (True) or default (False) priors
 switches['optimized_priors'] = False
@@ -55,7 +55,7 @@ switches['scipy']            = False
 # fit options
 switches['print_fit']        = False
 switches['report_fit']       = False
-switches['make_plots']       = True
+switches['make_plots']       = False
 switches['save_figs']        = True
 switches['plot_raw_data']    = False
 switches['verbose']          = False
@@ -78,7 +78,7 @@ switches['debug_phys']       = False
 switches['debug_shift']      = False
 switches['debug_nlo_check']  = False
 switches['debug_nnlo_check'] = False
-switches['debug_save_fit']   = False # also need 'save_fits' to work
+switches['debug_save_fit']   = True # also need 'save_fits' to work
 switches['debug_models']     = False
 switches['print_lattice']    = False # this will turn off all fitting - only reads data
 # testing NNLO function
