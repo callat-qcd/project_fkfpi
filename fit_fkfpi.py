@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # python libraries
-import os, sys
+import os, sys, copy
+import matplotlib.pyplot as plt
 # Peter Lepage's libraries
 import gvar as gv
 import lsqfit
@@ -14,6 +15,18 @@ import plotting
 
 ''' Write description
 '''
+
+''' useful for changing matplotlib.plt.show behavior and accessing results
+    from main() if run interactively in iPython
+'''
+def run_from_ipython():
+    try:
+        __IPYTHON__
+        return True
+    except NameError:
+        return False
+
+
 
 def main():
     print("python     version:", sys.version)
@@ -39,24 +52,44 @@ def main():
             print('DEBUGGING Terms in ',model)
             print('---------------------------------------------------------------')
             model_list, FF, fv = gather_model_elements(model)
-            debug_fit_function(check_fit, model_list, FF, fv, switches)
+            debug_fit_function(check_fit, model_list, FF, fv)
         sys.exit()
 
     # load data
     gv_data = io_utils.format_h5_data('data/FK_Fpi_data.h5',switches)
 
     models = sys_models(switches)
+    fit_results = dict()
+    plt.ion()
     for model in models:
         print('===============================================================')
         print(model)
-        print('---------------------------------------------------------------')
+        #print('---------------------------------------------------------------')
         model_list, FF, fv = gather_model_elements(model)
         fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
+        fitEnv     = 0.
         fitEnv     = FitEnv(gv_data, fit_model, switches)
         fit_result = fitEnv.fit_data(priors)
-        #print(fit_result.format(maxline=True))
-        report_phys_point(fit_result, phys_point, model_list, FF)
-        #gv.dump(fit_result, 'pickled_fits/'+model+'.p', add_dependencies=True)
+        if switches['print_fit']:
+            print(fit_result.format(maxline=True))
+        phys = report_phys_point(fit_result, phys_point, model_list, FF)
+        fit_results[model] = (fit_result,phys)
+        if switches['save_fits']:
+            gv.dump(fit_result, 'pickled_fits/'+model+'.p', add_dependencies=True)
+        if switches['make_plots']:
+            plots = plotting.ExtrapolationPlots(model, model_list, fitEnv, fit_result, switches)
+            if 'alphaS' not in model and 'ma' not in model:
+                plots.plot_vs_eps_asq(phys_point)
+            if 'ma' not in model:
+                plots.plot_vs_eps_pi(phys_point)
+
+    plt.ioff()
+    if run_from_ipython():
+        plt.show(block=False)
+        return fit_results
+    else:
+        plt.show()
+
 
 '''
     This is the main class that runs a given fit specified by a model
@@ -70,16 +103,20 @@ class FitEnv:
     def __init__(self, xyp_dict, model, switches):
         self.switches   = switches
         self.ensembles  = switches['ensembles_fit']
+        self.x          = xyp_dict['x']
         self.pruned_x   = {ens : { k : v for k, v in xyp_dict['x'][ens].items()}
                                 for ens in self.ensembles}
+        self.y          = xyp_dict['y']
         self.pruned_y   = {ens : xyp_dict['y'][ens] for ens in self.ensembles}
         required_params = model.get_required_parameters()
+        self.p          = xyp_dict['p']
         self.pruned_p   = {(ens, k) : v for (ens, k), v in xyp_dict['p'].items()
                                 if k in required_params and ens in self.ensembles}
         self.model      = model
 
     # create a callable function that acts on a single x and p (not all ensembles)
-    def _fit_function(a_model, x, p):
+    @classmethod
+    def _fit_function(cls, a_model, x, p):
         return a_model(x,p)
 
     def fit_function(self, x, p):
@@ -202,17 +239,21 @@ def gather_model_elements(model):
 
     return model_elements, FF, fv
 
-def report_phys_point(fit_result, phys_point, model_list, FF):
-    phys_data = dict(phys_point)
+def report_phys_point(fit_result, phys_point_params, model_list, FF):
+    phys_data = copy.deepcopy(phys_point_params)
+    if 'ma' in model_list[0]:
+        model_list[0] = model_list[0].replace('ma','xpt')
     fit_model = chipt.FitModel(model_list, _fv=False, _FF=FF)
     for k in fit_result.p:
         if isinstance(k,str):
             phys_data['p'][k] = fit_result.p[k]
     result    = FitEnv._fit_function(fit_model, phys_data['x'], phys_data['p'])
-    print('FK/Fpi = %s' %result)
+    print('  chi2/dof [dof] = %.2f [%d]   Q=%.3f   logGBF = %.3f' \
+        %(fit_result.chi2/fit_result.dof, fit_result.dof, fit_result.Q, fit_result.logGBF))
+    print('  FK/Fpi = %s' %result)
+    return result
 
-def debug_fit_function(check_fit, model_list, FF, fv, switches):
-    switches['ensembles_fit'] = ['']
+def debug_fit_function(check_fit, model_list, FF, fv):
     x = check_fit['x']
     p = check_fit['p']
     fit_model = chipt.FitModel(model_list, _fv=False, _FF=FF)

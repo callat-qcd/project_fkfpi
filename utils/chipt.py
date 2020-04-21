@@ -2,22 +2,27 @@
 import sys
 import numpy as np
 import functools # for LRU cache
+lru_cache_size=400 #increase this if need be to store all bessel function evaluations in cache memory
 import warnings # supress divide by zero warning in fakeData determination of terms
 import scipy.special as spsp # Bessel functions
 import gvar as gv
 
 sys.path.append('py_chiron')
 import chiron
+
+@functools.lru_cache(maxsize=lru_cache_size)
+def chironFF(aFloat):
+    return chiron.FF(aFloat)
+
 def FF(x):
     if isinstance(x, gv.GVar):
-        f = chiron.FF(x.mean)
+        f = chironFF(x.mean)
         stepSize = 1e-7# * chiron.FF(x.mean)
         dfdx = 0.5*(chiron.FF(x.mean+stepSize) - chiron.FF(x.mean-stepSize))/stepSize
         return gv.gvar_function(x, f, dfdx)
     else:
         return chiron.FF(x)
 
-lru_cache_size=200 #increase this if need be to store all bessel function evaluations in cache memory
 pi = np.pi
 
 '''
