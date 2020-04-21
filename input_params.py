@@ -12,7 +12,7 @@ switches['ensembles'] = [
 switches['ensembles_fit'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
-    'a15m310'  ,'a12m310' ,'a09m310',#'a06m310L',
+    'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
     'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
     'a15m135XL','a12m130','a09m135',
     ]
@@ -51,7 +51,7 @@ switches['make_plots']       = True
 switches['save_figs']        = True
 switches['plot_raw_data']    = False
 switches['verbose']          = False
-switches['milc_compare']     = False
+switches['milc_compare']     = True
 switches['plot_asq_converg'] = True
 # for tuning prior widths
 switches['nnlo_priors']      = False

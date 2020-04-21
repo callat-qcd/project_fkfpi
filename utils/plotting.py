@@ -15,12 +15,12 @@ class ExtrapolationPlots:
         self.fig_width = 6.75 # in inches, 2x as wide as APS column
         self.gr        = 1.618034333 # golden ratio
         self.fig_size  = (self.fig_width, self.fig_width / self.gr)
-        self.fig_size2 = (self.fig_width, self.fig_width * 1.6)
-        self.plt_axes  = [0.14,0.14,0.855,0.855]
+        self.fig_size2 = (self.fig_width, self.fig_width * 1.58)
+        self.plt_axes  = [0.14,0.14,0.858,0.858]
         self.fs_text   = 20 # font size of text
         self.fs_leg    = 16 # legend font size
         self.mrk_size  = '5' # marker size
-        self.tick_size = 16 # tick size
+        self.tick_size = 20 # tick size
         self.lw        = 1 # line width
 
         self.colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9', 'a06':'#00FFFF'}
@@ -92,7 +92,12 @@ class ExtrapolationPlots:
         self.ax_cont.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=self.fs_text)
         self.ax_cont.set_ylabel(r'$F_K / F_\pi$',fontsize=self.fs_text)
         self.ax_cont.set_xlim(0,.065)
-        self.ax_cont.set_ylim(1.135, 1.218)
+        if self.switches['milc_compare']:
+            self.ax_cont.set_ylim(1.151, 1.228)
+            self.ax_cont.set_ylabel(r'$F_K^+ / F_\pi^+$',fontsize=self.fs_text)
+            self.ax_cont.tick_params(labelsize=self.tick_size, direction='in')
+        else:
+            self.ax_cont.set_ylim(1.135, 1.218)
 
         if self.switches['save_figs']:
             plt.savefig('figures/'+'FKFpi_vs_ea_'+self.model+'.pdf',transparent=True)
