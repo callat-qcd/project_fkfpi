@@ -7,29 +7,21 @@ switches['ensembles'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
     'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
-    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220','a09m135',
-    'a15m135XL','a12m130',]
+    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
+    'a15m135XL','a12m130','a09m135',]
 switches['ensembles_fit'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
-    'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
+    'a15m310'  ,'a12m310' ,'a09m310',#'a06m310L',
     'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
     'a15m135XL','a12m130','a09m135',
     ]
-#switches['ensembles_fit'] = [
-#    'a12m400' ,'a09m400',
-#    'a12m350' ,'a09m350',
-#    'a12m310' ,'a09m310','a06m310L',
-#    'a12m220S','a12m220','a12m220L','a09m220',
-#    'a12m130',
-#    ]
-#switches['ensembles_fit'] = ['a09m135']
 
 # FIT MODELS
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
 switches['ansatz']['models'] = ['xpt_nnlo_FV_a4','ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
-switches['ansatz']['models'] = ['xpt_nnnlo_ct_FV']#, 'xpt_nnnlo_FV']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnnlo_FV']#, 'xpt_nnnlo_FV']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
 switches['sys']['Lam_chi']   = False
@@ -44,7 +36,7 @@ switches['ansatz']['a2dm']   = 'individual' # avg or individual
 switches['scales']           = ['PP','PK','KK']#,'PK','KK']
 switches['scale']            = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
 switches['do_analysis']      = True
-switches['save_fits']        = True
+switches['save_fits']        = False
 switches['model_avg']        = True
 # use optimized (True) or default (False) priors
 switches['optimized_priors'] = False
@@ -55,7 +47,7 @@ switches['scipy']            = False
 # fit options
 switches['print_fit']        = False
 switches['report_fit']       = False
-switches['make_plots']       = False
+switches['make_plots']       = True
 switches['save_figs']        = True
 switches['plot_raw_data']    = False
 switches['verbose']          = False
@@ -78,7 +70,7 @@ switches['debug_phys']       = False
 switches['debug_shift']      = False
 switches['debug_nlo_check']  = False
 switches['debug_nnlo_check'] = False
-switches['debug_save_fit']   = True # also need 'save_fits' to work
+switches['debug_save_fit']   = False # also need 'save_fits' to work
 switches['debug_models']     = False
 switches['print_lattice']    = False # this will turn off all fitting - only reads data
 # testing NNLO function
@@ -153,7 +145,7 @@ FK_phys  = gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2))
 phys_point = {
     'p':{
         'Fpi'     : FPi_phys, #PDG fpi+ eq(16)
-        'FK'      : FK_phys, #PDG fK+ eq(16)
+        'FK'      : FK_phys,  #PDG fK+ eq(16)
         'Lchi_PP' : 4 * np.pi * FPi_phys,
         'Lchi_PK' : 4 * np.pi * np.sqrt(FPi_phys * FK_phys),
         'Lchi_KK' : 4 * np.pi * FK_phys,

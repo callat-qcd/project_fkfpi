@@ -64,7 +64,7 @@ def main():
         print(model)
 
         do_fit = False
-        if switches['save_fits'] or switches['debug_save_fits']:
+        if switches['save_fits'] or switches['debug_save_fit']:
             if os.path.exists('pickled_fits/'+model+'.p'):
                 print('reading pickled_fits/'+model+'.p')
                 fit_result = gv.load('pickled_fits/'+model+'.p')

@@ -118,9 +118,9 @@ class ExtrapolationPlots:
             y_plot['a00'].append(self.fitEnv._fit_function(self.shift_fit, self.shift_xp['x'], self.shift_xp['p']))
             for aa in ['a15','a12','a09','a06']:
                 if aa == 'a06':
-                    self.shift_xp['p']['aw0'] = self.fit_result.p[(aa+'m310L','aw0')]
+                    self.shift_xp['p']['aw0'] = self.fitEnv.p[(aa+'m310L','aw0')]
                 else:
-                    self.shift_xp['p']['aw0'] = self.fit_result.p[(aa+'m310','aw0')]
+                    self.shift_xp['p']['aw0'] = self.fitEnv.p[(aa+'m310','aw0')]
                 y_plot[aa].append(self.fitEnv._fit_function(self.shift_fit, self.shift_xp['x'], self.shift_xp['p']))
         x = np.array([k.mean for k in x_plot])
         y  = dict()
@@ -169,27 +169,29 @@ class ExtrapolationPlots:
         for a_ens in self.switches['ensembles']:
             if a_ens in self.switches['ensembles_fit']:
                 c = self.colors[a_ens.split('m')[0]]
+                alpha = 1
             else:
                 c = 'k'
+                alpha = 0.6
             s = self.shapes['m'+a_ens.split('m')[1][0:3]]
             if p_type == 'ea':
-                x  = self.fit_result.p[(a_ens, 'aw0')]**2 / 4 / np.pi
+                x  = self.fitEnv.p[(a_ens, 'aw0')]**2 / 4 / np.pi
                 dx = self.dx_cont[a_ens]
             elif p_type == 'epi':
-                x  = (self.fit_result.p[(a_ens, 'mpi')] / self.fit_result.p[(a_ens, 'Lchi_'+self.FF)])**2
+                x  = (self.fitEnv.p[(a_ens, 'mpi')] / self.fitEnv.p[(a_ens, 'Lchi_'+self.FF)])**2
                 dx = 0
             label = self.labels[a_ens]
             if p_type == 'ea':
                 mfc = c
             elif p_type == 'epi':
                 mfc = 'None'
-            y = self.fit_result.y[a_ens] + y_shift[a_ens]
+            y = self.fitEnv.y[a_ens] + y_shift[a_ens]
             if p_type == 'ea':
                 self.ax_cont.errorbar(x=x.mean+dx, y=y.mean,xerr=x.sdev, yerr=y.sdev,
-                    marker=s, color=c, mfc=mfc, linestyle='None', label=label)
+                    marker=s, color=c, mfc=mfc, alpha=alpha, linestyle='None', label=label)
             elif p_type == 'epi':
                 self.ax_x.errorbar(x=x.mean+dx, y=y.mean,xerr=x.sdev, yerr=y.sdev,
-                    marker=s, color=c, mfc=mfc, linestyle='None', label=label)
+                    marker=s, color=c, mfc=mfc, alpha=alpha, linestyle='None', label=label)
 
     def shift_data(self, p_type):
         y_shift = dict()
@@ -210,13 +212,13 @@ class ExtrapolationPlots:
             for k in self.fit_result.p:
                 if isinstance(k,str):# grab the LECs from the fit results
                     og_priors[k] = self.fit_result.p[k]    # the LECs of the fit
-            self.shift_xp['p']['aw0'] = self.fit_result.p[(a_ens,'aw0')]
+            self.shift_xp['p']['aw0'] = self.fitEnv.p[(a_ens,'aw0')]
             if p_type == 'epi':
-                self.shift_xp['p']['aw0'] = self.fit_result.p[(a_ens,'aw0')]
-                self.shift_xp['p']['mpi'] = self.fit_result.p[(a_ens,'mpi')] / self.fit_result.p[(a_ens, 'Lchi_'+self.FF)]
+                self.shift_xp['p']['aw0'] = self.fitEnv.p[(a_ens,'aw0')]
+                self.shift_xp['p']['mpi'] = self.fitEnv.p[(a_ens,'mpi')] / self.fitEnv.p[(a_ens, 'Lchi_'+self.FF)]
                 self.shift_xp['p']['mk']  = self.shift_xp['p']['mk'] / self.shift_xp['p']['Lchi_'+self.FF]
                 self.shift_xp['p']['Lchi_'+self.FF] = 1
-                self.shift_xp['x']['alphaS'] = self.fit_result.x[a_ens]['alphaS']
+                self.shift_xp['x']['alphaS'] = self.fitEnv.x[a_ens]['alphaS']
             og_y    = self.fitEnv._fit_function(self.og_fit,    self.fitEnv.x[a_ens], og_priors)
             shift_y = self.fitEnv._fit_function(self.shift_fit, self.shift_xp['x'],   self.shift_xp['p'])
             y_shift[a_ens] = shift_y - og_y
