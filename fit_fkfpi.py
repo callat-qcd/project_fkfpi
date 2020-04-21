@@ -80,7 +80,7 @@ def main():
             tmp_result = fitEnv.fit_data(priors)
             tmp_result.phys = report_phys_point(tmp_result, phys_point, model_list, FF)
             if switches['print_fit']:
-                print(fit_result.format(maxline=True))
+                print(tmp_result.format(maxline=True))
             if not os.path.exists('pickled_fits/'+model+'.p') and switches['save_fits']:
                 gv.dump(tmp_result, 'pickled_fits/'+model+'.p', add_dependencies=True)
                 fit_result = gv.load('pickled_fits/'+model+'.p')
@@ -101,6 +101,9 @@ def main():
                 plots.plot_vs_eps_asq(phys_point)
             if 'ma' not in model:
                 plots.plot_vs_eps_pi(phys_point)
+
+    model_avg = analysis.BayesModelAvg(fit_results)
+    model_avg.print_weighted_models()
 
     plt.ioff()
     if run_from_ipython():
@@ -175,18 +178,20 @@ def check_for_duplicates(list_of_elems):
 def sys_models(switches):
     def check_model(sys_val,models,nnlo=False,nnnlo=False):
         for model in models:
-            new_model = model+sys_val
-            if nnlo:
-                if (sys_val not in model) and (new_model not in models):
-                    if nnnlo:
-                        if 'nnlo' in model and 'nnnlo' not in model:
-                            models.append(new_model)
-                    else:
-                        if 'nnlo' in model:
-                            models.append(new_model)
-            else:
-                if (sys_val not in model) and (new_model not in models):
-                    models.append(new_model)
+            if 'taylor' not in model:
+                new_model = model+sys_val
+                if nnlo:
+                    if (sys_val not in model) and (new_model not in models):
+                        if nnnlo:
+                            if 'nnlo' in model and 'nnnlo' not in model:
+                                models.append(new_model)
+                        else:
+                            if 'nnlo' in model:
+                                models.append(new_model)
+                else:
+                    if (sys_val not in model) and (new_model not in models):
+                        models.append(new_model)
+
     models = switches['ansatz']['models'].copy()
     if switches['sys']['FV']:
         check_model('_FV',models)

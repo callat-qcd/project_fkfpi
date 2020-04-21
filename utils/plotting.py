@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import matplotlib.pyplot as plt
 import numpy as np
 import os, copy
@@ -33,12 +34,12 @@ class ExtrapolationPlots:
             'a06m310L':'a06',
             }
         self.dx_cont = {
-            'a15m400'  :0.0016, 'a12m400':0.0016, 'a09m400':0.0016,
-            'a15m350'  :0.0008, 'a12m350':0.0008, 'a09m350':0.0008,
+            'a15m400'  :0.0050, 'a12m400':0.0050, 'a09m400':0.0050,
+            'a15m350'  :0.0025, 'a12m350':0.0025, 'a09m350':0.0025,
             'a15m310'  :0.,     'a12m310':0.,     'a09m310':0.,     'a06m310L':0.,
-            'a15m220'  :-0.0008,'a12m220':-0.0008,'a09m220':-0.0008,
-            'a15m135XL':-.0016, 'a12m130':-0.0016,'a09m135':-0.0016,
-            'a12m220L' :-0.0012,'a12m220S':-0.0004,
+            'a15m220'  :-0.0025,'a12m220':-0.0025,'a09m220':-0.0025,
+            'a15m135XL':-0.0050,'a12m130':-0.0050,'a09m135':-0.0050,
+            'a12m220L' :-0.0037,'a12m220S':-0.0012,
         }
 
         self.model      = model
@@ -69,7 +70,7 @@ class ExtrapolationPlots:
         a_range = np.sqrt(np.arange(0, .16**2, .16**2 / 50))
         for a_fm in a_range:
             self.shift_xp['p']['aw0'] = a_fm / self.shift_xp['p']['w0']
-            x_plot.append(self.shift_xp['p']['aw0']**2 / 4 / np.pi)
+            x_plot.append((self.shift_xp['p']['aw0'] / 2)**2)
             y_plot.append(self.fitEnv._fit_function(self.shift_fit, self.shift_xp['x'], self.shift_xp['p']))
         x  = np.array([k.mean for k in x_plot])
         y  = np.array([k.mean for k in y_plot])
@@ -91,7 +92,7 @@ class ExtrapolationPlots:
 
         self.ax_cont.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=self.fs_text)
         self.ax_cont.set_ylabel(r'$F_K / F_\pi$',fontsize=self.fs_text)
-        self.ax_cont.set_xlim(0,.065)
+        self.ax_cont.set_xlim(0,.225)
         if self.switches['milc_compare']:
             self.ax_cont.set_ylim(1.151, 1.228)
             self.ax_cont.set_ylabel(r'$F_K^+ / F_\pi^+$',fontsize=self.fs_text)
@@ -180,7 +181,7 @@ class ExtrapolationPlots:
                 alpha = 0.6
             s = self.shapes['m'+a_ens.split('m')[1][0:3]]
             if p_type == 'ea':
-                x  = self.fitEnv.p[(a_ens, 'aw0')]**2 / 4 / np.pi
+                x  = (self.fitEnv.p[(a_ens, 'aw0')] / 2)**2
                 dx = self.dx_cont[a_ens]
             elif p_type == 'epi':
                 x  = (self.fitEnv.p[(a_ens, 'mpi')] / self.fitEnv.p[(a_ens, 'Lchi_'+self.FF)])**2

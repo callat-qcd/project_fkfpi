@@ -107,7 +107,7 @@ class FitModel:
         a_result += p['L4'] * (4*pi)**2 * 4 * (cP['p2'] + cP['k2'])
         return a_result
     # eps_a**2
-    def _a2(self, x, p, cP):  return p['aw0']**2 / (4 * pi)
+    def _a2(self, x, p, cP):  return (p['aw0'] / 2)**2
     # mixed action params
     def _ju2(self, x, p, cP): return (p['mju'] / p['Lchi_'+self.FF])**2
     def _ru2(self, x, p, cP): return (p['mru'] / p['Lchi_'+self.FF])**2

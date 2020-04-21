@@ -94,10 +94,13 @@ def format_h5_data(data_path, switches):
         x[ens]['mxL']    = np.sqrt(4./3 *(gvdata['mk'].mean)**2 -1./3 *(gvdata['mpi'].mean)**2 + a2di[0]) * L_ens
 
         if switches['print_lattice']:
-            lattice_fits.append('%9s& %s& %s& %.2f& %s& %s& %s& %s& %s\\\\' \
-                %(ens, gvdata['mpi'], gvdata['mk'], x[ens]['mpiL'],\
-                    p[(ens,'aw0')]**2 / 4 / np.pi, x[ens]['alphaS'],\
-                    gvdata['Fpi'],gvdata['FK'],gvdata['FK']/gvdata['Fpi']))
+            lattice_fits.append('%9s& %s& %s& %s& %s& %.2f& %s& %s& %s& %s& %s\\\\' \
+                %(ens, gvdata['mpi'], gvdata['mk'], \
+                    (gvdata['mpi']/4/np.pi/gvdata['Fpi'])**2,\
+                    (gvdata['mk']/4/np.pi/gvdata['Fpi'])**2,\
+                    x[ens]['mpiL'], (p[(ens,'aw0')] / 2)**2, x[ens]['alphaS'],\
+                    #p[(ens,'aw0')]**2 / 4 / np.pi, x[ens]['alphaS'],\
+                    gvdata['Fpi'],gvdata['FK'], gvdata['FK']/gvdata['Fpi']))
             dju = p[(ens,'aw0')]**(-2) * (gvdata['mju']**2 - gvdata['mpi']**2)
             djs = p[(ens,'aw0')]**(-2) * (gvdata['mjs']**2 - gvdata['mk']**2)
             dru = p[(ens,'aw0')]**(-2) * (gvdata['mru']**2 - gvdata['mk']**2)
@@ -106,7 +109,7 @@ def format_h5_data(data_path, switches):
             mixed_fits.append('%9s& %s& %s& %s& %s& %s& %s& %s& %s& %s& %s\\\\' \
                 %(ens,gvdata['mju'],gvdata['mjs'],gvdata['mru'],gvdata['mrs'],gvdata['mss'],dju,djs,dru,drs,dpq))
     if switches['print_lattice']:
-        print(r'ensemble& $am_\pi$& $am_K$& $m_\pi L$& $\e_a^2$& $\a_S$& $aF_\pi$& $aF_K$& $F_K / F_\pi$\\')
+        print(r'ensemble& $am_\pi$& $am_K$& $\e_\pi^2$& $\e_K^2$& $m_\pi L$& $\e_a^2$& $\a_S$& $aF_\pi$& $aF_K$&  $F_K / F_\pi$\\')
         print(r'\hline')
         for l in lattice_fits:
             print(l)
