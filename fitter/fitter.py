@@ -282,6 +282,18 @@ class fitter(object):
             if key in newprior.keys():
                 del(newprior[key])
 
+        '''
+        output = gv.BufferDict()
+        for key in newprior:
+            if key not in fit_data:
+                sdev = np.log(gv.sdev(newprior[key]))
+                output['log('+key+')'] = gv.gvar(sdev, sdev)
+            else:
+                output[key] = newprior[key]
+
+        return output
+        '''
+
         return newprior
 
     def _make_y_data(self, fit_data=None):
@@ -337,8 +349,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
 
     def fitfcn(self, p, fit_data=None, debug=None):
-        if debug is None:
-            debug = self.debug
+
+        if debug:
+            self.debug = debug
+            self.debug_table = {}
 
         if fit_data is not None:
             for key in fit_data.keys():
@@ -398,8 +412,13 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             del(p[key])
 
         if debug:
-            print('n2lo', output - temp)
-            #print('p', p)
+            #print(gv.tabulate(self.debug_table))
+            temp_string = ''
+            for key in self.debug_table:
+                temp_string +='  % .6f:  %s\n' %(self.debug_table[key], key)
+            temp_string +='   -----\n'
+            temp_string +='  % .6f:  %s\n' %(output, 'total')
+            print(temp_string)
 
         return output
 
@@ -458,6 +477,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
             + 4 *(4 *np.pi)**2 *(mk**2 - mpi**2) / lam2_chi *p['L_5']
         )
+
+        if self.debug:
+            self.debug_table['nlo_ma'] = output
+
 
         return output
 
@@ -532,7 +555,12 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             )
         )
 
-        return FK_nlo_per_F0 / Fpi_nlo_per_F0
+        output = FK_nlo_per_F0 / Fpi_nlo_per_F0
+
+        if self.debug:
+            self.debug_table['nlo_ma-ratio'] = output
+
+        return output
 
 
     def fitfcn_nlo_polynomial(self, p):
@@ -541,6 +569,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         eps2_k = p['mk']**2 / lam2_chi
 
         output = 1 + (eps2_k - eps2_pi) *p['A_x']
+
+        if self.debug:
+            self.debug_table['nlo_poly'] = output
+
         return output
 
 
@@ -573,6 +605,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             - (3.0/8.0) *sf.fcn_I_m(meta, L, mu, order_vol) / F2)
             + 4 *(eps2_k - eps2_pi) *(4 *np.pi)**2 *p['L_5']
         )
+
+        if self.debug:
+            self.debug_table['nlo_xpt'] = output
+
         return output
 
 
@@ -612,7 +648,12 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             + 4 *eps2_k *(4 *np.pi)**2 *(2 *p['L_4'] + p['L_5'])
         )
 
-        return FK_nlo_per_F0 / Fpi_nlo_per_F0
+        output = FK_nlo_per_F0 / Fpi_nlo_per_F0
+
+        if self.debug:
+            self.debug_table['nlo_xpt'] = output
+
+        return output
 
 
     def fitfcn_n2lo_pure_ct(self, p, include_log=None):
@@ -646,6 +687,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 )
             )
 
+        if self.debug:
+            self.debug_table['n2lo_ct'] = output
+
         return output
 
     def fitfcn_n2lo_ratio(self, p):
@@ -657,22 +701,22 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         fcn_l = lambda x : x *np.log(x)
 
         if self.model_info['fit_type'] in ['ma-ratio', 'xpt-ratio']:
-            output = (
-                + (
-                    + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
-                    - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
-                ) *(
+            dFK = -(
                     + 3./8 *fcn_l(eps2_pi) + 3./4 *fcn_l(eps2_k) + 3./8 *fcn_l(eps2_eta)
-                    + 4 *(4*np.pi)**2 *(eps2_pi *p['L_4'] + eps2_k *(2 *p['L_4'] + p['L_5']))
+                    - 4 *(4*np.pi)**2 *(eps2_pi *p['L_4'] + eps2_k *(2 *p['L_4'] + p['L_5']))
                 )
 
-                - (
+            dFpi = -(
                     + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
                     - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
-                )**2
-            )
+                )
+
+            output = dFK *dFpi - dFpi**2
         else:
             output = 0
+
+        if self.debug:
+            self.debug_table['n2lo_ratio'] = output
 
         return output
 
@@ -684,56 +728,30 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
         fcn_l = lambda x : x *np.log(x)
 
-        xi = (
-            + (5./8) *fcn_l(eps2_pi)
-            - (1./4) *fcn_l(eps2_k)
-            - (3./8) *fcn_l(eps2_eta)
-
-            + 4 *(4 *np.pi)**2 *(
-                + eps2_pi *p['L_5']
+        dFK = -(
+                + 3./8 *fcn_l(eps2_pi) + 3./4 *fcn_l(eps2_k) + 3./8 *fcn_l(eps2_eta)
+                - 4 *(4*np.pi)**2 *(eps2_pi *p['L_4'] + eps2_k *(2 *p['L_4'] + p['L_5']))
             )
-        )
 
-        if self.model_info['F2'] == 'FKFK':
-            output = (3./2) *(eps2_k - eps2_pi) *(
-                + (3./8) *fcn_l(eps2_pi)
-                + (3./4) *fcn_l(eps2_k)
-                + (3./8) *fcn_l(eps2_eta)
-
-                - 4 *(4 *np.pi)**2 *(
-                    + eps2_pi *p['L_4']
-                    + eps2_k *(2 *p['L_4'] + p['L_5'])
-                )
-
-                + 2 *xi**2
+        dFpi = -(
+                + fcn_l(eps2_pi) + 1./2 *fcn_l(eps2_k)
+                - 4 *(4*np.pi)**2 *(eps2_pi *(p['L_4'] + p['L_5']) + 2 *eps2_k *p['L_4'])
             )
+
+        if self.model_info['F2'] == 'FpiFpi':
+            output = -3 / 2. *(eps2_k - eps2_pi) *dpi
 
         elif self.model_info['F2'] == 'FKFpi':
-            output = (3./2) *(eps2_k - eps2_pi) *(
-                + (11./8) *fcn_l(eps2_pi)
-                + (5./4) *fcn_l(eps2_k)
-                + (3./8) *fcn_l(eps2_eta)
+            output = -3 / 4. *(eps2_k - eps2_pi) *(dFK + dFpi)
+            output += (dFK - dFpi)**2
 
-                - 4 *(4 *np.pi)**2 *(
-                    + eps2_pi *(2 *p['L_4'] + p['L_5'])
-                    + eps2_k *(4 *p['L_4'] + p['L_5'])
-                )
+        elif self.model_info['F2'] == 'FKFK':
+            output = -3 / 2. *(eps2_k - eps2_pi) *dFK
+            output += 2 *(dFK - dFpi)**2
 
-                + xi**2
-            )
-
-        elif self.model_info['F2'] == 'FpiFpi':
-            output = (3./2) *(eps2_k - eps2_pi) *(
-                + fcn_l(eps2_pi)
-                + (1./2) * fcn_l(eps2_k)
-
-                - 4 *(4 *np.pi)**2 *(
-                    + eps2_pi *(p['L_4'] + p['L_5'])
-                    + eps2_k *(2 *p['L_4'])
-                )
-            )
         if self.debug:
-            print('mu fix', output)
+            self.debug_table['n2lo_scale'] = output
+
         return output
 
     def fitfcn_semi_n2lo_alpha_s_ct(self, p):
@@ -746,6 +764,10 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         output = (
             alpha_s *eps2_a *(eps2_k - eps2_pi) *p['A_loga']
         )
+
+        if self.debug:
+            self.debug_table['n2lo_alphaS'] = output
+
         return output
 
 
@@ -762,7 +784,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         )
 
         if self.debug:
-            print('log', output)
+            self.debug_table['n2lo_log'] = output
+
         return output
 
     def fitfcn_semi_n2lo_log_squared_ct(self, p):
@@ -781,7 +804,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         )
 
         if self.debug:
-            print('logSq', output)
+            self.debug_table['n2lo_logSq'] = output
+
         return output
 
     def fitfcn_semi_n2lo_sunset_ct(self, p):
@@ -795,7 +819,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             output = eps2_k**2 *sf.fcn_FF(eps2_pi/eps2_k)
 
         if self.debug:
-            print('FF', output)
+            self.debug_table['n2lo_sunset'] = output
+
         return output
 
     def fitfcn_n2lo_latt_spacing_ct(self, p):
@@ -807,6 +832,9 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
         output = (
             + (eps2_a) *p['A_a']
         ) *(eps2_k - eps2_pi)
+
+        if self.debug:
+            self.debug_table['n2lo_a2'] = output
 
         return output
 
@@ -820,17 +848,8 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             + (eps2_a)**2 *p['A_aa']
         ) *(eps2_k - eps2_pi)
 
-        return output
-
-    def fitfcn_n4lo_latt_spacing_ct(self, p):
-        lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
-        eps2_pi = p['mpi']**2 / lam2_chi
-        eps2_k = p['mk']**2 / lam2_chi
-
-        output = (
-            + (eps2_a)**4 *p['A_aaa']
-        ) *(eps2_k - eps2_pi)
+        if self.debug:
+            self.debug_table['n3lo_a4'] = output
 
         return output
 
@@ -854,6 +873,24 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
                 + eps2_pi *p['A_pp']
             )
         ) *(eps2_k - eps2_pi)
+
+        if self.debug:
+            self.debug_table['n3lo_ct'] = output
+
+        return output
+
+    def fitfcn_n4lo_latt_spacing_ct(self, p):
+        lam2_chi = p['lam2_chi']
+        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_pi = p['mpi']**2 / lam2_chi
+        eps2_k = p['mk']**2 / lam2_chi
+
+        output = (
+            + (eps2_a)**4 *p['A_aaa']
+        ) *(eps2_k - eps2_pi)
+
+        if self.debug:
+            self.debug_table['n4lo_a6'] = output
 
         return output
 
