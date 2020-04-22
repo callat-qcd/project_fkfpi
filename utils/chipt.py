@@ -134,6 +134,10 @@ class FitModel:
     def _Ip(self, x, p, cP): return self._I(cP['p2'], (x['mpiL'] if self.fv else None))
     def _Ik(self, x, p, cP): return self._I(cP['k2'], (x['mkL']  if self.fv else None))
     def _Ie(self, x, p, cP): return self._I(cP['e2'], (x['meL']  if self.fv else None))
+    # mock Taylor Expansion FV correction
+    def _IT(self, mL):
+        return (4*self.k0k1k2(mL)[1] if self.fv else 0.)
+    def _ITp(self, x, p, cP): return p['t_fv']*self._IT( x['mpiL'] if self.fv else None)
     # mixed action
     def _Iju(self, x, p, cP): return self._I(cP['ju2'], (x['mjuL'] if self.fv else None))
     def _Iru(self, x, p, cP): return self._I(cP['ru2'], (x['mruL'] if self.fv else None))
@@ -229,7 +233,7 @@ class FitModel:
         ''' in order to keep the LECs of the same order as XPT, we multiply
             by powers of (4pi)**2 just as in XPT
         '''
-        return 1. + (4*pi)**2 * p['L5'] * cP['k2p2']
+        return 1. + (4*pi)**2 * p['L5'] * cP['k2p2'] * (1 + cP['ITp'])
 
     # NNLO terms
     def nnlo_ct(self, x, p, cP):
