@@ -99,12 +99,12 @@ class FitModel:
     def _dFPnlo(self, x, p, cP):
         a_result  = -cP['p2']*cP['lp'] -0.5*cP['k2']*cP['lk']
         a_result += p['L5'] * (4*pi)**2 * 4 * cP['p2']
-        a_result += p['L4'] * (4*pi)**2 * 4 * (cP['p2'] + cP['k2'])
+        a_result += p['L4'] * (4*pi)**2 * 4 * (cP['p2'] + 2*cP['k2'])
         return a_result
     def _dFKnlo(self, x, p, cP):
         a_result  = -3./8 * cP['p2']*cP['lp'] -3./4 *cP['k2']*cP['lk'] -3./8*cP['e2']*cP['le']
         a_result += p['L5'] * (4*pi)**2 * 4 * cP['k2']
-        a_result += p['L4'] * (4*pi)**2 * 4 * (cP['p2'] + cP['k2'])
+        a_result += p['L4'] * (4*pi)**2 * 4 * (cP['p2'] + 2*cP['k2'])
         return a_result
     # eps_a**2
     def _a2(self, x, p, cP):  return (p['aw0'] / 2)**2

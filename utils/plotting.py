@@ -34,11 +34,11 @@ class ExtrapolationPlots:
             'a06m310L':'a06',
             }
         self.dx_cont = {
-            'a15m400'  :0.0050, 'a12m400':0.0050, 'a09m400':0.0050,
-            'a15m350'  :0.0025, 'a12m350':0.0025, 'a09m350':0.0025,
-            'a15m310'  :0.,     'a12m310':0.,     'a09m310':0.,     'a06m310L':0.,
-            'a15m220'  :-0.0025,'a12m220':-0.0025,'a09m220':-0.0025,
-            'a15m135XL':-0.0050,'a12m130':-0.0050,'a09m135':-0.0050,
+            'a15m400'  :0.0050, 'a12m400' :0.0050, 'a09m400':0.0050,
+            'a15m350'  :0.0025, 'a12m350' :0.0025, 'a09m350':0.0025,
+            'a15m310'  :0.,     'a12m310' :0.,     'a09m310':0.,     'a06m310L':0.,
+            'a15m220'  :-0.0025,'a12m220' :-0.0025,'a09m220':-0.0025,
+            'a15m135XL':-0.0050,'a12m130' :-0.0050,'a09m135':-0.0050,
             'a12m220L' :-0.0037,'a12m220S':-0.0012,
         }
 
@@ -48,8 +48,6 @@ class ExtrapolationPlots:
         self.model_list = model_list
         self.fitEnv     = fitEnv
         self.fit_result = fit_result
-        #for k, v in self.fit_results.items():
-        #    print(k,v)
         self.switches   = switches
 
         # create fit functions for original and shifted points

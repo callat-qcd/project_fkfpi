@@ -13,24 +13,26 @@ switches['ensembles_fit'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
     'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
-    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
-    'a15m135XL','a12m130','a09m135',
+    'a15m220'  ,'a12m220' ,'a09m220','a12m220S','a12m220L',
+    'a15m135XL','a12m130' ,'a09m135',
     ]
 
 # FIT MODELS
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo','ma_nnlo']
 switches['ansatz']['models'] = ['xpt_nnlo_FV_a4','ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
-switches['ansatz']['models'] = ['xpt_nnnlo_FV']#, 'xpt_nnnlo_FV']#,'ma_nnlo', 'xpt_nnnlo', 'ma_nnnlo']#, 'xpt_nnnlo_FV']#,'ma_nnlo_FV_a4']#,'xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnnlo_FV']#,'xpt_nnlo_ct_FV']#, 'xpt_nnlo_ct_a4_FV']#,
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
-switches['sys']['Lam_chi']   = False
+switches['sys']['Lam_chi']   = True
 switches['sys']['FV']        = False
-switches['sys']['alphaS']    = False
-switches['sys']['nnlo_ct']   = False
-switches['sys']['logSq']     = False
-switches['sys']['a4']        = False
+switches['sys']['alphaS']    = True
+switches['sys']['nnlo_ct']   = True
 switches['sys']['ratio']     = False
+# OLDER SYSTEMATICS - still work, but not used
+switches['sys']['logSq']     = False # only include logSq and ct (no log)
+switches['sys']['a4']        = False # only include mpi^2 a^4 N3LO ct
+
 
 switches['ansatz']['a2dm']   = 'individual' # avg or individual
 switches['scales']           = ['PP','PK','KK']#,'PK','KK']
@@ -47,15 +49,15 @@ switches['scipy']            = False
 # fit options
 switches['print_fit']        = False
 switches['report_fit']       = False
-switches['make_plots']       = True
+switches['make_plots']       = False
 switches['save_figs']        = True
 switches['plot_raw_data']    = False
 switches['verbose']          = False
-switches['milc_compare']     = True
+switches['milc_compare']     = False
 switches['plot_asq_converg'] = True
 # for tuning prior widths
-switches['nnlo_priors']      = False
-switches['prior_group']      = True
+switches['prior_search']     = True
+switches['prior_verbose']    = False
 switches['refine_prior']     = True
 # fit checks
 switches['nlo_report']       = False
@@ -94,35 +96,26 @@ priors['L8']   = gv.gvar( 0.000294,0.000294)
 priors['c2'] = gv.gvar(0,10)
 
 ''' default values '''
-n2lo_width = 5.
+nnlo_x = 2
+nnlo_a = 2
 #priors['s_4']   = gv.gvar(0.0, n2lo_width)
-priors['s_4']   = gv.gvar(0, 10)
-#priors['s_4']   = gv.gvar(0, 100)
-priors['k_4']   = gv.gvar(0.0, n2lo_width)
-priors['p_4']   = gv.gvar(0.0, n2lo_width)
-priors['saS_4'] = gv.gvar(0.0, 10)
-#priors['saS_4'] = gv.gvar(0.0, n2lo_width)
+priors['k_4']   = gv.gvar(0.0, nnlo_x)
+priors['p_4']   = gv.gvar(0.0, nnlo_x)
+priors['s_4']   = gv.gvar(0.0, nnlo_a)
+priors['saS_4'] = gv.gvar(0.0, nnlo_a)
 
 # Ananthanarayan et al, 1711.11328
-priors['k_4']   = gv.gvar(2.2, 4)
-priors['p_4']   = gv.gvar(7.9, 10)
+#priors['k_4']   = gv.gvar(2.2, 10)
+#priors['p_4']   = gv.gvar(7.9, 10)
 
-'''
-n3lo_width = 5.
-priors['kp_6']  = gv.gvar(0.0, n3lo_width)
-priors['k_6']   = gv.gvar(0.0, n3lo_width)
-priors['p_6']   = gv.gvar(0.0, n3lo_width)
-priors['s_6']   = gv.gvar(100, 100)
-priors['sk_6']  = gv.gvar(0.0, 100)
-priors['sp_6']  = gv.gvar(0.0, 100)
-'''
-n3lo_width = 20.
-priors['kp_6']  = gv.gvar(0.0, n3lo_width)
-priors['k_6']   = gv.gvar(0.0, n3lo_width)
-priors['p_6']   = gv.gvar(0.0, n3lo_width)
-priors['s_6']   = gv.gvar(0.0, 35)
-priors['sk_6']  = gv.gvar(0.0, 10)
-priors['sp_6']  = gv.gvar(0.0, 10)
+n3lo_x = 5
+n3lo_a = 5
+priors['kp_6']  = gv.gvar(0.0, n3lo_x)
+priors['k_6']   = gv.gvar(0.0, n3lo_x)
+priors['p_6']   = gv.gvar(0.0, n3lo_x)
+priors['s_6']   = gv.gvar(0.0, n3lo_a)
+priors['sk_6']  = gv.gvar(0.0, n3lo_a)
+priors['sp_6']  = gv.gvar(0.0, n3lo_a)
 
 
 

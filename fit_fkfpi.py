@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # python libraries
-import os, sys, copy
+import os, sys, shutil, copy
 import matplotlib.pyplot as plt
 # Peter Lepage's libraries
 import gvar as gv
@@ -37,7 +37,7 @@ def main():
 
     # if check_fit: - add support
     if switches['check_fit']:
-        models = sys_models(switches)
+        models = analysis.sys_models(switches)
         print('DEBUGGING FIT FUNCTION')
         print('p')
         for k in check_fit['p']:
@@ -49,68 +49,77 @@ def main():
             print('===============================================================')
             print('DEBUGGING Terms in ',model)
             print('---------------------------------------------------------------')
-            model_list, FF, fv = gather_model_elements(model)
+            model_list, FF, fv = analysis.gather_model_elements(model)
             debug_fit_function(check_fit, model_list, FF, fv)
         sys.exit()
 
     # load data
     gv_data = io_utils.format_h5_data('data/FK_Fpi_data.h5',switches)
 
-    models = sys_models(switches)
-    fit_results = dict()
-    plt.ion()
-    for model in models:
-        print('===============================================================')
-        print(model)
+    models = analysis.sys_models(switches)
+    if switches['prior_search']:
+        print('Performing Prior Width Scan')
+        print(r'%33s &  nnlo_x &  nnlo_a &  n3lo_x &  n3lo_a & logGBF_max' %'model')
+        print('======================================================================================')
+        for model in models:
+            model_list, FF, fv = analysis.gather_model_elements(model)
+            fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
+            fitEnv     = FitEnv(gv_data, fit_model, switches)
+            analysis.prior_width_scan(model, fitEnv, fit_model, priors, switches)
+    else:
+        fit_results = dict()
+        plt.ion()
+        for model in models:
+            print('===============================================================')
+            print(model)
 
-        do_fit = False
-        if switches['save_fits'] or switches['debug_save_fit']:
-            if os.path.exists('pickled_fits/'+model+'.p'):
-                print('reading pickled_fits/'+model+'.p')
-                fit_result = gv.load('pickled_fits/'+model+'.p')
+            do_fit = False
+            if switches['save_fits'] or switches['debug_save_fit']:
+                if os.path.exists('pickled_fits/'+model+'.p'):
+                    print('reading pickled_fits/'+model+'.p')
+                    fit_result = gv.load('pickled_fits/'+model+'.p')
+                else:
+                    do_fit = True
             else:
                 do_fit = True
+            if do_fit or switches['debug_save_fit']:
+                model_list, FF, fv = analysis.gather_model_elements(model)
+                fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
+                fitEnv     = FitEnv(gv_data, fit_model, switches)
+                tmp_result = fitEnv.fit_data(priors)
+                tmp_result.phys = report_phys_point(tmp_result, phys_point, model_list, FF)
+                if switches['print_fit']:
+                    print(tmp_result.format(maxline=True))
+                if not os.path.exists('pickled_fits/'+model+'.p') and switches['save_fits']:
+                    gv.dump(tmp_result, 'pickled_fits/'+model+'.p', add_dependencies=True)
+                    fit_result = gv.load('pickled_fits/'+model+'.p')
+                if switches['debug_save_fit']:
+                    print('live fit')
+                    print('dF/dy =', tmp_result.phys.partialsdev(tmp_result.y))
+                    print('dF/dprior =', tmp_result.phys.partialsdev(tmp_result.prior))
+                    print('pickled fit')
+                    print('dF/dy =', fit_result.phys.partialsdev(fit_result.y))
+                    print('dF/dprior =', fit_result.phys.partialsdev(fit_result.prior))
+                if do_fit:
+                    fit_result = tmp_result
+
+            fit_results[model] = fit_result
+            if switches['make_plots']:
+                plots = plotting.ExtrapolationPlots(model, model_list, fitEnv, fit_result, switches)
+                if 'alphaS' not in model and 'ma' not in model:
+                    plots.plot_vs_eps_asq(phys_point)
+                if 'ma' not in model:
+                    plots.plot_vs_eps_pi(phys_point)
+
+        model_avg = analysis.BayesModelAvg(fit_results)
+        model_avg.print_weighted_models()
+
+        plt.ioff()
+        if run_from_ipython():
+            plt.show(block=False)
+            return fit_results
         else:
-            do_fit = True
-        if do_fit or switches['debug_save_fit']:
-            model_list, FF, fv = gather_model_elements(model)
-            fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
-            fitEnv     = 0.
-            fitEnv     = FitEnv(gv_data, fit_model, switches)
-            tmp_result = fitEnv.fit_data(priors)
-            tmp_result.phys = report_phys_point(tmp_result, phys_point, model_list, FF)
-            if switches['print_fit']:
-                print(tmp_result.format(maxline=True))
-            if not os.path.exists('pickled_fits/'+model+'.p') and switches['save_fits']:
-                gv.dump(tmp_result, 'pickled_fits/'+model+'.p', add_dependencies=True)
-                fit_result = gv.load('pickled_fits/'+model+'.p')
-            if switches['debug_save_fit']:
-                print('live fit')
-                print('dF/dy =', tmp_result.phys.partialsdev(tmp_result.y))
-                print('dF/dprior =', tmp_result.phys.partialsdev(tmp_result.prior))
-                print('pickled fit')
-                print('dF/dy =', fit_result.phys.partialsdev(fit_result.y))
-                print('dF/dprior =', fit_result.phys.partialsdev(fit_result.prior))
-            if do_fit:
-                fit_result = tmp_result
-
-        fit_results[model] = fit_result
-        if switches['make_plots']:
-            plots = plotting.ExtrapolationPlots(model, model_list, fitEnv, fit_result, switches)
-            if 'alphaS' not in model and 'ma' not in model:
-                plots.plot_vs_eps_asq(phys_point)
-            if 'ma' not in model:
-                plots.plot_vs_eps_pi(phys_point)
-
-    model_avg = analysis.BayesModelAvg(fit_results)
-    model_avg.print_weighted_models()
-
-    plt.ioff()
-    if run_from_ipython():
-        plt.show(block=False)
-        return fit_results
-    else:
-        plt.show()
+            plt.show()
 
 
 '''
@@ -167,102 +176,6 @@ class FitEnv:
             fitter='gsl_multifit'
         return lsqfit.nonlinear_fit(data=(x,y), prior=p, fcn=self.fit_function, fitter=fitter, debug=True)
 
-
-def check_for_duplicates(list_of_elems):
-    ''' Check if given list contains any duplicates '''
-    if len(list_of_elems) == len(set(list_of_elems)):
-        return False
-    else:
-        return True
-
-def sys_models(switches):
-    def check_model(sys_val,models,nnlo=False,nnnlo=False):
-        for model in models:
-            if 'taylor' not in model:
-                new_model = model+sys_val
-                if nnlo:
-                    if (sys_val not in model) and (new_model not in models):
-                        if nnnlo:
-                            if 'nnlo' in model and 'nnnlo' not in model:
-                                models.append(new_model)
-                        else:
-                            if 'nnlo' in model:
-                                models.append(new_model)
-                else:
-                    if (sys_val not in model) and (new_model not in models):
-                        models.append(new_model)
-
-    models = switches['ansatz']['models'].copy()
-    if switches['sys']['FV']:
-        check_model('_FV',models)
-    if switches['sys']['alphaS']:
-        check_model('_alphaS',models,nnlo=True)
-    if switches['sys']['nnlo_ct']:
-        check_model('_ct',models,nnlo=True)
-    if switches['sys']['logSq']:
-        check_model('_logSq',models,nnlo=True)
-    if switches['sys']['a4']:
-        check_model('_a4',models,nnlo=True,nnnlo=True)
-    if switches['sys']['ratio']:
-        for model in models:
-            model_ratio = model.replace('xpt','xpt-ratio').replace('ma','ma-ratio')
-            if '-ratio' not in model and model_ratio not in models:
-                models.append(model_ratio)
-    models_FPK = []
-    for model in models:
-        if switches['sys']['Lam_chi']:
-            for FPK in switches['scales']:
-                models_FPK.append(model+'_'+FPK)
-        else:
-            models_FPK.append(model+'_'+switches['scale'])
-    if switches['debug_models']:
-        for model in models_FPK:
-            print(model)
-    print(len(models_FPK),'models')
-    print('Duplicate models?',check_for_duplicates(models_FPK))
-    return models_FPK
-
-
-def gather_model_elements(model):
-    eft    = model.split('_')[0]
-    order  = model.split('_')[1]
-    FF     = model.split('_')[-1]
-    fv     = 'FV'     in model
-    alphaS = 'alphaS' in model
-    ct     = 'ct'     in model
-    a4     = 'a4'     in model
-
-    if FF not in ['PP','PK','KK']:
-        sys.exit('unrecognized FF choice [PP, PK, KK]: '+FF)
-
-    if 'ratio' in eft:
-        model_elements = [eft.replace('-','_')+'_nlo']
-    else:
-        model_elements = [eft+'_nlo']
-    if eft == 'taylor':
-        if order in ['nnlo', 'nnnlo']:
-            model_elements += ['nnlo_ct']
-        if order in ['nnnlo']:
-            model_elements += ['nnnlo_ct']
-    else:
-        if order in ['nnlo','nnnlo']:
-            if alphaS:
-                model_elements += ['nnlo_alphaS']
-            if ct:
-                model_elements += ['nnlo_ct']
-            else:
-                model_elements += ['nnlo_ct','xpt_nnlo_logSq','xpt_nnlo_log','xpt_nnlo_FF_'+FF]
-                if 'ratio' in eft:
-                    model_elements += ['xpt_nnlo_ratio']
-
-
-            if a4 and order == 'nnlo':
-                model_elements += ['nnnlo_a4']
-            if order == 'nnnlo':
-                model_elements += ['nnnlo_ct']
-
-    return model_elements, FF, fv
-
 def report_phys_point(fit_result, phys_point_params, model_list, FF):
     phys_data = copy.deepcopy(phys_point_params)
     if 'ma' in model_list[0]:
@@ -282,19 +195,33 @@ def debug_fit_function(check_fit, model_list, FF, fv):
     p = check_fit['p']
     fit_model = chipt.FitModel(model_list, _fv=False, _FF=FF)
     cP        = chipt.ConvenienceDict(fit_model, x, p)
+    result    = 0.
+    result_FV = 0.
     if fv:
         fit_model_fv = chipt.FitModel(model_list, _fv=True, _FF=FF)
         cP_FV        = chipt.ConvenienceDict(fit_model_fv, x, p)
         for term in model_list:
             if '_nlo' in term:
-                print('%16s ' %(term+'_FV'), getattr(chipt.FitModel, term)(fit_model_fv, x, p, cP_FV))
-                print('%16s ' %(term), getattr(chipt.FitModel, term)(fit_model, x, p, cP))
+                t_FV = getattr(chipt.FitModel, term)(fit_model_fv, x, p, cP_FV)
+                t    = getattr(chipt.FitModel, term)(fit_model, x, p, cP)
+                result    += t
+                result_FV += t_FV
+                print('%16s   ' %(term+'_FV'), t_FV)
+                print('%16s   ' %(term), t)
             else:
-                print('%16s ' %(term), getattr(chipt.FitModel, term)(fit_model, x, p, cP))
+                t = getattr(chipt.FitModel, term)(fit_model, x, p, cP)
+                result_FV += t
+                result    += t
+                print('%16s   ' %(term), t)
     else:
         for term in model_list:
-            print('%16s ' %(term), getattr(chipt.FitModel, term)(fit_model, x, p, cP))
-
+            t = getattr(chipt.FitModel, term)(fit_model, x, p, cP)
+            result += t
+            print('%16s   ' %(term), t)
+    print('---------------------------------------')
+    if fv:
+        print('%16s   %f' %('total_FV', result_FV))
+    print('%16s   %f' %('total', result))
 
 if __name__ == "__main__":
     main()
