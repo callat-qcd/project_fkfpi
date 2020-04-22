@@ -686,7 +686,7 @@ class fit_manager(object):
                                        /self._get_phys_point_data('lam2_chi'))
                               for abbr in self.abbrs}
         elif param in ['a']:
-            plot_data['x'] = {abbr : (self.plot_data[abbr]['a/w0'] / (4 *np.pi))**2 for abbr in self.abbrs}
+            plot_data['x'] = {abbr : (self.plot_data[abbr]['a/w0'])**2/(4 *np.pi) for abbr in self.abbrs}
 
         plot_data['y'] = self.shift_fk_fpi_for_phys_params(phys_params=phys_params)
         color_data = {abbr : self.plot_data[abbr]['a/w0'] *self.w0 for abbr in self.abbrs}
@@ -713,7 +713,7 @@ class fit_manager(object):
             elif param in ['a']:
                 minimum = 0
                 maximum = np.nanmax([np.nanmax(
-                    np.sqrt([plot_data['x'][abbr] *(4 *np.pi)**2 for abbr in self.abbrs])
+                    np.sqrt([plot_data['x'][abbr] *(4 *np.pi) for abbr in self.abbrs])
                 ) for abbr in self.abbrs])
 
             minimum = gv.mean(minimum)
@@ -734,7 +734,7 @@ class fit_manager(object):
             if param in ['mpi', 'mk']:
                 x = x**2 / self._get_phys_point_data('lam2_chi')
             elif param in ['a']:
-                x = x**2 / (4 *np.pi)**2
+                x = x**2 / (4 *np.pi)
 
             y = self.fk_fpi_fit_fcn(fit_data=prepped_data)
 
@@ -802,7 +802,8 @@ class fit_manager(object):
 
         return fig
 
-    def plot_parameters(self, xparam, yparam=None, show_posterior=False, show_prior=False):
+    # show_fit option current doesn't work
+    def plot_parameters(self, xparam, yparam=None, show_posterior=False, show_prior=False, show_fit=False):
         if yparam is None:
             yparam = 'FK/Fpi'
 
@@ -853,10 +854,10 @@ class fit_manager(object):
 
                 # params is a variable
                 elif param == 'mpi':
-                    fcn = lambda eps2_a, eps2_pi, eps2_k : (eps2_k - eps2_pi) *eps2_pi
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : eps2_pi
                     label = '$\epsilon_\pi^2$'
                 elif param == 'mk':
-                    fcn = lambda eps2_a, eps2_pi, eps2_k : (eps2_k - eps2_pi) *eps2_k
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : eps2_k
                     label = '$\epsilon_K^2$'
                 else:
                     fcn = lambda eps2_a, eps2_pi, eps2_k : np.repeat(1, len(eps2_a))
@@ -869,7 +870,6 @@ class fit_manager(object):
                 elif j == 1:
                     y[abbr] = fcn(eps2_a, eps2_pi, eps2_k)
                     ylabel = label
-
 
         if (show_posterior or show_prior) and (xparam in self.posterior) and (yparam=='FK/Fpi'):
 
@@ -899,10 +899,56 @@ class fit_manager(object):
             plt.xlim(xmin - 0.05 *(xmax-xmin), xmax + 0.05 *(xmax-xmin))
             plt.ylim(ymin - 0.05 *(ymax-ymin), ymax + 0.05 *(ymax-ymin))
 
-        for abbr in self.abbrs:
-            sc = plt.scatter(x[abbr], y[abbr], c=c[abbr],
-                       rasterized=True, marker='.', alpha=100.0/self.plot_bs_N,
-                        label=abbr[:3])
+
+        #temp_dict = self.shift_fk_fpi_for_phys_params(['mk'])
+        if (show_fit) and (yparam == 'FK/Fpi') and (xparam in ['mpi', 'mk']):
+            xmin = (np.min([np.min(x[abbr]) for abbr in self.abbrs]))
+            xmax = (np.max([np.max(x[abbr]) for abbr in self.abbrs]))
+            ymin = (np.min([np.min(y[abbr]) for abbr in self.abbrs]))
+            ymax = (np.max([np.max(y[abbr]) for abbr in self.abbrs]))
+
+            hbar_c = 197.32698045930
+
+            for abbr in self.abbrs:
+                fit_data = {param : self.plot_data[abbr][param] for param in list(self._make_fit_data()) if param != 'y'}
+                fkfpi_abbr = self.fk_fpi_fit_fcn(fit_data=fit_data)
+                #fkfpi_abbr = self.extrapolate_to_ensemble(abbr)
+
+
+
+                fit_data = self.phys_point_data.copy()
+                fit_data['a/w0'] = self.plot_data[abbr]['a/w0']#float('0.'+abbr[1:3])/self.w0
+                fit_data[xparam] = np.sqrt(x[abbr] *self.plot_data[abbr]['lam2_chi']) *hbar_c / float('0.'+abbr[1:3])
+                #fit_data[xparam] = np.sqrt(x[abbr] *self.phys_point_data['lam2_chi'])
+                fkfpi_x = self.fk_fpi_fit_fcn(fit_data=fit_data)
+
+                shifted_fkfpi = gv.mean(y[abbr] + fkfpi_x - fkfpi_abbr)
+
+
+                sc = plt.scatter(x[abbr], shifted_fkfpi, c=c[abbr],
+                           rasterized=True, marker='.', alpha=100.0/self.plot_bs_N,
+                            label=abbr[:3])
+
+
+            for a in reversed(colors):
+                x_plt = np.linspace(xmin, xmax)
+
+                fit_data = self.phys_point_data.copy()
+                fit_data['a/w0'] = float('0.'+a)/self.w0
+                #fit_data[xparam] = np.sqrt(x_plt *self.phys_point_data['lam2_chi'])
+                fit_data[xparam] = np.sqrt(x_plt) *hbar_c / float('0.'+abbr[1:3])
+
+                y_plt = self.fk_fpi_fit_fcn(fit_data=fit_data)
+
+                pm = pm = lambda g, k : gv.mean(g) + k*gv.sdev(g)
+                plt.fill_between(pm(x_plt, 0), pm(y_plt, -1), pm(y_plt, 1), alpha=0.40, color=colors[a], rasterized=True)
+
+
+        else:
+            for abbr in self.abbrs:
+                sc = plt.scatter(x[abbr], y[abbr], c=c[abbr],
+                           rasterized=True, marker='.', alpha=100.0/self.plot_bs_N,
+                            label=abbr[:3])
 
         plt.grid()
         plt.xlabel(xlabel, fontsize = 24)
