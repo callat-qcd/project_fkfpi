@@ -66,7 +66,7 @@ def main():
             fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
             fitEnv     = FitEnv(gv_data, fit_model, switches)
             analysis.prior_width_scan(model, fitEnv, fit_model, priors, switches)
-    else:
+    else: # do analysis
         fit_results = dict()
         plt.ion()
         for model in models:
