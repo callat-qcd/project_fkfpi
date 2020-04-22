@@ -81,20 +81,20 @@ priors['t_fv'] = gv.gvar(0,100)
 nnlo_x = 2
 nnlo_a = 2
 nnlo_a = nnlo_x # from prior optimization, we found holding them the same is good
-priors['k_4']   = gv.gvar(0.0, nnlo_x)
-priors['p_4']   = gv.gvar(0.0, nnlo_x)
-priors['s_4']   = gv.gvar(0.0, nnlo_a)
-priors['saS_4'] = gv.gvar(0.0, nnlo_a)
+priors['k_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2
+priors['p_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_pi^2
+priors['s_4']   = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2
+priors['saS_4'] = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2 * alpha_S
 
 n3lo_x = 5
 n3lo_a = 5
 n3lo_a = n3lo_x
-priors['kp_6']  = gv.gvar(0.0, n3lo_x)
-priors['k_6']   = gv.gvar(0.0, n3lo_x)
-priors['p_6']   = gv.gvar(0.0, n3lo_x)
-priors['s_6']   = gv.gvar(0.0, n3lo_a)
-priors['sk_6']  = gv.gvar(0.0, n3lo_a)
-priors['sp_6']  = gv.gvar(0.0, n3lo_a)
+priors['kp_6']  = gv.gvar(0.0, n3lo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2 * eps_pi^2
+priors['k_6']   = gv.gvar(0.0, n3lo_x) # (eps_K^2 - eps_pi^2 )^2 * eps_K^2
+priors['p_6']   = gv.gvar(0.0, n3lo_x) # (eps_K^2 - eps_pi^2 )^2 * eps_pi^2
+priors['s_6']   = gv.gvar(0.0, n3lo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^4
+priors['sk_6']  = gv.gvar(0.0, n3lo_a) # (eps_K^2 - eps_pi^2 ) * eps_K^2 * eps_a^2
+priors['sp_6']  = gv.gvar(0.0, n3lo_a) # (eps_K^2 - eps_pi^2 ) * eps_pi^2 * eps_a^2
 
 ''' Physical point extrapolation
 '''
