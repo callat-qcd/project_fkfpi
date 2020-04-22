@@ -686,7 +686,7 @@ class fit_manager(object):
                                        /self._get_phys_point_data('lam2_chi'))
                               for abbr in self.abbrs}
         elif param in ['a']:
-            plot_data['x'] = {abbr : (self.plot_data[abbr]['a/w0'] / (4 *np.pi))**2 for abbr in self.abbrs}
+            plot_data['x'] = {abbr : (self.plot_data[abbr]['a/w0'])**2/(4 *np.pi) for abbr in self.abbrs}
 
         plot_data['y'] = self.shift_fk_fpi_for_phys_params(phys_params=phys_params)
         color_data = {abbr : self.plot_data[abbr]['a/w0'] *self.w0 for abbr in self.abbrs}
@@ -713,7 +713,7 @@ class fit_manager(object):
             elif param in ['a']:
                 minimum = 0
                 maximum = np.nanmax([np.nanmax(
-                    np.sqrt([plot_data['x'][abbr] *(4 *np.pi)**2 for abbr in self.abbrs])
+                    np.sqrt([plot_data['x'][abbr] *(4 *np.pi) for abbr in self.abbrs])
                 ) for abbr in self.abbrs])
 
             minimum = gv.mean(minimum)
@@ -734,7 +734,7 @@ class fit_manager(object):
             if param in ['mpi', 'mk']:
                 x = x**2 / self._get_phys_point_data('lam2_chi')
             elif param in ['a']:
-                x = x**2 / (4 *np.pi)**2
+                x = x**2 / (4 *np.pi)
 
             y = self.fk_fpi_fit_fcn(fit_data=prepped_data)
 
@@ -853,10 +853,10 @@ class fit_manager(object):
 
                 # params is a variable
                 elif param == 'mpi':
-                    fcn = lambda eps2_a, eps2_pi, eps2_k : (eps2_k - eps2_pi) *eps2_pi
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : eps2_pi
                     label = '$\epsilon_\pi^2$'
                 elif param == 'mk':
-                    fcn = lambda eps2_a, eps2_pi, eps2_k : (eps2_k - eps2_pi) *eps2_k
+                    fcn = lambda eps2_a, eps2_pi, eps2_k : eps2_k
                     label = '$\epsilon_K^2$'
                 else:
                     fcn = lambda eps2_a, eps2_pi, eps2_k : np.repeat(1, len(eps2_a))
