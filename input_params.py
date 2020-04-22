@@ -25,20 +25,18 @@ switches['ansatz']['models'] = ['xpt_nnnlo_FV']#,'xpt_nnlo_ct_FV']#, 'xpt_nnlo_c
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()
 switches['sys']['Lam_chi']   = True
-switches['sys']['FV']        = False
 switches['sys']['alphaS']    = True
 switches['sys']['nnlo_ct']   = True
-switches['sys']['ratio']     = False
+switches['sys']['ratio']     = True
 # OLDER SYSTEMATICS - still work, but not used
+switches['sys']['FV']        = False # turn on/off FV corrections
 switches['sys']['logSq']     = False # only include logSq and ct (no log)
 switches['sys']['a4']        = False # only include mpi^2 a^4 N3LO ct
 
-
-switches['ansatz']['a2dm']   = 'individual' # avg or individual
 switches['scales']           = ['PP','PK','KK']#,'PK','KK']
 switches['scale']            = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
 switches['do_analysis']      = True
-switches['save_fits']        = False
+switches['save_fits']        = True
 switches['model_avg']        = True
 # use optimized (True) or default (False) priors
 switches['optimized_priors'] = False
@@ -53,10 +51,10 @@ switches['make_plots']       = False
 switches['save_figs']        = True
 switches['plot_raw_data']    = False
 switches['verbose']          = False
-switches['milc_compare']     = False
+switches['milc_compare']     = True
 switches['plot_asq_converg'] = True
 # for tuning prior widths
-switches['prior_search']     = True
+switches['prior_search']     = False
 switches['prior_verbose']    = False
 switches['refine_prior']     = True
 # fit checks
@@ -94,10 +92,12 @@ priors['L8']   = gv.gvar( 0.000294,0.000294)
 
 # Taylor priors
 priors['c2'] = gv.gvar(0,10)
+priors['t_fv'] = gv.gvar(0,100)
 
 ''' default values '''
 nnlo_x = 2
 nnlo_a = 2
+nnlo_a = nnlo_x
 #priors['s_4']   = gv.gvar(0.0, n2lo_width)
 priors['k_4']   = gv.gvar(0.0, nnlo_x)
 priors['p_4']   = gv.gvar(0.0, nnlo_x)
@@ -110,6 +110,7 @@ priors['saS_4'] = gv.gvar(0.0, nnlo_a)
 
 n3lo_x = 5
 n3lo_a = 5
+n3lo_a = n3lo_x
 priors['kp_6']  = gv.gvar(0.0, n3lo_x)
 priors['k_6']   = gv.gvar(0.0, n3lo_x)
 priors['p_6']   = gv.gvar(0.0, n3lo_x)
@@ -133,7 +134,7 @@ phys_point = dict()
 #phys_point['meta'] = gv.gvar(547.862,0.017) #PDG
 # http://pdg.lbl.gov/2015/reviews/rpp2015-rev-pseudoscalar-meson-decay-cons.pdf
 FPi_phys = gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2))
-FK_phys  = gv.gvar(155.5/np.sqrt(2), 0.7/np.sqrt(2))
+FK_phys  = gv.gvar(155.7/np.sqrt(2), 0.7/np.sqrt(2))
 
 phys_point = {
     'p':{

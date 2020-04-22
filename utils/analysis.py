@@ -89,11 +89,18 @@ class BayesModelAvg:
         pdf_split['ct_PP'] = 0.
         pdf_split['no_ct_PP'] = 0.
         results = []
+        var_avg = dict()
         for i_r, a_res in enumerate(self.r_list):
             w_i = self.weights[i_r]
             a_i = self.results[a_res].phys
             results.append(a_i)
             avg += gv.gvar(w_i*a_i.mean, np.sqrt(w_i)*a_i.sdev)
+
+            uncertainties = uncertainty_breakdown(self.results[a_res])
+            for k in uncertainties:
+                if k not in var_avg: var_avg[k] = 0.
+                var_avg[k] += w_i * uncertainties[k]**2
+
             p = stats.norm.pdf(self.pdf_x, a_i.mean, a_i.sdev)
             pdf += w_i * p
             cdf += w_i * stats.norm.cdf(self.pdf_x, a_i.mean, a_i.sdev)
@@ -118,6 +125,9 @@ class BayesModelAvg:
         self.model_var += -self.avg.mean**2
         print('-----------------------------------------------------------------------------------')
         print('%33s &         %s +- %.4f' %('Bayes Model Avg', self.avg, np.sqrt(self.model_var)))
+        for k in var_avg:
+            e = '%.4f' %np.sqrt(var_avg[k])
+            print('%33s           %9s      %s' %('',e[-2:],k))
 
     def plot_bma_hist(self,hist_type,save_fig=False):
         hist = plt.figure('hist_'+hist_type, figsize=self.fig_size)
@@ -182,6 +192,27 @@ class BayesModelAvg:
             plt.savefig('figures/hist_'+hist_type+'.pdf', transparent=True)
 
 
+def uncertainty_breakdown(result,print_error=False):
+    stat = dict()
+    xpt  = dict()
+    disc = dict()
+    for k in result.prior:
+        if isinstance(k, tuple):
+            stat[k] = result.prior[k]
+        elif 's' in k:
+            disc[k] = result.prior[k]
+        else:
+            xpt[k]  = result.prior[k]
+    uncertainties = dict()
+    uncertainties['stat_xy']    = result.phys.partialsdev(result.y,stat)
+    uncertainties['xpt']        = result.phys.partialsdev(xpt)
+    uncertainties['cont']       = result.phys.partialsdev(disc)
+    uncertainties['phys_point'] = result.phys.partialsdev(result.phys_point)
+    if print_error:
+        for k in uncertainties:
+            print('%10s   %f' %(k,uncertainties[k]))
+    else:
+        return uncertainties
 
 def check_for_duplicates(list_of_elems):
     ''' Check if given list contains any duplicates '''

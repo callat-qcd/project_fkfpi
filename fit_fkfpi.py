@@ -75,7 +75,7 @@ def main():
             model_list, FF, fv = analysis.gather_model_elements(model)
             fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
             fitEnv     = FitEnv(gv_data, fit_model, switches)
-            
+
             do_fit = False
             pickled_fit = 'pickled_fits/'+model+'_n2lo'+str(ip.nnlo_x)+'_n3lo'+str(ip.n3lo_x)+'.p'
             if switches['save_fits'] or switches['debug_save_fit']:
@@ -90,16 +90,16 @@ def main():
 
                 tmp_result = fitEnv.fit_data(priors)
                 tmp_result.phys = report_phys_point(tmp_result, phys_point, model_list, FF)
+                tmp_result.phys_point = dict()
+                tmp_result.phys_point.update({k:v for k,v in phys_point['p'].items() if ('Lchi' in k) or k in ['mpi','mk']})
                 if not os.path.exists(pickled_fit) and switches['save_fits']:
                     gv.dump(tmp_result, pickled_fit, add_dependencies=True)
                     fit_result = gv.load(pickled_fit)
                 if switches['debug_save_fit']:
                     print('live fit')
-                    print('dF/dy =', tmp_result.phys.partialsdev(tmp_result.y))
-                    print('dF/dprior =', tmp_result.phys.partialsdev(tmp_result.prior))
+                    analysis.uncertainty_breakdown(tmp_result,print_error=True)
                     print('pickled fit')
-                    print('dF/dy =', fit_result.phys.partialsdev(fit_result.y))
-                    print('dF/dprior =', fit_result.phys.partialsdev(fit_result.prior))
+                    analysis.uncertainty_breakdown(fit_result,print_error=True)
                 if do_fit:
                     fit_result = tmp_result
 
