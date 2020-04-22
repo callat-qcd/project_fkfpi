@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.stats as stats
 import os, sys, shutil
 import yaml
 
@@ -35,6 +36,20 @@ class BayesModelAvg:
         self.r_list  = [a_res for a_res in self.results]
         self.weights = self.get_weights()
 
+        # Figure formatting
+        self.fig_width = 6.75 # in inches, 2x as wide as APS column
+        self.gr        = 1.618034333 # golden ratio
+        self.fig_size  = (self.fig_width, self.fig_width / self.gr)
+        self.fig_size2 = (self.fig_width, self.fig_width * 1.58)
+        self.plt_axes  = [0.14,0.14,0.858,0.858]
+        self.fs_text   = 20 # font size of text
+        self.fs_leg    = 16 # legend font size
+        self.mrk_size  = '5' # marker size
+        self.tick_size = 20 # tick size
+        self.lw        = 1 # line width
+
+
+
     def get_weights(self):
         weights = []
         for a_res in self.r_list:
@@ -46,7 +61,7 @@ class BayesModelAvg:
 
     def print_weighted_models(self):
         i_weights = np.argsort(self.weights)[::-1]
-        print(r"model & $\chi^2/{\rm dof}$ & $Q$& logGBF& weight& $F_K/F_\pi$\\")
+        print(r"%33s & chi2/dof &   $Q$ &  logGBF& weight& $F_K/F_\pi$\\" %'model')
         print(r'\hline')
         for a_i, a_model in enumerate(np.array(self.r_list)[i_weights]):
             chi2   = self.results[a_model].chi2
@@ -55,7 +70,116 @@ class BayesModelAvg:
             logGBF = self.results[a_model].logGBF
             w_i    = self.weights[i_weights][a_i]
             phys   = self.results[a_model].phys
-            print(r'%33s &  %.3f&  %.3f&  %.3f&  %.3f&  %s\\' %(a_model, chi2/dof, Q, logGBF, w_i, phys))
+            print(r'%33s &  %.3f   &  %.3f&  %.3f&  %.3f&  %s\\' %(a_model, chi2/dof, Q, logGBF, w_i, phys))
+
+    def bayes_model_avg(self):
+        self.pdf_x = np.arange(1.15,1.2301,.0001)
+        avg = 0.
+        pdf = 0.
+        cdf = 0.
+        pdf_split = dict()
+        pdf_split['PP'] = 0.
+        pdf_split['PK'] = 0.
+        pdf_split['KK'] = 0.
+        pdf_split['PP_xpt'] = 0.
+        pdf_split['PK_xpt'] = 0.
+        pdf_split['KK_xpt'] = 0.
+        pdf_split['ratio_PP'] = 0.
+        pdf_split['no_ratio_PP'] = 0.
+        pdf_split['ct_PP'] = 0.
+        pdf_split['no_ct_PP'] = 0.
+        results = []
+        for i_r, a_res in enumerate(self.r_list):
+            w_i = self.weights[i_r]
+            a_i = self.results[a_res].phys
+            results.append(a_i)
+            avg += gv.gvar(w_i*a_i.mean, np.sqrt(w_i)*a_i.sdev)
+            p = stats.norm.pdf(self.pdf_x, a_i.mean, a_i.sdev)
+            pdf += w_i * p
+            cdf += w_i * stats.norm.cdf(self.pdf_x, a_i.mean, a_i.sdev)
+            FF = a_res.split('_')[-1]
+            pdf_split[FF] += w_i * p
+            if FF == 'PP':
+                if '_ct_' not in a_res:
+                    if 'ratio' in a_res:
+                        pdf_split['ratio_PP'] += w_i * p
+                    else:
+                        pdf_split['no_ratio_PP'] += w_i * p
+                    pdf_split['no_ct_PP'] += w_i * p
+                else:
+                    pdf_split['ct_PP'] += w_i * p
+            if '_ct_' not in a_res:
+                pdf_split[FF+'_xpt'] += w_i * p
+        self.avg = avg
+        self.pdf = pdf
+        self.cdf = cdf
+        self.pdf_split = pdf_split
+        self.model_var  = np.sum(self.weights * np.array([r.mean**2 for r in results]))
+        self.model_var += -self.avg.mean**2
+        print('-----------------------------------------------------------------------------------')
+        print('%33s &         %s +- %.4f' %('Bayes Model Avg', self.avg, np.sqrt(self.model_var)))
+
+    def plot_bma_hist(self,hist_type,save_fig=False):
+        hist = plt.figure('hist_'+hist_type, figsize=self.fig_size)
+        ax   = plt.axes(self.plt_axes)
+        # histogram splitting
+        if hist_type == 'FF':
+            ax.plot(self.pdf_x, self.pdf, color='k')
+            ax.fill_between(x=self.pdf_x, y1=self.pdf, color='k', alpha=.2)
+            # 95%
+            lidx95 = abs(self.cdf-0.025).argmin()
+            uidx95 = abs(self.cdf-0.975).argmin()
+            ax.fill_between(x=self.pdf_x[lidx95:uidx95],y1=self.pdf[lidx95:uidx95],\
+                facecolor='k',edgecolor='k',alpha=0.1)
+            #68%
+            lidx68 = abs(self.cdf-0.158655254).argmin()
+            uidx68 = abs(self.cdf-0.841344746).argmin()
+            ax.fill_between(x=self.pdf_x[lidx68:uidx68],y1=self.pdf[lidx68:uidx68],\
+                facecolor='k',edgecolor='k',alpha=0.1)
+            # black lines
+            ax.errorbar(x=[self.pdf_x[lidx95],self.pdf_x[lidx95]],\
+                y=[0,self.pdf[lidx95]],color='k')#,lw=0.5)
+            ax.errorbar(x=[self.pdf_x[uidx95],self.pdf_x[uidx95]],\
+                y=[0,self.pdf[uidx95]],color='k')#,lw=0.5)
+            ax.errorbar(x=[self.pdf_x[lidx68],self.pdf_x[lidx68]],\
+                y=[0,self.pdf[lidx68]],color='k')#,lw=0.5)
+            ax.errorbar(x=[self.pdf_x[uidx68],self.pdf_x[uidx68]],\
+                y=[0,self.pdf[uidx68]],color='k')#,lw=0.5)
+
+            ax.fill_between(x=self.pdf_x,y1=self.pdf_split['PP'],\
+                color='r',alpha=0.6,label=r'$F^2 \rightarrow F_\pi^2$')
+            ax.fill_between(x=self.pdf_x,y1=self.pdf_split['PK'],\
+                color='g',alpha=0.6,label=r'$F^2 \rightarrow F_\pi F_K$')
+            ax.fill_between(x=self.pdf_x,y1=self.pdf_split['KK'],\
+                color='b',alpha=0.6,label=r'$F^2 \rightarrow F_K^2$')
+            ax.set_ylabel(r'Bayes Model Avg PDF',fontsize=self.fs_text)
+        elif hist_type == 'FF_xpt':
+            ax.fill_between(x=self.pdf_x,y1=self.pdf_split['PP_xpt'],\
+                color='r',alpha=0.6,label=r'$F^2 \rightarrow F_\pi^2$')
+            ax.fill_between(x=self.pdf_x,y1=self.pdf_split['PK_xpt'],\
+                color='g',alpha=0.6,label=r'$F^2 \rightarrow F_\pi F_K$')
+            ax.fill_between(x=self.pdf_x,y1=self.pdf_split['KK_xpt'],\
+                color='b',alpha=0.6,label=r'$F^2 \rightarrow F_K^2$')
+            ax.set_ylabel(r'PDFs from XPT fits',fontsize=self.fs_text)
+        elif hist_type == 'ratio':
+            ax.fill_between(x=self.pdf_x,y1=self.pdf_split['no_ratio_PP'],\
+                color='b',alpha=0.6,label=r'w/o ratio fit $(F_\pi^2)$')
+            ax.fill_between(x=self.pdf_x,y1=self.pdf_split['ratio_PP'],\
+                color='r',alpha=0.6,label=r'w/  ratio fit $(F_\pi^2)$')
+            ax.set_ylabel(r'PDFs from ratio or not',fontsize=self.fs_text)
+        elif hist_type == 'ct':
+            ax.fill_between(x=self.pdf_x,y1=self.pdf_split['ct_PP'],\
+                color='r',alpha=0.6,label=r'N2LO=ct $(F_\pi^2)$')
+            ax.fill_between(x=self.pdf_x,y1=self.pdf_split['no_ct_PP'],\
+                color='b',alpha=0.6,label=r'N2LO=XPT $(F_\pi^2)$')
+            ax.set_ylabel(r'PDFs from N2LO ct or full XPT',fontsize=self.fs_text)
+
+        ax.set_xlim([1.1675,1.2275])
+        ax.set_ylim(ymin=0)
+        ax.set_xlabel(r'$F_K / F_\pi$',fontsize=self.fs_text)
+        ax.legend(fontsize=self.fs_leg)
+        if save_fig:
+            plt.savefig('figures/hist_'+hist_type+'.pdf', transparent=True)
 
 
 

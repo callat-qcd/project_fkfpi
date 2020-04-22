@@ -88,15 +88,19 @@ class ExtrapolationPlots:
         labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
         self.ax_cont.legend(handles, labels, ncol=4, fontsize=self.fs_leg)
 
-        self.ax_cont.set_xlabel(r'$\epsilon_a^2 = a^2 / (4\pi w_0^2)$',fontsize=self.fs_text)
+        self.ax_cont.set_xlabel(r'$\epsilon_a^2 = a^2 / (2 w_0)^2$',fontsize=self.fs_text)
         self.ax_cont.set_ylabel(r'$F_K / F_\pi$',fontsize=self.fs_text)
-        self.ax_cont.set_xlim(0,.225)
         if self.switches['milc_compare']:
+            self.ax_cont.axhspan(1.1932-0.0019,1.1932+0.0019, color='k', alpha=.3)
+            self.ax_cont.text(0.11, 1.1960, r'FLAG[2019]: $N_F=2+1+1$', \
+                horizontalalignment='center', fontsize=self.fs_text)
             self.ax_cont.set_ylim(1.151, 1.228)
             self.ax_cont.set_ylabel(r'$F_K^+ / F_\pi^+$',fontsize=self.fs_text)
+            self.ax_cont.set_xlabel(r'$\epsilon_a^2 = a^2 / (2 w_0)^2$',fontsize=24)
             self.ax_cont.tick_params(labelsize=self.tick_size, direction='in')
         else:
             self.ax_cont.set_ylim(1.135, 1.218)
+        self.ax_cont.set_xlim(0,.21)
 
         if self.switches['save_figs']:
             plt.savefig('figures/'+'FKFpi_vs_ea_'+self.model+'.pdf',transparent=True)

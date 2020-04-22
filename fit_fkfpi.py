@@ -72,27 +72,27 @@ def main():
         for model in models:
             print('===============================================================')
             print(model)
-
+            model_list, FF, fv = analysis.gather_model_elements(model)
+            fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
+            fitEnv     = FitEnv(gv_data, fit_model, switches)
+            
             do_fit = False
+            pickled_fit = 'pickled_fits/'+model+'_n2lo'+str(ip.nnlo_x)+'_n3lo'+str(ip.n3lo_x)+'.p'
             if switches['save_fits'] or switches['debug_save_fit']:
-                if os.path.exists('pickled_fits/'+model+'.p'):
-                    print('reading pickled_fits/'+model+'.p')
-                    fit_result = gv.load('pickled_fits/'+model+'.p')
+                if os.path.exists(pickled_fit):
+                    print('reading %s' %pickled_fit)
+                    fit_result = gv.load(pickled_fit)
                 else:
                     do_fit = True
             else:
                 do_fit = True
             if do_fit or switches['debug_save_fit']:
-                model_list, FF, fv = analysis.gather_model_elements(model)
-                fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
-                fitEnv     = FitEnv(gv_data, fit_model, switches)
+
                 tmp_result = fitEnv.fit_data(priors)
                 tmp_result.phys = report_phys_point(tmp_result, phys_point, model_list, FF)
-                if switches['print_fit']:
-                    print(tmp_result.format(maxline=True))
-                if not os.path.exists('pickled_fits/'+model+'.p') and switches['save_fits']:
-                    gv.dump(tmp_result, 'pickled_fits/'+model+'.p', add_dependencies=True)
-                    fit_result = gv.load('pickled_fits/'+model+'.p')
+                if not os.path.exists(pickled_fit) and switches['save_fits']:
+                    gv.dump(tmp_result, pickled_fit, add_dependencies=True)
+                    fit_result = gv.load(pickled_fit)
                 if switches['debug_save_fit']:
                     print('live fit')
                     print('dF/dy =', tmp_result.phys.partialsdev(tmp_result.y))
@@ -103,6 +103,8 @@ def main():
                 if do_fit:
                     fit_result = tmp_result
 
+            if switches['print_fit']:
+                print(fit_result.format(maxline=True))
             fit_results[model] = fit_result
             if switches['make_plots']:
                 plots = plotting.ExtrapolationPlots(model, model_list, fitEnv, fit_result, switches)
@@ -113,6 +115,12 @@ def main():
 
         model_avg = analysis.BayesModelAvg(fit_results)
         model_avg.print_weighted_models()
+        model_avg.bayes_model_avg()
+        if switches['make_plots']:
+            model_avg.plot_bma_hist('FF',save_fig=switches['save_figs'])
+            model_avg.plot_bma_hist('FF_xpt',save_fig=switches['save_figs'])
+            model_avg.plot_bma_hist('ratio',save_fig=switches['save_figs'])
+            model_avg.plot_bma_hist('ct',save_fig=switches['save_figs'])
 
         plt.ioff()
         if run_from_ipython():
