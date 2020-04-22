@@ -3,8 +3,10 @@
 # modify the SDKROOT if need be
 export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk
 # use the pybind11 path installed with your python installation
-# Andre laptop
+# Andre laptop test_pybind env
 PYBIND_PATH=/usr/local/anaconda/envs/test_pybind/include/python3.7m/pybind11
+# Andre laptop
+PYBIND_PATH=/usr/local/anaconda/include/python3.6m/pybind11
 # Andre Desktop
 #PYBIND_PATH=/usr/local/anaconda/include/python3.7m/pybind11
 # I have stashed chiron one dir up - specify full path if desired
