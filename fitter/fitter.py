@@ -65,22 +65,22 @@ class fitter(object):
         z_max = {}
 
         z_min['chiral_nlo'] = 1e-2
-        z_max['chiral_nlo'] = 1e4
+        z_max['chiral_nlo'] = 1e2
 
         z_min['chiral_n2lo'] = 1e-2
-        z_max['chiral_n2lo'] = 1e3
+        z_max['chiral_n2lo'] = 1e2
 
         z_min['chiral_n3lo'] = 1e-2
-        z_max['chiral_n3lo'] = 1e5
+        z_max['chiral_n3lo'] = 1e3
 
         z_min['latt_n2lo'] = 1e0
-        z_max['latt_n2lo'] = 1e5
+        z_max['latt_n2lo'] = 1e3
 
         z_min['latt_n3lo'] = 1e0
-        z_max['latt_n3lo'] = 1e6
+        z_max['latt_n3lo'] = 1e3
 
         z_min['latt_n4lo'] = 1e0
-        z_max['latt_n4lo'] = 1e7
+        z_max['latt_n4lo'] = 1e4
 
 
         for key in prior.keys():
@@ -145,21 +145,21 @@ class fitter(object):
 
         # chiral terms
         if self.model_info['fit_type'] == 'poly':
-            z0['chiral_nlo'] = 1.0
+            z0['chiral_nlo'] = 10.0
         if self.model_info['order'] in ['n2lo', 'n3lo']:
-            z0['chiral_n2lo'] = 1.0
-            z0['latt_n2lo'] = 100.0
+            z0['chiral_n2lo'] = 10.0
+            z0['latt_n2lo'] = 10.0
         if self.model_info['order'] in ['n3lo']:
-            z0['chiral_n3lo'] = 1.0
-            z0['latt_n3lo'] = 1000.0
+            z0['chiral_n3lo'] = 10.0
+            z0['latt_n3lo'] = 10.0
 
         # latt terms
         if self.model_info['latt_ct'] in ['n2lo', 'n3lo', 'n4lo']:
-            z0['latt_n2lo'] = 100.0
+            z0['latt_n2lo'] = 10.0
         if self.model_info['latt_ct'] in ['n3lo', 'n4lo']:
-            z0['latt_n3lo'] = 1000.0
+            z0['latt_n3lo'] = 10.0
         if self.model_info['latt_ct'] in ['n4lo']:
-            z0['latt_n4lo'] = 1000.0
+            z0['latt_n4lo'] = 10.0
 
 
         # Might need to change minargs default values for empbayes_fit to converge:
