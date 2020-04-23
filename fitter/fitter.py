@@ -661,7 +661,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             include_log = self.model_info['include_log']
 
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_a = (p['a/w0'])**2 / 4
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
@@ -739,7 +739,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
             )
 
         if self.model_info['F2'] == 'FpiFpi':
-            output = -3 / 2. *(eps2_k - eps2_pi) *dpi
+            output = -3 / 2. *(eps2_k - eps2_pi) *dFpi
 
         elif self.model_info['F2'] == 'FKFpi':
             output = -3 / 4. *(eps2_k - eps2_pi) *(dFK + dFpi)
@@ -756,7 +756,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_semi_n2lo_alpha_s_ct(self, p):
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_a = (p['a/w0'])**2 / 4
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
         alpha_s = p['alpha_s']
@@ -825,7 +825,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_n2lo_latt_spacing_ct(self, p):
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_a = (p['a/w0'])**2 / 4
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
@@ -840,7 +840,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_n3lo_latt_spacing_ct(self, p):
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_a = (p['a/w0'])**2 / 4
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
@@ -855,7 +855,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_n3lo_pure_ct(self, p):
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_a = (p['a/w0'])**2 / 4
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 
@@ -881,7 +881,7 @@ class fk_fpi_model(lsqfit.MultiFitterModel):
 
     def fitfcn_n4lo_latt_spacing_ct(self, p):
         lam2_chi = p['lam2_chi']
-        eps2_a = (p['a/w0'])**2 / (4 *np.pi)
+        eps2_a = (p['a/w0'])**2 / 4
         eps2_pi = p['mpi']**2 / lam2_chi
         eps2_k = p['mk']**2 / lam2_chi
 

@@ -98,10 +98,10 @@ class fit_manager(object):
             prior['A_x'] = gv.gvar('0.0(1.0)')
 
             # Lattice spacing terms
-            prior['A_a'] = gv.gvar('0.0(100.0)')#gv.gvar('0.0(5.0)')
-            prior['A_loga'] = gv.gvar('0.0(100.0)')#gv.gvar('0.0(5.0)')
-            prior['A_aa'] = gv.gvar('0.0(1000.0)')#gv.gvar('0.0(50.0)')
-            prior['A_aaa'] = gv.gvar('0.0(10000.0)')#gv.gvar('0.0(50.0)')
+            prior['A_a'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(5.0)')
+            prior['A_loga'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(5.0)')
+            prior['A_aa'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(50.0)')
+            prior['A_aaa'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(50.0)')
 
             # n2lo terms
             prior['A_k'] = gv.gvar('0.0(10.0)')#gv.gvar('0.0(5.0)')
@@ -686,7 +686,7 @@ class fit_manager(object):
                                        /self._get_phys_point_data('lam2_chi'))
                               for abbr in self.abbrs}
         elif param in ['a']:
-            plot_data['x'] = {abbr : (self.plot_data[abbr]['a/w0'])**2/(4 *np.pi) for abbr in self.abbrs}
+            plot_data['x'] = {abbr : (self.plot_data[abbr]['a/w0'])**2/4 for abbr in self.abbrs}
 
         plot_data['y'] = self.shift_fk_fpi_for_phys_params(phys_params=phys_params)
         color_data = {abbr : self.plot_data[abbr]['a/w0'] *self.w0 for abbr in self.abbrs}
@@ -713,7 +713,7 @@ class fit_manager(object):
             elif param in ['a']:
                 minimum = 0
                 maximum = np.nanmax([np.nanmax(
-                    np.sqrt([plot_data['x'][abbr] *(4 *np.pi) for abbr in self.abbrs])
+                    np.sqrt([plot_data['x'][abbr] *4 for abbr in self.abbrs])
                 ) for abbr in self.abbrs])
 
             minimum = gv.mean(minimum)
@@ -734,7 +734,7 @@ class fit_manager(object):
             if param in ['mpi', 'mk']:
                 x = x**2 / self._get_phys_point_data('lam2_chi')
             elif param in ['a']:
-                x = x**2 / (4 *np.pi)
+                x = x**2 / 4
 
             y = self.fk_fpi_fit_fcn(fit_data=prepped_data)
 
@@ -822,7 +822,7 @@ class fit_manager(object):
         for abbr in self.abbrs:
             lam2_chi = self.plot_data[abbr]['lam2_chi']
 
-            eps2_a  = np.repeat(gv.mean(self.plot_data[abbr]['a/w0'])**2, self.plot_bs_N) / (4 *np.pi)
+            eps2_a  = np.repeat(gv.mean(self.plot_data[abbr]['a/w0'])**2 / 4, self.plot_bs_N)
             eps2_pi = self.plot_data[abbr]['mpi']**2 / lam2_chi
             eps2_k  = self.plot_data[abbr]['mk']**2 / lam2_chi
 
