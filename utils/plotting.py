@@ -95,7 +95,7 @@ class ExtrapolationPlots:
             self.ax_cont.text(0.11, 1.1960, r'FLAG[2019]: $N_F=2+1+1$', \
                 horizontalalignment='center', fontsize=self.fs_text)
             self.ax_cont.set_ylim(1.151, 1.228)
-            self.ax_cont.set_ylabel(r'$F_K^+ / F_\pi^+$',fontsize=self.fs_text)
+            self.ax_cont.set_ylabel(r'$F_{K^+} / F_{\pi^+}$',fontsize=self.fs_text)
             self.ax_cont.set_xlabel(r'$\epsilon_a^2 = a^2 / (2 w_0)^2$',fontsize=24)
             self.ax_cont.tick_params(labelsize=self.tick_size, direction='in')
         else:

@@ -20,7 +20,8 @@ switches['ensembles_fit'] = [
 # FIT MODELS
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnnlo_FV']
-''' The full list of models can be rather long.  The sys switches help loop
+'''
+    The full list of models can be rather long.  The sys switches help loop
     over them.  Example other base models are
         taylor_nnnlo_FV
         ma_nnnlo_FV
@@ -42,22 +43,26 @@ switches['scale']            = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB
 switches['print_lattice']    = False # print data for paper - not fitting will occur
 
 # Fitting options
-switches['check_fit']        = False # print pieces of fit function - no fitting will occur
 switches['bs_bias']          = True  # shift bs avg to b0?
-switches['scipy']            = False # use scipy minimizer instead of gsl?
 switches['print_fit']        = False # print lsqfit results?
+switches['report_phys']      = False  # report physical point for each fit?
 switches['save_fits']        = True  # save fits in pickle file?
+switches['model_avg']        = True # perform Bayes Model Avg
+switches['check_fit']        = False # print pieces of fit function - no fitting will occur
 switches['prior_search']     = False # perform a crude grid search to optimize
 switches['prior_verbose']    = False # NNLO and NNNLO prior widths
+switches['scipy']            = False # use scipy minimizer instead of gsl?
 
 # Plotting options
-switches['make_plots']       = True  # make plots
+switches['make_extrap']      = False # make plots
+switches['make_hist']        = False # make plots
 switches['save_figs']        = True  # save figures
-switches['milc_compare']     = True  # compare with MILCs result
+switches['milc_compare']     = False # compare with MILCs result
 
 # DEBUGGING
 switches['debug_models']     = False # print list of models being generated
 switches['debug_save_fit']   = False # check pickling of fit works
+switches['debug_phys_point'] = False  # run report_phys_point even if fit is just loaded
 switches['debug_shift']      = False # check the shifting of raw data to extrapolated points
 switches['debug_bs']         = False # debug shape of bs lists
 
@@ -78,8 +83,8 @@ priors['c2'] = gv.gvar(0,10)
 priors['t_fv'] = gv.gvar(0,100)
 
 # Counter terms
-nnlo_x = 2
-nnlo_a = 2
+nnlo_x = 5
+#nnlo_a = 2
 nnlo_a = nnlo_x # from prior optimization, we found holding them the same is good
 priors['k_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2
 priors['p_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_pi^2
@@ -87,7 +92,7 @@ priors['s_4']   = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2
 priors['saS_4'] = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2 * alpha_S
 
 n3lo_x = 5
-n3lo_a = 5
+#n3lo_a = 5
 n3lo_a = n3lo_x
 priors['kp_6']  = gv.gvar(0.0, n3lo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2 * eps_pi^2
 priors['k_6']   = gv.gvar(0.0, n3lo_x) # (eps_K^2 - eps_pi^2 )^2 * eps_K^2
@@ -113,8 +118,8 @@ phys_point = {
         'Lchi_PK' : 4 * np.pi * np.sqrt(FPi_phys * FK_phys),
         'Lchi_KK' : 4 * np.pi * FK_phys,
         'mpi'     : gv.gvar(134.8, 0.3), #FLAG 2017 (16)
-        #'mk'      : gv.gvar(494.2, 0.3), #FLAG 2017 (16) isospin symmetric
-        'mk'      : gv.gvar(491.5, 0.7), # our estimate of MK+ without QED - see paper
+        'mk'      : gv.gvar(494.2, 0.3), #FLAG 2017 (16) isospin symmetric
+        'mkp'     : gv.gvar(491.2, 0.5), #FLAG 2017 (15) strong isospin breaking only
         'aw0'     : gv.gvar(0,0),
         'a2DI'    : gv.gvar(0,0),
         'w0'      : gv.gvar(0.1714,0),

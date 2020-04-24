@@ -69,12 +69,12 @@ class BayesModelAvg:
             Q      = self.results[a_model].Q
             logGBF = self.results[a_model].logGBF
             w_i    = self.weights[i_weights][a_i]
-            phys   = self.results[a_model].phys
+            phys   = self.results[a_model].phys['FKFpi']
             print(r'%33s &  %.3f   &  %.3f&  %.3f&  %.3f&  %s\\' %(a_model, chi2/dof, Q, logGBF, w_i, phys))
 
     def bayes_model_avg(self):
         self.pdf_x = np.arange(1.15,1.2301,.0001)
-        avg = 0.
+        avg = {k:0. for k in ['FKFpi', 'FKFpi_plus', 'D_iso_xpt', 'D_iso_split', 'D_iso_avg', 'FK+/Fpi+']}
         pdf = 0.
         cdf = 0.
         pdf_split = dict()
@@ -93,17 +93,25 @@ class BayesModelAvg:
         for i_r, a_res in enumerate(self.r_list):
             w_i = self.weights[i_r]
             a_i = self.results[a_res].phys
-            results.append(a_i)
-            avg += gv.gvar(w_i*a_i.mean, np.sqrt(w_i)*a_i.sdev)
-
-            uncertainties = uncertainty_breakdown(self.results[a_res])
+            results.append(a_i['FKFpi'])
+            for k in avg:
+                if k == 'D_iso_avg':
+                    D_avg = avg_Diso(a_i['D_iso_xpt'],a_i['D_iso_split'])
+                    avg[k] += gv.gvar(w_i*D_avg.mean, np.sqrt(w_i)*D_avg.sdev)
+                elif k == 'FK+/Fpi+':
+                    D_avg = avg_Diso(a_i['D_iso_xpt'],a_i['D_iso_split'])
+                    avg[k] += gv.gvar(w_i*(a_i['FKFpi']+D_avg).mean, np.sqrt(w_i)*(a_i['FKFpi']+D_avg).sdev)
+                else:
+                    avg[k] += gv.gvar(w_i*a_i[k].mean, np.sqrt(w_i)*a_i[k].sdev)
+            #avg.update({k:v += gv.gvar(w_i*a_i[k].mean, np.sqrt(w_i)*a_i[k].sdev) for k,v in avg.items()})
+            uncertainties = uncertainty_breakdown(self.results[a_res],'FKFpi')
             for k in uncertainties:
                 if k not in var_avg: var_avg[k] = 0.
                 var_avg[k] += w_i * uncertainties[k]**2
 
-            p = stats.norm.pdf(self.pdf_x, a_i.mean, a_i.sdev)
+            p = stats.norm.pdf(self.pdf_x, a_i['FKFpi'].mean, a_i['FKFpi'].sdev)
             pdf += w_i * p
-            cdf += w_i * stats.norm.cdf(self.pdf_x, a_i.mean, a_i.sdev)
+            cdf += w_i * stats.norm.cdf(self.pdf_x, a_i['FKFpi'].mean, a_i['FKFpi'].sdev)
             FF = a_res.split('_')[-1]
             pdf_split[FF] += w_i * p
             if FF == 'PP':
@@ -122,12 +130,19 @@ class BayesModelAvg:
         self.cdf = cdf
         self.pdf_split = pdf_split
         self.model_var  = np.sum(self.weights * np.array([r.mean**2 for r in results]))
-        self.model_var += -self.avg.mean**2
+        self.model_var += -self.avg['FKFpi'].mean**2
         print('-----------------------------------------------------------------------------------')
-        print('%33s &         %s +- %.4f' %('Bayes Model Avg', self.avg, np.sqrt(self.model_var)))
+        print('%33s &         %s +- %.4f' %('Bayes Model Avg: FK/Fpi', self.avg['FKFpi'], np.sqrt(self.model_var)))
         for k in var_avg:
             e = '%.4f' %np.sqrt(var_avg[k])
             print('%33s           %9s      %s' %('',e[-2:],k))
+        for k in ['FKFpi_plus', 'D_iso_xpt', 'D_iso_split', 'D_iso_avg']:
+            if self.avg[k].mean < 0:
+                print('%33s          %s    %s' %('',self.avg[k],k))
+            else:
+                print('%33s           %s     %s' %('',self.avg[k],k))
+        print('-----------------------------------------------------------------------------------')
+        print('%33s           %s +- %.4f' %('FK+/Fpi+', self.avg['FK+/Fpi+'], np.sqrt(self.model_var)))
 
     def plot_bma_hist(self,hist_type,save_fig=False):
         hist = plt.figure('hist_'+hist_type, figsize=self.fig_size)
@@ -192,7 +207,7 @@ class BayesModelAvg:
             plt.savefig('figures/hist_'+hist_type+'.pdf', transparent=True)
 
 
-def uncertainty_breakdown(result,print_error=False):
+def uncertainty_breakdown(result,key,print_error=False):
     stat = dict()
     xpt  = dict()
     disc = dict()
@@ -204,10 +219,10 @@ def uncertainty_breakdown(result,print_error=False):
         else:
             xpt[k]  = result.prior[k]
     uncertainties = dict()
-    uncertainties['stat_xy']    = result.phys.partialsdev(result.y,stat)
-    uncertainties['xpt']        = result.phys.partialsdev(xpt)
-    uncertainties['cont']       = result.phys.partialsdev(disc)
-    uncertainties['phys_point'] = result.phys.partialsdev(result.phys_point)
+    uncertainties['stat_xy']    = result.phys[key].partialsdev(result.y,stat)
+    uncertainties['xpt']        = result.phys[key].partialsdev(xpt)
+    uncertainties['cont']       = result.phys[key].partialsdev(disc)
+    uncertainties['phys_point'] = result.phys[key].partialsdev(result.phys_point)
     if print_error:
         for k in uncertainties:
             print('%10s   %f' %(k,uncertainties[k]))
@@ -383,3 +398,12 @@ def prior_width_scan(model, fitEnv, fit_model, priors, switches):
     prior_file = open('data/saved_prior_search.yaml', 'w')
     yaml.dump(prior_grid, prior_file)
     prior_file.close()
+
+def avg_Diso(a,b):
+    ''' avg isospin breaking terms, but make the uncertainty as large as
+        the bigger of the two
+    '''
+    max_err = max([a.sdev, b.sdev])
+    avg_err = 0.5*(a+b).sdev
+    sig     = np.sqrt( (max_err**2 - avg_err**2) / ((a+b).mean/2)**2)
+    return 0.5*(a+b) * gv.gvar(1, sig)

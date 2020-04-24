@@ -311,3 +311,16 @@ class FitModel:
         a_result += cP['k2p2']**2         * cP['p2'] * p['p_6']
 
         return a_result
+
+
+def dFKFpi_iso(phys_point,FF):
+    p   = phys_point['p']
+    k2  = (p['mk']/p['Lchi_'+FF])**2
+    k2p = (p['mkp']/p['Lchi_'+FF])**2
+    p2  = (p['mpi']/p['Lchi_'+FF])**2
+    e2  = 4./3*k2 - 1./3*p2
+
+    result  = (k2p - k2) * 4 * (4*np.pi)**2 * p['L5']
+    result += -(k2p - k2)/4 * (1 + 2*np.log(p2) + np.log(k2) + np.log(e2 / p2))
+
+    return result
