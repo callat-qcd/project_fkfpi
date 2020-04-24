@@ -74,7 +74,7 @@ class BayesModelAvg:
 
     def bayes_model_avg(self):
         self.pdf_x = np.arange(1.15,1.2301,.0001)
-        avg = {k:0. for k in ['FKFpi', 'FKFpi_plus', 'D_iso_xpt', 'D_iso_split', 'D_iso_avg', 'FK+/Fpi+']}
+        avg = {k:0. for k in ['FKFpi', 'FKFpi(MK+)', 'D_iso_xpt', 'D_iso_split', 'D_iso_avg', 'FK+/Fpi+']}
         pdf = 0.
         cdf = 0.
         pdf_split = dict()
@@ -135,14 +135,16 @@ class BayesModelAvg:
         print('%33s &         %s +- %.4f' %('Bayes Model Avg: FK/Fpi', self.avg['FKFpi'], np.sqrt(self.model_var)))
         for k in var_avg:
             e = '%.4f' %np.sqrt(var_avg[k])
-            print('%33s           %9s      %s' %('',e[-2:],k))
-        for k in ['FKFpi_plus', 'D_iso_xpt', 'D_iso_split', 'D_iso_avg']:
+            print('%33s           %9s     %s' %('',e[-2:],k))
+        for k in ['FKFpi(MK+)', 'D_iso_xpt', 'D_iso_split', 'D_iso_avg']:
             if self.avg[k].mean < 0:
-                print('%33s          %s    %s' %('',self.avg[k],k))
+                print('%33s          %s   %s' %('',self.avg[k],k))
             else:
-                print('%33s           %s     %s' %('',self.avg[k],k))
-        print('-----------------------------------------------------------------------------------')
-        print('%33s           %s +- %.4f' %('FK+/Fpi+', self.avg['FK+/Fpi+'], np.sqrt(self.model_var)))
+                print('%33s           %s    %s' %('',self.avg[k],k))
+        #print('-----------------------------------------------------------------------------------')
+        print('                  ----------------------------------------------------')
+        print('%33s           %s +- %.4f     |' %('| FK+/Fpi+    =', self.avg['FK+/Fpi+'], np.sqrt(self.model_var)))
+        print('                  ----------------------------------------------------')
 
     def plot_bma_hist(self,hist_type,save_fig=False):
         hist = plt.figure('hist_'+hist_type, figsize=self.fig_size)

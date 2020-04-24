@@ -210,8 +210,8 @@ def report_phys_point(fit_result, phys_point_params, model_list, FF, report=Fals
     fit_result.phys['D_iso_xpt']   = chipt.dFKFpi_iso(phys_data, FF)
     # swap MK+ into MK to extrapolate to the MK+ limit
     phys_data['p']['mk']           = phys_point_params['p']['mkp']
-    fit_result.phys['FKFpi_plus']  = FitEnv._fit_function(fit_model, phys_data['x'], phys_data['p'])
-    split                          = fit_result.phys['FKFpi_plus'] - fit_result.phys['FKFpi']
+    fit_result.phys['FKFpi(MK+)']  = FitEnv._fit_function(fit_model, phys_data['x'], phys_data['p'])
+    split                          = fit_result.phys['FKFpi(MK+)'] - fit_result.phys['FKFpi']
     # set this correction to 2/3 split +- 1/3 split
     if split.sdev > abs(split.mean/2):
         fit_result.phys['D_iso_split'] = 2./3 * split
