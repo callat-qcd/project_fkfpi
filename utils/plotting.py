@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.optimize import minimize_scalar
 import os, copy
 import gvar as gv
 # import chipt lib for fit functions
@@ -233,3 +234,81 @@ class ExtrapolationPlots:
             if self.switches['debug_shift']:
                 print('%9s   %11s   %s' %(a_ens, og_y, shift_y))
         return y_shift
+
+    def plot_vs_ml(self):
+        fv_dict = dict()
+        fv_dict['p'] = dict()
+        fv_dict['p']['mpi']     = self.fit_result.p['a12m220L', 'mpi']
+        fv_dict['p']['mk']      = self.fit_result.p['a12m220L', 'mk']
+        fv_dict['p']['Lchi_PP'] = self.fit_result.p['a12m220L', 'Lchi_PP']
+        fv_dict['p']['aw0']     = self.fit_result.p['a12m220L', 'aw0']
+        fv_dict['x'] = dict()
+        fv_dict['x'] = dict(self.fit_result.x['a12m220L'])
+        for k in self.fit_result.p:
+            if isinstance(k, str):
+                fv_dict['p'][k] = self.fit_result.p[k]
+        mpi = fv_dict['p']['mpi'].mean
+        mk  = fv_dict['p']['mk'].mean
+        me  = np.sqrt(4./3 * mk**2 - 1./3*mpi**2)
+        fv_pred = []
+        x   = []
+        fv_fit_func = chipt.FitModel(self.model_list, _fv=self.fv, _FF=self.FF)
+        for mL in np.arange(3.,10.1,.1):
+            x.append(np.exp(-mL) / (mL)**1.5)
+            fv_dict['x']['mpiL'] = mL
+            fv_dict['x'][k] = mL * mk/mpi
+            fv_dict['x'][k] = mL * me/mpi
+            fv_pred.append(self.fitEnv._fit_function(fv_fit_func, fv_dict['x'], fv_dict['p']))
+        x = np.array(x)
+        y  = np.array([k.mean for k in fv_pred])
+        dy = np.array([k.sdev for k in fv_pred])
+
+        self.fig_Fv = plt.figure('FKFpi_vs_mL_'+self.model, figsize=self.fig_size)
+        self.ax_fv  = plt.axes(self.plt_axes)
+        self.ax_fv.fill_between(x, y-dy, y+dy, color=self.colors['a12'], alpha=0.4)
+        markers = ['s','o','*']
+        mL_ens = dict()
+        xL_ens = dict()
+        fL_ens = dict()
+        for i_e,ens in enumerate(['a12m220L', 'a12m220', 'a12m220S']):
+            if ens in self.switches['ensembles_fit']:
+                c = color=self.colors['a12']
+            else:
+                c = 'k'
+            mL_ens[ens] = self.fit_result.x[ens]['mpiL']
+            y_data = self.fit_result.y[ens]
+            self.ax_fv.errorbar(np.exp(-mL_ens[ens])/mL_ens[ens]**1.5, y_data.mean, yerr=y_data.sdev, \
+                marker=markers[i_e], color=c, linestyle='None',label=r'$m_\pi L=%.2f$' %(mL_ens[ens]))
+            # collect info for making text in band
+            fv_dict['x']['mpiL'] = mL_ens[ens]
+            fv_dict['x'][k] = mL_ens[ens] * mk/mpi
+            fv_dict['x'][k] = mL_ens[ens] * me/mpi
+            xL_ens[ens] = np.exp(-mL_ens[ens])/mL_ens[ens]**1.5
+            fL_ens[ens] = self.fitEnv._fit_function(fv_fit_func, fv_dict['x'], fv_dict['p']).mean
+
+        self.ax_fv.set_xlabel(r'$e^{-m_\pi L} / (m_\pi L)^{3/2}$',fontsize=self.fs_text)
+        self.ax_fv.set_ylabel(r'$F_K / F_\pi$',fontsize=self.fs_text)
+        self.ax_fv.legend(ncol=3, fontsize=self.fs_leg, columnspacing=0.5)
+        self.ax_fv.vlines(0,1.12,1.15, color='k', lw=0.4)
+        self.ax_fv.set_ylim(1.124, 1.144)
+        self.ax_fv.set_xlim(-0.0001,.0075)
+
+        # Do a little of trig to get text to line up in band
+        x_text  = (xL_ens['a12m220S'] + xL_ens['a12m220']) / 2
+        def ml_x(mL):
+            return np.exp(-mL)/mL**1.5
+        mL_text = minimize_scalar(lambda x: (ml_x(x) -x_text)**2 ,bounds=(3,7), method='bounded').x
+        fv_dict['x']['mpiL'] = mL_text
+        fv_dict['x'][k] = mL_text * mk/mpi
+        fv_dict['x'][k] = mL_text * me/mpi
+        y_text = self.fitEnv._fit_function(fv_fit_func, fv_dict['x'], fv_dict['p']).mean
+        # scale dy and dx by the limits of the plot to get angle right
+        dx = (xL_ens['a12m220S'] - xL_ens['a12m220']) / (self.ax_fv.get_xlim()[1]-self.ax_fv.get_xlim()[0])
+        dy = (fL_ens['a12m220S'] - fL_ens['a12m220']) / (self.ax_fv.get_ylim()[1]-self.ax_fv.get_ylim()[0])
+        angle = 180/np.pi * np.arctan(dy / dx / self.gr) # remember the golden ratio scaling
+        self.ax_fv.text(x_text, y_text - 0.0003, r'a12m220: $\delta_{\rm FV}^{{\rm NLO}\ \chi{\rm PT}}(m_\pi L)$', \
+            horizontalalignment='center', verticalalignment='center', \
+            rotation=angle, fontsize=self.fs_text)
+
+        if self.switches['save_figs']:
+            plt.savefig('figures/'+'FKFpi_vs_mL_'+self.model+'.pdf',transparent=True)

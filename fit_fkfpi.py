@@ -60,7 +60,6 @@ def main():
     # load data
     gv_data = io_utils.format_h5_data('data/FK_Fpi_data.h5',switches)
 
-
     models = analysis.sys_models(switches)
     if switches['prior_search']:
         print('Performing Prior Width Scan')
@@ -118,12 +117,16 @@ def main():
 
             if switches['debug_phys_point'] and not do_fit:
                 report_phys_point(fit_result, phys_point, model_list, FF)
-            if switches['make_extrap']:
+            if switches['make_extrap'] or switches['make_fv']:
                 plots = plotting.ExtrapolationPlots(model, model_list, fitEnv, fit_result, switches)
+            if switches['make_extrap']:
                 if 'alphaS' not in model and 'ma' not in model:
                     plots.plot_vs_eps_asq(phys_point)
                 if 'ma' not in model:
                     plots.plot_vs_eps_pi(phys_point)
+            if switches['make_fv']:
+                if 'xpt' in model and 'FV' in model and 'PP' in model:
+                    plots.plot_vs_ml()
 
         if switches['model_avg']:
             model_avg = analysis.BayesModelAvg(fit_results)

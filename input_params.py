@@ -13,7 +13,7 @@ switches['ensembles_fit'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
     'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
-    'a15m220'  ,'a12m220' ,'a09m220','a12m220S','a12m220L',
+    'a15m220'  ,'a12m220' ,'a09m220','a12m220L','a12m220S',
     'a15m135XL','a12m130' ,'a09m135',
     ]
 
@@ -28,10 +28,10 @@ switches['ansatz']['models'] = ['xpt_nnnlo_FV']
 '''
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()     # these cause the fitter to loop over various options
-switches['sys']['Lam_chi']   = True # FF = Fpi Fpi, Fpi FK, FK FK
-switches['sys']['alphaS']    = True # include alphaS at NNLO?
-switches['sys']['nnlo_ct']   = True # NNLO = full XPT or just counterterm
-switches['sys']['ratio']     = True # use ratio version of NLO fit
+switches['sys']['Lam_chi']   = False # FF = Fpi Fpi, Fpi FK, FK FK
+switches['sys']['alphaS']    = False # include alphaS at NNLO?
+switches['sys']['nnlo_ct']   = False # NNLO = full XPT or just counterterm
+switches['sys']['ratio']     = False # use ratio version of NLO fit
 # OLDER SYSTEMATICS - still work, but not used
 switches['sys']['FV']        = False # turn on/off FV corrections
 switches['sys']['logSq']     = False # only include logSq and ct (no log)
@@ -56,6 +56,7 @@ switches['scipy']            = False # use scipy minimizer instead of gsl?
 # Plotting options
 switches['make_extrap']      = False # make plots
 switches['make_hist']        = False # make plots
+switches['make_fv']          = True
 switches['save_figs']        = True  # save figures
 switches['milc_compare']     = False # compare with MILCs result
 
