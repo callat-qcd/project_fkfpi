@@ -291,7 +291,7 @@ class ExtrapolationPlots:
         self.ax_fv.legend(ncol=3, fontsize=self.fs_leg, columnspacing=0.5)
         self.ax_fv.vlines(0,1.12,1.15, color='k', lw=0.4)
         self.ax_fv.set_ylim(1.124, 1.144)
-        self.ax_fv.set_xlim(-0.0001,.0075)
+        self.ax_fv.set_xlim(-0.000,.0075)
 
         # Do a little of trig to get text to line up in band
         x_text  = (xL_ens['a12m220S'] + xL_ens['a12m220']) / 2
@@ -306,9 +306,10 @@ class ExtrapolationPlots:
         dx = (xL_ens['a12m220S'] - xL_ens['a12m220']) / (self.ax_fv.get_xlim()[1]-self.ax_fv.get_xlim()[0])
         dy = (fL_ens['a12m220S'] - fL_ens['a12m220']) / (self.ax_fv.get_ylim()[1]-self.ax_fv.get_ylim()[0])
         angle = 180/np.pi * np.arctan(dy / dx / self.gr) # remember the golden ratio scaling
-        self.ax_fv.text(x_text, y_text - 0.0003, r'a12m220: $\delta_{\rm FV}^{{\rm NLO}\ \chi{\rm PT}}(m_\pi L)$', \
+        self.ax_fv.text(x_text, y_text - 0.0003, \
+            r'a12m220: $\delta_{\rm FV}^{{\rm NLO}\ \chi{\rm PT}}(m_\pi L)$', \
             horizontalalignment='center', verticalalignment='center', \
-            rotation=angle, fontsize=self.fs_text)
+            rotation=angle, fontsize=self.fs_text-1)
 
         if self.switches['save_figs']:
             plt.savefig('figures/'+'FKFpi_vs_mL_'+self.model+'.pdf',transparent=True)
