@@ -78,8 +78,11 @@ class FitModel:
         # convenience functions)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            dummy = sum(getattr(FitModel, term)(self,fake_x,fake_p,fake_cp)
-                        for term in self.term_list)
+            try:
+                dummy = sum(getattr(FitModel, term)(self,fake_x,fake_p,fake_cp)
+                            for term in self.term_list)
+            except:
+                pass
         return fake_x.param_list, fake_p.param_list, set(fake_cp.keys())
 
     ''' define all the convenience functions; whichever attribute is accessed of
@@ -312,6 +315,39 @@ class FitModel:
 
         return a_result
 
+    def ma_longform_nlo(self,x,p,cP):
+        a_result  = 1.
+        # L5 counter term
+        a_result += p['L5'] * (4*pi)**2 * 4 * (cP['k2'] - cP['p2'])
+        # - dFPi
+        a_result += cP['Iju']
+        a_result += 0.5 * cP['Iru']
+        # + dFK
+        a_result += -0.5  * cP['Iju']
+        a_result += -1./4 * cP['Iru']
+        a_result += -0.5  * cP['Ijs']
+        a_result += -1./4 * cP['Irs']
+        a_result += -1./8 * cP['dju2']
+        a_result += cP['dju2']**2 / 24 / (cP['xx2'] - cP['p2'])
+        a_result += cP['drs2'] * (cP['k2']-cP['p2']) / 6 / (cP['xx2']-cP['ss2'])
+        a_result += -cP['dju2'] * cP['drs2'] / 12 / (cP['xx2'] - cP['ss2'])
+        a_result += cP['lp']/24 * (3*cP['p2'] \
+                - 3*cP['dju2']*(cP['xx2']+cP['p2'])/(cP['xx2']-cP['p2']) \
+                + cP['dju2']**2 * cP['xx2']/(cP['xx2']-cP['p2'])**2\
+                -4*cP['dju2']*cP['drs2']*cP['p2']/(cP['xx2']-cP['p2'])/(cP['ss2']-cP['p2'])\
+                )
+        a_result += -cP['xx2']/24 * np.log(cP['xx2'])*(9 \
+                -6*cP['dju2']/(cP['xx2']-cP['p2']) \
+                + cP['dju2']**2/(cP['xx2']-cP['p2'])**2\
+                +cP['drs2']*(4*(cP['k2']-cP['p2'])+6*(cP['ss2']-cP['xx2']))/(cP['xx2']- cP['ss2'])**2 \
+                -2*cP['dju2']*cP['drs2']*(2*cP['ss2']-cP['p2']-cP['xx2'])/(cP['xx2']-cP['ss2'])**2/(cP['xx2']-cP['p2'])\
+                )
+        a_result += np.log(cP['ss2'])/12 * (3*cP['ss2'] \
+                +cP['drs2']*(3*cP['ss2']**2 + 2*(cP['k2']-cP['p2'])*cP['xx2'] -3*cP['ss2']*cP['xx2'])/(cP['xx2']-cP['ss2'])**2\
+                -cP['dju2']*cP['drs2']*(2*cP['ss2']**2 - cP['xx2']*(cP['ss2']+cP['p2']))/(cP['xx2']-cP['ss2'])**2 / (cP['ss2']-cP['p2'])\
+                )
+
+        return a_result
 
 def dFKFpi_iso(phys_point,FF):
     p   = phys_point['p']

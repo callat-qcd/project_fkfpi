@@ -298,7 +298,7 @@ def gather_model_elements(model):
     if FF not in ['PP','PK','KK']:
         sys.exit('unrecognized FF choice [PP, PK, KK]: '+FF)
 
-    if 'ratio' in eft:
+    if 'ratio' in eft or 'longform' in eft:
         model_elements = [eft.replace('-','_')+'_nlo']
     else:
         model_elements = [eft+'_nlo']

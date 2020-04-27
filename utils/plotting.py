@@ -307,7 +307,7 @@ class ExtrapolationPlots:
         dy = (fL_ens['a12m220S'] - fL_ens['a12m220']) / (self.ax_fv.get_ylim()[1]-self.ax_fv.get_ylim()[0])
         angle = 180/np.pi * np.arctan(dy / dx / self.gr) # remember the golden ratio scaling
         self.ax_fv.text(x_text, y_text - 0.0003, \
-            r'a12m220: $\delta_{\rm FV}^{{\rm NLO}\ \chi{\rm PT}}(m_\pi L)$', \
+            r'a12m220: $\delta_{\rm FV}^{{\rm NLO}\ \chi{\rm PT}}(\epsilon_\pi^2, m_\pi L)$', \
             horizontalalignment='center', verticalalignment='center', \
             rotation=angle, fontsize=self.fs_text-1)
 
