@@ -61,7 +61,7 @@ class BayesModelAvg:
 
     def print_weighted_models(self):
         i_weights = np.argsort(self.weights)[::-1]
-        print(r"%33s & chi2/dof &   $Q$ &  logGBF& weight& $F_K/F_\pi$\\" %'model')
+        print(r"%37s & chi2/dof &   $Q$ &  logGBF& weight& $F_K/F_\pi$\\" %'model')
         print(r'\hline')
         for a_i, a_model in enumerate(np.array(self.r_list)[i_weights]):
             chi2   = self.results[a_model].chi2
@@ -70,7 +70,7 @@ class BayesModelAvg:
             logGBF = self.results[a_model].logGBF
             w_i    = self.weights[i_weights][a_i]
             phys   = self.results[a_model].phys['FKFpi']
-            print(r'%33s &  %.3f   &  %.3f&  %.3f&  %.3f&  %s\\' %(a_model, chi2/dof, Q, logGBF, w_i, phys))
+            print(r'%37s &  %.3f   &  %.3f&  %.3f&  %.3f&  %s\\' %(a_model.replace('_','\_'), chi2/dof, Q, logGBF, w_i, phys))
 
     def bayes_model_avg(self):
         self.pdf_x = np.arange(1.15,1.2301,.0001)
@@ -132,18 +132,18 @@ class BayesModelAvg:
         self.model_var  = np.sum(self.weights * np.array([r.mean**2 for r in results]))
         self.model_var += -self.avg['FKFpi'].mean**2
         print('-----------------------------------------------------------------------------------')
-        print('%33s &         %s +- %.4f' %('Bayes Model Avg: FK/Fpi', self.avg['FKFpi'], np.sqrt(self.model_var)))
+        print('%37s &         %s +- %.4f' %('Bayes Model Avg: FK/Fpi', self.avg['FKFpi'], np.sqrt(self.model_var)))
         for k in var_avg:
             e = '%.4f' %np.sqrt(var_avg[k])
-            print('%33s           %9s     %s' %('',e[-2:],k))
+            print('%37s           %9s     %s' %('',e[-2:],k))
         for k in ['FKFpi(MK+)', 'D_iso_xpt', 'D_iso_split', 'D_iso_avg']:
             if self.avg[k].mean < 0:
-                print('%33s          %s   %s' %('',self.avg[k],k))
+                print('%37s          %s   %s' %('',self.avg[k],k))
             else:
-                print('%33s           %s    %s' %('',self.avg[k],k))
+                print('%37s           %s    %s' %('',self.avg[k],k))
         #print('-----------------------------------------------------------------------------------')
         print('                  ----------------------------------------------------')
-        print('%33s           %s +- %.4f     |' %('| FK+/Fpi+    =', self.avg['FK+/Fpi+'], np.sqrt(self.model_var)))
+        print('%37s           %s +- %.4f     |' %('| FK+/Fpi+    =', self.avg['FK+/Fpi+'], np.sqrt(self.model_var)))
         print('                  ----------------------------------------------------')
 
     def plot_bma_hist(self,hist_type,save_fig=False):
@@ -396,7 +396,7 @@ def prior_width_scan(model, fitEnv, fit_model, priors, switches):
     vals = ''
     vals = vals.join("& %5s   " %str(k) for k in logGBF_array[i_l_max][:-1])
     vals = vals + "& %f" %logGBF_array[i_l_max][-1]
-    print('%33s' %model, vals)
+    print('%37s' %model, vals)
     prior_file = open('data/saved_prior_search.yaml', 'w')
     yaml.dump(prior_grid, prior_file)
     prior_file.close()

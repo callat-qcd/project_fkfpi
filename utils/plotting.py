@@ -101,7 +101,11 @@ class ExtrapolationPlots:
             self.ax_cont.tick_params(labelsize=self.tick_size, direction='in')
         else:
             self.ax_cont.set_ylim(1.135, 1.218)
+            self.ax_cont.text(0.0175, 1.145, r'%s' %(self.model.replace('_','\_')),\
+                horizontalalignment='left', verticalalignment='center', \
+                fontsize=self.fs_text, bbox={'facecolor':'None','boxstyle':'round'})
         self.ax_cont.set_xlim(0,.21)
+
 
         if self.switches['save_figs']:
             plt.savefig('figures/'+'FKFpi_vs_ea_'+self.model+'.pdf',transparent=True)
@@ -167,7 +171,10 @@ class ExtrapolationPlots:
             self.ax_x.set_xlabel(r'$\epsilon_\pi^2 = (m_\pi / 4\pi F_K)^2$',fontsize=self.fs_text)
             self.ax_x.set_xlim(0,.084)
         self.ax_x.set_ylabel(r'$F_K / F_\pi$',fontsize=self.fs_text)
-        self.ax_x.set_ylim(1.02, 1.218)
+        self.ax_x.set_ylim(1.06, 1.218)
+        self.ax_x.text(0.0175, 1.075, r'%s' %(self.model.replace('_','\_')),\
+            horizontalalignment='left', verticalalignment='center', \
+            fontsize=self.fs_text, bbox={'facecolor':'None','boxstyle':'round'})
 
         if self.switches['save_figs']:
             plt.savefig('figures/'+'FKFpi_vs_epi_'+self.model+'.pdf',transparent=True)
@@ -181,7 +188,7 @@ class ExtrapolationPlots:
                 alpha = 1
             else:
                 c = 'k'
-                alpha = 0.6
+                alpha = 0.4
             s = self.shapes['m'+a_ens.split('m')[1][0:3]]
             if p_type == 'ea':
                 x  = (self.fitEnv.p[(a_ens, 'aw0')] / 2)**2
