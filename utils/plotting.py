@@ -17,7 +17,7 @@ class ExtrapolationPlots:
         self.fig_width = 6.75 # in inches, 2x as wide as APS column
         self.gr        = 1.618034333 # golden ratio
         self.fig_size  = (self.fig_width, self.fig_width / self.gr)
-        self.fig_size2 = (self.fig_width, self.fig_width * 1.58)
+        self.fig_size2 = (self.fig_width, self.fig_width * 1.49)
         self.plt_axes  = [0.14,0.14,0.858,0.858]
         self.fs_text   = 20 # font size of text
         self.fs_leg    = 16 # legend font size
@@ -70,7 +70,10 @@ class ExtrapolationPlots:
         for a_fm in a_range:
             self.shift_xp['p']['aw0'] = a_fm / self.shift_xp['p']['w0']
             x_plot.append((self.shift_xp['p']['aw0'] / 2)**2)
-            y_plot.append(self.fitEnv._fit_function(self.shift_fit, self.shift_xp['x'], self.shift_xp['p']))
+            y_a = self.fitEnv._fit_function(self.shift_fit, self.shift_xp['x'], self.shift_xp['p'])
+            if self.switches['milc_compare']:
+                y_a += self.fit_result.phys['dF_iso_xpt2'].mean
+            y_plot.append(y_a)
         x  = np.array([k.mean for k in x_plot])
         y  = np.array([k.mean for k in y_plot])
         dy = np.array([k.sdev for k in y_plot])
@@ -81,7 +84,10 @@ class ExtrapolationPlots:
             figsize = self.fig_size
 
         self.fig_cont = plt.figure('FKFpi_vs_ea_'+self.model,figsize=figsize)
-        self.ax_cont  = plt.axes(self.plt_axes)
+        if self.switches['milc_compare']:
+            self.ax_cont  = plt.axes([0.14,0.065,0.858,0.933])
+        else:
+            self.ax_cont  = plt.axes(self.plt_axes)
         self.ax_cont.fill_between(x, y-dy, y+dy, color='#b36ae2', alpha=0.4)
 
         self.plot_data(p_type='ea')
@@ -95,7 +101,7 @@ class ExtrapolationPlots:
             self.ax_cont.axhspan(1.1932-0.0019,1.1932+0.0019, color='k', alpha=.3)
             self.ax_cont.text(0.11, 1.1960, r'FLAG[2019]: $N_F=2+1+1$', \
                 horizontalalignment='center', fontsize=self.fs_text)
-            self.ax_cont.set_ylim(1.151, 1.228)
+            self.ax_cont.set_ylim(1.149, 1.228)
             self.ax_cont.set_ylabel(r'$F_{K^+} / F_{\pi^+}$',fontsize=self.fs_text)
             self.ax_cont.set_xlabel(r'$\epsilon_a^2 = a^2 / (2 w_0)^2$',fontsize=24)
             self.ax_cont.tick_params(labelsize=self.tick_size, direction='in')
@@ -198,10 +204,15 @@ class ExtrapolationPlots:
                 dx = 0
             label = self.labels[a_ens]
             if p_type == 'ea':
-                mfc = c
+                if a_ens in self.switches['ensembles_fit']:
+                    mfc = c
+                else:
+                    mfc = 'None'
             elif p_type == 'epi':
                 mfc = 'None'
             y = self.fitEnv.y[a_ens] + y_shift[a_ens]
+            if self.switches['milc_compare']:
+                y += self.fit_result.phys['dF_iso_xpt2'].mean
             if p_type == 'ea':
                 self.ax_cont.errorbar(x=x.mean+dx, y=y.mean,xerr=x.sdev, yerr=y.sdev,
                     marker=s, color=c, mfc=mfc, alpha=alpha, linestyle='None', label=label)

@@ -74,7 +74,7 @@ class BayesModelAvg:
 
     def bayes_model_avg(self):
         self.pdf_x = np.arange(1.15,1.2301,.0001)
-        avg = {k:0. for k in ['FKFpi', 'FKFpi(MK+)', 'D_iso_xpt', 'D_iso_split', 'D_iso_avg', 'FK+/Fpi+']}
+        avg = {k:0. for k in ['FKFpi', 'dF_iso_xpt', 'dF_iso_xpt2']}
         pdf = 0.
         cdf = 0.
         pdf_split = dict()
@@ -95,14 +95,7 @@ class BayesModelAvg:
             a_i = self.results[a_res].phys
             results.append(a_i['FKFpi'])
             for k in avg:
-                if k == 'D_iso_avg':
-                    D_avg = avg_Diso(a_i['D_iso_xpt'],a_i['D_iso_split'])
-                    avg[k] += gv.gvar(w_i*D_avg.mean, np.sqrt(w_i)*D_avg.sdev)
-                elif k == 'FK+/Fpi+':
-                    D_avg = avg_Diso(a_i['D_iso_xpt'],a_i['D_iso_split'])
-                    avg[k] += gv.gvar(w_i*(a_i['FKFpi']+D_avg).mean, np.sqrt(w_i)*(a_i['FKFpi']+D_avg).sdev)
-                else:
-                    avg[k] += gv.gvar(w_i*a_i[k].mean, np.sqrt(w_i)*a_i[k].sdev)
+                avg[k] += gv.gvar(w_i*a_i[k].mean, np.sqrt(w_i)*a_i[k].sdev)
             #avg.update({k:v += gv.gvar(w_i*a_i[k].mean, np.sqrt(w_i)*a_i[k].sdev) for k,v in avg.items()})
             uncertainties = uncertainty_breakdown(self.results[a_res],'FKFpi')
             for k in uncertainties:
@@ -136,15 +129,18 @@ class BayesModelAvg:
         for k in var_avg:
             e = '%.4f' %np.sqrt(var_avg[k])
             print('%37s           %9s     %s' %('',e[-2:],k))
-        for k in ['FKFpi(MK+)', 'D_iso_xpt', 'D_iso_split', 'D_iso_avg']:
+        for k in ['dF_iso_xpt', 'dF_iso_xpt2']:
             if self.avg[k].mean < 0:
                 print('%37s          %s   %s' %('',self.avg[k],k))
             else:
                 print('%37s           %s    %s' %('',self.avg[k],k))
+        self.avg['dF_iso_avg'] = avg_iso(self.avg['dF_iso_xpt'],self.avg['dF_iso_xpt2'])
+        print('%37s          %s   %s' %('',self.avg['dF_iso_avg'],'dF_iso_avg'))
         #print('-----------------------------------------------------------------------------------')
-        print('                  ----------------------------------------------------')
+        self.avg['FK+/Fpi+'] = self.avg['FKFpi'] + self.avg['dF_iso_avg']
+        print('                      ----------------------------------------------------')
         print('%37s           %s +- %.4f     |' %('| FK+/Fpi+    =', self.avg['FK+/Fpi+'], np.sqrt(self.model_var)))
-        print('                  ----------------------------------------------------')
+        print('                      ----------------------------------------------------')
 
     def plot_bma_hist(self,hist_type,save_fig=False):
         hist = plt.figure('hist_'+hist_type, figsize=self.fig_size)
@@ -401,11 +397,17 @@ def prior_width_scan(model, fitEnv, fit_model, priors, switches):
     yaml.dump(prior_grid, prior_file)
     prior_file.close()
 
-def avg_Diso(a,b):
-    ''' avg isospin breaking terms, but make the uncertainty as large as
-        the bigger of the two
+def avg_iso(a,b):
+    ''' We know this correction is negative - so this routing assumes that.
+        - Take the larger in magnitude term
+        - Take the largest uncertainty
+        - add half the difference in the uncertainty
     '''
     max_err = max([a.sdev, b.sdev])
     avg_err = 0.5*(a+b).sdev
     sig     = np.sqrt( (max_err**2 - avg_err**2) / ((a+b).mean/2)**2)
-    return 0.5*(a+b) * gv.gvar(1, sig)
+    sig_dif = gv.gvar(1,abs((a-b).mean)/(a+b).mean)
+    if a < b:
+        return 0.5*(a+b) * gv.gvar(1, sig) * sig_dif + (a-b).mean/2
+    else:
+        return 0.5*(a+b) * gv.gvar(1, sig) * sig_dif + (b-a).mean/2

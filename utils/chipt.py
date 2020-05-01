@@ -236,7 +236,7 @@ class FitModel:
         ''' in order to keep the LECs of the same order as XPT, we multiply
             by powers of (4pi)**2 just as in XPT
         '''
-        return 1. + (4*pi)**2 * p['L5'] * cP['k2p2'] * (1 + cP['ITp'])
+        return 1. + (4*pi)**2 * p['L5'] * cP['k2p2'] * (1 + p['t_fv'] * cP['ITp'])
 
     # NNLO terms
     def nnlo_ct(self, x, p, cP):
@@ -352,11 +352,55 @@ class FitModel:
 def dFKFpi_iso(phys_point,FF):
     p   = phys_point['p']
     k2  = (p['mk']/p['Lchi_'+FF])**2
-    k2p = (p['mkp']/p['Lchi_'+FF])**2
+    k2p = (p['mk+']/p['Lchi_'+FF])**2
+    k20 = (p['mk0']/p['Lchi_'+FF])**2
     p2  = (p['mpi']/p['Lchi_'+FF])**2
     e2  = 4./3*k2 - 1./3*p2
 
     result  = (k2p - k2) * 4 * (4*np.pi)**2 * p['L5']
-    result += -(k2p - k2)/4 * (1 + 2*np.log(p2) + np.log(k2) + np.log(e2 / p2))
+    result += -1./4*( k2p*np.log(k2p) - k2*np.log(k2) )
+    result +=  1./4 *(k20 -k2p) * (e2*np.log(e2) - p2*np.log(p2)) / (e2 - p2)
 
     return result
+
+def dFKFpi_iso_2(phys_point,FF, FKFpi):
+    p   = phys_point['p']
+    k2  = (p['mk']/p['Lchi_'+FF])**2
+    k2p = (p['mk+']/p['Lchi_'+FF])**2
+    k20 = (p['mk0']/p['Lchi_'+FF])**2
+    p2  = (p['mpi']/p['Lchi_'+FF])**2
+    e2  = 4./3*k2 - 1./3*p2
+
+    prefac = -1./6 * ( k20 - k2p ) / ( e2 - p2 )
+    result = prefac * ( 4 *(FKFpi - 1) +p2 * np.log(k2/p2) -k2 +p2 )
+
+    return result
+
+
+def dFKFpi_vincenzo(phys_point,FF):
+    p   = phys_point['p']
+    k2  = (p['mk']/p['Lchi_'+FF])**2
+    k2p = (p['mk+']/p['Lchi_'+FF])**2
+    k20 = (p['mk0']/p['Lchi_'+FF])**2
+    p2  = (p['mpi']/p['Lchi_'+FF])**2
+    e2  = 4./3*k2 - 1./3*p2
+    eps = np.sqrt(3)/4 * (k20-k2p)/(k2-p2)
+
+    result  = -16*np.sqrt(3) * eps / 3 * p['L5'] * (4*np.pi)**2 * (k2 - p2)
+    result += -np.sqrt(3)*eps/2*(p2*np.log(p2) -e2*np.log(e2) -2./3*(k2-p2)*(np.log(k2) +1))
+
+    return result / 2
+
+def dFKFpi_vincenzo_2(phys_point,FF, FKFpi):
+    p   = phys_point['p']
+    k2  = (p['mk']/p['Lchi_'+FF])**2
+    k2p = (p['mk+']/p['Lchi_'+FF])**2
+    k20 = (p['mk0']/p['Lchi_'+FF])**2
+    p2  = (p['mpi']/p['Lchi_'+FF])**2
+    e2  = 4./3*k2 - 1./3*p2
+    eps = np.sqrt(3)/4 * (k20-k2p)/(k2-p2)
+
+    result  = np.sqrt(3) * eps * (-4./3) * (FKFpi -1)
+    result += np.sqrt(3) * eps * 1./3 * (k2 -p2 -p2*np.log(k2/p2))
+
+    return result / 2

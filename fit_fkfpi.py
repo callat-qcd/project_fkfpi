@@ -53,6 +53,16 @@ def main():
             model_list, FF, fv = analysis.gather_model_elements(model)
             debug_fit_function(check_fit, model_list, FF, fv)
         sys.exit()
+    if switches['print_Li']:
+        li_rho = r'$10^3L_i(m_\rho)$& '
+        li_mu0 = r'$10^3L_i(\mu_0)$& '
+        for Li in ['L1','L2','L3','L4','L5','L6','L7','L8']:
+            li_rho += str(ip.Li_mrho[Li])+'& '
+            li_mu0 += str(1e3*ip.priors[Li])+'& '
+        print(li_rho)
+        print(li_mu0)
+        sys.exit('Exiting after printing L_i values')
+
     if switches['save_fits']:
         if not os.path.exists('pickled_fits'):
             os.makedirs('pickled_fits')
@@ -110,6 +120,7 @@ def main():
             if switches['print_fit']:
                 print(fit_result.format(maxline=True))
             fit_result.phys_point.update({k:v for k,v in phys_point['p'].items() if ('Lchi' in k) or k in ['mpi','mk','mkp']})
+            fit_result.ensembles_fit = switches['ensembles_fit']
             report_phys_point(fit_result, phys_point, model_list, FF, report=switches['report_phys'])
             fit_results[model] = fit_result
             if switches['save_fits']:
@@ -210,26 +221,16 @@ def report_phys_point(fit_result, phys_point_params, model_list, FF, report=Fals
             phys_data['p'][k] = fit_result.p[k]
     fit_result.phys                = dict()
     fit_result.phys['FKFpi']       = FitEnv._fit_function(fit_model, phys_data['x'], phys_data['p'])
-    fit_result.phys['D_iso_xpt']   = chipt.dFKFpi_iso(phys_data, FF)
-    # swap MK+ into MK to extrapolate to the MK+ limit
-    phys_data['p']['mk']           = phys_point_params['p']['mkp']
-    fit_result.phys['FKFpi(MK+)']  = FitEnv._fit_function(fit_model, phys_data['x'], phys_data['p'])
-    split                          = fit_result.phys['FKFpi(MK+)'] - fit_result.phys['FKFpi']
-    # set this correction to 2/3 split +- 1/3 split
-    if split.sdev > abs(split.mean/2):
-        fit_result.phys['D_iso_split'] = 2./3 * split
-    else:
-        fit_result.phys['D_iso_split'] = 2./3 * split * gv.gvar(1, np.sqrt(1./4 - (split.sdev/split.mean)**2))
+    fit_result.phys['dF_iso_xpt']  = chipt.dFKFpi_iso(phys_data, FF)
+    fit_result.phys['dF_iso_xpt2'] = chipt.dFKFpi_iso_2(phys_data, FF, fit_result.phys['FKFpi'])
     if report:
         print('  chi2/dof [dof] = %.2f [%d]   Q=%.3f   logGBF = %.3f' \
             %(fit_result.chi2/fit_result.dof, fit_result.dof, fit_result.Q, fit_result.logGBF))
         print('  FK/Fpi                = %s' %fit_result.phys['FKFpi'])
-        # inflate uncertainty on D_xpt + D_split to be max of the two
-        D_xpt   = fit_result.phys['D_iso_xpt']
-        D_split = fit_result.phys['D_iso_split']
-        D_avg = analysis.avg_Diso(D_xpt, D_split)
-        print('  D_iso (xpt,split,avg) = %s, %s, %s' %(D_xpt, D_split,  D_avg))
-        print('  FK+/Fpi+              = %s' %(fit_result.phys['FKFpi'] +D_avg))
+        print('  dF_iso_xpt            = %s' %chipt.dFKFpi_iso(phys_data, FF))
+        print('  dF_iso_xpt2           = %s' %chipt.dFKFpi_iso_2(phys_data, FF, fit_result.phys['FKFpi']))
+        print('  dF_iso_vincenzo       = %s' %chipt.dFKFpi_vincenzo(phys_data, FF))
+        print('  dF_iso_vincenzo2      = %s' %chipt.dFKFpi_vincenzo_2(phys_data, FF, fit_result.phys['FKFpi']))
 
 def debug_fit_function(check_fit, model_list, FF, fv):
     x = check_fit['x']

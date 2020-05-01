@@ -19,7 +19,7 @@ switches['ensembles_fit'] = [
 
 # FIT MODELS
 switches['ansatz'] = dict()
-switches['ansatz']['models'] = ['xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt-ratio_nnnlo_FV_ct']
 '''
     The full list of models can be rather long.  The sys switches help loop
     over them.  Example other base models are
@@ -41,24 +41,26 @@ switches['scales']           = ['PP','PK','KK'] # choices of F**2 to loop over
 switches['scale']            = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
 
 switches['print_lattice']    = False # print data for paper - not fitting will occur
+switches['print_Li']         = False # print Li at mrho and 4piF0 scales
 
 # Fitting options
 switches['bs_bias']          = True  # shift bs avg to b0?
 switches['print_fit']        = False # print lsqfit results?
-switches['report_phys']      = False  # report physical point for each fit?
+switches['report_phys']      = True  # report physical point for each fit?
 switches['save_fits']        = True  # save fits in pickle file?
 switches['model_avg']        = True # perform Bayes Model Avg
-switches['check_fit']        = False # print pieces of fit function - no fitting will occur
 switches['prior_search']     = False # perform a crude grid search to optimize
 switches['prior_verbose']    = False # NNLO and NNNLO prior widths
 switches['scipy']            = False # use scipy minimizer instead of gsl?
 
+switches['check_fit']        = False # print pieces of fit function - no fitting will occur
+
 # Plotting options
 switches['make_extrap']      = False # make plots
 switches['make_hist']        = False # make plots
-switches['make_fv']          = True
+switches['make_fv']          = False
 switches['save_figs']        = True  # save figures
-switches['milc_compare']     = False # compare with MILCs result
+switches['milc_compare']     = True # compare with MILCs result
 
 # DEBUGGING
 switches['debug_models']     = False # print list of models being generated
@@ -68,23 +70,23 @@ switches['debug_shift']      = False # check the shifting of raw data to extrapo
 switches['debug_bs']         = False # debug shape of bs lists
 
 # PRIORS for fit
+gamma_i = {
+    'L1':3./32, 'L2':3./16, 'L3':0, 'L4':1./8, 'L5':3./8, 'L6':11./144, 'L7':0, 'L8':5./48
+}
+Li_mrho = {# central values from Bijnens, Ecker, 1405.6488 BE14
+    'L1':gv.gvar(0.53,.5), 'L2':gv.gvar(0.81,.5),  'L3':gv.gvar(-3.07,1.0), 'L4':gv.gvar(0.3,.3),
+    'L5':gv.gvar(1.01,.5), 'L6':gv.gvar(0.14,.14), 'L7':gv.gvar(-0.34,.34), 'L8':gv.gvar(0.47,.47)
+}
 priors = dict()
-priors['L5']   = gv.gvar(0, 0.04)
-priors['L4']   = gv.gvar(0, 0.005)
-# Ananthanarayan et al, 1711.11328 --> Bijnens, Ecker, 1405.6488
-priors['L1']   = gv.gvar( 0.000372,0.000372)
-priors['L2']   = gv.gvar( 0.000493,0.000493)
-priors['L3']   = gv.gvar(-0.003070,0.003070)
-priors['L6']   = gv.gvar( 0.000011,0.00011)
-priors['L7']   = gv.gvar(-0.000340,0.000340)
-priors['L8']   = gv.gvar( 0.000294,0.000294)
+for Li in gamma_i:
+    priors[Li] = 1.e-3 * Li_mrho[Li] - gamma_i[Li]/(4*np.pi)**2 * np.log(4*np.pi*80/770)
 
 # Taylor priors - beyond NLO - use "XPT" NiLO priors
 priors['c2'] = gv.gvar(0,10)
 priors['t_fv'] = gv.gvar(0,100)
 
 # Counter terms
-nnlo_x = 5
+nnlo_x = 2
 #nnlo_a = 2
 nnlo_a = nnlo_x # from prior optimization, we found holding them the same is good
 priors['k_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2
@@ -120,7 +122,8 @@ phys_point = {
         'Lchi_KK' : 4 * np.pi * FK_phys,
         'mpi'     : gv.gvar(134.8, 0.3), #FLAG 2017 (16)
         'mk'      : gv.gvar(494.2, 0.3), #FLAG 2017 (16) isospin symmetric
-        'mkp'     : gv.gvar(491.2, 0.5), #FLAG 2017 (15) strong isospin breaking only
+        'mk+'     : gv.gvar(491.2, 0.5), #FLAG 2017 (15) strong isospin breaking only
+        'mk0'     : gv.gvar(497.2, 0.4), #FLAG 2017 (15) strong isospin breaking only
         'aw0'     : gv.gvar(0,0),
         'a2DI'    : gv.gvar(0,0),
         'w0'      : gv.gvar(0.1714,0),
