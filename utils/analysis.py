@@ -401,13 +401,12 @@ def avg_iso(a,b):
     ''' We know this correction is negative - so this routing assumes that.
         - Take the larger in magnitude term
         - Take the largest uncertainty
-        - add half the difference in the uncertainty
+        - add 25% for SU(3) breaking
     '''
     max_err = max([a.sdev, b.sdev])
     avg_err = 0.5*(a+b).sdev
     sig     = np.sqrt( (max_err**2 - avg_err**2) / ((a+b).mean/2)**2)
-    sig_dif = gv.gvar(1,abs((a-b).mean)/(a+b).mean)
     if a < b:
-        return 0.5*(a+b) * gv.gvar(1, sig) * sig_dif + (a-b).mean/2
+        return 0.5*(a+b) * gv.gvar(1, sig) * gv.gvar(1,.25) + (a-b).mean/2
     else:
-        return 0.5*(a+b) * gv.gvar(1, sig) * sig_dif + (b-a).mean/2
+        return 0.5*(a+b) * gv.gvar(1, sig) * gv.gvar(1,.25) + (b-a).mean/2

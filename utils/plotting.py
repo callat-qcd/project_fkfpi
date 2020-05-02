@@ -123,11 +123,23 @@ class ExtrapolationPlots:
             if isinstance(k,str):
                 self.shift_xp['p'][k] = self.fit_result.p[k]
         y_plot = dict()
+        # fit for each a and continuum
         y_plot['a15'] = []
         y_plot['a12'] = []
         y_plot['a09'] = []
         y_plot['a06'] = []
         y_plot['a00'] = []
+        # xpt convergence - these are summed to a given order
+        y_conv = dict()
+        y_conv['NLO']   = []
+        y_conv['NNLO']  = []
+        y_conv['NNNLO'] = []
+        nlo_lst   = [t for t in self.model_list if 'nlo' in t and not any(n in t for n in ['nnlo','nnnlo'])]
+        nnlo_lst  = [t for t in self.model_list if 'nnlo' in t and 'nnnlo' not in t]
+        nnnlo_lst = [t for t in self.model_list if 'nnnlo' in t]
+        nlo_fit   = chipt.FitModel(nlo_lst, _fv=False, _FF=self.FF)
+        nnlo_fit  = chipt.FitModel(nlo_lst+nnlo_lst, _fv=False, _FF=self.FF)
+        nnnlo_fit = chipt.FitModel(nlo_lst+nnlo_lst+nnnlo_lst, _fv=False, _FF=self.FF)
         x_plot = []
         mpi_range = np.sqrt(np.arange(100, 411**2, 411**2/200))
         for a_mpi in mpi_range:
@@ -135,6 +147,9 @@ class ExtrapolationPlots:
             self.shift_xp['p']['mpi'] = a_mpi
             self.shift_xp['p']['aw0'] = 0
             y_plot['a00'].append(self.fitEnv._fit_function(self.shift_fit, self.shift_xp['x'], self.shift_xp['p']))
+            y_conv['NLO'].append(self.fitEnv._fit_function(nlo_fit, self.shift_xp['x'], self.shift_xp['p']))
+            y_conv['NNLO'].append(self.fitEnv._fit_function(nnlo_fit, self.shift_xp['x'], self.shift_xp['p']))
+            y_conv['NNNLO'].append(self.fitEnv._fit_function(nnnlo_fit, self.shift_xp['x'], self.shift_xp['p']))
             for aa in ['a15','a12','a09','a06']:
                 if aa == 'a06':
                     self.shift_xp['p']['aw0'] = self.fitEnv.p[(aa+'m310L','aw0')]
@@ -167,15 +182,14 @@ class ExtrapolationPlots:
         self.ax_x.legend(handles, labels, ncol=1, fontsize=self.fs_leg)
 
         # labels
-        if self.FF == 'PP':
-            self.ax_x.set_xlabel(r'$\epsilon_\pi^2 = (m_\pi / 4\pi F_\pi)^2$',fontsize=self.fs_text)
-            self.ax_x.set_xlim(0,.094)
-        elif self.FF == 'PK':
-            self.ax_x.set_xlabel(r'$\epsilon_\pi^2 = (m_\pi / 4\pi)^2 /(F_\pi F_K)$',fontsize=self.fs_text)
-            self.ax_x.set_xlim(0,.088)
-        elif self.FF == 'KK':
-            self.ax_x.set_xlabel(r'$\epsilon_\pi^2 = (m_\pi / 4\pi F_K)^2$',fontsize=self.fs_text)
-            self.ax_x.set_xlim(0,.084)
+        eps_FF = {
+            'PP':r'$\epsilon_\pi^2 = (m_\pi / 4\pi F_\pi)^2$',
+            'PK':r'$\epsilon_\pi^2 = (m_\pi / 4\pi)^2 /(F_\pi F_K)$',
+            'KK':r'$\epsilon_\pi^2 = (m_\pi / 4\pi F_K)^2$'
+        }
+        xlim_FF = {'PP':.094, 'PK':.088, 'KK':.084}
+        self.ax_x.set_xlabel(eps_FF[self.FF],fontsize=self.fs_text)
+        self.ax_x.set_xlim(0,xlim_FF[self.FF])
         self.ax_x.set_ylabel(r'$F_K / F_\pi$',fontsize=self.fs_text)
         self.ax_x.set_ylim(1.06, 1.218)
         self.ax_x.text(0.0175, 1.075, r'%s' %(self.model.replace('_','\_')),\
@@ -184,6 +198,33 @@ class ExtrapolationPlots:
 
         if self.switches['save_figs']:
             plt.savefig('figures/'+'FKFpi_vs_epi_'+self.model+'.pdf',transparent=True)
+
+        # Convergence plot
+        order_list = ['NLO']
+        if 'nnnlo' in self.model:
+            order_list = order_list + ['NNLO','NNNLO']
+        elif 'nnlo' in self.model:
+            order_list = order_list + ['NNLO']
+        self.fig_conv = plt.figure('FKFpi_vs_epi_convergence_'+self.model, figsize=self.fig_size)
+        self.ax_conv  = plt.axes(self.plt_axes)
+        labels = {'NLO':'NLO', 'NNLO':r'N$^2$LO','NNNLO':r'N$^3$LO'}
+        for order in order_list:
+            mean = np.array([k.mean for k in y_conv[order]])
+            sdev = np.array([k.sdev for k in y_conv[order]])
+            self.ax_conv.fill_between(x, mean-sdev, mean+sdev, alpha=.4, label=labels[order])
+        self.ax_conv.set_xlabel(eps_FF[self.FF],fontsize=self.fs_text)
+        self.ax_conv.set_xlim(0,xlim_FF[self.FF])
+        self.ax_conv.set_ylabel(r'$F_K / F_\pi$',fontsize=self.fs_text)
+        self.ax_conv.set_ylim(1.06, 1.218)
+        self.ax_conv.text(0.0175, 1.075, r'%s' %(self.model.replace('_','\_')),\
+            horizontalalignment='left', verticalalignment='center', \
+            fontsize=self.fs_text, bbox={'facecolor':'None','boxstyle':'round'})
+        self.ax_conv.axvline(eps_pisq_phys.mean,linestyle='--',color='#a6aaa9')
+        self.ax_conv.axvspan(eps_pisq_phys.mean -eps_pisq_phys.sdev, eps_pisq_phys.mean +eps_pisq_phys.sdev,
+            alpha=0.4, color='#a6aaa9')
+        self.ax_conv.legend(ncol=3, fontsize=self.fs_leg)
+        if self.switches['save_figs']:
+            plt.savefig('figures/'+'FKFpi_vs_epi_convergence_'+self.model+'.pdf',transparent=True)
 
 
     def plot_data(self, p_type, offset=False, raw=False):

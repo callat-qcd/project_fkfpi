@@ -122,6 +122,15 @@ def main():
             fit_result.phys_point.update({k:v for k,v in phys_point['p'].items() if ('Lchi' in k) or k in ['mpi','mk','mkp']})
             fit_result.ensembles_fit = switches['ensembles_fit']
             report_phys_point(fit_result, phys_point, model_list, FF, report=switches['report_phys'])
+            if switches['report_Li']:
+                for Li in ['L1','L2','L3','L4','L5','L6','L7','L8']:
+                    if Li in fit_result.p:
+                        Li_mu0 = fit_result.p[Li]
+                        Li_rho = Li_mu0 - ip.gamma_i[Li]/(4*np.pi)**2 * np.log(770 / (4*np.pi*80))
+                        print("%s   %10s   %10s" %(Li, 1e3*Li_mu0, 1e3*Li_rho))
+                for k in ['k_4', 'p_4', 'kp_6', 'k_6', 'p_6']:
+                    if k in fit_result.p:
+                        print("%4s   %s" %(k,fit_result.p[k]))
             fit_results[model] = fit_result
             if switches['save_fits']:
                 gv.dump(fit_result, pickled_fit, add_dependencies=True)
@@ -156,6 +165,7 @@ def main():
         else:
             plt.show()
 
+        return fit_results
 
 '''
     This is the main class that runs a given fit specified by a model

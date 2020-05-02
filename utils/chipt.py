@@ -56,6 +56,7 @@ class FitModel:
         self.required_params = self._get_used_params()
 
     def __call__(self, x, p):
+        if len(self.term_list)==0: return 0. # convenience value for plotting purposes
         convenience_p = ConvenienceDict(self, x, p)
         return sum(getattr(FitModel, term)(self, x, p, convenience_p) for term in self.term_list)
 

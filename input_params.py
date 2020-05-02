@@ -12,14 +12,14 @@ switches['ensembles'] = [
 switches['ensembles_fit'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
-    'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
+    'a15m310'  ,'a12m310' ,'a09m310',#'a06m310L',
     'a15m220'  ,'a12m220' ,'a09m220','a12m220L','a12m220S',
     'a15m135XL','a12m130' ,'a09m135',
     ]
 
 # FIT MODELS
 switches['ansatz'] = dict()
-switches['ansatz']['models'] = ['xpt-ratio_nnnlo_FV_ct']
+switches['ansatz']['models'] = ['xpt_nnnlo_FV']
 '''
     The full list of models can be rather long.  The sys switches help loop
     over them.  Example other base models are
@@ -28,10 +28,10 @@ switches['ansatz']['models'] = ['xpt-ratio_nnnlo_FV_ct']
 '''
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()     # these cause the fitter to loop over various options
-switches['sys']['Lam_chi']   = False # FF = Fpi Fpi, Fpi FK, FK FK
-switches['sys']['alphaS']    = False # include alphaS at NNLO?
-switches['sys']['nnlo_ct']   = False # NNLO = full XPT or just counterterm
-switches['sys']['ratio']     = False # use ratio version of NLO fit
+switches['sys']['Lam_chi']   = True # FF = Fpi Fpi, Fpi FK, FK FK
+switches['sys']['alphaS']    = True # include alphaS at NNLO?
+switches['sys']['nnlo_ct']   = True # NNLO = full XPT or just counterterm
+switches['sys']['ratio']     = True # use ratio version of NLO fit
 # OLDER SYSTEMATICS - still work, but not used
 switches['sys']['FV']        = False # turn on/off FV corrections
 switches['sys']['logSq']     = False # only include logSq and ct (no log)
@@ -46,7 +46,7 @@ switches['print_Li']         = False # print Li at mrho and 4piF0 scales
 # Fitting options
 switches['bs_bias']          = True  # shift bs avg to b0?
 switches['print_fit']        = False # print lsqfit results?
-switches['report_phys']      = True  # report physical point for each fit?
+switches['report_phys']      = False  # report physical point for each fit?
 switches['save_fits']        = True  # save fits in pickle file?
 switches['model_avg']        = True # perform Bayes Model Avg
 switches['prior_search']     = False # perform a crude grid search to optimize
@@ -60,12 +60,13 @@ switches['make_extrap']      = False # make plots
 switches['make_hist']        = False # make plots
 switches['make_fv']          = False
 switches['save_figs']        = True  # save figures
-switches['milc_compare']     = True # compare with MILCs result
+switches['milc_compare']     = False # compare with MILCs result
+switches['report_Li']        = False # report fitted Li values
 
 # DEBUGGING
 switches['debug_models']     = False # print list of models being generated
 switches['debug_save_fit']   = False # check pickling of fit works
-switches['debug_phys_point'] = False  # run report_phys_point even if fit is just loaded
+switches['debug_phys_point'] = False # run report_phys_point even if fit is just loaded
 switches['debug_shift']      = False # check the shifting of raw data to extrapolated points
 switches['debug_bs']         = False # debug shape of bs lists
 
@@ -94,7 +95,7 @@ priors['p_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_pi^2
 priors['s_4']   = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2
 priors['saS_4'] = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2 * alpha_S
 
-n3lo_x = 5
+n3lo_x = 2
 #n3lo_a = 5
 n3lo_a = n3lo_x
 priors['kp_6']  = gv.gvar(0.0, n3lo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2 * eps_pi^2
