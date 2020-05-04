@@ -68,7 +68,7 @@ def plot_pbp(ensemble,dataset,column):
     ax0 = plt.subplot(gs[0])
     ax1 = plt.subplot(gs[1])
     #---
-    for i,s in enumerate(dataset.keys()):
+    for i,s in enumerate(streams[ensemble]):
         data = dataset[s][column].values
         avg = np.mean(data)
         std = np.std(data)
@@ -81,7 +81,6 @@ def plot_pbp(ensemble,dataset,column):
         bins = np.linspace(start = data.min(), stop = data.max(), num = int(len(data)/50))
         dataset[s][column].plot(kind='hist',bins=bins,color=colors[i],orientation='horizontal',histtype='step',align='left', stacked=True, fill=True,ax=ax1)
         #---
-    ax0.set_ylabel(r'$\bar{\psi}\psi$',rotation=0)
     # Remove the inner label numbers of the histograms
     nullfmt = mpl.ticker.NullFormatter()
     ax1.yaxis.set_major_formatter(nullfmt)
@@ -102,8 +101,8 @@ def plot_pbp(ensemble,dataset,column):
 def parsing_args():
     parser = argparse.ArgumentParser(description='Extract HMC observable for an ensemble')
     parser.add_argument('--ens', type=str, default='a06m310L_s', help='pick an ensemble [%(default)s]')
-    parser.add_argument('--autocorr', default=True, action='store_const', const=False, help='Compute autocorr times? [%(default)s]')
-    parser.add_argument('--plots', default=True, action='store_const', const=False, help='Plot HMC histories? [%(default)s]')
+    parser.add_argument('--autocorr', default=False, action='store_const', const=True, help='Compute autocorr times? [%(default)s]')
+    parser.add_argument('--plots', default=False, action='store_const', const=True, help='Plot HMC histories? [%(default)s]')
     ### Setup
     args = parser.parse_args()
     ensemble = args.ens
@@ -154,9 +153,9 @@ def main():
     f.close()
 
     # statistics
-    for s in dset_mdt.keys():
+    for s in streams[ensemble]:
         print(dset_mdt[s].describe().T)
-    for s in dset_trj.keys():
+    for s in streams[ensemble]:
         print(dset_trj[s].describe().T)
 
     #### plotting
@@ -168,20 +167,23 @@ def main():
     if acorr:
         ### Raw analysis of autocorrelations of pbp
         print('PBP autocorrelation times (lower bound) in trajectory length units')
-        for s in dset_mdt.keys():
+        for s in streams[ensemble]:
             for pbp in ['pbp_l','pbp_s','pbp_c']:
                 series = dset_mdt[s][pbp].values
                 tau = autocorr.integrated_time(series,c=5,tol=50,quiet=True)
                 print('{}/{}: {}'.format(s,pbp,tau))
         ### Raw analysis of autocorrelations of plaquette
         print('Plaquette autocorrelation times (lower bound) in units of saved configurations')
-        for s in dset_trj.keys():
+        for s in streams[ensemble]:
             series = dset_trj[s]['plaq'].values
             tau = autocorr.integrated_time(series,c=5,tol=50,quiet=True)
             print('{}/{}: {}'.format(s,'plaq',tau))
 
     ### Save data into txt files for unew analysis
     os.makedirs('unew_files',exist_ok=True)
+    filename = os.path.join('unew_files',ensemble+'_pbp.pdf')
+
+
 
 ######
 
