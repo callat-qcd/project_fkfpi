@@ -3,6 +3,7 @@ import argparse
 import tables as h5
 import pandas as pd
 import numpy as np
+import gvar as gv
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 # now module for Madras-Sokal autocorr time
@@ -110,5 +111,21 @@ if __name__ == '__main__':
     # Close file
     f.close()
 
+    ###
+
+    ### Raw analysis of autocorrelations of pbp
+    for s in dset_mdt.keys():
+        for pbp in ['pbp_l','pbp_s','pbp_c']:
+            series = dset_mdt[s][pbp].values
+            tau = autocorr.integrated_time(series,c=5)
+            print('{}/{}: {}'.format(s,pbp,tau))
+    ### Raw analysis of autocorrelations of plaquette
+    for s in dset_trj.keys():
+        series = dset_trj[s]['plaq'].values
+        tau = autocorr.integrated_time(series,c=5)
+        print('{}/{}: {}'.format(s,'plaq',tau))
+    #### plotting
+    ax = plt.gca()
+    for s in dset_mdt.keys():
+        dset_mdt[s].pbp_l.plot(ax=ax)
     ### Save data into txt files for unew analysis
-    
