@@ -50,7 +50,7 @@ pbp_reps = 5  # number of stochastic point sources for PBP
 
 labels = {'a15m135XL_s':'a15m135XL', 'a09m135_s':'a09m135', 'a06m310L_s':'a06m310L'}
 lattices = {'a15m135XL':'a15', 'a09m135':'a09', 'a06m310L':'a06'}
-colors = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9', 'a06':'#00FFFF'}
+colors_a = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9', 'a06':'#00FFFF'}
 
 # we have a total of 6 observables
 ## The first 4 are measured every MDTU
@@ -59,26 +59,69 @@ obs = ['deltaS','pbp_c','pbp_s','pbp_l','acc_rej','plaq']
 # we use MDTU and TRAJ as indices for observables
 index = ['mdt','traj']
 
-######
-parser = argparse.ArgumentParser(description='Extract HMC observable for an ensemble')
-parser.add_argument('--ens', type=str, default='a06m135XL_s', help='pick an ensemble [%(default)s]')
-parser.add_argument('--autocorr', default=True, action='store_const', const=False, help='Compute autocorr times? [%(default)s]')
+####
+def plot_pbp(ensemble,dataset,column):
+    colors = ['r','g','b','m']
+    gs = mpl.gridspec.GridSpec(1, 2,width_ratios=[4, 1])
+    gs.update(wspace=0.00)
+    #---
+    ax0 = plt.subplot(gs[0])
+    ax1 = plt.subplot(gs[1])
+    #---
+    for i,s in enumerate(dataset.keys()):
+        data = dataset[s][column].values
+        avg = np.mean(data)
+        std = np.std(data)
+        ax0.axhline(avg,color=colors[i],ls='--',lw=2)
+        # do not show the standard deviation
+        # ax0.fill_between(dset_mdt[s].index, avg-std, avg+std,color=colors[i], alpha=0.5)
+        #---
+        dataset[s][column].plot(label=s,color=colors[i],marker='s',mfc='None',alpha=.5,ax=ax0)
+        #---
+        bins = np.linspace(start = data.min(), stop = data.max(), num = int(len(data)/50))
+        dataset[s][column].plot(kind='hist',bins=bins,color=colors[i],orientation='horizontal',histtype='step',align='left', stacked=True, fill=True,ax=ax1)
+        #---
+    ax0.set_ylabel(r'$\bar{\psi}\psi$',rotation=0)
+    # Remove the inner label numbers of the histograms
+    nullfmt = mpl.ticker.NullFormatter()
+    ax1.yaxis.set_major_formatter(nullfmt)
+    # Remove the inner ticks on the y axis
+    nulllct= mpl.ticker.NullLocator()
+    ax1.yaxis.set_major_locator(nulllct)
+    ax1.set_ylim(bins.min(),bins.max())
+    #---
+    ax0.set_ylim(bins.min(),bins.max())
+    ax0.set_xlabel('MD trajectory')
+    ax1.set_xlabel('Count')
+    plt.tight_layout()
+    figname = os.path.join('figures',ensemble+'_'+column+'.pdf')
+    print('Saving to {}'.format(figname))
+    plt.savefig(figname,transparent=True)
 
-if __name__ == '__main__':
+######
+def parsing_args():
+    parser = argparse.ArgumentParser(description='Extract HMC observable for an ensemble')
+    parser.add_argument('--ens', type=str, default='a06m310L_s', help='pick an ensemble [%(default)s]')
+    parser.add_argument('--autocorr', default=True, action='store_const', const=False, help='Compute autocorr times? [%(default)s]')
+    parser.add_argument('--plots', default=True, action='store_const', const=False, help='Plot HMC histories? [%(default)s]')
     ### Setup
     args = parser.parse_args()
     ensemble = args.ens
     acorr = args.autocorr
+    plot = args.plots
+    return ensemble, acorr, plot
 
-    print('Extract HMC observable for {}'.format(ensemble))
-    print('This ensemble has {} streams: {}'.format(len(streams[ensemble]),streams[ensemble]))
-    prex = labels[ensemble]
+def main():
+    ensemble, acorr, plot  = parsing_args()
     filename_obs = 'hmc_obs_'+ensemble+'.h5'
     print('Getting data from {}'.format(filename_obs))
-
-    if ! os.path.isfile(filename_obs):
+    if (not os.path.isfile(filename_obs)):
         print('File {} not found'.format(filename_obs))
         return
+    print('Extract HMC observable for {}'.format(ensemble))
+    prex = labels[ensemble]
+    print('This ensemble has {} streams: {}'.format(len(streams[ensemble]),streams[ensemble]))
+
     ### Get data
     dataset_mdt = dict()
     dataset_trj = dict()
@@ -103,7 +146,6 @@ if __name__ == '__main__':
                 dataset_trj[o] = data[:,1]
             if o in ['plaq']:
                 dataset_trj[o] = data.mean(axis=1)/3.
-
         dset_mdt[s] = pd.DataFrame(data=dataset_mdt,index=index_mdt)
         dset_trj[s] = pd.DataFrame(data=dataset_trj,index=index_trj)
         assert(dset_mdt[s].shape[1] == 4)  # we have 4 observables for each MDTU
@@ -111,21 +153,37 @@ if __name__ == '__main__':
     # Close file
     f.close()
 
-    ###
-
-    ### Raw analysis of autocorrelations of pbp
+    # statistics
     for s in dset_mdt.keys():
-        for pbp in ['pbp_l','pbp_s','pbp_c']:
-            series = dset_mdt[s][pbp].values
-            tau = autocorr.integrated_time(series,c=5)
-            print('{}/{}: {}'.format(s,pbp,tau))
-    ### Raw analysis of autocorrelations of plaquette
+        print(dset_mdt[s].describe().T)
     for s in dset_trj.keys():
-        series = dset_trj[s]['plaq'].values
-        tau = autocorr.integrated_time(series,c=5)
-        print('{}/{}: {}'.format(s,'plaq',tau))
+        print(dset_trj[s].describe().T)
+
     #### plotting
-    ax = plt.gca()
-    for s in dset_mdt.keys():
-        dset_mdt[s].pbp_l.plot(ax=ax)
+    if plot:
+        for o in ['pbp_c','pbp_s','pbp_l']:
+            plot_pbp(ensemble,dset_mdt,o)
+
+    ### Autocorrelations
+    if acorr:
+        ### Raw analysis of autocorrelations of pbp
+        print('PBP autocorrelation times (lower bound) in trajectory length units')
+        for s in dset_mdt.keys():
+            for pbp in ['pbp_l','pbp_s','pbp_c']:
+                series = dset_mdt[s][pbp].values
+                tau = autocorr.integrated_time(series,c=5,tol=50,quiet=True)
+                print('{}/{}: {}'.format(s,pbp,tau))
+        ### Raw analysis of autocorrelations of plaquette
+        print('Plaquette autocorrelation times (lower bound) in units of saved configurations')
+        for s in dset_trj.keys():
+            series = dset_trj[s]['plaq'].values
+            tau = autocorr.integrated_time(series,c=5,tol=50,quiet=True)
+            print('{}/{}: {}'.format(s,'plaq',tau))
+
     ### Save data into txt files for unew analysis
+    os.makedirs('unew_files',exist_ok=True)
+
+######
+
+if __name__ == '__main__':
+    main()
