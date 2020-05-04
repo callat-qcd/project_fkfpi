@@ -180,9 +180,11 @@ def main():
             print('{}/{}: {}'.format(s,'plaq',tau))
 
     ### Save data into txt files for unew analysis
-    os.makedirs('unew_files',exist_ok=True)
-    filename = os.path.join('unew_files',ensemble+'_pbp.pdf')
-
+    newdir = os.path.join('unew_files',labels[ensemble]+'_pbp')
+    os.makedirs(newdir,exist_ok=True)
+    filename = os.path.join(newdir,'runs_')
+    for i,s in enumerate(streams[ensemble]):
+        dset_mdt[s].to_csv(filename+str(i)+'.dat',sep=' ',header=False,index=False,columns=['pbp_l','pbp_s','pbp_c'],mode='w')
 
 
 ######

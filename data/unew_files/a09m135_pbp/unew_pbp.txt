@@ -1,0 +1,40 @@
+	### RESULTS ###
+
+Results for primary observable n. 1:
+         value: 5.761196760371287e-03
+         error: 6.045693081043400e-06
+error of error: 5.586823622075874e-07
+   naive error: 1.719297475317769e-06
+      variance: 1.194217458688159e-08
+       tau_int: 6.165416337883503e+00
+ tau_int error: 1.032666621895542e+00
+         W_opt: 34
+         t_max: 68
+         Q_val: 9.143460300089780e-01
+
+
+Results for primary observable n. 2:
+         value: 3.934582065198014e-02
+         error: 3.481773713681688e-06
+error of error: 5.268424078814153e-07
+   naive error: 5.320668138753978e-07
+      variance: 1.143704181487170e-09
+       tau_int: 2.120145055567254e+01
+ tau_int error: 5.633071135952578e+00
+         W_opt: 92
+         t_max: 184
+         Q_val: 5.647835064841981e-01
+
+
+Results for primary observable n. 3:
+         value: 3.205399145594059e-01
+         error: 5.321774624418439e-07
+error of error: 2.292959729907446e-08
+   naive error: 3.834683368555760e-07
+      variance: 5.940737800979575e-10
+       tau_int: 9.627758228675229e-01
+ tau_int error: 7.745709020227710e-02
+         W_opt: 7
+         t_max: 14
+         Q_val: 1.171391787667888e-01
+
