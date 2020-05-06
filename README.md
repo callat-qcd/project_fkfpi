@@ -13,9 +13,10 @@ NOTE: if your `lsqfit` is not compiled against GSL, you have to set
 ```
 switches['scipy']            = True
 ```
-We installed with GSL support by specifying FIX ME
+We installed with GSL support by specifying
 ```
-LDFLAGS="-L/usr/local/Cellar/gsl/2.6/"; CPPFLAGS="-I/usr/local/Cellar/gsl/2.6/"; pip install lsqfit
+pip install --no-cache-dir --global-option=build_ext --global-option="-lgsl" --global-option="-I/usr/local/include/gsl" --global-option="-L/usr/local/lib" gvar=11.2
+pip install --no-cache-dir --global-option=build_ext --global-option="-lgsl" --global-option="-I/usr/local/include/gsl" --global-option="-L/usr/local/lib" lsqfit==11.5.1
 ```
 
 
