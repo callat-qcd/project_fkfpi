@@ -1,4 +1,4 @@
-
+### shell: unew -d '.' -p '*.dat' -b -s
 	### RESULTS ###
 
 Results for primary observable n. 1:

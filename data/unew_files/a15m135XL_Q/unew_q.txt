@@ -1,0 +1,16 @@
+unew runs.dat -R 4 -b -s
+Please wait while loading data: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00, 61.01it/s]
+
+	### RESULTS ###
+
+Results for primary observable n. 1:
+         value: -2.705525832495940e+00
+         error: 1.844952208677175e+00
+error of error: 1.725794764960463e-01
+   naive error: 7.525743519547179e-01
+      variance: 1.132736310440127e+03
+       tau_int: 2.997624785788787e+00
+ tau_int error: 5.105189149461303e-01
+         W_opt: 17
+         t_max: 34
+         Q_val: 5.131754524496002e-02

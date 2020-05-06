@@ -18,9 +18,9 @@ plt_axes  = [0.14,0.14,0.85,0.85]
 axes1     = [0.13,0.13,0.69,0.85]
 axes2     = [0.821,0.13,0.12,0.85]
 fs_text   = 18 # font size of text
-fs_leg    = 16 # legend font size
+fs_leg    = 14 # legend font size
 mrk_size  = '5' # marker size
-tick_size = 16 # tick size
+tick_size = 14 # tick size
 lw        = 1 # line width
 # saving as rc params
 mpl.rcParams['figure.figsize'] = fig_size
@@ -39,11 +39,25 @@ streams = {
     'a09m135_s'  :['a','b'],
     'a06m310L_s' :['b','c'],
 }
-## offset in units of MDTU
+## offset in units of MDTU for visualization
 offset = {
     'a15m135XL_s':[0, 2700, 5400, 8100],
     'a09m135_s'  :[0, 3422],
     'a06m310L_s' :[0, 3200],
+}
+
+## stitching of a15 pbp
+stitching = {
+    'a15m135XL_s': [250,5],
+    'a09m135_s'  : [0,0],
+    'a06m310L_s' : [0,0],
+}
+
+## measurement frequency in Len.
+freq = {
+    'a15m135XL_s':25,
+    'a09m135_s'  :4,
+    'a06m310L_s' :3,
 }
 
 pbp_reps = 5  # number of stochastic point sources for PBP
@@ -55,32 +69,45 @@ colors_a = {'a15':'#ec5d57', 'a12':'#70bf41', 'a09':'#51a7f9', 'a06':'#00FFFF'}
 # we have a total of 6 observables
 ## The first 4 are measured every MDTU
 ## The last 2 are measured every TRAJ
-obs = ['deltaS','pbp_c','pbp_s','pbp_l','acc_rej','plaq']
+obs_all = ['deltaS','pbp_c','pbp_s','pbp_l','acc_rej','plaq']
+# forget about deltaS because it's complicated with a15m135
+obs_a15 = ['pbp_c','pbp_s','pbp_l','acc_rej','plaq']
 # we use MDTU and TRAJ as indices for observables
-index = ['mdt','traj']
+index_all = ['mdt','traj']
+# for a15m135 pbp there is a separate index!!
+index_a15 = ['mdt_pbp','traj']
 
 ####
 def plot_pbp(ensemble,dataset,column):
-    colors = ['r','g','b','m']
-    gs = mpl.gridspec.GridSpec(1, 2,width_ratios=[4, 1])
+    colors = ['r','orange','g','b','m']
+    if len(streams[ensemble]) == 1:
+        cs = [colors_a[lattices[labels[ensemble]]]]
+    else:
+        cs = colors[::int(len(colors)/len(streams[ensemble]))]
+    gs = mpl.gridspec.GridSpec(1, 2,width_ratios=[5, 1])
     gs.update(wspace=0.00)
     #---
     ax0 = plt.subplot(gs[0])
     ax1 = plt.subplot(gs[1])
     #---
+    binned_data = np.array([])
     for i,s in enumerate(streams[ensemble]):
-        data = dataset[s][column].values
+        # print every saved config
+        idx = np.concatenate((np.arange(0,stitching[ensemble][0]),
+                              np.arange(stitching[ensemble][0],dataset.loc[s].shape[0],freq[ensemble])))
+        data = dataset.loc[s].iloc[idx][column].values
+        index = np.concatenate((dataset.loc[s].iloc[idx].index[:stitching[ensemble][0]].values,
+                                dataset.loc[s].iloc[idx].index[stitching[ensemble][0]:].values+stitching[ensemble][1]))+offset[ensemble][i]
         avg = np.mean(data)
-        std = np.std(data)
-        ax0.axhline(avg,color=colors[i],ls='--',lw=2)
-        # do not show the standard deviation
-        # ax0.fill_between(dset_mdt[s].index, avg-std, avg+std,color=colors[i], alpha=0.5)
         #---
-        dataset[s][column].plot(label=s,color=colors[i],marker='s',mfc='None',alpha=.5,ax=ax0)
+        ax0.plot(index,data,label=s,color=cs[i],marker='s',mfc='None',alpha=.5)
+        ax0.hlines(y=avg,xmin=index.min(),xmax=index.max(),color=cs[i],linestyles='dashed',linewidths=2)
         #---
-        bins = np.linspace(start = data.min(), stop = data.max(), num = int(len(data)/50))
-        dataset[s][column].plot(kind='hist',bins=bins,color=colors[i],orientation='horizontal',histtype='step',align='left', stacked=True, fill=True,ax=ax1)
-        #---
+        binned_data = np.append(binned_data,data)
+    #---
+    binned_data = binned_data.reshape((-1,len(streams[ensemble])),order='F')
+    bins = np.linspace(start = binned_data.min()-binned_data.std(), stop = binned_data.max()+binned_data.std(), num = int(binned_data.shape[0]/10))
+    ax1.hist(binned_data,bins=bins,color=cs[0:len(streams[ensemble])],orientation='horizontal',histtype='bar',align='left', stacked=True, fill=True,alpha=0.7)
     # Remove the inner label numbers of the histograms
     nullfmt = mpl.ticker.NullFormatter()
     ax1.yaxis.set_major_formatter(nullfmt)
@@ -90,8 +117,9 @@ def plot_pbp(ensemble,dataset,column):
     ax1.set_ylim(bins.min(),bins.max())
     #---
     ax0.set_ylim(bins.min(),bins.max())
-    ax0.set_xlabel('MD trajectory')
-    ax1.set_xlabel('Count')
+    ax0.set_xlabel('HMC trajectory')
+    ax0.text(0.05,0.1,labels[ensemble],transform=ax0.transAxes,bbox=dict(boxstyle="round",facecolor='None'),verticalalignment='center')
+    ax0.legend(loc=2,ncol=4)
     plt.tight_layout()
     figname = os.path.join('figures',ensemble+'_'+column+'.pdf')
     print('Saving to {}'.format(figname))
@@ -121,6 +149,14 @@ def main():
     prex = labels[ensemble]
     print('This ensemble has {} streams: {}'.format(len(streams[ensemble]),streams[ensemble]))
 
+    ### treat a15 separately because of pbp measurements
+    if ensemble  == 'a15m135XL_s':
+        obs = obs_a15
+        index = index_a15
+    else:
+        obs = obs_all
+        index = index_all
+
     ### Get data
     dataset_mdt = dict()
     dataset_trj = dict()
@@ -128,7 +164,7 @@ def main():
     dset_trj = dict()
     ## Open file
     f = h5.open_file(filename_obs)
-    for s in streams[ensemble]:
+    for i,s in enumerate(streams[ensemble]):
         node_name = "/{}_{}/{}".format(prex,s,index[0])
         index_mdt = f.get_node(node_name).read()
         node_name = "/{}_{}/{}".format(prex,s,index[1])
@@ -147,8 +183,7 @@ def main():
                 dataset_trj[o] = data.mean(axis=1)/3.
         dset_mdt[s] = pd.DataFrame(data=dataset_mdt,index=index_mdt)
         dset_trj[s] = pd.DataFrame(data=dataset_trj,index=index_trj)
-        assert(dset_mdt[s].shape[1] == 4)  # we have 4 observables for each MDTU
-        assert(dset_trj[s].shape[1] == 2)  # we have 2 observable for each TRAJ
+        print("read stream {}".format(i))
     # Close file
     f.close()
 
@@ -158,10 +193,12 @@ def main():
     for s in streams[ensemble]:
         print(dset_trj[s].describe().T)
 
+
+    results_pbp = pd.concat(dset_mdt, keys=streams[ensemble])
     #### plotting
     if plot:
         for o in ['pbp_c','pbp_s','pbp_l']:
-            plot_pbp(ensemble,dset_mdt,o)
+            plot_pbp(ensemble,results_pbp,o)
 
     ### Autocorrelations
     if acorr:
