@@ -24,7 +24,7 @@ pip install --no-cache-dir --global-option=build_ext --global-option="-lgsl" --g
 ## Installation
 
 ### Required Packages
-- standard scientific Python libraries
+- standard scientific Python libraries (numpy, scipy, PyTables, matplotlib, yaml, functools)
 - gcc/clang, we used
 ```
 Apple clang version 11.0.0 (clang-1100.0.33.12)
