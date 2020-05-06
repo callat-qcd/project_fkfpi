@@ -4,7 +4,7 @@ This repo performs the chiral, continuum, infinite volume extrapolation of the F
 
 While most of the code in `master` branch was written by André Walker-Loud, the design of the code is from Ben Hoerz.  Nolan Miller wrote a completely independent fitting code (`nolan` branch) and the two were cross checked.
 
-After [Installation](### Installing), in principle, the only file the user should have to modify is `input_params.py` where many options are controlled, such as what fit model to use, which data to include, whether to make plots, whether to save and use fits, etc.  To run the fit, simply run
+After [Installation](#installing), in principle, the only file the user should have to modify is `input_params.py` where many options are controlled, such as what fit model to use, which data to include, whether to make plots, whether to save and use fits, etc.  To run the fit, simply run
 
 ```
 python fit_fkfpi.py
