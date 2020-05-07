@@ -96,6 +96,7 @@ def main():
                 if os.path.exists(pickled_fit):
                     print('reading %s' %pickled_fit)
                     fit_result = gv.load(pickled_fit)
+                    check_pickled_fit(fit_result,switches,priors)
                 else:
                     do_fit = True
             else:
@@ -274,6 +275,17 @@ def debug_fit_function(check_fit, model_list, FF, fv):
     if fv:
         print('%16s   %f' %('total_FV', result_FV))
     print('%16s   %f' %('total', result))
+
+def check_pickled_fit(fit,switches,priors):
+    ''' make sure the pickled data is consistent with choices in switches '''
+    if not set(fit.ensembles_fit) == set(switches['ensembles_fit']):
+        sys.exit('ensembles_fit from the pickled fit does not match ensembles_fit from input_params')
+    for p in priors:
+        if p in fit.prior:
+            if priors[p].mean != fit.prior[p].mean or priors[p].sdev != fit.prior[p].sdev:
+                sys.exit('prior %s from fit, %s, does not match from input_params %s' \
+                    %(p,fit.prior[p],priors[p]))
+
 
 if __name__ == "__main__":
     main()
