@@ -12,7 +12,7 @@ switches['ensembles'] = [
 switches['ensembles_fit'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
-    'a15m310'  ,'a12m310' ,'a09m310',#'a06m310L',
+    'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
     'a15m220'  ,'a12m220' ,'a09m220','a12m220L','a12m220S',
     'a15m135XL','a12m130' ,'a09m135',
     ]
@@ -95,7 +95,7 @@ priors['p_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_pi^2
 priors['s_4']   = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2
 priors['saS_4'] = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2 * alpha_S
 
-n3lo_x = 2
+n3lo_x = 5
 #n3lo_a = 5
 n3lo_a = n3lo_x
 priors['kp_6']  = gv.gvar(0.0, n3lo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2 * eps_pi^2
