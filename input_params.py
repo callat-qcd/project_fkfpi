@@ -38,6 +38,7 @@ switches['sys']['logSq']     = False # only include logSq and ct (no log)
 switches['sys']['a4']        = False # only include mpi^2 a^4 N3LO ct
 
 switches['scales']           = ['PP','PK','KK'] # choices of F**2 to loop over
+                               # scale is used when the loop over scales is not triggered
 switches['scale']            = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
 
 switches['print_lattice']    = False # print data for paper - not fitting will occur
