@@ -29,7 +29,7 @@ switches['scipy']            = True
 ```
 We installed with GSL support by specifying
 ```
-pip install --no-cache-dir --global-option=build_ext --global-option="-lgsl" --global-option="-I/usr/local/include/gsl" --global-option="-L/usr/local/lib" gvar=11.2
+pip install --no-cache-dir --global-option=build_ext --global-option="-lgsl" --global-option="-I/usr/local/include/gsl" --global-option="-L/usr/local/lib" gvar==11.2
 pip install --no-cache-dir --global-option=build_ext --global-option="-lgsl" --global-option="-I/usr/local/include/gsl" --global-option="-L/usr/local/lib" lsqfit==11.5.1
 ```
 
