@@ -8,13 +8,15 @@ switches['ensembles'] = [
     'a15m350'  ,'a12m350' ,'a09m350',
     'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
     'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
-    'a15m135XL','a12m130','a09m135',]
+    'a15m135XL','a12m130','a09m135',
+    'a15m310L', 'a12m180L', 'a12m220ms']
 switches['ensembles_fit'] = [
     'a15m400'  ,'a12m400' ,'a09m400',
     'a15m350'  ,'a12m350' ,'a09m350',
     'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
     'a15m220'  ,'a12m220' ,'a09m220','a12m220L','a12m220S',
     'a15m135XL','a12m130' ,'a09m135',
+    #'a15m310L', 'a12m180L', 'a12m220ms',
     ]
 
 # FIT MODELS
@@ -113,6 +115,7 @@ phys_point = dict()
 # FLAG[2019] = 1902.08191
 # FLAG[2017] = 1607.00299
 FPi_phys = gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2)) # FLAG[2019] (84)
+FPi_phys = gv.gvar(130.4/np.sqrt(2), 0.2/np.sqrt(2)) # FLAG[2019] (84)
 FK_phys  = gv.gvar(155.7/np.sqrt(2), 0.7/np.sqrt(2)) # FLAG[2019] (85) - use NF=2+1 for consistency
 
 phys_point = {
