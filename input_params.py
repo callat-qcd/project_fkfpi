@@ -29,7 +29,7 @@ switches['ansatz']['models'] = ['xpt_nnnlo_FV']
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()     # these cause the fitter to loop over various options
 switches['sys']['Lam_chi']   = True # FF = Fpi Fpi, Fpi FK, FK FK
-switches['sys']['alphaS']    = True # include alphaS at NNLO?
+switches['sys']['alphaS']    = False # include alphaS at NNLO?
 switches['sys']['nnlo_ct']   = True # NNLO = full XPT or just counterterm
 switches['sys']['ratio']     = True # use ratio version of NLO fit
 # OLDER SYSTEMATICS - still work, but not used
@@ -52,7 +52,7 @@ switches['save_fits']        = True  # save fits in pickle file?
 switches['model_avg']        = True # perform Bayes Model Avg
 switches['prior_search']     = False # perform a crude grid search to optimize
 switches['prior_verbose']    = False # NNLO and NNNLO prior widths
-switches['scipy']            = False # use scipy minimizer instead of gsl?
+switches['scipy']            = True # use scipy minimizer instead of gsl?
 
 switches['check_fit']        = False # print pieces of fit function - no fitting will occur
 
