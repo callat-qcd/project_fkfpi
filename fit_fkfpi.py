@@ -68,7 +68,7 @@ def main():
             os.makedirs('pickled_fits')
 
     # load data
-    gv_data = io_utils.format_h5_data('data/FK_Fpi_data.mdwf.h5',switches)
+    gv_data = io_utils.format_h5_data('data/FKFpi_jamie.h5',switches)
 
     models = analysis.sys_models(switches)
     if switches['prior_search']:

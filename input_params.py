@@ -4,17 +4,21 @@ import numpy as np
 switches = dict()
 # Make two sets of ensembles - so we can plot data excluded from fit
 switches['ensembles'] = [
-    'a15m400'  ,'a12m400' ,'a09m400',
-    'a15m350'  ,'a12m350' ,'a09m350',
-    'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
-    'a15m220'  ,'a12m220S','a12m220','a12m220L','a09m220',
-    'a15m135XL','a12m130','a09m135',]
+    'a12m456', 'a12m436', 'a12m410', 'a12m375', 'a12m375M', 'a12m375L', 'a12m363', 'a12m292', 'a12m250', 'a12m208M', 'a12m208', 'a12m176', 'a12m135',
+    'a10m460', 'a10m401', 'a10m340', 'a10m300', 'a10m247', 'a10m214', 
+    'a08m430', 'a08m375', 'a08m323', 'a08m271rs', 'a08m271', 'a08m220',
+    'a06m343', 'a06m275',
+    'a05m364'
+    ]
 switches['ensembles_fit'] = [
-    'a15m400'  ,'a12m400' ,'a09m400',
-    'a15m350'  ,'a12m350' ,'a09m350',
-    'a15m310'  ,'a12m310' ,'a09m310','a06m310L',
-    'a15m220'  ,'a12m220' ,'a09m220','a12m220L','a12m220S',
-    'a15m135XL','a12m130' ,'a09m135',
+    'a12m410', 'a12m375', 'a12m375M', 'a12m375L', 'a12m363', 'a12m292', 'a12m250', 'a12m208M', 'a12m208', 'a12m176', 'a12m135',
+    'a10m401', 'a10m340', 'a10m300', 'a10m247', 'a10m214', 
+    'a08m375', 'a08m323', 'a08m271rs', 'a08m271', 'a08m220',
+    'a06m343', 'a06m275',
+    'a05m364',
+    #'a12m456', 'a12m436',   
+    # 'a10m460', 
+    # 'a08m430', 
     ]
 
 # FIT MODELS
@@ -28,7 +32,7 @@ switches['ansatz']['models'] = ['xpt_nnnlo_FV']
 '''
 # SYSTEMATIC SWITCHES
 switches['sys'] = dict()     # these cause the fitter to loop over various options
-switches['sys']['Lam_chi']   = True # FF = Fpi Fpi, Fpi FK, FK FK
+switches['sys']['Lam_chi']   = False # FF = Fpi Fpi, Fpi FK, FK FK
 switches['sys']['alphaS']    = False # include alphaS at NNLO?
 switches['sys']['nnlo_ct']   = True # NNLO = full XPT or just counterterm
 switches['sys']['ratio']     = True # use ratio version of NLO fit
@@ -46,7 +50,7 @@ switches['print_Li']         = False # print Li at mrho and 4piF0 scales
 
 # Fitting options
 switches['bs_bias']          = True  # shift bs avg to b0?
-switches['print_fit']        = False # print lsqfit results?
+switches['print_fit']        = True # print lsqfit results?
 switches['report_phys']      = False  # report physical point for each fit?
 switches['save_fits']        = True  # save fits in pickle file?
 switches['model_avg']        = True # perform Bayes Model Avg
@@ -57,7 +61,7 @@ switches['scipy']            = True # use scipy minimizer instead of gsl?
 switches['check_fit']        = False # print pieces of fit function - no fitting will occur
 
 # Plotting options
-switches['make_extrap']      = False # make plots
+switches['make_extrap']      = True # make plots
 switches['make_hist']        = False # make plots
 switches['make_fv']          = False
 switches['save_figs']        = True  # save figures
@@ -88,7 +92,7 @@ priors['c2'] = gv.gvar(0,10)
 priors['t_fv'] = gv.gvar(0,100)
 
 # Counter terms
-nnlo_x = 2
+nnlo_x = 3
 #nnlo_a = 2
 nnlo_a = nnlo_x # from prior optimization, we found holding them the same is good
 priors['k_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2
@@ -96,7 +100,7 @@ priors['p_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_pi^2
 priors['s_4']   = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2
 priors['saS_4'] = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2 * alpha_S
 
-n3lo_x = 5
+n3lo_x = 3
 #n3lo_a = 5
 n3lo_a = n3lo_x
 priors['kp_6']  = gv.gvar(0.0, n3lo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2 * eps_pi^2
