@@ -304,8 +304,9 @@ class FitModel:
         return cP['k2p2'] * cP['a2']**2 * p['s_6']
 
     def nnnlo_ct(self, x, p, cP):
-        # a^4
-        a_result  = cP['k2p2'] * cP['a2'] * cP['a2'] * p['s_6']
+        a_result  = 0
+        # a^4 - this is handled with a4 switch
+        #a_result  = cP['k2p2'] * cP['a2'] * cP['a2'] * p['s_6']
         # a^2
         a_result += cP['k2p2'] * cP['k2'] * cP['a2'] * p['sk_6']
         a_result += cP['k2p2'] * cP['p2'] * cP['a2'] * p['sp_6']

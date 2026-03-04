@@ -87,6 +87,7 @@ def main():
             print('===============================================================')
             print(model)
             model_list, FF, fv = analysis.gather_model_elements(model)
+            #import IPython; IPython.embed()
             fit_model  = chipt.FitModel(model_list, _fv=fv, _FF=FF)
             fitEnv     = FitEnv(gv_data, fit_model, switches)
 

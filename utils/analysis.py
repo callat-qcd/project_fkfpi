@@ -261,13 +261,19 @@ def sys_models(switches):
         check_model('_ct',models,nnlo=True)
     if switches['sys']['logSq']:
         check_model('_logSq',models,nnlo=True)
+    if not switches['sys']['a4']:
+        check_model('_a4',models,nnlo=False,nnnlo=True)
     if switches['sys']['a4']:
+        check_model('_a4',models,nnlo=False,nnnlo=True)
         check_model('_a4',models,nnlo=True,nnnlo=True)
     if switches['sys']['ratio']:
         for model in models:
             model_ratio = model.replace('xpt','xpt-ratio').replace('ma','ma-ratio')
             if '-ratio' not in model and model_ratio not in models:
                 models.append(model_ratio)
+    if not switches['sys']['a4']:
+        models_a4 = [k for k in models if '_a4' in k]
+        models = list(models_a4)
     models_FPK = []
     for model in models:
         if switches['sys']['Lam_chi']:
@@ -278,6 +284,7 @@ def sys_models(switches):
     if switches['debug_models']:
         for model in models_FPK:
             print(model)
+        input('\n  hit a key to continue\n')
     print(len(models_FPK),'models')
     print('Duplicate models?',check_for_duplicates(models_FPK))
     return models_FPK
@@ -317,7 +324,7 @@ def gather_model_elements(model):
                     model_elements += ['xpt_nnlo_ratio']
 
 
-            if a4 and order == 'nnlo':
+            if a4 and order in ['nnlo', 'nnnlo']:
                 model_elements += ['nnnlo_a4']
             if order == 'nnnlo':
                 model_elements += ['nnnlo_ct']

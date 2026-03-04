@@ -11,19 +11,19 @@ switches['ensembles'] = [
     'a05m364'
     ]
 switches['ensembles_fit'] = [
-    'a12m410', 'a12m375', 'a12m375M', 'a12m375L', 'a12m363', 'a12m292', 'a12m250', 'a12m208M', 'a12m208', 'a12m176', 'a12m135',
+    'a12m410', 'a12m375', 'a12m375L', 'a12m363', 'a12m292', 'a12m250', 'a12m208M', 'a12m208', 'a12m176', 'a12m135',
     'a10m401', 'a10m340', 'a10m300', 'a10m247', 'a10m214', 
     'a08m375', 'a08m323', 'a08m271rs', 'a08m271', 'a08m220',
     'a06m343', 'a06m275',
     'a05m364',
-    #'a12m456', 'a12m436',   
+    #'a12m456', 'a12m436', 'a12m375M', 
     # 'a10m460', 
     # 'a08m430', 
     ]
 
 # FIT MODELS
 switches['ansatz'] = dict()
-switches['ansatz']['models'] = ['xpt_nnnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnlo_FV']
 '''
     The full list of models can be rather long.  The sys switches help loop
     over them.  Example other base models are
@@ -36,10 +36,11 @@ switches['sys']['Lam_chi']   = False # FF = Fpi Fpi, Fpi FK, FK FK
 switches['sys']['alphaS']    = False # include alphaS at NNLO?
 switches['sys']['nnlo_ct']   = True # NNLO = full XPT or just counterterm
 switches['sys']['ratio']     = True # use ratio version of NLO fit
+switches['sys']['a4']        = True # False: only have a**4 with nnnlo
+                                     # True: loop over including or not a**4 with nnlo and nnnlo
 # OLDER SYSTEMATICS - still work, but not used
 switches['sys']['FV']        = False # turn on/off FV corrections
 switches['sys']['logSq']     = False # only include logSq and ct (no log)
-switches['sys']['a4']        = False # only include mpi^2 a^4 N3LO ct
 
 switches['scales']           = ['PP','PK','KK'] # choices of F**2 to loop over
                                # scale is used when the loop over scales is not triggered
@@ -69,7 +70,7 @@ switches['milc_compare']     = False # compare with MILCs result
 switches['report_Li']        = False # report fitted Li values
 
 # DEBUGGING
-switches['debug_models']     = False # print list of models being generated
+switches['debug_models']     = True # print list of models being generated
 switches['debug_save_fit']   = False # check pickling of fit works
 switches['debug_phys_point'] = False # run report_phys_point even if fit is just loaded
 switches['debug_shift']      = False # check the shifting of raw data to extrapolated points
@@ -92,7 +93,7 @@ priors['c2'] = gv.gvar(0,10)
 priors['t_fv'] = gv.gvar(0,100)
 
 # Counter terms
-nnlo_x = 3
+nnlo_x = 5
 #nnlo_a = 2
 nnlo_a = nnlo_x # from prior optimization, we found holding them the same is good
 priors['k_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2
@@ -100,7 +101,7 @@ priors['p_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_pi^2
 priors['s_4']   = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2
 priors['saS_4'] = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2 * alpha_S
 
-n3lo_x = 3
+n3lo_x = 5
 #n3lo_a = 5
 n3lo_a = n3lo_x
 priors['kp_6']  = gv.gvar(0.0, n3lo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2 * eps_pi^2
