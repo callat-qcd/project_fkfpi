@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize_scalar
@@ -6,6 +7,15 @@ import os, copy
 import gvar as gv
 # import chipt lib for fit functions
 import chipt
+
+def colorFader(c1,c2,mix=0):
+    ''' fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)
+        taken from Markus Dutschke answer at stack overflow
+        https://stackoverflow.com/questions/25668828/how-to-create-colour-gradient-in-python
+    '''
+    c1=np.array(mpl.colors.to_rgb(c1))
+    c2=np.array(mpl.colors.to_rgb(c2))
+    return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
 
 
 class ExtrapolationPlots:
@@ -25,7 +35,7 @@ class ExtrapolationPlots:
         self.tick_size = 20 # tick size
         self.lw        = 1 # line width
 
-        self.colors = {'a12':"#7c0315",'a10':"#eb5a21", 'a08':'#70bf41', 'a06':'#51a7f9', 'a05':'#6a5acd'}
+        self.colors = {'a12':"#7c0315",'a10':"#eb4621", 'a08':"#3EA055", 'a06':"#0e21f6", 'a05':"#7b37c8"}
         self.shapes = {'m4':'h', 'm3':'p', 'm3':'s', 'm2':'^', 'm1':'o'}
         self.dx_cont = {
             'a15m400'  :0.0050, 'a12m400' :0.0050, 'a09m400':0.0050,
@@ -59,7 +69,7 @@ class ExtrapolationPlots:
                 self.shift_xp['p'][k] = self.fit_result.p[k]
         y_plot = []
         x_plot = []
-        a_range = np.sqrt(np.arange(0, .16**2, .16**2 / 50))
+        a_range = np.sqrt(np.arange(0, .13**2, .13**2 / 500))
         for a_fm in a_range:
             self.shift_xp['p']['aw0'] = a_fm / self.shift_xp['p']['w0']
             x_plot.append((self.shift_xp['p']['aw0'] / 2)**2)
@@ -81,12 +91,36 @@ class ExtrapolationPlots:
             self.ax_cont  = plt.axes([0.141,0.065,0.858,0.933])
         else:
             self.ax_cont  = plt.axes(self.plt_axes)
-        self.ax_cont.fill_between(x, y-dy, y+dy, color='#b36ae2', alpha=0.4)
+        
+        # find locations of a05 etc
+        i05 = np.where(x > ((self.fitEnv.p[('a05m218', 'aw0')] /2)**2).mean)[0][0]
+        i06 = np.where(x > ((self.fitEnv.p[('a06m275', 'aw0')] /2)**2).mean)[0][0]
+        i08 = np.where(x > ((self.fitEnv.p[('a08m220', 'aw0')] /2)**2).mean)[0][0]
+        i10 = np.where(x > ((self.fitEnv.p[('a10m214', 'aw0')] /2)**2).mean)[0][0]
+        i12 = np.where(x > ((self.fitEnv.p[('a12m410', 'aw0')] /2)**2).mean)[0][0]
+
+        for i in range(i05):
+            self.ax_cont.fill_between(x[i:i+2], (y-dy)[i:i+2], (y+dy)[i:i+2],
+                                      color=colorFader('k', self.colors['a05'], i/i05), alpha=.3)
+        for ii,i in enumerate(range(i05,i06)):
+            self.ax_cont.fill_between(x[i:i+2], (y-dy)[i:i+2], (y+dy)[i:i+2],
+                color=colorFader(self.colors['a05'],self.colors['a06'],ii/(i06-i05)),alpha=.3)
+        for ii,i in enumerate(range(i06,i08)):
+            self.ax_cont.fill_between(x[i:i+2], (y-dy)[i:i+2], (y+dy)[i:i+2],
+                color=colorFader(self.colors['a06'],self.colors['a08'],ii/(i08-i06)),alpha=.3)
+        for ii,i in enumerate(range(i08,i10)):
+            self.ax_cont.fill_between(x[i:i+2], (y-dy)[i:i+2], (y+dy)[i:i+2],
+                color=colorFader(self.colors['a08'],self.colors['a10'],ii/(i10-i08)),alpha=.3)
+        for ii,i in enumerate(range(i10,i12)):
+            self.ax_cont.fill_between(x[i:i+2], (y-dy)[i:i+2], (y+dy)[i:i+2],
+                color=colorFader(self.colors['a10'],self.colors['a12'],ii/(i12-i10)),alpha=.3)
+        #self.ax_cont.fill_between(x, y-dy, y+dy, color='#b36ae2', alpha=0.4)
 
         self.plot_data(p_type='ea')
         handles, labels = self.ax_cont.get_legend_handles_labels()
         labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
-        self.ax_cont.legend(handles, labels, ncol=4, fontsize=self.fs_leg)
+        self.ax_cont.legend(handles, labels, ncol=5, columnspacing=0.5,
+                            fontsize=self.fs_leg)
 
         self.ax_cont.set_xlabel(r'$\epsilon_a^2 = a^2 / (2 w_0)^2$',fontsize=self.fs_text)
         self.ax_cont.set_ylabel(r'$F_K / F_\pi$',fontsize=self.fs_text)
