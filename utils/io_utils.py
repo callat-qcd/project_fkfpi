@@ -36,7 +36,7 @@ def format_h5_data(data_path, switches):
     for ens in sort_ens(switches['ensembles']):
         x[ens] = dict()
         data_dict = dict()
-        for m in ['mpi','mk']:
+        for m in ['mpi','mk', 'w0', 'sqrt_t0']:
             data_dict[m] = data.get_node('/'+ens+'/'+m).read()
         for f in ['FK','Fpi']:
             data_dict[f] = data.get_node('/'+ens+'/'+f).read()
@@ -75,9 +75,13 @@ def format_h5_data(data_path, switches):
         p[(ens,'Lchi_PK')] = 4 * np.pi * np.sqrt(gvdata['FK'] * gvdata['Fpi'])
         p[(ens,'Lchi_KK')] = 4 * np.pi * gvdata['FK']
 
-        # HISQ params
-        aw0 = data.get_node('/'+ens+'/aw0').read()
-        p[(ens,'aw0')]   = gv.gvar(aw0[0],aw0[1])
+        # eps_a params
+        if switches['ea'] == 'w0':
+            p[(ens,'aw0')] = 1 / gvdata['w0']
+        elif switches['ea'] == 't0':
+            p[(ens,'aw0')] = 1 / gvdata['sqrt_t0'] / 1.25
+        #aw0 = data.get_node('/'+ens+'/aw0').read()
+        #p[(ens,'aw0')]   = gv.gvar(aw0[0],aw0[1])
 
         if switches['print_lattice']:
             lattice_fits.append('%9s& %s& %s& %s& %s& %.2f& %s& %s& %s& %s& %s\\\\' \

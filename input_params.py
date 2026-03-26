@@ -5,25 +5,25 @@ switches = dict()
 # Make two sets of ensembles - so we can plot data excluded from fit
 switches['ensembles'] = [
     'a12m456', 'a12m436', 'a12m410', 'a12m375', 'a12m375M', 'a12m375L', 'a12m363', 'a12m292', 'a12m250', 'a12m208M', 'a12m208', 'a12m176', 'a12m135',
-    'a10m460', 'a10m401', 'a10m340', 'a10m300', 'a10m247', 'a10m214', 
+    'a10m460', 'a10m401', 'a10m340', 'a10m300', 'a10m247', 'a10m247M', 'a10m214', 
     'a08m430', 'a08m375', 'a08m323', 'a08m271rs', 'a08m271', 'a08m220',
     'a06m343', 'a06m275',
-    'a05m364'
+    'a05m364', 'a05m218',
     ]
 switches['ensembles_fit'] = [
-    'a12m410', 'a12m375', 'a12m375L', 'a12m363', 'a12m292', 'a12m250', 'a12m208M', 'a12m208', 'a12m176', 'a12m135',
-    'a10m401', 'a10m340', 'a10m300', 'a10m247', 'a10m214', 
+    'a12m410', 'a12m375', 'a12m375M', 'a12m375L', 'a12m363', 'a12m292', 'a12m250', 'a12m208M', 'a12m208', 'a12m176', 'a12m135',
+    'a10m401', 'a10m340', 'a10m300', 'a10m247', 'a10m247M', 'a10m214', 
     'a08m375', 'a08m323', 'a08m271rs', 'a08m271', 'a08m220',
     'a06m343', 'a06m275',
-    'a05m364',
-    #'a12m456', 'a12m436', 'a12m375M', 
-    # 'a10m460', 
-    # 'a08m430', 
+    'a05m364', 'a05m218',
+    'a12m456', 'a12m436',
+    'a10m460', 
+    'a08m430', 
     ]
 
 # FIT MODELS
 switches['ansatz'] = dict()
-switches['ansatz']['models'] = ['xpt_nnlo_FV']
+switches['ansatz']['models'] = ['xpt_nnlo_FV', 'xpt_nnnlo_FV']
 '''
     The full list of models can be rather long.  The sys switches help loop
     over them.  Example other base models are
@@ -38,6 +38,7 @@ switches['sys']['nnlo_ct']   = True # NNLO = full XPT or just counterterm
 switches['sys']['ratio']     = True # use ratio version of NLO fit
 switches['sys']['a4']        = True # False: only have a**4 with nnnlo
                                      # True: loop over including or not a**4 with nnlo and nnnlo
+switches['ea']               = 't0' # w0: define eps_a = 1/w0, t0: define eps_a = 1/sqrt(t0)
 # OLDER SYSTEMATICS - still work, but not used
 switches['sys']['FV']        = False # turn on/off FV corrections
 switches['sys']['logSq']     = False # only include logSq and ct (no log)
@@ -122,13 +123,14 @@ FK_phys  = gv.gvar(155.7/np.sqrt(2), 0.7/np.sqrt(2)) # FLAG[2019] (85) - use NF=
 
 phys_point = {
     'p':{
-        'Fpi'     : FPi_phys,
+        'Fpi'     : gv.gvar('130.50000(1)')/np.sqrt(2),
         'FK'      : FK_phys,
-        'Lchi_PP' : 4 * np.pi * FPi_phys,
+        'Lchi_PP' : 4 * np.pi * gv.gvar('130.50000(1)')/np.sqrt(2),
         'Lchi_PK' : 4 * np.pi * np.sqrt(FPi_phys * FK_phys),
         'Lchi_KK' : 4 * np.pi * FK_phys,
-        'mpi'     : gv.gvar(134.8, 0.3), #FLAG 2017 (16)
-        'mk'      : gv.gvar(494.2, 0.3), #FLAG 2017 (16) isospin symmetric
+        'mpi'     : gv.gvar('135.00000(1)'), #FLAG 2024
+        #'mk'      : gv.gvar('495.01138(1)'), #PDG 0.5(mK+**2 + mK0**2 - mpi+**2 + mpi0**2)
+        'mk'      : gv.gvar('494.60000(1)'), #FLAG 2024
         'mk+'     : gv.gvar(491.2, 0.5), #FLAG 2017 (15) strong isospin breaking only
         'mk0'     : gv.gvar(497.2, 0.4), #FLAG 2017 (15) strong isospin breaking only
         'aw0'     : gv.gvar(0,0),

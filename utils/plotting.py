@@ -69,7 +69,7 @@ class ExtrapolationPlots:
                 self.shift_xp['p'][k] = self.fit_result.p[k]
         y_plot = []
         x_plot = []
-        a_range = np.sqrt(np.arange(0, .13**2, .13**2 / 500))
+        a_range = np.sqrt(np.arange(0, .19**2, .19**2 / 800))
         for a_fm in a_range:
             self.shift_xp['p']['aw0'] = a_fm / self.shift_xp['p']['w0']
             x_plot.append((self.shift_xp['p']['aw0'] / 2)**2)
@@ -119,7 +119,7 @@ class ExtrapolationPlots:
         self.plot_data(p_type='ea')
         handles, labels = self.ax_cont.get_legend_handles_labels()
         labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
-        self.ax_cont.legend(handles, labels, ncol=5, columnspacing=0.5,
+        self.ax_cont.legend(handles, labels, ncol=5, columnspacing=0.5, handletextpad=0.1,
                             fontsize=self.fs_leg)
 
         self.ax_cont.set_xlabel(r'$\epsilon_a^2 = a^2 / (2 w_0)^2$',fontsize=self.fs_text)
@@ -137,7 +137,7 @@ class ExtrapolationPlots:
             self.ax_cont.text(0.0175, 1.145, r'%s' %(self.model.replace('_','\_')),\
                 horizontalalignment='left', verticalalignment='center', \
                 fontsize=self.fs_text, bbox={'facecolor':'None','boxstyle':'round'})
-        self.ax_cont.set_xlim(0,.121)
+        self.ax_cont.set_xlim(0,.181)
 
 
         if self.switches['save_figs']:
