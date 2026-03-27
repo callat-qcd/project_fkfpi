@@ -69,7 +69,17 @@ class ExtrapolationPlots:
                 self.shift_xp['p'][k] = self.fit_result.p[k]
         y_plot = []
         x_plot = []
-        a_range = np.sqrt(np.arange(0, .19**2, .19**2 / 800))
+        # find max value of a/w0
+        aw0_vals = {}
+        for ens in self.fitEnv.y:
+            a = ens[0:3]
+            if a not in aw0_vals:
+                aw0_vals[a] = []
+            aw0_vals[a].append(self.fitEnv.p[(ens, 'aw0')].mean)
+        aw0_max = 1.02 * max(aw0_vals['a12'])
+        w0_fm   = self.shift_xp['p']['w0'].mean
+        afm_max = aw0_max * w0_fm
+        a_range = np.sqrt(np.arange(0, (afm_max)**2, (afm_max)**2 / 600))
         for a_fm in a_range:
             self.shift_xp['p']['aw0'] = a_fm / self.shift_xp['p']['w0']
             x_plot.append((self.shift_xp['p']['aw0'] / 2)**2)
@@ -93,11 +103,16 @@ class ExtrapolationPlots:
             self.ax_cont  = plt.axes(self.plt_axes)
         
         # find locations of a05 etc
-        i05 = np.where(x > ((self.fitEnv.p[('a05m218', 'aw0')] /2)**2).mean)[0][0]
-        i06 = np.where(x > ((self.fitEnv.p[('a06m275', 'aw0')] /2)**2).mean)[0][0]
-        i08 = np.where(x > ((self.fitEnv.p[('a08m220', 'aw0')] /2)**2).mean)[0][0]
-        i10 = np.where(x > ((self.fitEnv.p[('a10m214', 'aw0')] /2)**2).mean)[0][0]
-        i12 = np.where(x > ((self.fitEnv.p[('a12m410', 'aw0')] /2)**2).mean)[0][0]
+        #i05 = np.where(x > ((self.fitEnv.p[('a05m218', 'aw0')] /2)**2).mean)[0][0]
+        #i06 = np.where(x > ((self.fitEnv.p[('a06m275', 'aw0')] /2)**2).mean)[0][0]
+        #i08 = np.where(x > ((self.fitEnv.p[('a08m220', 'aw0')] /2)**2).mean)[0][0]
+        #i10 = np.where(x > ((self.fitEnv.p[('a10m214', 'aw0')] /2)**2).mean)[0][0]
+        #i12 = np.where(x > ((self.fitEnv.p[('a12m410', 'aw0')] /2)**2).mean)[0][0]
+        i05 = np.where(x > ((np.mean(aw0_vals['a05']) /2)**2))[0][0]
+        i06 = np.where(x > ((np.mean(aw0_vals['a06']) /2)**2))[0][0]
+        i08 = np.where(x > ((np.mean(aw0_vals['a08']) /2)**2))[0][0]
+        i10 = np.where(x > ((np.mean(aw0_vals['a10']) /2)**2))[0][0]
+        i12 = len(x)
 
         for i in range(i05):
             self.ax_cont.fill_between(x[i:i+2], (y-dy)[i:i+2], (y+dy)[i:i+2],
@@ -137,7 +152,7 @@ class ExtrapolationPlots:
             self.ax_cont.text(0.0175, 1.145, r'%s' %(self.model.replace('_','\_')),\
                 horizontalalignment='left', verticalalignment='center', \
                 fontsize=self.fs_text, bbox={'facecolor':'None','boxstyle':'round'})
-        self.ax_cont.set_xlim(0,.181)
+        self.ax_cont.set_xlim(0,(aw0_max/2)**2)
 
 
         if self.switches['save_figs']:
