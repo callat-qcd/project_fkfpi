@@ -11,14 +11,24 @@ switches['ensembles'] = [
     'a05m364', 'a05m218',
     ]
 switches['ensembles_fit'] = [
-    'a12m410', 'a12m375', 'a12m375M', 'a12m375L', 'a12m363', 'a12m292', 'a12m250', 'a12m208M', 'a12m208', 'a12m176', 'a12m135',
-    'a10m401', 'a10m340', 'a10m300', 'a10m247', 'a10m247M', 'a10m214', 
-    'a08m375', 'a08m323', 'a08m271rs', 'a08m271', 'a08m220',
-    'a06m343', 'a06m275',
-    'a05m364', 'a05m218',
-    'a12m456', 'a12m436',
-    'a10m460', 
-    'a08m430', 
+    # L/t0**1/2 < 13
+    'a10m460', 'a08m430',
+    # a12
+    'a12m456', 'a12m436', 'a12m410', 
+    'a12m375', 'a12m375M', 'a12m375L', 'a12m363', 
+    'a12m292', 'a12m250', 'a12m208M', 'a12m208', 'a12m176', 'a12m135',
+    # a10
+    'a10m401', 'a10m340', 
+    'a10m300', 'a10m247', 'a10m247M', 'a10m214', 
+    # a08
+    'a08m375', 'a08m323', 
+    'a08m271rs', 'a08m271', 'a08m220',
+    # a06
+    'a06m343', 
+    'a06m275',
+    # a05
+    'a05m364', 
+    'a05m218',
     ]
 
 # FIT MODELS
@@ -38,7 +48,7 @@ switches['sys']['nnlo_ct']   = True # NNLO = full XPT or just counterterm
 switches['sys']['ratio']     = True # use ratio version of NLO fit
 switches['sys']['a4']        = True # False: only have a**4 with nnnlo
                                      # True: loop over including or not a**4 with nnlo and nnnlo
-switches['ea']               = 't0' # w0: define eps_a = 1/w0, t0: define eps_a = 1/sqrt(t0)
+switches['ea']               = 'w0' # w0: define eps_a = 1/w0, t0: define eps_a = 1/sqrt(t0)
 # OLDER SYSTEMATICS - still work, but not used
 switches['sys']['FV']        = False # turn on/off FV corrections
 switches['sys']['logSq']     = False # only include logSq and ct (no log)
@@ -65,13 +75,13 @@ switches['check_fit']        = False # print pieces of fit function - no fitting
 # Plotting options
 switches['make_extrap']      = True # make plots
 switches['make_hist']        = False # make plots
-switches['make_fv']          = False
+switches['make_fv']          = True
 switches['save_figs']        = True  # save figures
 switches['milc_compare']     = False # compare with MILCs result
-switches['report_Li']        = False # report fitted Li values
+switches['report_Li']        = True # report fitted Li values
 
 # DEBUGGING
-switches['debug_models']     = True # print list of models being generated
+switches['debug_models']     = False # print list of models being generated
 switches['debug_save_fit']   = False # check pickling of fit works
 switches['debug_phys_point'] = False # run report_phys_point even if fit is just loaded
 switches['debug_shift']      = False # check the shifting of raw data to extrapolated points
@@ -81,9 +91,9 @@ switches['debug_bs']         = False # debug shape of bs lists
 gamma_i = {
     'L1':3./32, 'L2':3./16, 'L3':0, 'L4':1./8, 'L5':3./8, 'L6':11./144, 'L7':0, 'L8':5./48
 }
-Li_mrho = {# central values from Bijnens, Ecker, 1405.6488 BE14
+Li_mrho = {# central values from Bijnens, Ecker, 1405.6488 BE14 - except L5
     'L1':gv.gvar(0.53,.5), 'L2':gv.gvar(0.81,.5),  'L3':gv.gvar(-3.07,1.0), 'L4':gv.gvar(0.3,.3),
-    'L5':gv.gvar(1.01,.5), 'L6':gv.gvar(0.14,.14), 'L7':gv.gvar(-0.34,.34), 'L8':gv.gvar(0.47,.47)
+    'L5':gv.gvar(1.01,1.0), 'L6':gv.gvar(0.14,.14), 'L7':gv.gvar(-0.34,.34), 'L8':gv.gvar(0.47,.47)
 }
 priors = dict()
 for Li in gamma_i:
@@ -94,7 +104,7 @@ priors['c2'] = gv.gvar(0,10)
 priors['t_fv'] = gv.gvar(0,100)
 
 # Counter terms
-nnlo_x = 5
+nnlo_x = 3.5
 #nnlo_a = 2
 nnlo_a = nnlo_x # from prior optimization, we found holding them the same is good
 priors['k_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2
@@ -102,7 +112,7 @@ priors['p_4']   = gv.gvar(0.0, nnlo_x) # (eps_K^2 - eps_pi^2 ) * eps_pi^2
 priors['s_4']   = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2
 priors['saS_4'] = gv.gvar(0.0, nnlo_a) # (eps_K^2 - eps_pi^2 ) * eps_a^2 * alpha_S
 
-n3lo_x = 5
+n3lo_x = 3.5
 #n3lo_a = 5
 n3lo_a = n3lo_x
 priors['kp_6']  = gv.gvar(0.0, n3lo_x) # (eps_K^2 - eps_pi^2 ) * eps_K^2 * eps_pi^2
