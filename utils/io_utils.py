@@ -84,15 +84,16 @@ def format_h5_data(data_path, switches):
         #p[(ens,'aw0')]   = gv.gvar(aw0[0],aw0[1])
 
         if switches['print_lattice']:
-            lattice_fits.append('%9s& %s& %s& %s& %s& %.2f& %s& %s& %s& %s& %s\\\\' \
-                %(ens, gvdata['mpi'], gvdata['mk'], \
-                    (gvdata['mpi']/4/np.pi/gvdata['Fpi'])**2,\
+            lattice_fits.append('%9s& %s& %s& %s& %s& %s\\\\' \
+                %(ens, gvdata['FK']/gvdata['Fpi'], 
+                  (gvdata['mpi']/4/np.pi/gvdata['Fpi'])**2,\
                     (gvdata['mk']/4/np.pi/gvdata['Fpi'])**2,\
-                    x[ens]['mpiL'], (p[(ens,'aw0')] / 2)**2, x[ens]['alphaS'],\
+                    gvdata['mpi'] * L_ens, (p[(ens,'aw0')] / 2)**2, \
+                    #x[ens]['alphaS'],\
                     #p[(ens,'aw0')]**2 / 4 / np.pi, x[ens]['alphaS'],\
-                    gvdata['Fpi'],gvdata['FK'], gvdata['FK']/gvdata['Fpi']))
+                ))
     if switches['print_lattice']:
-        print(r'ensemble& $am_\pi$& $am_K$& $\e_\pi^2$& $\e_K^2$& $m_\pi L$& $\e_a^2$& $\a_S$& $aF_\pi$& $aF_K$&  $F_K / F_\pi$\\')
+        print(r'ensemble& $F_K / F_\pi$& $\e_\pi^2$& $\e_K^2$& $m_\pi L$& $\e_a^2$& $\a_S$& $aF_\pi$& $aF_K$&  \\')
         print(r'\hline')
         for l in lattice_fits:
             print(l)

@@ -129,7 +129,7 @@ def main():
                     if Li in fit_result.p:
                         Li_mu0 = fit_result.p[Li]
                         Li_rho = Li_mu0 - ip.gamma_i[Li]/(4*np.pi)**2 * np.log(770 / (4*np.pi*80))
-                        print("%s   %10s   %10s" %(Li, 1e3*Li_mu0, 1e3*Li_rho))
+                        print("%4s   %10s   %10s" %(Li, 1e3*Li_mu0, 1e3*Li_rho))
                 for k in ['k_4', 'p_4', 'kp_6', 'k_6', 'p_6']:
                     if k in fit_result.p:
                         print("%4s   %s" %(k,fit_result.p[k]))
