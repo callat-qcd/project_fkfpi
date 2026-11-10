@@ -136,6 +136,7 @@ class BayesModelAvg:
                 print('%37s           %s    %s' %('',self.avg[k],k))
         self.avg['dF_iso_avg'] = avg_iso(self.avg['dF_iso_xpt'],self.avg['dF_iso_xpt2'])
         print('%37s          %s   %s' %('',self.avg['dF_iso_avg'],'dF_iso_avg'))
+        print('%37s          %s   %s' %('',2*self.avg['dF_iso_avg']/self.avg['FKFpi'], 'delta_SU2_avg'))
         #print('-----------------------------------------------------------------------------------')
         self.avg['FK+/Fpi+'] = self.avg['FKFpi'] + self.avg['dF_iso_avg']
         print('                      ----------------------------------------------------')

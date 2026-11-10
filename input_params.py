@@ -52,7 +52,7 @@ switches['save_fits']        = True  # save fits in pickle file?
 switches['model_avg']        = True # perform Bayes Model Avg
 switches['prior_search']     = False # perform a crude grid search to optimize
 switches['prior_verbose']    = False # NNLO and NNNLO prior widths
-switches['scipy']            = False # use scipy minimizer instead of gsl?
+switches['scipy']            = True # use scipy minimizer instead of gsl?
 
 switches['check_fit']        = False # print pieces of fit function - no fitting will occur
 
