@@ -70,7 +70,15 @@ class BayesModelAvg:
             logGBF = self.results[a_model].logGBF
             w_i    = self.weights[i_weights][a_i]
             phys   = self.results[a_model].phys['FKFpi']
-            print(r'%37s &  %.3f   &  %.3f&  %.3f&  %.3f&  %s\\' %(a_model.replace('_','\_'), chi2/dof, Q, logGBF, w_i, phys))
+            # clean up name for MDWF
+            model = a_model.replace('_PP','')
+            model = model.replace('_FV','')
+            model = model.replace('xpt-','')
+            model = model.replace('xpt_','')
+            model = model.replace('ratio_nnnlo','nnnlo_ratio')
+            model = model.replace('ratio_nnlo', 'nnlo_ratio')
+            model = model.replace('_','\_')
+            print(r'%37s &  %.3f   &  %.3f&  %.3f&  %.3f&  %s\\' %(model, chi2/dof, Q, logGBF, w_i, phys))
 
     def bayes_model_avg(self):
         self.pdf_x = np.arange(1.15,1.2301,.0001)
@@ -136,6 +144,7 @@ class BayesModelAvg:
                 print('%37s           %s    %s' %('',self.avg[k],k))
         self.avg['dF_iso_avg'] = avg_iso(self.avg['dF_iso_xpt'],self.avg['dF_iso_xpt2'])
         print('%37s          %s   %s' %('',self.avg['dF_iso_avg'],'dF_iso_avg'))
+        print('%37s          %s   %s' %('',2*self.avg['dF_iso_avg']/self.avg['FKFpi'], 'delta_SU2_avg'))
         #print('-----------------------------------------------------------------------------------')
         self.avg['FK+/Fpi+'] = self.avg['FKFpi'] + self.avg['dF_iso_avg']
         print('                      ----------------------------------------------------')

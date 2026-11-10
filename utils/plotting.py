@@ -377,7 +377,11 @@ class ExtrapolationPlots:
             'a12m375L':['a12m375L', 'a12m375M', 'a12m375'],
             'a10m247M':['a10m247M','a10m247'],
             'a12m208M':['a12m208M', 'a12m208']}
-        for fv_ens in ['a12m375L','a10m247M','a12m208M']:
+        fv_ens_fit = []
+        for ens in ['a12m375L','a10m247M','a12m208M']:
+            if ens in self.fit_result.x:
+                fv_ens_fit.append(ens)
+        for fv_ens in fv_ens_fit:
             fv_dict = dict()
             fv_dict['p'] = dict()
             fv_dict['p']['mpi']     = self.fit_result.p[fv_ens, 'mpi']

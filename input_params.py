@@ -12,16 +12,19 @@ switches['ensembles'] = [
     ]
 switches['ensembles_fit'] = [
     # L/t0**1/2 < 13
-    'a10m460', 'a08m430',
+    'a10m460', 
+    'a08m430',
     # a12
     'a12m456', 'a12m436', 'a12m410', 
     'a12m375', 'a12m375M', 'a12m375L', 'a12m363', 
     'a12m292', 'a12m250', 'a12m208M', 'a12m208', 'a12m176', 'a12m135',
     # a10
-    'a10m401', 'a10m340', 
+    'a10m401', 
+    'a10m340', 
     'a10m300', 'a10m247', 'a10m247M', 'a10m214', 
     # a08
-    'a08m375', 'a08m323', 
+    'a08m375', 
+    'a08m323', 
     'a08m271rs', 'a08m271', 'a08m220',
     # a06
     'a06m343', 
@@ -34,6 +37,7 @@ switches['ensembles_fit'] = [
 # FIT MODELS
 switches['ansatz'] = dict()
 switches['ansatz']['models'] = ['xpt_nnlo_FV', 'xpt_nnnlo_FV']
+#switches['ansatz']['models'] = ['xpt_nnlo', 'xpt_nnnlo']
 '''
     The full list of models can be rather long.  The sys switches help loop
     over them.  Example other base models are
@@ -60,10 +64,13 @@ switches['scale']            = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB
 switches['print_lattice']    = False # print data for paper - not fitting will occur
 switches['print_Li']         = False # print Li at mrho and 4piF0 scales
 
+# PhysPoint
+switches['phys_point']       = 'FLAG' # PDG or FLAG
+switches['report_phys']      = False  # report physical point for each fit?
+
 # Fitting options
 switches['bs_bias']          = True  # shift bs avg to b0?
-switches['print_fit']        = True # print lsqfit results?
-switches['report_phys']      = False  # report physical point for each fit?
+switches['print_fit']        = False # print lsqfit results?
 switches['save_fits']        = True  # save fits in pickle file?
 switches['model_avg']        = True # perform Bayes Model Avg
 switches['prior_search']     = False # perform a crude grid search to optimize
@@ -73,9 +80,9 @@ switches['scipy']            = True # use scipy minimizer instead of gsl?
 switches['check_fit']        = False # print pieces of fit function - no fitting will occur
 
 # Plotting options
-switches['make_extrap']      = True # make plots
+switches['make_extrap']      = False # make plots
 switches['make_hist']        = False # make plots
-switches['make_fv']          = True
+switches['make_fv']          = True # make FV plots - only runs if make_extrap
 switches['save_figs']        = True  # save figures
 switches['milc_compare']     = False # compare with MILCs result
 switches['report_Li']        = True # report fitted Li values
@@ -130,29 +137,35 @@ phys_point = dict()
 # FLAG[2017] = 1607.00299
 FPi_phys = gv.gvar(130.2/np.sqrt(2), 0.8/np.sqrt(2)) # FLAG[2019] (84)
 FK_phys  = gv.gvar(155.7/np.sqrt(2), 0.7/np.sqrt(2)) # FLAG[2019] (85) - use NF=2+1 for consistency
+# FLAG[2024]
+FPi_phys = gv.gvar(130.5 / np.sqrt(2), 0.000001/np.sqrt(2))
 
 phys_point = {
     'p':{
-        'Fpi'     : gv.gvar('130.50000(1)')/np.sqrt(2),
         'FK'      : FK_phys,
-        'Lchi_PP' : 4 * np.pi * gv.gvar('130.50000(1)')/np.sqrt(2),
         'Lchi_PK' : 4 * np.pi * np.sqrt(FPi_phys * FK_phys),
         'Lchi_KK' : 4 * np.pi * FK_phys,
-        'mpi'     : gv.gvar('135.00000(1)'), #FLAG 2024
-        #'mk'      : gv.gvar('495.01138(1)'), #PDG 0.5(mK+**2 + mK0**2 - mpi+**2 + mpi0**2)
-        'mk'      : gv.gvar('494.60000(1)'), #FLAG 2024
         'mk+'     : gv.gvar(491.2, 0.5), #FLAG 2017 (15) strong isospin breaking only
         'mk0'     : gv.gvar(497.2, 0.4), #FLAG 2017 (15) strong isospin breaking only
         'aw0'     : gv.gvar(0,0),
         'a2DI'    : gv.gvar(0,0),
         'w0'      : gv.gvar(0.1714,0),
-
         'F0'      : gv.gvar(80,20), #FLAG use of F0 in SU(2) correction for FK/Fpi
         'FKFpi_FLAG' : gv.gvar(1.1932, 0.0019)
     },
     'x' : {'alphaS':0},
     'y' : {},
 }
+if switches['phys_point'] == 'PDG':
+    phys_point['p']['Fpi'] = gv.gvar('130.56(13)')/np.sqrt(2)
+    phys_point['p']['mpi'] = gv.gvar('134.9768(05)')
+    phys_point['p']['mk']  = gv.gvar('495.01138(1)') #PDG 0.5(mK+**2 + mK0**2 - mpi+**2 + mpi0**2)
+    phys_point['p']['Lchi_PP'] = 4 * np.pi * phys_point['p']['Fpi']
+elif switches['phys_point'] == 'FLAG':
+    phys_point['p']['Fpi'] = gv.gvar('130.50000(1)')/np.sqrt(2)
+    phys_point['p']['mpi'] = gv.gvar('135.00000(1)')
+    phys_point['p']['mk']  = gv.gvar('494.60000(1)')
+    phys_point['p']['Lchi_PP'] = 4 * np.pi * phys_point['p']['Fpi']
 
 ''' Values for checking fit function
 '''
