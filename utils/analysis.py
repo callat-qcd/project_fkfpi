@@ -149,6 +149,7 @@ class BayesModelAvg:
         self.avg['FK+/Fpi+'] = self.avg['FKFpi'] + self.avg['dF_iso_avg']
         print('                      ----------------------------------------------------')
         print('%37s           %s +- %.4f     |' %('| FK+/Fpi+    =', self.avg['FK+/Fpi+'], np.sqrt(self.model_var)))
+        print('%37s           %s +- %.4f     |' %('| FK+/Fpi+    =', self.avg['FKFpi']*(1-0.5*gv.gvar('0.0058(06)')), np.sqrt(self.model_var)))
         print('                      ----------------------------------------------------')
 
     def plot_bma_hist(self,hist_type,save_fig=False):
@@ -225,6 +226,13 @@ def uncertainty_breakdown(result,key,print_error=False):
             disc[k] = result.prior[k]
         else:
             xpt[k]  = result.prior[k]
+    if print_error:
+        print('XPT')
+        for k in xpt:
+            print(f'  {k}')
+        print('DISCO')
+        for k in disc:
+            print(f'  {k}')
     uncertainties = dict()
     uncertainties['stat_xy']    = result.phys[key].partialsdev(result.y,stat)
     uncertainties['xpt']        = result.phys[key].partialsdev(xpt)

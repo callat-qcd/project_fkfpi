@@ -61,7 +61,7 @@ switches['scales']           = ['PP','PK','KK'] # choices of F**2 to loop over
                                # scale is used when the loop over scales is not triggered
 switches['scale']            = 'PP' # PP, PK, KK, LamChi = 4 * pi * sqrt(FA * FB)
 
-switches['print_lattice']    = False # print data for paper - not fitting will occur
+switches['print_lattice']    = False # print data for paper - no fitting will occur
 switches['print_Li']         = False # print Li at mrho and 4piF0 scales
 
 # PhysPoint
@@ -98,7 +98,7 @@ switches['debug_bs']         = False # debug shape of bs lists
 gamma_i = {
     'L1':3./32, 'L2':3./16, 'L3':0, 'L4':1./8, 'L5':3./8, 'L6':11./144, 'L7':0, 'L8':5./48
 }
-Li_mrho = {# central values from Bijnens, Ecker, 1405.6488 BE14 - except L5
+Li_mrho = {# central values from Bijnens, Ecker, 1405.6488 BE14 fit L5=1.01(06): L5=1.19(25) Nf211 [0.95(41) Nf21]
     'L1':gv.gvar(0.53,.5), 'L2':gv.gvar(0.81,.5),  'L3':gv.gvar(-3.07,1.0), 'L4':gv.gvar(0.3,.3),
     'L5':gv.gvar(1.01,1.0), 'L6':gv.gvar(0.14,.14), 'L7':gv.gvar(-0.34,.34), 'L8':gv.gvar(0.47,.47)
 }
